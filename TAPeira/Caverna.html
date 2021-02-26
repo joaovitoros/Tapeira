@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title id="titulo"></title>
+	<link rel="stylesheet" href="css/estilos.css">
+	<script src="script/script.js"></script>
+	<script src="script/FileSaver.js"></script>
+</head>
+
+<body class="Batalha" onload="PreCarregamento()">
+
+	<div id="container-AndarManter">
+		<div id="container-Andar">
+			<label>Andar: </label>
+			<div class="contAndar" id="contAndar"></div>
+		</div>
+
+		<div id="container-ManterAndar">
+			<label id="lblManter">Manter no andar:</label>
+			<input type="checkbox" id="manterAndar" onclick="MostraInfo('Só pode ser ativado a partir do andar 5')">
+		</div>
+
+		<div>
+			<input type="button" value="Voltar andar" id="btnAndar" class="btn-Padrao" onclick="VoltaAndar()">
+		</div>
+	</div>
+
+	<div id="container-Fugir">
+		<div id="VidaInimigoBorda"></div>
+		<div id="VidaInimigo"></div>
+
+		<div>Tempo fugir: </div>
+		<div class="contTempo" id="contTempo"></div>
+	</div>
+
+	<div id="container-GoldEsmeraldas">
+		<div id="container-Gold">
+			<div class="contGoldlbl">Gold:</div>
+			<div class="contGold" id="contGold"></div>
+		</div>
+
+		<div id="container-Esmeraldas">
+			<div class="contEmeraldaslbl">Esmeraldas:</div>
+			<div class="contEmeraldas" id="contEmeraldas"></div>
+		</div>
+	</div>
+
+	<div id="container-DerrotouResta">
+		<div id="container-TotalAbatidos">
+			<div class="contDerrotadoslbl">Total Abatidos:</div>
+			<div class="contDerrotados" id="contDerrotados"></div>
+		</div>
+
+		<div id="container-Derrotados">
+			<div class="contRestanteslbl">Derrotados: </div>
+			<div class="contRestantes" id="contRestantes"></div>
+		</div>
+
+		<div id="container-Restantes">
+			<div class="contIniAndarlbl">Inimigos restantes: </div>
+			<div class="contIniAndar" id="contIniAndar"></div>
+		</div>
+	</div>
+
+	<div id="container-Infos">
+		<label id="lblInf">Infos:</label>
+		<textarea type="textarea" id="Infos" readonly="True" rows="5" cols="30"></textarea>
+	</div>
+
+	<img src="imagens/player.png" class="player">
+
+
+	<div id="container-Habilidades">
+			<div id="BaraQTDHab1Borda"><div id="BaraQTDHab1"><div id="QTDTempoHab1"></div></div></div>
+			
+	</div>
+
+	<div id="container-opcoes">
+		<div id="container-Botoes">
+			<input type="submit" value="Status" id="btnStatus" class="btn-Padrao" onclick="SobeStatus()">
+			<input type="button" value="Loja" id="btn-Loja" class="btn-Padrao" onclick="AbreLoja()">
+			<input type="button" value="Config" id="btn-Config" class="btn-Padrao" onclick="AbreConfig()">
+		</div>
+
+		<div id="container-Status">
+			<div id="DivStatus" style="visibility:hidden">
+				<textarea type="textarea" id="Status" readonly="True" rows="15" cols="35"
+					onclick="SobeStatus()"></textarea>
+			</div>
+		</div>
+
+		<div id="container-Loja">
+			<div id="Loja" style="visibility:hidden">
+				<table id="TabLoja">
+					<caption>Loja</caption>
+					<thead>
+						<tr>
+							<th>Item</th>
+							<th>Preço</th>
+							<th>Nivel</th>
+							<th>Comprar</th>
+							<th>
+								<div id="btnLojaE" onclick="LojaEsmeralda()">></div>
+							</th>
+						</tr>
+					</thead>
+					<tr>
+						<td>+Dano</td>
+						<td align="center">
+							<div id="precoDano"></div>
+						</td>
+						<td align="center">
+							<div id="lvlDano"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraDano()"></td>
+					</tr>
+
+					<tr>
+						<td>Chance Bau</td>
+						<td align="center">
+							<div id="precoBau"></div>
+						</td>
+						<td align="center">
+							<div id="lvlBau"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraBau()"></td>
+					</tr>
+
+					<tr>
+						<td>- Tempo bater(Espaço)</td>
+						<td align="center">
+							<div id="precoBEspaco"></div>
+						</td>
+						<td align="center">
+							<div id="lvlBEspaco"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraBEspaco()"></td>
+					</tr>
+
+					<tr>
+						<td>Mult Gold</td>
+						<td align="center">
+							<div id="precoGold"></div>
+						</td>
+						<td align="center">
+							<div id="lvlGold"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraGold()"></td>
+					</tr>
+
+					<tr>
+						<td>Avanço Rapido</td>
+						<td align="center">
+							<div id="precoAvan"></div>
+						</td>
+						<td align="center">
+							<div id="lvlAvan"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraAvanco()"></td>
+					</tr>
+
+					<tr>
+						<td>Dano critico</td>
+						<td align="center">
+							<div id="precoDCrit"></div>
+						</td>
+						<td align="center">
+							<div id="lvlDCrit"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraDCrit()"></td>
+					</tr>
+					
+					<tr>
+						<td>Subtrair vida Mug</td>
+						<td align="center">
+							<div id="precoVidaInimigo"></div>
+						</td>
+						<td align="center">
+							<div id="lvlSubVida"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraSubVida()"></td>
+					</tr>
+
+					<tr>
+						<td>Chance critico</td>
+						<td align="center">
+							<div id="precoCCrit"></div>
+						</td>
+						<td align="center">
+							<div id="lvlCCrit"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraCCrit()"></td>
+					</tr>
+					
+					<tr>
+						<td>Quantidade Avanço Rapido</td>
+						<td align="center">
+							<div id="precoQTDAvan"></div>
+						</td>
+						<td align="center">
+							<div id="lvlQTDAvan"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraQTDAvanco()"></td>
+					</tr>
+
+				</table>
+
+
+				<table id="LojaEsm" style="visibility:hidden">
+					<caption>Loja de Esmeralda</caption>
+					<thead>
+						<tr>
+							<th>Bonus</th>
+							<th>Preço</th>
+							<th>Nivel</th>
+							<th>Comprar</th>
+							<th>
+								<div id="btnLojaE" onclick="LojaEsmeralda()">
+									<</div> </th> </tr> </thead> <tr>
+							<td>Companheiro 1(DPS)</td>
+							<td align="center">
+								<div id="precoComp1"></div>
+							</td>
+							<td align="center">
+								<div id="lvlComp1"></div>
+							</td>
+							<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+									onclick="CompraComp1()"></td>
+						</tr>
+
+						<tr>
+							<td>Avanço Gold</td>
+							<td align="center">
+								<div id="precoAvGold"></div>
+							</td>
+							<td align="center">
+								<div id="lvlAvGold"></div>
+							</td>
+							<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+									onclick="CompraAvGold()"></td>
+						</tr>
+
+						<tr>
+							<td>Companheiro 2(GoldPS)</td>
+							<td align="center">
+								<div id="precoComp2"></div>
+							</td>
+							<td align="center">
+								<div id="lvlComp2"></div>
+							</td>
+							<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+									onclick="CompraComp2()"></td>
+						</tr>
+						
+						<tr>
+							<td>Companheiro 3(Bonus tempo)</td>
+							<td align="center">
+								<div id="precoComp3"></div>
+							</td>
+							<td align="center">
+								<div id="lvlComp3"></div>
+							</td>
+							<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+									onclick="CompraComp3()"></td>
+						</tr>
+				</table>
+			</div>
+		</div>
+
+		<div id="container-SalvaCarrega" style="visibility:hidden">
+			<div id="divSalvar">
+				<div>Salvar Jogo:</div>
+				<input type="button" value="Salvar" onclick="Salvar()" /><br />
+			</div>
+
+			<div id="divCarregar">
+				<div>Carregar Jogo:</div>
+				<input type="file" id="txtfiletoread" onclick="CarregarArquivo()" /><br />
+				<div id="filecontents"> </div>
+			</div>
+		</div>
+	</div>
+	</div>
+
+
+	<!--<input type="button" value="Status" id="Status" class="btn-Padrao" onclick="SobeStatus()">-->
+
+
+
+
+
+
+
+
+</body>
+
+</html>
