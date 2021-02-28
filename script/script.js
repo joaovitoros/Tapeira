@@ -114,6 +114,8 @@ var tempoComp3 = 1;
 var lvlComp3 = 0;
 ////
 
+var qtdMusicas = 8;
+
 
 //funçoes do sistema
 
@@ -267,6 +269,22 @@ function CarregarArquivo () {
      }
 }
 
+function ChamaSom(som){
+	document.getElementById(som).play();
+}
+
+function AbaixaSom(){
+	for(i=1;i<=qtdMusicas;i++){
+		document.getElementById('audio'+i).volume-=0.1;
+	}
+}
+
+function AumentaSom(){
+	for(i=1;i<=qtdMusicas;i++){
+		document.getElementById('audio'+i).volume+=0.1;
+	}
+}
+
 ////
 
 
@@ -292,7 +310,7 @@ function Batalha(){
 	CarregarStatus();
 	CriarCompanheiros();
 	CriarInimigos();
-	MostraStatus();	
+	MostraStatus();
 }
 
 
@@ -347,7 +365,7 @@ function CarregarStatus(){
 }
 
 function CriarInimigos(){
-	
+	ChamaSom('audio1');
 	
     if(andar<5){
         limiteInimigos = 1;
@@ -459,17 +477,21 @@ function Bater(inimigo, validaDano){
 	if(missaoAtual==2){
 		MissaoGolpes();
 	}
+
+	if(DanoCritico(danoCritico)){
+		dano = danoCritico;
+		ChamaSom('audio8');
+	}else{
+		ChamaSom('audio3');
+	}
 	
     if(inimigo==1){
 		if(vidaInimigo1>0){
-			if(DanoCritico(danoCritico)){
-				vidaInimigo1 = vidaInimigo1 - danoCritico;
-			}else{
-				vidaInimigo1 = vidaInimigo1 - dano;
-			}
+			vidaInimigo1 = vidaInimigo1 - dano;
 		}
         if(vidaInimigo1<=0){
 			document.body.removeChild(document.getElementById("inimigo1"));
+			ChamaSom('audio2');
             av = Avancar();
             inimigosDerrotados = inimigosDerrotados+av;
             totalDerrotados = totalDerrotados+av;
@@ -491,14 +513,11 @@ function Bater(inimigo, validaDano){
 		DesceVida(1);
     }else if (inimigo==2){
 		if(vidaInimigo2>0){
-			if(DanoCritico(danoCritico)){
-				vidaInimigo2 = vidaInimigo2 - danoCritico;
-			}else{
-				vidaInimigo2 = vidaInimigo2 - dano;
-			}
+			vidaInimigo2 = vidaInimigo2 - dano;
 		}
         if(vidaInimigo2<=0){
-            document.body.removeChild(document.getElementById("inimigo2"));
+			document.body.removeChild(document.getElementById("inimigo2"));
+			ChamaSom('audio2');
 			av = Avancar();
             inimigosDerrotados = inimigosDerrotados+av;
             totalDerrotados = totalDerrotados+av;
@@ -520,14 +539,11 @@ function Bater(inimigo, validaDano){
 		DesceVida(2);
     }else if (inimigo==3){
 		if(vidaInimigo3>0){
-			if(DanoCritico(danoCritico)){
-				vidaInimigo3 = vidaInimigo3 - danoCritico;
-			}else{
-				vidaInimigo3 = vidaInimigo3 - dano;
-			}
+			vidaInimigo3 = vidaInimigo3 - dano;
 		}
         if(vidaInimigo3<=0){
-            document.body.removeChild(document.getElementById("inimigo3"));
+			document.body.removeChild(document.getElementById("inimigo3"));
+			ChamaSom('audio2');
             av = Avancar();
             inimigosDerrotados = inimigosDerrotados+av;
             totalDerrotados = totalDerrotados+av;
@@ -549,14 +565,11 @@ function Bater(inimigo, validaDano){
 		DesceVida(3);
     }else{
 		if(vidaInimigo4>0){
-			if(DanoCritico(danoCritico)){
-				vidaInimigo4 = vidaInimigo4 - danoCritico;
-			}else{
-				vidaInimigo4 = vidaInimigo4 - dano;
-			}
+			vidaInimigo4 = vidaInimigo4 - dano;
 		}
         if(vidaInimigo4<=0){
-            document.body.removeChild(document.getElementById("inimigo4"));
+			document.body.removeChild(document.getElementById("inimigo4"));
+			ChamaSom('audio2');
             av = Avancar();
             inimigosDerrotados = inimigosDerrotados+av;
             totalDerrotados = totalDerrotados+av;
@@ -647,7 +660,8 @@ function CriaBau(){
 
 function ColetaBau(){
 	valida = Math.random();
-	document.body.removeChild(document.getElementById("bau"));
+	RemoveBau();
+	ChamaSom('audio4');
 	if(valida<=chanceEsmeraldaBau){
 		esmeraldas++;
 		document.getElementById("contEmeraldas").innerHTML=esmeraldas;
@@ -688,6 +702,7 @@ function VerificaHabilidade(){
 		habilidade.setAttributeNode(att3);
 		habilidade.setAttributeNode(att4);
 		document.body.appendChild(habilidade);
+		ChamaSom('audio7');
 	}
 	if(qtdCarregaHabilidade>abateshabilidadeDano){
 		qtdCarregaHabilidade=abateshabilidadeDano;
@@ -708,6 +723,7 @@ function AtualizaQTDHabildiade1(){
 
 function UsaHabilidadeDano(){
 	document.body.removeChild(document.getElementById("habilidade1"));
+	ChamaSom('audio5');
 	verificaHabilidadeDano = true;
 	qtdCarregaHabilidade = 0;
 }
@@ -1183,7 +1199,7 @@ function CompraDano(){
 		if(lvlComp1>0){
 			danoComp = danoJogador*danoComp1;
 		}
-
+		ChamaSom('audio6');
 		document.getElementById("contGold").innerHTML=gold.toFixed(2);
 		document.getElementById("precoDano").innerHTML=precoDano.toFixed(2);
 		document.getElementById("lvlDano").innerHTML=lvlDano;
@@ -1201,6 +1217,7 @@ function CompraBau(){
 			precoBau = precoBau*2;
 			lvlBau++;
 
+			ChamaSom('audio6');
 			document.getElementById("contGold").innerHTML=gold.toFixed(2);
 			document.getElementById("precoBau").innerHTML=precoBau.toFixed(2);
 			document.getElementById("lvlBau").innerHTML=lvlBau;
@@ -1225,6 +1242,7 @@ function CompraGold(){
 			goldCompanheiro = lvlComp2*mulGold;
 		}
 		
+		ChamaSom('audio6');
 		document.getElementById("contGold").innerHTML=gold.toFixed(2);
 		document.getElementById("precoGold").innerHTML=precoGold.toFixed(2);
 		document.getElementById("lvlGold").innerHTML=lvlGold;
@@ -1248,6 +1266,7 @@ function CompraAvanco(){
 				avanco=0.5;
 			}
 			
+			ChamaSom('audio6');
 			document.getElementById("contGold").innerHTML=gold.toFixed(2);
 			document.getElementById("precoAvan").innerHTML=precoAvan.toFixed(2);
 			document.getElementById("lvlAvan").innerHTML=lvlAvan;
@@ -1268,6 +1287,7 @@ function CompraDCrit(){
 		precoDCrit = precoDCrit*1.5;
 		lvlDCrit++;
 		
+		ChamaSom('audio6');
 		document.getElementById("contGold").innerHTML=gold.toFixed(2);
 		document.getElementById("precoDCrit").innerHTML=precoDCrit.toFixed(2);
 		document.getElementById("lvlDCrit").innerHTML=lvlDCrit;
@@ -1286,6 +1306,7 @@ function CompraSubVida(){
 			precoVidaInimigo = precoVidaInimigo*1.5;
 			lvlSubVida++
 
+			ChamaSom('audio6');
 			document.getElementById("contGold").innerHTML=gold.toFixed(2);
 			document.getElementById("precoVidaInimigo").innerHTML=precoVidaInimigo.toFixed(2);
 			document.getElementById("lvlSubVida").innerHTML=lvlSubVida;
@@ -1311,6 +1332,7 @@ function CompraCCrit(){
 				chanceCrit=0.7;
 			}
 			
+			ChamaSom('audio6');
 			document.getElementById("contGold").innerHTML=gold.toFixed(2);
 			document.getElementById("precoCCrit").innerHTML=precoCCrit.toFixed(2);
 			document.getElementById("lvlCCrit").innerHTML=lvlCCrit;
@@ -1331,6 +1353,8 @@ function CompraBEspaco(){
 			precoBEspaco = precoBEspaco*1.5;
 			lvlBEspaco++;
 		}
+
+		ChamaSom('audio6');
 		document.getElementById("contGold").innerHTML=gold.toFixed(2);
 		document.getElementById("precoBEspaco").innerHTML=precoBEspaco.toFixed(2);
 		document.getElementById("lvlBEspaco").innerHTML=lvlBEspaco;
@@ -1341,7 +1365,6 @@ function CompraBEspaco(){
 }
 
 function CompraQTDAvanco(){
-
 	if(lvlQTDAvanco<=20){
 		if(gold>=precoQTDAvanco){
 			gold = gold-precoQTDAvanco;
@@ -1349,6 +1372,8 @@ function CompraQTDAvanco(){
 			precoQTDAvanco = precoQTDAvanco*1.5;
 			lvlQTDAvanco++;
 			
+
+			ChamaSom('audio6');
 			document.getElementById("contGold").innerHTML=gold.toFixed(2);
 			document.getElementById("precoQTDAvan").innerHTML=precoQTDAvanco.toFixed(2);
 			document.getElementById("lvlQTDAvan").innerHTML=lvlQTDAvanco;
@@ -1391,6 +1416,7 @@ function CompraComp1(){
 		precoComp1 = precoComp1*2;
 		lvlComp1++;
 		
+		ChamaSom('audio6');
 		document.getElementById("contEmeraldas").innerHTML=esmeraldas;
 		document.getElementById("precoComp1").innerHTML=precoComp1;
 		document.getElementById("lvlComp1").innerHTML=lvlComp1;
@@ -1408,6 +1434,7 @@ function CompraAvGold(){
 		precoAvGold = precoAvGold*2;
 		lvlAvGold++;
 		
+		ChamaSom('audio6');
 		document.getElementById("contEmeraldas").innerHTML=esmeraldas;
 		document.getElementById("precoAvGold").innerHTML=precoAvGold;
 		document.getElementById("lvlAvGold").innerHTML=lvlAvGold;
@@ -1424,6 +1451,7 @@ function CompraComp2(){
 		goldCompanheiro = lvlComp2*mulGold;
 		precoComp2 = precoComp2*2;
 		
+		ChamaSom('audio6');
 		document.getElementById("contEmeraldas").innerHTML=esmeraldas;
 		document.getElementById("precoComp2").innerHTML=precoComp2;
 		document.getElementById("lvlComp2").innerHTML=lvlComp2;
@@ -1441,6 +1469,7 @@ function CompraComp3(){
 		precoComp3 = precoComp3*2;
 		lvlComp3++;
 		
+		ChamaSom('audio6');
 		document.getElementById("contEmeraldas").innerHTML=esmeraldas;
 		document.getElementById("precoComp3").innerHTML=precoComp3;
 		document.getElementById("lvlComp3").innerHTML=lvlComp3;
