@@ -670,6 +670,15 @@ tr, td, th{
 	white-space: nowrap;
 }
 
+/* Coluna de preço: valor em destaque na cor da moeda da loja (valor vs informação) */
+#TabLoja td:nth-child(2) {
+	color: #ffd84a;
+}
+
+#TabLojaEsm td:nth-child(2) {
+	color: #4dff88;
+}
+
 caption{
 	font-size: 1.1vw;
 	padding: 0.3vw;
