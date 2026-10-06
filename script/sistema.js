@@ -1618,6 +1618,10 @@ function CriarObjetoSave() {
 
 function AutoSaveLocal() {
 
+	// Zerando o jogo: o save está sendo apagado de propósito e não pode ser regravado
+	// (o reload dispara pagehide/visibilitychange, que chamam esta função).
+	if (jogoSendoZerado) return true;
+
 	const ultimaDataAnterior = ultimaDataSaveOffline;
 	try {
 
@@ -1672,4 +1676,46 @@ function LimparAutoSave() {
 	localStorage.removeItem("autoSaveCaverna");
 
 	console.log("Auto Save removido");
+}
+
+// Apaga todos os saves e faz o jogo voltar ao zero
+var confirmacaoZerarJogo = null;
+var jogoSendoZerado = false;
+
+function ZerarTodosSaves() {
+
+	const botao = document.getElementById("btnZerarJogo");
+	if (!botao) return;
+
+	// Sem diálogo nativo: o primeiro clique arma a confirmação e o segundo (em até 5s)
+	// executa, para funcionar igual no PC, no navegador e no Android.
+	if (confirmacaoZerarJogo === null) {
+		botao.value = "Confirmar? Apaga tudo";
+		MostraInfo?.("Todos os saves serão apagados e o jogo volta ao zero. Clique de novo para confirmar.");
+
+		confirmacaoZerarJogo = setTimeout(() => {
+			confirmacaoZerarJogo = null;
+			botao.value = "Apagar todos os saves";
+		}, 5000);
+		return;
+	}
+
+	clearTimeout(confirmacaoZerarJogo);
+	confirmacaoZerarJogo = null;
+
+	try {
+		// Bloqueia o AutoSaveLocal até a página recarregar, senão o save seria
+		// regravado no momento do reload e o jogo não zerava.
+		jogoSendoZerado = true;
+		localStorage.removeItem("autoSaveCaverna");
+	} catch (e) {
+		jogoSendoZerado = false;
+		console.error("Erro ao apagar os saves:", e);
+		MostraInfo?.("Não foi possível apagar os saves.");
+		botao.value = "Apagar todos os saves";
+		return;
+	}
+
+	// Recarrega a caverna sem save: começa do zero (andar 1, gold 0, loja zerada)
+	window.location.reload();
 }
