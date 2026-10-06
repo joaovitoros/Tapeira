@@ -104,6 +104,7 @@ function CompraDano(){
 			danoJogador = N(danoJogador) * 1.2;
 			danoCritJogador = N(danoCritJogador) + ((N(danoJogador)/2)*(2+N(sobeDCrit)));
 		}
+		LimitaDanoCritico();
 
 		if(lvlComp1>0){
 			danoComp = N(danoJogador) * N(danoComp1);
@@ -216,8 +217,10 @@ function CompraDCrit(){
 
 		gold.add(-N(precoDCrit));
 
-		sobeDCrit = N(sobeDCrit) * 1.05;
+		multiplicadorMaximoDanoCritico += 0.05;
+		sobeDCrit = N(sobeDCrit) * 1.025;
 		danoCritJogador = N(danoCritJogador) + ((N(danoJogador)/2) * (2 + N(sobeDCrit)));
+		LimitaDanoCritico();
 		precoDCrit = N(precoDCrit) * 1.5;
 		lvlDCrit++;
 

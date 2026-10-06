@@ -15,6 +15,7 @@ var totalGold = new GoldNumber(0); //total de gold coletado durante todo o jogo
 var danoJogador = 1; //dano atual do jogador
 var danoCritJogador = 2; //dano critico atual do jogador
 var chanceCrit = 0.01; //chance em porcentagem de se causar um dano critico
+var multiplicadorMaximoDanoCritico = 4;
 var vidaAndar; //usado para marcar a vida maximo que os inimigos podem ter no andar atual
 var vidaInimigo1; //vida atual do inimigo 1
 var vidaInimigo2; //vida atual do inimigo 2
@@ -86,7 +87,7 @@ var quantidadeBausDisponiveis = 0;
 const FORMIGAS = [
 	{ id: "vermelhas", nome: "Vermelhas", singular: "vermelha", contador: "formigasVermelhas", cor: "#e94b4b", bonus: "+5% de dano por conjunto de 5" },
 	{ id: "amarelas", nome: "Amarelas", singular: "amarela", contador: "formigasAmarelas", cor: "#ffd34f", bonus: "+5% de Gold por conjunto de 5" },
-	{ id: "marrons", nome: "Marrons", singular: "marrom", contador: "formigasMarrons", cor: "#9b633f", bonus: "+2% de Gold por baú e +0,01% de chance de baú extra por conjunto de 5" },
+	{ id: "marrons", nome: "Marrons", singular: "marrom", contador: "formigasMarrons", cor: "#9b633f", bonus: "+2% de Gold por baú e +1 ponto percentual de chance de baú extra por conjunto de 5" },
 	{ id: "pretas", nome: "Pretas", singular: "preta", contador: "formigasPretas", cor: "#333943", bonus: "+2 minutos no limite de progresso offline por conjunto de 5" },
 	{ id: "cinzas", nome: "Cinzas", singular: "cinza", contador: "formigasCinzas", cor: "#aab2bd", bonus: "+1 baú no limite de progresso offline por conjunto de 5" }
 ];
@@ -130,7 +131,14 @@ function MultiplicadorGoldBauFormigas() {
 }
 
 function ChanceBauExtraFormigas() {
-	return ConjuntosFormigas("marrons") * 0.0001;
+	return ConjuntosFormigas("marrons") * 0.01;
+}
+
+function LimitaDanoCritico() {
+	const danoNormal = Number(danoJogador);
+	const danoCritico = Number(danoCritJogador);
+	if (!Number.isFinite(danoNormal) || !Number.isFinite(danoCritico)) return;
+	danoCritJogador = Math.min(Math.max(danoNormal, danoCritico), danoNormal * multiplicadorMaximoDanoCritico);
 }
 
 function LimiteTempoOffline(quantidadePretas = QuantidadeFormigas("pretas")) {
@@ -325,6 +333,7 @@ function ColetaBau(){
 	}
 	ChamaSom('audio4');
 	if(valida<=chanceEsmeraldaBau){
+		UI.showChestOpening("normal", "emerald", "Esmeralda encontrada", "+1 Esmeralda", "#72e7c1");
 		esmeraldas++;
 		document.getElementById("contEmeraldas").innerHTML=esmeraldas;
 		UI.showCurrencyReward("emerald", 1);
@@ -333,6 +342,7 @@ function ColetaBau(){
 		bonus = ValorGoldBau();
 		bonus = AddGold(bonus);
 		AddTotalGold(bonus, false);
+		UI.showChestOpening("normal", "gold", "Gold encontrado", `+${FormatGold(bonus)} Gold`);
 		document.getElementById("contGold").innerHTML = FormatGold(gold);
 		UI.showCurrencyReward("gold", bonus);
 		UI.showStatus();
@@ -386,12 +396,15 @@ function ColetaBauDourado() {
 		const bonus = ValorGoldBau() * 5;
 		const goldRecebido = AddGold(bonus);
 		AddTotalGold(goldRecebido, false);
+		UI.showChestOpening("golden", "gold", "Grande recompensa!", `+${FormatGold(goldRecebido)} Gold`);
 		UI.showCurrencyReward("gold", goldRecebido);
 		UI.showInfo(`O baú dourado rendeu ${FormatGold(goldRecebido)} Gold!`);
 	} else if (sorteio < chanceGold + chanceFormiga) {
 		const formiga = FORMIGAS[Math.floor(Math.random() * FORMIGAS.length)];
+		UI.showChestOpening("golden", "ant", "Nova formiga!", `Formiga ${formiga.singular}`, formiga.cor);
 		ConcedeFormigaColecao(formiga);
 	} else {
+		UI.showChestOpening("golden", "skills", "Skills recarregadas", "Todas as habilidades desbloqueadas estão prontas");
 		CarregaHabilidadesDesbloqueadas();
 	}
 
@@ -522,7 +535,7 @@ function NivelDaSkill(id) {
 function DescricaoEfeitoSkill(id, nivel = NivelDaSkill(id)) {
 	if (id === "damage") return `Duração: ${30 + nivel * 5} s (+5 s por nível).`;
 	if (id === "electric") {
-		return `Dano encadeado: ${20 + nivel * 5}% · bônus sem alvo próximo: ${10 + nivel * 2}%.`;
+		return `Dano encadeado: ${25 + nivel * 5}% · bônus sem alvo próximo: ${10 + nivel * 2}%.`;
 	}
 	if (id === "gold") return `Gold extra por ataque: ${25 + nivel * 5}% (+5% por nível).`;
 	return `Pausa da fuga: ${10 + nivel * 2} s (+2 s por nível).`;
@@ -637,9 +650,9 @@ function AtivaHabilidadeCombate(id) {
 	AtualizaHabilidadesCombate();
 }
 
-function ConsomeAtaqueHabilidades() {
-	if (ataquesCorrenteEletrica > 0) ataquesCorrenteEletrica--;
-	if (ataquesBonusGold > 0) ataquesBonusGold--;
+function ConsomeAtaqueHabilidades(consomeCorrenteEletrica, consomeBonusGold) {
+	if (consomeCorrenteEletrica && ataquesCorrenteEletrica > 0) ataquesCorrenteEletrica--;
+	if (consomeBonusGold && ataquesBonusGold > 0) ataquesBonusGold--;
 	AtualizaHabilidadesCombate();
 }
 
@@ -824,6 +837,7 @@ function Conquistas(){
 			UI.showInfo("Conquista desbloqueada!\nVoce recebeu um bonus de dano critico");
 			UI.showMilestone("Conquista desbloqueada", "Bônus de dano crítico recebido");
 		}
+		LimitaDanoCritico();
 		UI.render();
 	}
 	

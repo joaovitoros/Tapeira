@@ -16,6 +16,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	}
 
 	const ataqueJogador = validaDano && aplicaNovasHabilidades;
+	const ataqueCorrenteEletrica = ataquesCorrenteEletrica > 0;
 	const vidaAnterior = window["vidaInimigo" + inimigo];
 	if (vidaAnterior <= 0) return;
 
@@ -27,13 +28,14 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	if (critico) {
 		dano = danoCritico;
 	}
+	TocaSomSintetico(critico ? "critico" : "impacto");
 	dano *= MultiplicadorDanoFormigas();
 
 	if (validaDano) UI.playAttackAnimation(inimigoElement);
 
 	const danoBaseAtaque = dano;
 	let chainTarget = null;
-	if (ataqueJogador && ataquesCorrenteEletrica > 0) {
+	if (ataqueCorrenteEletrica) {
 		const targetRect = inimigoElement.getBoundingClientRect();
 		const targetCenterX = targetRect.left + targetRect.width / 2;
 		const targetCenterY = targetRect.top + targetRect.height / 2;
@@ -68,8 +70,8 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		UI.showCurrencyReward("gold", goldRecebido);
 	}
 
-	if (ataqueJogador && (ataquesCorrenteEletrica > 0 || ataquesBonusGold > 0)) {
-		ConsomeAtaqueHabilidades();
+	if (ataqueCorrenteEletrica || (ataqueJogador && ataquesBonusGold > 0)) {
+		ConsomeAtaqueHabilidades(ataqueCorrenteEletrica, ataqueJogador);
 	}
 
 	ChamaSom(critico ? "audio8" : "audio3");
@@ -78,7 +80,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	UI.showDamageNumber(inimigoElement, dano, critico);
 
 	if (chainTarget) {
-		const chainDamage = danoBaseAtaque * ((20 + NivelDaSkill("electric") * 5) / 100);
+		const chainDamage = danoBaseAtaque * ((25 + NivelDaSkill("electric") * 5) / 100);
 		const chainHealth = Math.max(0, window["vidaInimigo" + chainTarget.id] - chainDamage);
 		window["vidaInimigo" + chainTarget.id] = chainHealth;
 		UI.showDamageNumber(chainTarget.element, chainDamage, false);
@@ -175,6 +177,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 
 			if (elAndar) elAndar.innerHTML = andar;
 			if (elTitulo) elTitulo.innerHTML = "Caverna (Andar: " + andar + ")";
+			UI.showFloorTransition(andar);
 
 			qtdInimigosAndar++;
 
@@ -326,6 +329,16 @@ function animarImpacto(el, critico, eletrico = false) {
 	impacto.style.top = rect.top + rect.height * 0.62 + "px";
 	document.body.appendChild(impacto);
 	impacto.addEventListener("animationend", () => impacto.remove(), { once: true });
+
+	const burst = document.createElement("div");
+	burst.className = critico
+		? "enemy-impact-burst enemy-impact-burst--critical"
+		: "enemy-impact-burst";
+	burst.setAttribute("aria-hidden", "true");
+	burst.style.left = `${rect.left + rect.width / 2}px`;
+	burst.style.top = `${rect.top + rect.height * 0.58}px`;
+	document.body.appendChild(burst);
+	burst.addEventListener("animationend", () => burst.remove(), { once: true });
 }
 
 function animarEfeitoEletrico(el) {
@@ -372,66 +385,63 @@ function DesceVida(inimigo) {
 	UI.updateEnemyHealth(inimigo, vida, vidaAndar);
 }
 
+const efeitosMorteAtivos = new Map();
+
+function LimpaEfeitosMorte() {
+	for (const [elemento, animacao] of efeitosMorteAtivos) {
+		clearInterval(animacao.intervalo);
+		clearTimeout(animacao.limite);
+		elemento.remove();
+	}
+	efeitosMorteAtivos.clear();
+}
+
 function animarMorte(el) {
+	const rect = el.getBoundingClientRect();
+	const morte = document.createElement("img");
+	morte.className = "morteAnim";
+	morte.src = "imagens/morte/frame12.png";
+	morte.style.left = `${rect.left}px`;
+	morte.style.top = `${rect.top}px`;
+	morte.style.width = `${rect.width}px`;
+	morte.style.height = `${rect.height}px`;
+	morte.style.transform = el.style.transform;
+	morte.style.filter = getComputedStyle(el).filter;
+	document.body.appendChild(morte);
+	el.style.visibility = "hidden";
 
-    const rect = el.getBoundingClientRect();
+	const frames = [
+		"imagens/morte/frame12.png",
+		"imagens/morte/frame11.png",
+		"imagens/morte/frame10.png",
+		"imagens/morte/frame9.png",
+		"imagens/morte/frame8.png",
+		"imagens/morte/frame7.png",
+		"imagens/morte/frame6.png",
+		"imagens/morte/frame5.png",
+		"imagens/morte/frame4.png",
+		"imagens/morte/frame3.png",
+		"imagens/morte/frame2.png",
+		"imagens/morte/frame1.png"
+	];
 
-    // cria animação
-    const morte = document.createElement("img");
-
-    morte.className = "morteAnim";
-
-    // PRIMEIRO FRAME
-    morte.src = "imagens/morte/frame12.png";
-
-    // posição
-    morte.style.position = "absolute";
-    morte.style.left = rect.left + "px";
-    morte.style.top = rect.top + "px";
-
-    // tamanho igual ao inimigo
-    morte.style.width = rect.width + "px";
-    morte.style.height = rect.height + "px";
-
-    // flip igual ao inimigo
-    morte.style.transform = el.style.transform;
-
-    document.body.appendChild(morte);
-
-    // esconde inimigo original
-    el.style.visibility = "hidden";
-
-    const frames = [
-        "imagens/morte/frame12.png",
-        "imagens/morte/frame11.png",
-        "imagens/morte/frame10.png",
-        "imagens/morte/frame9.png",
-        "imagens/morte/frame8.png",
-        "imagens/morte/frame7.png",
-        "imagens/morte/frame6.png",
-        "imagens/morte/frame5.png",
-        "imagens/morte/frame4.png",
-        "imagens/morte/frame3.png",
-        "imagens/morte/frame2.png",
-        "imagens/morte/frame1.png"
-    ];
-
-    let frame = 0;
-
-    const animacao = setInterval(() => {
-
-        frame++;
-
-        if (frame >= frames.length) {
-
-            clearInterval(animacao);
-
-            morte.remove();
-
-            return;
-        }
-
-        morte.src = frames[frame];
-
-    }, 80);
+	let frame = 0;
+	const limpa = () => {
+		const animacao = efeitosMorteAtivos.get(morte);
+		if (!animacao) return;
+		clearInterval(animacao.intervalo);
+		clearTimeout(animacao.limite);
+		efeitosMorteAtivos.delete(morte);
+		morte.remove();
+	};
+	const intervalo = setInterval(() => {
+		frame++;
+		if (frame >= frames.length) {
+			limpa();
+			return;
+		}
+		morte.src = frames[frame];
+	}, 80);
+	const limite = setTimeout(limpa, 1200);
+	efeitosMorteAtivos.set(morte, { intervalo, limite });
 }

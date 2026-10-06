@@ -8,6 +8,14 @@ const UI = {
     // =========================
 
     render() {
+        const caveRoot = document.getElementById("game-root");
+        if (caveRoot) {
+            const themes = ["amber", "crimson", "teal", "violet"];
+            const theme = themes[Math.floor(Math.max(1, andar) / 10) % themes.length];
+            caveRoot.classList.remove(...themes.map(name => `cave-depth--${name}`));
+            caveRoot.classList.add(`cave-depth--${theme}`);
+            caveRoot.classList.toggle("cave-floor--guardian", andar % 10 === 0);
+        }
         document.getElementById("titulo").innerHTML = "Caverna (Andar: " + andar + ")";
         document.getElementById("contDerrotados").innerHTML = totalDerrotados;
         document.getElementById("contAndar").innerHTML = andar;
@@ -110,6 +118,129 @@ const UI = {
                 this.displayNextMilestone();
             }, 200);
         }, 2600);
+    },
+
+    floorTransitionTimeout: null,
+    guardianIntroTimeout: null,
+    guardianTargetTimeout: null,
+    guardianTargetRestoreTimeout: null,
+    guardianTarget: null,
+    guardianTargetFilter: "",
+    guardianTargetTransition: "",
+
+    clearGuardianIntro() {
+        clearTimeout(this.guardianIntroTimeout);
+        clearTimeout(this.guardianTargetTimeout);
+        clearTimeout(this.guardianTargetRestoreTimeout);
+        this.guardianIntroTimeout = null;
+        this.guardianTargetTimeout = null;
+        this.guardianTargetRestoreTimeout = null;
+
+        if (this.guardianTarget) {
+            this.guardianTarget.style.filter = this.guardianTargetFilter;
+            this.guardianTarget.style.transition = this.guardianTargetTransition;
+            this.guardianTarget.classList.remove("guardian-intro-target");
+            this.guardianTarget = null;
+        }
+
+        const spotlight = document.getElementById("guardianIntroSpotlight");
+        spotlight?.classList.remove("guardian-intro-spotlight--visible");
+    },
+
+    showFloorTransition(floor) {
+        this.clearGuardianIntro();
+        clearTimeout(this.floorTransitionTimeout);
+        let transition = document.getElementById("floorTransition");
+        if (!transition) {
+            transition = document.createElement("div");
+            transition.id = "floorTransition";
+            transition.className = "floor-transition";
+            transition.setAttribute("role", "status");
+            transition.setAttribute("aria-live", "polite");
+            transition.innerHTML = `
+                <span class="floor-transition__eyebrow"></span>
+                <strong class="floor-transition__number"></strong>
+            `;
+            document.body.appendChild(transition);
+        }
+
+        const bossFloor = floor % 10 === 0;
+        transition.classList.toggle("floor-transition--boss", bossFloor);
+        transition.querySelector(".floor-transition__eyebrow").textContent =
+            bossFloor ? "Um guardião bloqueia o caminho" : "Descendo mais fundo";
+        transition.querySelector(".floor-transition__number").textContent =
+            bossFloor ? `Andar ${floor} · Guardião` : `Andar ${floor}`;
+
+        transition.classList.remove("floor-transition--visible");
+        void transition.offsetWidth;
+        transition.classList.add("floor-transition--visible");
+        clearTimeout(this.floorTransitionTimeout);
+        this.floorTransitionTimeout = setTimeout(() => {
+            transition.classList.remove("floor-transition--visible");
+        }, bossFloor ? 2800 : 1500);
+
+        if (bossFloor) {
+            let spotlight = document.getElementById("guardianIntroSpotlight");
+            if (!spotlight) {
+                spotlight = document.createElement("div");
+                spotlight.id = "guardianIntroSpotlight";
+                spotlight.className = "guardian-intro-spotlight";
+                spotlight.setAttribute("aria-hidden", "true");
+                document.body.appendChild(spotlight);
+            }
+
+            spotlight.style.setProperty("--guardian-focus-x", "50%");
+            spotlight.style.setProperty("--guardian-focus-y", "50%");
+            void spotlight.offsetWidth;
+            spotlight.classList.add("guardian-intro-spotlight--visible");
+            this.guardianIntroTimeout = setTimeout(() => {
+                spotlight.classList.remove("guardian-intro-spotlight--visible");
+                this.guardianIntroTimeout = null;
+            }, 2800);
+
+            this.guardianTargetTimeout = setTimeout(() => {
+                const targets = Array.from(document.querySelectorAll(
+                    "#inimigo1, #inimigo2, #inimigo3, #inimigo4"
+                ));
+                const target = targets
+                    .filter(enemy => getComputedStyle(enemy).visibility === "visible")
+                    .sort((a, b) => Number(b.id.slice(-1)) - Number(a.id.slice(-1)))[0];
+                if (!target) return;
+
+                const rect = target.getBoundingClientRect();
+                spotlight.style.setProperty(
+                    "--guardian-focus-x",
+                    `${Math.round((rect.left + rect.width / 2) / window.innerWidth * 100)}%`
+                );
+                spotlight.style.setProperty(
+                    "--guardian-focus-y",
+                    `${Math.round((rect.top + rect.height / 2) / window.innerHeight * 100)}%`
+                );
+                this.guardianTarget = target;
+                this.guardianTargetFilter = target.style.filter;
+                this.guardianTargetTransition = target.style.transition;
+                target.style.transition = "filter 240ms ease-out";
+                target.style.filter = `${getComputedStyle(target).filter} drop-shadow(0 0 20px rgba(255, 220, 153, 0.98))`;
+                target.classList.add("guardian-intro-target");
+                this.guardianTargetRestoreTimeout = setTimeout(() => {
+                    if (this.guardianTarget !== target) return;
+                    target.style.filter = this.guardianTargetFilter;
+                    target.style.transition = this.guardianTargetTransition;
+                    target.classList.remove("guardian-intro-target");
+                    this.guardianTarget = null;
+                    this.guardianTargetRestoreTimeout = null;
+                }, 1900);
+            }, 650);
+        }
+        TocaSomSintetico(bossFloor ? "guardiao" : "andar");
+
+        const floorCounter = document.getElementById("contAndar");
+        floorCounter?.classList.remove("floor-counter--changed");
+        if (floorCounter) {
+            void floorCounter.offsetWidth;
+            floorCounter.classList.add("floor-counter--changed");
+            setTimeout(() => floorCounter.classList.remove("floor-counter--changed"), 650);
+        }
     },
 
     syncScreenButtons() {
@@ -457,7 +588,8 @@ const UI = {
             return `Bônus de ganho de Gold: +${(sets * 5).toFixed(0)}% (${sets} × 5%).`;
         }
         if (id === "marrons") {
-            return `Gold recebido dos baús: +${(sets * 2).toFixed(0)}%. Chance de um baú extra por baú encontrado: +${(sets * 0.01).toFixed(2)}%.`;
+            const chanceExtraPontos = (sets * 1).toFixed(0);
+            return `Gold recebido dos baús: +${(sets * 2).toFixed(0)}%. Chance de um baú extra por baú encontrado: +${chanceExtraPontos} ponto percentual.`;
         }
         if (id === "pretas") {
             const minutes = Math.floor(LimiteTempoOffline() / 60000);
@@ -982,6 +1114,79 @@ const UI = {
     // UI EXTRAS (BAÚ / ETC)
     // =========================
 
+    chestOpeningTimeout: null,
+
+    showChestOpening(chestKind, rewardKind, title, detail, accentColor = "#ffd34f") {
+        const previous = document.getElementById("chestOpening");
+        if (previous) previous.remove();
+        clearTimeout(this.chestOpeningTimeout);
+
+        const opening = document.createElement("div");
+        opening.id = "chestOpening";
+        opening.className = `chest-opening chest-opening--${chestKind} chest-opening--reward-${rewardKind}`;
+        opening.setAttribute("role", "status");
+        opening.setAttribute("aria-live", "polite");
+        opening.style.setProperty(
+            "--chest-accent",
+            chestKind === "golden" ? "#ffd34f" : accentColor
+        );
+        opening.style.setProperty("--reward-accent", accentColor);
+
+        const card = document.createElement("div");
+        card.className = "chest-opening__card";
+        const label = document.createElement("span");
+        label.className = "chest-opening__label";
+        label.textContent = chestKind === "golden" ? "Baú dourado aberto" : "Baú encontrado";
+
+        const stage = document.createElement("div");
+        stage.className = "chest-opening__stage";
+        const chest = document.createElement("img");
+        chest.className = "chest-opening__chest";
+        chest.src = chestKind === "golden" ? "imagens/bau-dourado.svg" : "imagens/bau-aventura.svg";
+        chest.alt = "";
+        stage.appendChild(chest);
+
+        const reward = document.createElement("div");
+        reward.className = "chest-opening__reward";
+        if (rewardKind === "gold") {
+            const icon = document.createElement("span");
+            icon.className = "chest-opening__reward-icon chest-opening__reward-icon--gold";
+            icon.setAttribute("aria-hidden", "true");
+            icon.textContent = "G";
+            reward.appendChild(icon);
+        } else if (rewardKind === "emerald") {
+            const icon = document.createElement("img");
+            icon.className = "chest-opening__reward-icon";
+            icon.src = "imagens/esmeralda-recompensa.svg";
+            icon.alt = "";
+            reward.appendChild(icon);
+        } else if (rewardKind === "ant") {
+            reward.appendChild(this.createAntSprite(accentColor));
+        } else {
+            const icon = document.createElement("span");
+            icon.className = "chest-opening__reward-icon chest-opening__reward-icon--skills";
+            icon.setAttribute("aria-hidden", "true");
+            icon.textContent = "✦";
+            reward.appendChild(icon);
+        }
+
+        const rewardTitle = document.createElement("strong");
+        rewardTitle.className = "chest-opening__title";
+        rewardTitle.textContent = title;
+        const rewardDetail = document.createElement("span");
+        rewardDetail.className = "chest-opening__detail";
+        rewardDetail.textContent = detail;
+        reward.append(rewardTitle, rewardDetail);
+        card.append(label, stage, reward);
+        opening.appendChild(card);
+        document.body.appendChild(opening);
+
+        this.chestOpeningTimeout = setTimeout(() => {
+            opening.remove();
+            this.chestOpeningTimeout = null;
+        }, 3500);
+    },
+
     updateGoldenChestProgress() {
         const tracker = document.getElementById("golden-chest-tracker");
         const progress = document.getElementById("golden-chest-progress");
@@ -1291,6 +1496,7 @@ function SobeStatus() {
 }
 
 function RemoverInimigos() {
+    LimpaEfeitosMorte();
     UI.removeAllEnemies();
 }
 

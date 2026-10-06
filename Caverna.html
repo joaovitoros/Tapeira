@@ -271,7 +271,14 @@
 						<input type="range" id="volumeControle" min="0" max="100" step="1" value="5"
 							aria-label="Volume geral do jogo" oninput="AtualizaVolume(this.value)" />
 					</div>
-
+					<div id="divAmbienteBotoes" class="audio-setting">
+						<div class="audio-setting__label">
+							<label for="volumeAmbienteControle">Ambiente da caverna</label>
+							<output id="volumeAmbienteValor" for="volumeAmbienteControle">30%</output>
+						</div>
+						<input type="range" id="volumeAmbienteControle" min="0" max="100" step="1" value="30"
+							aria-label="Volume do ambiente da caverna" oninput="AtualizaVolumeAmbiente(this.value)" />
+					</div>
 				</div>
 				<div id="divDesktopDisplay" hidden>
 					<div class="tituloConfig">Tela (PC)</div>
