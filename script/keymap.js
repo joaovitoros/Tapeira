@@ -146,6 +146,64 @@ function stopPlayerAttack() {
     document.querySelector(".player")?.classList.remove("is-auto-attacking");
 }
 
+// Fecha qualquer janela aberta (painéis, modais, baú, pausa).
+// Retorna true se fechou alguma coisa.
+function FechaJanelasAbertas() {
+    let fechou = false;
+
+    // Diálogo de pausa / confirmação de saída
+    if (document.getElementById("pauseOverlay")) {
+        AtualizaEstadoPausa(false);
+        fechou = true;
+    }
+
+    // Painéis abertos por visibility (loja, status, salvar/carregar)
+    ["Loja", "LojaEsm", "DivStatus", "container-SalvaCarrega"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.style.visibility === "visible") {
+            el.style.visibility = "hidden";
+            fechou = true;
+        }
+    });
+
+    // Modais removidos do DOM ao fechar
+    ["antCollectionModal", "skillUpgradeModal", "infoModal"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.remove();
+            fechou = true;
+        }
+    });
+
+    // Modal de missões/conquistas (aberto com display:flex)
+    const gameModal = document.getElementById("gameModal");
+    if (gameModal && gameModal.style.display === "flex") {
+        gameModal.remove();
+        fechou = true;
+    }
+
+    // Animação de abertura de baú
+    const chest = document.getElementById("chestOpening");
+    if (chest) {
+        clearTimeout(UI.chestOpeningTimeout);
+        UI.chestOpeningTimeout = null;
+        chest.remove();
+        fechou = true;
+    }
+
+    if (fechou) UI.syncScreenButtons();
+    return fechou;
+}
+
+// ESC fecha janelas; a confirmação de saída só abre sem nenhuma janela na tela.
+// Capture para rodar antes dos handlers internos dos modais e do handler do ESC abaixo.
+document.addEventListener("keydown", function(evt) {
+    if (evt.code !== "Escape" || evt.repeat) return;
+    if (!FechaJanelasAbertas()) return;
+    evt.preventDefault();
+    evt.stopPropagation();
+}, { capture: true });
+
 document.addEventListener("keydown", function(evt) {
     if ((evt.ctrlKey || evt.metaKey) && evt.key.toLowerCase() === "a") {
         evt.preventDefault();
