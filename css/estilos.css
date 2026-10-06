@@ -4468,6 +4468,13 @@ input:focus-visible {
 		--ui-text: clamp(13px, 1vw, 15px);
 	}
 
+	#golden-chest-tracker {
+		top: 82px;
+		right: 12px;
+		bottom: auto;
+		width: min(260px, calc(100vw - 24px));
+	}
+
 	#container-AndarManter {
 		top: 12px;
 		left: 12px;

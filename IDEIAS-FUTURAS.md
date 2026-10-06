@@ -18,6 +18,8 @@ Registro de propostas e evoluções futuras do TAPeira.
 
 > A chegada dos guardiões agora escurece brevemente os arredores, abre um foco de luz no inimigo e prolonga o anúncio visual do andar; o foco acompanha o inimigo principal e respeita movimento reduzido.
 
+> Em telas desktop horizontais de 1000–1500 px por 780–950 px, o painel do baú dourado fica abaixo do HUD à direita para não cobrir a loja.
+
 > A abertura dos baús agora apresenta uma animação de revelação e destaca visualmente a recompensa recebida (Gold, esmeralda, formiga ou recarga de habilidades), respeitando a preferência por movimento reduzido e sem alterar chances ou valores.
 
 > O dano crítico inicia limitado a 4x o dano normal para reduzir o crescimento excessivo. Cada compra de dano crítico aumenta permanentemente o teto em 0,05x; o limite atual é salvo, aplicado ao carregar saves existentes e respeitado após melhorias/conquistas.

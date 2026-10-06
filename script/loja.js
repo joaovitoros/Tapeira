@@ -243,12 +243,32 @@ function CompraSubVida(){
 
 			gold.add(-N(precoVidaInimigo));
 
-			subVidaInimigo = N(subVidaInimigo) + 0.01;
-			vidaAndar = N(vidaAndar) * (1 - N(subVidaInimigo));
+			// Aplica apenas o desconto novo (1%), e não o total acumulado: usar o total
+			// multiplicava o desconto em dobro a cada compra e a vida "voltava" no respawn,
+			// quando CarregarStatus() recalcula a vida do andar do zero.
+			const subAnterior = N(subVidaInimigo);
+			subVidaInimigo = subAnterior + 0.01;
+			const fatorDesconto = (1 - N(subVidaInimigo)) / (1 - subAnterior);
+
+			vidaAndar = N(vidaAndar) * fatorDesconto;
+
+			// Reduz também os inimigos vivos, senão a compra não tem efeito real até a próxima onda
+			let inimigoAtualizado = 0;
+			for (let i = 1; i <= 4; i++) {
+				const chave = "vidaInimigo" + i;
+				const vidaAtual = N(window[chave]);
+				if (vidaAtual > 0) {
+					window[chave] = Math.max(0, vidaAtual * fatorDesconto);
+					if (!inimigoAtualizado) inimigoAtualizado = i;
+				}
+			}
+
 			precoVidaInimigo = N(precoVidaInimigo) * 1.5;
 			lvlSubVida++;
 
 			ChamaSom('audio6');
+
+			if (inimigoAtualizado) DesceVida(inimigoAtualizado);
 
 			document.getElementById("contGold").innerHTML = FormatGold(gold);
 			document.getElementById("precoVidaInimigo").innerHTML = FormatGold(precoVidaInimigo);

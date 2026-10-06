@@ -256,14 +256,20 @@ function CarregarStatus(){
 		Missao();
 	}
 	
-	if(andarBoss==andar){
+	// Andares de chefe (múltiplos de 10): o dobro de vida precisa valer em todas as ondas
+	// do andar. Antes o boost era aplicado só uma vez, porque andarBoss era incrementado
+	// junto, e nos respawns seguintes os inimigos voltavam com metade da vida.
+	if (andar >= 10 && andar % 10 === 0) {
 		vidaAndar = vidaAndar*2;
 		vidaInimigo1 = vidaInimigo1*2;
 		vidaInimigo2 = vidaInimigo2*2;
 		vidaInimigo3 = vidaInimigo3*2;
 		vidaInimigo4 = vidaInimigo4*2;
-		UI.showInfo("Inimigos mais fortes...");
-		andarBoss=andarBoss+10;
+
+		if (andarBoss==andar) {
+			UI.showInfo("Inimigos mais fortes...");
+			andarBoss=andarBoss+10;
+		}
 	}
 }
 
