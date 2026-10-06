@@ -95,8 +95,9 @@ function CompraDano(){
 		gold.add(-N(precoDano));
 
 		danoJogador = N(danoJogador) + N(mulDano);
-		precoDano = N(precoDano) * 1.5;
-		mulDano = N(mulDano) * 1.02;
+		// Começo mais amigável: os 5 primeiros níveis sobem 40% em vez de 50%
+		precoDano = N(precoDano) * (lvlDano < 5 ? 1.4 : 1.5);
+		mulDano = N(mulDano) * 1.025;
 		danoCritJogador = N(danoCritJogador) + ((N(danoJogador)/2)*(2+N(sobeDCrit)));
 		lvlDano++;
 
@@ -155,10 +156,10 @@ function CompraGold(){
 		gold.add(-N(precoGold));
 
 		mulGold = N(mulGold) * (1 + N(sobeGold));
-		if(lvlGold> 10){
-			precoGold = N(precoGold) * 1.25;
+		if(lvlGold< 5){
+			precoGold = N(precoGold) * 1.50;
 		}else{
-			precoGold = N(precoGold) * 1.75;
+			precoGold = N(precoGold) * 2;
 		}
 		sobeGold = Math.min(N(sobeGold) + 0.1, 0.5);
 		lvlGold++;
