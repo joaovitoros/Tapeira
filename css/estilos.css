@@ -663,6 +663,13 @@ tr, td, th{
 	padding: 0.3vw 0.4vw;
 }
 
+/* Item no nível máximo: substitui o preço na loja (o botão é escondido via JS) */
+.loja-lvl-max {
+	color: #ffd36b;
+	font-weight: 800;
+	white-space: nowrap;
+}
+
 caption{
 	font-size: 1.1vw;
 	padding: 0.3vw;

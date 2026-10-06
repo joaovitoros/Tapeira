@@ -68,6 +68,33 @@ function AtualizaLojaGold() {
 
 	document.getElementById("precoQTDAvan").innerHTML = FormatGold(precoQTDAvanco);
 	document.getElementById("lvlQTDAvan").innerHTML = lvlQTDAvanco;
+
+	AtualizaMaximosLoja();
+}
+
+// Itens com nível máximo: no lugar do preço exibe "Lvl Max" e esconde o
+// botão de compra. Espelha os mesmos gates das funções Compra* — quem pode
+// comprar continua sendo decidido por elas.
+function AtualizaMaximosLoja() {
+	const itens = [
+		{ preco: "precoBau", max: N(chanceBau) >= 0.75, valor: FormatGold(precoBau) },
+		{ preco: "precoAvan", max: N(avanco) >= 0.5, valor: FormatGold(precoAvan) },
+		{ preco: "precoVidaInimigo", max: N(lvlSubVida) >= 25, valor: FormatGold(precoVidaInimigo) },
+		{ preco: "precoCCrit", max: N(chanceCrit) >= 0.7, valor: FormatGold(precoCCrit) },
+		{ preco: "precoBEspaco", max: N(lvlBEspaco) >= 15, valor: FormatGold(precoBEspaco) },
+		{ preco: "precoQTDAvan", max: N(lvlQTDAvanco) > 20, valor: FormatGold(precoQTDAvanco) }
+	];
+
+	for (const item of itens) {
+		const elPreco = document.getElementById(item.preco);
+		if (!elPreco) continue;
+		// Os botões compartilham o id "btnLoja" (duplicado), então o
+		// localizamos pela linha da tabela em que o preço está.
+		const linha = elPreco.closest("tr");
+		const btn = linha ? linha.querySelector("input[type='button']") : null;
+		elPreco.innerHTML = item.max ? '<span class="loja-lvl-max">Lvl Max</span>' : item.valor;
+		if (btn) btn.style.display = item.max ? "none" : "";
+	}
 }
 
 function AbreLoja(){
@@ -139,6 +166,7 @@ function CompraBau(){
 			document.getElementById("contGold").innerHTML = FormatGold(gold);
 			document.getElementById("precoBau").innerHTML = FormatGold(precoBau);
 			document.getElementById("lvlBau").innerHTML = lvlBau;
+			AtualizaMaximosLoja();
 
 			MostraStatus();
 		}else{
@@ -205,6 +233,7 @@ function CompraAvanco(){
 			document.getElementById("contGold").innerHTML = FormatGold(gold);
 			document.getElementById("precoAvan").innerHTML = FormatGold(precoAvan);
 			document.getElementById("lvlAvan").innerHTML = lvlAvan;
+			AtualizaMaximosLoja();
 
 			MostraStatus();
 		}else{
@@ -277,6 +306,7 @@ function CompraSubVida(){
 			document.getElementById("contGold").innerHTML = FormatGold(gold);
 			document.getElementById("precoVidaInimigo").innerHTML = FormatGold(precoVidaInimigo);
 			document.getElementById("lvlSubVida").innerHTML = lvlSubVida;
+			AtualizaMaximosLoja();
 
 			MostraStatus();
 		}else{
@@ -308,6 +338,7 @@ function CompraCCrit(){
 			document.getElementById("contGold").innerHTML = FormatGold(gold);
 			document.getElementById("precoCCrit").innerHTML = FormatGold(precoCCrit);
 			document.getElementById("lvlCCrit").innerHTML = lvlCCrit;
+			AtualizaMaximosLoja();
 
 			MostraStatus();
 		}else{
@@ -335,6 +366,7 @@ function CompraBEspaco(){
 		document.getElementById("contGold").innerHTML = FormatGold(gold);
 		document.getElementById("precoBEspaco").innerHTML = FormatGold(precoBEspaco);
 		document.getElementById("lvlBEspaco").innerHTML = lvlBEspaco;
+		AtualizaMaximosLoja();
 
 		MostraStatus();
 	}else{
@@ -358,6 +390,7 @@ function CompraQTDAvanco(){
 			document.getElementById("contGold").innerHTML = FormatGold(gold);
 			document.getElementById("precoQTDAvan").innerHTML = FormatGold(precoQTDAvanco);
 			document.getElementById("lvlQTDAvan").innerHTML = lvlQTDAvanco;
+			AtualizaMaximosLoja();
 
 			MostraStatus();
 		}else{
