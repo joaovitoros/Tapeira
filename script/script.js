@@ -59,9 +59,9 @@ var nivelSkillDano = 0;
 var nivelSkillEletrica = 0;
 var nivelSkillGold = 0;
 var nivelSkillFuga = 0;
-const NIVEL_MAXIMO_SKILLS = 5;
+const NIVEL_MAXIMO_SKILLS = 10;
 const SKILLS_UPGRADE = [
-	{ id: "damage", nome: "Dano automático", pisoDesbloqueio: 1, maximo: 6, nivel: "nivelSkillDano" },
+	{ id: "damage", nome: "Dano automático", pisoDesbloqueio: 1, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillDano" },
 	{ id: "electric", nome: "Corrente elétrica", pisoDesbloqueio: 15, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillEletrica" },
 	{ id: "gold", nome: "Bônus de Gold", pisoDesbloqueio: 25, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillGold" },
 	{ id: "escape", nome: "Pausa da fuga", pisoDesbloqueio: 35, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillFuga" }
