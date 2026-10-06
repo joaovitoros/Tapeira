@@ -3999,7 +3999,10 @@ input:focus-visible {
 	}
 
 	#container-opcoes {
-		right: 8px;
+		/* right:auto: a nav encosta no conteúdo (botões) em vez de ocupar a
+		   largura toda — assim o espaço vazio à direita dos botões não engole
+		   a barra e a espada das skills, que ficam ao lado da nav. */
+		right: auto;
 		bottom: max(6px, env(safe-area-inset-bottom));
 		left: 8px;
 	}
@@ -4913,7 +4916,9 @@ input:focus-visible {
 
 	#BaraQTDHab1Borda {
 		right: 12px;
-		bottom: max(12px, env(safe-area-inset-bottom));
+		/* Acima da nav (que vai até 62px do rodapé) — antes bottom:12 ficava
+		   boa parte dela embaixo dos botões (z-index 30). */
+		bottom: calc(68px + env(safe-area-inset-bottom));
 		left: auto;
 		width: 34px;
 		height: 78px;
@@ -4921,7 +4926,7 @@ input:focus-visible {
 
 	.habilidade1 {
 		right: 58px;
-		bottom: max(12px, env(safe-area-inset-bottom));
+		bottom: calc(68px + env(safe-area-inset-bottom));
 		left: auto;
 		width: 52px;
 		height: 52px;
@@ -4973,7 +4978,7 @@ input:focus-visible {
 
 	.skill-unlock-panel {
 		right: 116px;
-		bottom: max(12px, env(safe-area-inset-bottom));
+		bottom: calc(68px + env(safe-area-inset-bottom));
 		left: auto;
 		gap: 4px;
 	}
@@ -5726,7 +5731,10 @@ input:focus-visible {
 @media (max-width: 700px) {
 	#golden-chest-tracker {
 		right: 8px;
-		bottom: calc(62px + env(safe-area-inset-bottom));
+		/* Acima da linha de skills (bottom:62 + altura 72 + folga 6 = 140).
+		   Antes ficava em 62, no mesmo nível da barra/espada/painel, e com
+		   z-index 16 cobria os três (os cliques iam para o baú). */
+		bottom: calc(140px + env(safe-area-inset-bottom));
 		width: min(220px, calc(100vw - 16px));
 		padding: 8px 10px;
 	}
@@ -5740,7 +5748,8 @@ input:focus-visible {
 @media (min-width: 701px) and (max-width: 900px) and (orientation: portrait) {
 	#golden-chest-tracker {
 		right: 10px;
-		bottom: calc(64px + env(safe-area-inset-bottom));
+		/* Acima das skills (bottom:68 + altura 78 + folga 6 = 152). */
+		bottom: calc(152px + env(safe-area-inset-bottom));
 		width: min(250px, calc(100vw - 20px));
 	}
 }
