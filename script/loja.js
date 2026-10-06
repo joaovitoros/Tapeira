@@ -156,11 +156,14 @@ function CompraGold(){
 		gold.add(-N(precoGold));
 
 		mulGold = N(mulGold) * (1 + N(sobeGold));
-		if(lvlGold< 5){
+		if(lvlGold<= 5){
 			precoGold = N(precoGold) * 1.50;
-		}else{
+		}else if(lvlGold > 5 && lvlGold <= 10){
 			precoGold = N(precoGold) * 2;
-		}
+		}else{
+			precoGold = N(precoGold) * 3;
+		} 
+
 		sobeGold = Math.min(N(sobeGold) + 0.1, 0.5);
 		lvlGold++;
 
