@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 200" fill="none">
+  <defs>
+    <linearGradient id="bolt" x1="63" y1="39" x2="105" y2="151" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff"/>
+      <stop offset=".35" stop-color="#c9fbff"/>
+      <stop offset="1" stop-color="#33aaff"/>
+    </linearGradient>
+    <filter id="electric-glow" x="-40%" y="-30%" width="180%" height="170%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <g stroke="#53dfff" stroke-linecap="round" stroke-linejoin="round" filter="url(#electric-glow)">
+    <path d="m37 29-13 16 11 5-17 25 20-10-4-10 13-18" stroke-width="5"/>
+    <path d="m123 37 14 17-11 5 15 24-20-10 5-10-14-18" stroke-width="5"/>
+    <path d="m31 111-14 10 11 7-5 18 19-20-11-3 11-10" stroke-width="4"/>
+    <path d="m129 111 14 10-11 7 5 18-19-20 11-3-11-10" stroke-width="4"/>
+  </g>
+  <path d="m88 31-35 76h24l-8 62 39-87H84l4-51Z" fill="url(#bolt)" stroke="#fff" stroke-width="4" stroke-linejoin="round" filter="url(#electric-glow)"/>
+  <path d="m46 87 7-12m62 12-7-12M52 156l9-8m47 8-9-8" stroke="#d9fbff" stroke-linecap="round" stroke-width="4"/>
+</svg>

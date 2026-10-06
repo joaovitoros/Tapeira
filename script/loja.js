@@ -22,44 +22,61 @@ function GE(a, b){
         .compare(b instanceof GoldNumber ? b : new GoldNumber(b)) >= 0;
 }
 
+function NormalizaPrecosLoja() {
+	const nomesPrecos = [
+		"precoDano", "precoBau", "precoGold", "precoBEspaco", "precoAvan",
+		"precoDCrit", "precoVidaInimigo", "precoCCrit", "precoQTDAvanco",
+		"precoComp1", "precoAvGold", "precoComp2", "precoComp3"
+	];
+
+	nomesPrecos.forEach(nome => {
+		const valor = N(window[nome]);
+		window[nome] = Number.isFinite(valor) ? Math.max(1, valor) : 1;
+	});
+}
+
 // =========================
 // LOJA
+
 // =========================
+
+function AtualizaLojaGold() {
+	NormalizaPrecosLoja();
+	document.getElementById("precoDano").innerHTML = FormatGold(precoDano);
+	document.getElementById("lvlDano").innerHTML = lvlDano;
+
+	document.getElementById("precoBau").innerHTML = FormatGold(precoBau);
+	document.getElementById("lvlBau").innerHTML = lvlBau;
+
+	document.getElementById("precoGold").innerHTML = FormatGold(precoGold);
+	document.getElementById("lvlGold").innerHTML = lvlGold;
+
+	document.getElementById("precoBEspaco").innerHTML = FormatGold(precoBEspaco);
+	document.getElementById("lvlBEspaco").innerHTML = lvlBEspaco;
+
+	document.getElementById("precoAvan").innerHTML = FormatGold(precoAvan);
+	document.getElementById("lvlAvan").innerHTML = lvlAvan;
+
+	document.getElementById("precoDCrit").innerHTML = FormatGold(precoDCrit);
+	document.getElementById("lvlDCrit").innerHTML = lvlDCrit;
+
+	document.getElementById("precoVidaInimigo").innerHTML = FormatGold(precoVidaInimigo);
+	document.getElementById("lvlSubVida").innerHTML = lvlSubVida;
+
+	document.getElementById("precoCCrit").innerHTML = FormatGold(precoCCrit);
+	document.getElementById("lvlCCrit").innerHTML = lvlCCrit;
+
+	document.getElementById("precoQTDAvan").innerHTML = FormatGold(precoQTDAvanco);
+	document.getElementById("lvlQTDAvan").innerHTML = lvlQTDAvanco;
+}
 
 function AbreLoja(){
 	if(document.getElementById("Loja").style.visibility=="hidden"){
 		document.getElementById("Loja").style.visibility="visible";
-
-		document.getElementById("precoDano").innerHTML = FormatGold(precoDano);
-		document.getElementById("lvlDano").innerHTML = lvlDano;
-
-		document.getElementById("precoBau").innerHTML = FormatGold(precoBau);
-		document.getElementById("lvlBau").innerHTML = lvlBau;
-
-		document.getElementById("precoGold").innerHTML = FormatGold(precoGold);
-		document.getElementById("lvlGold").innerHTML = lvlGold;
-
-		document.getElementById("precoBEspaco").innerHTML = FormatGold(precoBEspaco);
-		document.getElementById("lvlBEspaco").innerHTML = lvlBEspaco;
-
-		document.getElementById("precoAvan").innerHTML = FormatGold(precoAvan);
-		document.getElementById("lvlAvan").innerHTML = lvlAvan;
-
-		document.getElementById("precoDCrit").innerHTML = FormatGold(precoDCrit);
-		document.getElementById("lvlDCrit").innerHTML = lvlDCrit;
-
-		document.getElementById("precoVidaInimigo").innerHTML = FormatGold(precoVidaInimigo);
-		document.getElementById("lvlSubVida").innerHTML = lvlSubVida;
-
-		document.getElementById("precoCCrit").innerHTML = FormatGold(precoCCrit);
-		document.getElementById("lvlCCrit").innerHTML = lvlCCrit;
-
-		document.getElementById("precoQTDAvan").innerHTML = FormatGold(precoQTDAvanco);
-		document.getElementById("lvlQTDAvan").innerHTML = lvlQTDAvanco;
-
 	}else{
 		document.getElementById("Loja").style.visibility="hidden";
 	}
+	AtualizaLojaGold();
 
 	if(document.getElementById("LojaEsm").style.visibility=="visible"){
 		document.getElementById("LojaEsm").style.visibility="hidden";
@@ -71,6 +88,7 @@ function AbreLoja(){
 }
 
 function CompraDano(){
+	NormalizaPrecosLoja();
 
 	if(GE(gold, precoDano)){
 
@@ -104,6 +122,7 @@ function CompraDano(){
 }
 
 function CompraBau(){
+	NormalizaPrecosLoja();
 	if(N(chanceBau) < 0.75){
 		if(GE(gold, N(precoBau))){
 
@@ -129,6 +148,7 @@ function CompraBau(){
 }
 
 function CompraGold(){
+	NormalizaPrecosLoja();
 	if(GE(gold, N(precoGold))){
 
 		gold.add(-N(precoGold));
@@ -159,6 +179,7 @@ function CompraGold(){
 }
 
 function CompraAvanco(){
+	NormalizaPrecosLoja();
 
 	if(N(avanco) < 0.5){
 		if(GE(gold, N(precoAvan))){
@@ -190,6 +211,7 @@ function CompraAvanco(){
 }
 
 function CompraDCrit(){
+	NormalizaPrecosLoja();
 	if(GE(gold, N(precoDCrit))){
 
 		gold.add(-N(precoDCrit));
@@ -212,6 +234,7 @@ function CompraDCrit(){
 }
 
 function CompraSubVida(){
+	NormalizaPrecosLoja();
 	if(lvlSubVida < 25){
 		if(GE(gold, N(precoVidaInimigo))){
 
@@ -238,6 +261,7 @@ function CompraSubVida(){
 }
 
 function CompraCCrit(){
+	NormalizaPrecosLoja();
 	if(N(chanceCrit) < 0.7){
 		if(GE(gold, N(precoCCrit))){
 
@@ -268,6 +292,7 @@ function CompraCCrit(){
 }
 
 function CompraBEspaco(){
+	NormalizaPrecosLoja();
 	if(GE(gold, N(precoBEspaco))){
 		if(lvlBEspaco < 15){
 
@@ -291,6 +316,7 @@ function CompraBEspaco(){
 }
 
 function CompraQTDAvanco(){
+	NormalizaPrecosLoja();
 	if(lvlQTDAvanco <= 20){
 		if(GE(gold, N(precoQTDAvanco))){
 
@@ -316,6 +342,7 @@ function CompraQTDAvanco(){
 }
 
 function LojaEsmeralda(){
+	NormalizaPrecosLoja();
 	if(document.getElementById("LojaEsm").style.visibility=="hidden"){
 		document.getElementById("Loja").style.visibility="hidden";
 		document.getElementById("LojaEsm").style.visibility="visible";
@@ -339,6 +366,7 @@ function LojaEsmeralda(){
 }
 
 function CompraComp1(){
+	NormalizaPrecosLoja();
 	if(N(esmeraldas) >= N(precoComp1)){
 		esmeraldas = N(esmeraldas) - N(precoComp1);
 		danoComp1 = N(danoComp1) + 0.05;
@@ -360,6 +388,7 @@ function CompraComp1(){
 }
 
 function CompraAvGold(){
+	NormalizaPrecosLoja();
 	if(N(esmeraldas) >= N(precoAvGold)){
 		esmeraldas = N(esmeraldas) - N(precoAvGold);
 		mulGoldAvanco = N(mulGoldAvanco) * 1.1;
@@ -379,6 +408,7 @@ function CompraAvGold(){
 }
 
 function CompraComp2(){
+	NormalizaPrecosLoja();
 	if(N(esmeraldas) >= N(precoComp2)){
 		esmeraldas = N(esmeraldas) - N(precoComp2);
 		lvlComp2++;
@@ -399,6 +429,7 @@ function CompraComp2(){
 }
 
 function CompraComp3(){
+	NormalizaPrecosLoja();
 	if(N(esmeraldas) >= N(precoComp3)){
 		esmeraldas = N(esmeraldas) - N(precoComp3);
 		tempoEsperaCompanheiro = N(tempoEsperaCompanheiro) + N(tempoComp3);

@@ -129,8 +129,64 @@
 					<div id="QTDTempoHab1"></div>
 				</div>
 			</div>
-
+			<div id="skill-unlock-panel" class="skill-unlock-panel" hidden aria-label="Habilidades desbloqueadas">
+				<button type="button" id="skill-electric" class="combat-skill" hidden aria-label="Corrente elétrica"
+					title="Corrente elétrica" onclick="AtivaHabilidadeCombate('electric')">
+					<img class="combat-skill__icon" src="imagens/espada-eletrica.svg" alt="">
+					<span id="skill-electric-progress" class="sr-only"></span>
+					<span class="combat-skill__meter" role="progressbar" aria-label="Carga da corrente elétrica"
+						aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+						<span id="skill-electric-meter" class="combat-skill__meter-fill"></span>
+					</span>
+				</button>
+				<button type="button" id="skill-gold" class="combat-skill" hidden aria-label="Bônus de Gold"
+					title="Bônus de Gold" onclick="AtivaHabilidadeCombate('gold')">
+					<svg class="combat-skill__icon combat-skill__icon--gold" viewBox="0 0 32 32" aria-hidden="true">
+						<circle cx="16" cy="16" r="13" />
+						<path d="M20.5 10.5c-1-.9-2.3-1.3-4.1-1.3-2.7 0-4.5 1.4-4.5 3.5 0 2 1.4 3 4.2 3.6l1.5.3c1.4.3 2 .7 2 1.4 0 .9-1 1.5-2.8 1.5-1.7 0-3.1-.6-4.2-1.7l-2 2c1.3 1.4 3.3 2.3 5.8 2.4v2h2.2v-2.1c3-.4 4.8-2 4.8-4.2 0-2.1-1.4-3.1-4.5-3.8l-1.5-.3c-1.3-.3-1.8-.6-1.8-1.2 0-.7.8-1.2 2.3-1.2 1.3 0 2.4.4 3.3 1.2z" />
+					</svg>
+					<span id="skill-gold-progress" class="sr-only"></span>
+					<span class="combat-skill__meter" role="progressbar" aria-label="Carga do bônus de Gold"
+						aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+						<span id="skill-gold-meter" class="combat-skill__meter-fill"></span>
+					</span>
+				</button>
+				<button type="button" id="skill-escape" class="combat-skill" hidden aria-label="Parar fuga"
+					title="Parar fuga" onclick="AtivaHabilidadeCombate('escape')">
+					<svg class="combat-skill__icon combat-skill__icon--escape" viewBox="0 0 32 32" aria-hidden="true">
+						<circle cx="16" cy="16" r="12.5" />
+						<path d="M16 8.5v8l5 3" />
+						<path d="M12 2.5h8M16 2.5v3" />
+					</svg>
+					<span id="skill-escape-progress" class="sr-only"></span>
+					<span class="combat-skill__meter" role="progressbar" aria-label="Carga de parar a fuga"
+						aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+						<span id="skill-escape-meter" class="combat-skill__meter-fill"></span>
+					</span>
+				</button>
+			</div>
 		</div>
+
+		<section id="golden-chest-tracker" aria-labelledby="golden-chest-title">
+			<div class="golden-chest-tracker__heading">
+				<img src="imagens/bau-dourado.svg" alt="" class="golden-chest-tracker__icon">
+				<div>
+					<div id="golden-chest-title">Baú dourado</div>
+					<div id="golden-chest-time">20 min no jogo · 40 min fora</div>
+				</div>
+			</div>
+			<div id="golden-chest-progress" class="golden-chest-tracker__progress" role="progressbar"
+				aria-label="Progresso para encontrar um baú dourado" aria-valuemin="0" aria-valuemax="100"
+				aria-valuenow="0" aria-valuetext="0% concluído">
+				<div id="golden-chest-progress-fill"></div>
+			</div>
+			<div class="golden-chest-tracker__footer">
+				<span id="golden-chest-progress-text">0:00 / 20:00</span>
+				<button type="button" id="golden-chest-claim" onclick="ColetaBauDourado()" disabled>
+					Abrir
+				</button>
+			</div>
+		</section>
 
 		<div id="container-opcoes">
 			<div id="container-Botoes">
@@ -148,6 +204,21 @@
 					aria-controls="container-SalvaCarrega" aria-expanded="false" onclick="AbreConfig()">
 					<span class="screen-nav-icon screen-nav-icon--config" aria-hidden="true"></span>
 					<span>Config</span>
+				</button>
+				<button type="button" id="btn-Formigas" class="btn-Padrao screen-nav-button screen-nav-button--ants"
+					aria-expanded="false" onclick="UI.toggleAntCollection()">
+					<span class="screen-nav-icon screen-nav-icon--ants" aria-hidden="true">✦</span>
+					<span>Formigas</span>
+				</button>
+				<button type="button" id="btnSkills" class="btn-Padrao screen-nav-button screen-nav-button--skills"
+					aria-expanded="false" onclick="UI.toggleSkillUpgradePanel()">
+					<span class="screen-nav-icon screen-nav-icon--skills" aria-hidden="true">
+						<svg viewBox="0 0 24 24" focusable="false">
+							<path d="m12 2 1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9L12 2Zm7 12 .9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14ZM5 15l.8 1.7L7.5 17.5l-1.7.8L5 20l-.8-1.7-1.7-.8 1.7-.8L5 15Z"/>
+						</svg>
+					</span>
+					<span>Skills</span>
+					<span id="skill-point-badge" class="skill-point-badge" hidden aria-label="Pontos de habilidade disponíveis"></span>
 				</button>
 			</div>
 
@@ -422,7 +493,7 @@
 
 
 
-
+	<script src="script/dev-tools.js"></script>
 
 
 

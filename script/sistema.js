@@ -91,6 +91,18 @@ function Salvar() {
 		maxAndar,
 		andarVolta,
 		totalDerrotados,
+		nivelJogador,
+		xpAtual,
+		pontosHabilidade,
+		nivelSkillDano,
+		nivelSkillEletrica,
+		nivelSkillGold,
+		nivelSkillFuga,
+		formigasVermelhas,
+		formigasAmarelas,
+		formigasMarrons,
+		formigasPretas,
+		formigasCinzas,
 
 		danoJogador,
 		danoCritJogador,
@@ -119,6 +131,13 @@ function Salvar() {
 		numVoltas,
 		tempoAvancoInimigos,
 		andarBoss,
+		abatesCorrenteEletrica,
+		ataquesCorrenteEletrica,
+		abatesBonusGoldAtaque,
+		ataquesBonusGold,
+		abatesPausaFuga,
+		segundosPausaFuga,
+		qtdCarregaHabilidade,
 
 		progressoConquistaDano,
 		progressoConquistaGold,
@@ -176,7 +195,10 @@ function Salvar() {
 		chanceBau,
 		chanceEsmeraldaBau,
 		precoBau,
-		lvlBau
+		lvlBau,
+		progressoBauDourado,
+		bauDouradoPendente,
+		ultimaAtualizacaoBauDourado
 	};
 
 	save.saveFormat = "tapeira-save";
@@ -216,6 +238,45 @@ function Salvar() {
 // =========================
 // LOAD
 // =========================
+
+function ValidarRecompensasOffline(recompensas, limiteTempo, limiteBaus) {
+	if (!recompensas || typeof recompensas !== "object" || Array.isArray(recompensas)) {
+		throw new TypeError("As recompensas offline do save são inválidas.");
+	}
+
+	for (const key of ["tempoMs", "dano", "gold", "abates", "inimigosTela"]) {
+		if (!Number.isFinite(recompensas[key]) || recompensas[key] < 0) {
+			throw new TypeError("As recompensas offline do save são inválidas.");
+		}
+	}
+	if (recompensas.tempoMs > limiteTempo
+		|| !Number.isInteger(recompensas.abates)
+		|| !Number.isInteger(recompensas.inimigosTela)
+		|| recompensas.inimigosTela > 4) {
+		throw new TypeError("Os limites das recompensas offline do save são inválidos.");
+	}
+
+	if (!Array.isArray(recompensas.vidasInimigos) || recompensas.vidasInimigos.length !== 4
+		|| recompensas.vidasInimigos.some(vida => !Number.isFinite(vida) || vida < 0)) {
+		throw new TypeError("As vidas dos inimigos no progresso offline são inválidas.");
+	}
+
+	if (!Array.isArray(recompensas.baus) || recompensas.baus.length > limiteBaus
+		|| recompensas.baus.some(bau => !bau || typeof bau !== "object"
+			|| !Number.isFinite(bau.gold) || bau.gold < 0
+			|| !Number.isInteger(bau.esmeraldas) || bau.esmeraldas < 0)) {
+		throw new TypeError("Os baús do progresso offline são inválidos.");
+	}
+	if (recompensas.formigas !== undefined
+		&& (!Array.isArray(recompensas.formigas) || recompensas.formigas.length !== FORMIGAS.length
+			|| recompensas.formigas.some(total => !Number.isSafeInteger(total) || total < 0))) {
+		throw new TypeError("As formigas do progresso offline são inválidas.");
+	}
+	if (recompensas.xp !== undefined
+		&& (!Number.isSafeInteger(recompensas.xp) || recompensas.xp < 0)) {
+		throw new TypeError("A experiência do progresso offline é inválida.");
+	}
+}
 
 function ValidarSave(save) {
 	if (!save || typeof save !== "object" || Array.isArray(save)) {
@@ -258,18 +319,311 @@ function ValidarSave(save) {
 		}
 	}
 
+	const formigaKeys = [
+		"formigasVermelhas", "formigasAmarelas", "formigasMarrons",
+		"formigasPretas", "formigasCinzas"
+	];
+	for (const key of formigaKeys) {
+		if (save[key] !== undefined && (!Number.isSafeInteger(save[key]) || save[key] < 0)) {
+			throw new TypeError("A coleção permanente de formigas do save é inválida.");
+		}
+	}
+	const xpKeys = [
+		["nivelJogador", 1, Number.MAX_SAFE_INTEGER],
+		["xpAtual", 0, Number.MAX_SAFE_INTEGER],
+		["pontosHabilidade", 0, Number.MAX_SAFE_INTEGER],
+		["nivelSkillDano", 0, 6],
+		["nivelSkillEletrica", 0, NIVEL_MAXIMO_SKILLS],
+		["nivelSkillGold", 0, NIVEL_MAXIMO_SKILLS],
+		["nivelSkillFuga", 0, NIVEL_MAXIMO_SKILLS]
+	];
+	for (const [key, minimo, maximo] of xpKeys) {
+		if (save[key] !== undefined
+			&& (!Number.isSafeInteger(save[key]) || save[key] < minimo || save[key] > maximo)) {
+			throw new TypeError("Os dados de experiência ou habilidades do save são inválidos.");
+		}
+	}
+	if (save.progressoBauDourado !== undefined
+		&& (!Number.isFinite(save.progressoBauDourado)
+			|| save.progressoBauDourado < 0
+			|| save.progressoBauDourado > TEMPO_BAU_DOURADO_JOGO)) {
+		throw new TypeError("O progresso do baú dourado no save é inválido.");
+	}
+	if (save.bauDouradoPendente !== undefined
+		&& (!Number.isInteger(save.bauDouradoPendente)
+			|| save.bauDouradoPendente < 0
+			|| save.bauDouradoPendente > 1)) {
+		throw new TypeError("O estado do baú dourado no save é inválido.");
+	}
+	if (save.ultimaAtualizacaoBauDourado !== undefined
+		&& (!Number.isFinite(save.ultimaAtualizacaoBauDourado)
+			|| save.ultimaAtualizacaoBauDourado < 0)) {
+		throw new TypeError("A data do progresso do baú dourado no save é inválida.");
+	}
+	const limiteTempoSalvo = maxTempoProgressoOffline
+		+ Math.floor((save.formigasPretas ?? 0) / 5) * 2 * 60 * 1000;
+	const limiteBausSalvo = maxBausOffline + Math.floor((save.formigasCinzas ?? 0) / 5);
+	if (save.offlineLastSavedAt !== undefined
+		&& (!Number.isFinite(save.offlineLastSavedAt) || save.offlineLastSavedAt < 0)) {
+		throw new TypeError("A data do último salvamento offline é inválida.");
+	}
+	if (save.offlinePendingRewards !== undefined && save.offlinePendingRewards !== null) {
+		ValidarRecompensasOffline(save.offlinePendingRewards, limiteTempoSalvo, limiteBausSalvo);
+	}
+
 	for (const [key, value] of Object.entries(save)) {
-		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold"].includes(key)) continue;
+		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");
 		}
 	}
 }
 
-function Carregar(saveData) {
+function SimulaDanoOffline(dano) {
+	const limite = andar < 5 ? 1 : andar <= 14 ? 2 : andar <= 29 ? 3 : 4;
+	const vidaMaxima = Number(vidaAndar);
+	const vidas = [1, 2, 3, 4].map(indice => {
+		if (indice > limite) return 0;
+		const vida = Number(window["vidaInimigo" + indice]);
+		return Number.isFinite(vida) ? Math.max(0, vida) : 0;
+	});
+	let restante = dano;
+	let abates = 0;
+
+	for (let indice = limite - 1; indice >= 0 && restante > 0; indice--) {
+		const danoNoInimigo = Math.min(restante, vidas[indice]);
+		vidas[indice] -= danoNoInimigo;
+		restante -= danoNoInimigo;
+		if (vidas[indice] <= 0 && danoNoInimigo > 0) {
+			vidas[indice] = 0;
+			abates++;
+		}
+	}
+
+	const restaurarOnda = () => {
+		for (let indice = 0; indice < 4; indice++) {
+			vidas[indice] = indice < limite ? vidaMaxima : 0;
+		}
+	};
+
+	if (dano > 0 && vidas.slice(0, limite).every(vida => vida <= 0)) {
+		restaurarOnda();
+	}
+
+	if (restante > 0 && Number.isFinite(vidaMaxima) && vidaMaxima > 0) {
+		const danoPorOnda = vidaMaxima * limite;
+		if (Number.isFinite(danoPorOnda) && danoPorOnda > 0) {
+			const ondasCompletas = Math.floor(restante / danoPorOnda);
+			abates += ondasCompletas * limite;
+			restante -= ondasCompletas * danoPorOnda;
+
+			if (ondasCompletas > 0) restaurarOnda();
+
+			for (let indice = limite - 1; indice >= 0 && restante > 0; indice--) {
+				const danoNoInimigo = Math.min(restante, vidas[indice]);
+				vidas[indice] -= danoNoInimigo;
+				restante -= danoNoInimigo;
+				if (vidas[indice] <= 0 && danoNoInimigo > 0) {
+					vidas[indice] = 0;
+					abates++;
+				}
+			}
+
+			if (vidas.slice(0, limite).every(vida => vida <= 0)) {
+				restaurarOnda();
+			}
+		}
+	}
+
+	return {
+		vidasInimigos: vidas,
+		abates,
+		inimigosTela: vidas.slice(0, limite).filter(vida => vida > 0).length
+	};
+}
+
+function ContaAvancosVirtuais(abates) {
+	const abatesParaProximoAndar = Math.max(1, Math.ceil(qtdInimigosAndar - inimigosDerrotados));
+	const b = 2 * abatesParaProximoAndar - 1;
+	const avancos = Math.floor((Math.sqrt(b * b + 8 * abates) - b) / 2);
+	return Number.isFinite(avancos) ? Math.max(0, avancos) : Number.MAX_SAFE_INTEGER;
+}
+
+function CriaBausOffline(avancos) {
+	const baus = [];
+	let tentativasRestantes = Math.floor(avancos);
+	const chanceBauSegura = Math.max(0, Math.min(1, Number(chanceBau)));
+	const chanceEsmeraldaSegura = Math.max(0, Math.min(1, Number(chanceEsmeraldaBau)));
+	const limiteBaus = LimiteBausOffline();
+	const chanceExtra = ChanceBauExtraFormigas();
+	const extrasGarantidos = Math.floor(chanceExtra);
+	const chanceExtraFracionada = chanceExtra - extrasGarantidos;
+	const bonusGoldBau = Math.max(0, (((andar * mulGold)
+		+ (vidaAndar * mulGold) * mulGoldAvanco) * 5)
+		* MultiplicadorGoldBauFormigas() * MultiplicadorGoldFormigas()
+		* multiplicadorProgressoOffline);
+
+	while (tentativasRestantes > 0 && baus.length < limiteBaus && chanceBauSegura > 0) {
+		const aleatorio = Math.max(Number.EPSILON, Math.random());
+		const distancia = chanceBauSegura >= 1
+			? 1
+			: Math.floor(Math.log(aleatorio) / Math.log(1 - chanceBauSegura)) + 1;
+		if (distancia > tentativasRestantes) break;
+
+		tentativasRestantes -= distancia;
+		const quantidade = 1 + extrasGarantidos
+			+ (Math.random() < chanceExtraFracionada ? 1 : 0);
+		for (let indice = 0; indice < quantidade && baus.length < limiteBaus; indice++) {
+			const esmeralda = Math.random() < chanceEsmeraldaSegura;
+			baus.push({
+				gold: esmeralda ? 0 : bonusGoldBau,
+				esmeraldas: esmeralda ? 1 : 0
+			});
+		}
+	}
+
+	return baus;
+}
+
+function CalculaProgressoOffline(ultimaDataSalva) {
+	const agora = Date.now();
+	const dataAnterior = Number.isFinite(ultimaDataSalva) ? ultimaDataSalva : agora;
+	ultimaDataSaveOffline = agora;
+	if (recompensasOfflinePendentes) return;
+
+	const tempoMs = Math.min(
+		LimiteTempoOffline(),
+		Math.max(0, agora - dataAnterior)
+	);
+	if (tempoMs <= 0) return;
+
+	const chanceCritica = Math.max(0, Math.min(1, Number(chanceCrit)));
+	const danoCriticoCompanheiro = Math.max(0, Number(danoCritJogador) * Number(danoComp1));
+	const danoBaseCompanheiro = Math.max(0, Number(danoComp));
+	const danoMedioCompanheirosPorSegundo = danoBaseCompanheiro > 0
+		? (danoBaseCompanheiro * (1 - chanceCritica))
+			+ (danoCriticoCompanheiro * chanceCritica)
+		: 0;
+	const danoMedioJogadorPorAtaque = (Math.max(0, Number(danoJogador)) * (1 - chanceCritica))
+		+ (Math.max(0, Number(danoCritJogador)) * chanceCritica);
+	const intervaloAtaqueJogadorMs = Math.max(1, Number(MaxValidaBater)) * 30;
+	const ataquesJogadorPorSegundo = 1000 / intervaloAtaqueJogadorMs;
+	const danoMedioPorSegundo = danoMedioCompanheirosPorSegundo
+		+ danoMedioJogadorPorAtaque * ataquesJogadorPorSegundo;
+	const danoOffline = danoMedioPorSegundo * (tempoMs / 1000)
+		* multiplicadorProgressoOffline * MultiplicadorDanoFormigas();
+	if (!Number.isFinite(danoOffline) || danoOffline < 0) {
+		console.error("Não foi possível calcular o dano offline com os valores atuais.");
+		UI.showInfo("Não foi possível calcular o progresso offline. Verifique os atributos dos companheiros.");
+		return;
+	}
+
+	const simulacao = SimulaDanoOffline(danoOffline);
+	if (!Number.isFinite(simulacao.abates)
+		|| simulacao.vidasInimigos.some(vida => !Number.isFinite(vida))) {
+		console.error("O dano offline excede os limites numéricos suportados.");
+		UI.showInfo("O progresso offline não pôde ser calculado devido ao limite numérico dos atributos.");
+		return;
+	}
+	const avancosVirtuais = ContaAvancosVirtuais(simulacao.abates);
+	const baus = CriaBausOffline(avancosVirtuais);
+	const goldPorAbate = (andar * mulGold) + 1;
+	const goldPassivo = Number(goldCompanheiro) * (tempoMs / 1000);
+	const goldDosBaus = baus.reduce((total, bau) => total + bau.gold, 0);
+	const goldOffline = (goldPassivo + simulacao.abates * goldPorAbate)
+		* multiplicadorProgressoOffline * MultiplicadorGoldFormigas() + goldDosBaus;
+	if (!Number.isFinite(goldOffline) || goldOffline < 0) {
+		console.error("Não foi possível calcular o Gold offline com os valores atuais.");
+		UI.showInfo("Não foi possível calcular o Gold offline. Verifique os bônus dos companheiros.");
+		return;
+	}
+
+	recompensasOfflinePendentes = {
+		tempoMs,
+		dano: danoOffline,
+		gold: goldOffline,
+		abates: simulacao.abates,
+		inimigosTela: simulacao.inimigosTela,
+		vidasInimigos: simulacao.vidasInimigos,
+		baus,
+		formigas: SorteiaFormigas(simulacao.abates),
+		xp: Math.min(
+			Number.MAX_SAFE_INTEGER - xpAtual,
+			simulacao.abates * XPPorInimigo(andar)
+		)
+	};
+}
+
+function RecebeProgressoOffline() {
+	const recompensas = recompensasOfflinePendentes;
+	if (!recompensas) return;
+
+	let inimigoComVida = 0;
+	recompensas.vidasInimigos.forEach((vida, indice) => {
+		window["vidaInimigo" + (indice + 1)] = vida;
+		const inimigo = document.getElementById("inimigo" + (indice + 1));
+		const ativo = indice < (andar < 5 ? 1 : andar <= 14 ? 2 : andar <= 29 ? 3 : 4);
+		if (vida <= 0 || !ativo) {
+			UI.removeEnemy(indice + 1);
+		} else if (inimigo) {
+			inimigo.style.visibility = "visible";
+			inimigoComVida = indice + 1;
+		}
+	});
+	if (inimigoComVida) {
+		DesceVida(inimigoComVida);
+	} else {
+		UI.updateEnemyHealth(0, 0, vidaAndar);
+	}
+
+	numInimigosTela = recompensas.inimigosTela;
+	totalDerrotados += recompensas.abates;
+	const xpOffline = recompensas.xp ?? Math.min(
+		Number.MAX_SAFE_INTEGER - xpAtual,
+		recompensas.abates * XPPorInimigo(andar)
+	);
+	const xpRecebido = GanhaXP(recompensas.abates, andar, xpOffline);
+	if (recompensas.gold > 0) {
+		AddGold(recompensas.gold, false);
+		AddTotalGold(recompensas.gold, false);
+		UI.showCurrencyReward("gold", recompensas.gold);
+	}
+	const esmeraldasRecebidas = recompensas.baus.reduce((total, bau) => total + bau.esmeraldas, 0);
+	if (esmeraldasRecebidas > 0) {
+		esmeraldas += esmeraldasRecebidas;
+		UI.showCurrencyReward("emerald", esmeraldasRecebidas);
+	}
+	const formigasRecebidas = recompensas.formigas ?? FORMIGAS.map(() => 0);
+	formigasRecebidas.forEach((total, indice) => {
+		const formiga = FORMIGAS[indice];
+		window[formiga.contador] = Math.min(
+			Number.MAX_SAFE_INTEGER,
+			window[formiga.contador] + total
+		);
+	});
+	const totalFormigasRecebidas = formigasRecebidas.reduce((total, quantidade) => total + quantidade, 0);
+	if (totalFormigasRecebidas > 0) {
+		formigasRecebidas.forEach((quantidade, indice) => {
+			if (quantidade > 0) UI.showAntReward(FORMIGAS[indice], quantidade);
+		});
+		UI.showMilestone("Formigas encontradas", `${totalFormigasRecebidas} adicionadas à coleção permanente`);
+	}
+	if (xpRecebido > 0) UI.showMilestone("Experiência recebida", `+${xpRecebido} XP durante sua ausência`);
+
+	recompensasOfflinePendentes = null;
+	UI.render();
+	MostraStatus?.();
+	if (typeof AtualizaEstadoPausa === "function") AtualizaEstadoPausa(false);
+	if (!AutoSaveLocal()) {
+		UI.showInfo("As recompensas offline foram recebidas, mas não foi possível salvá-las localmente.");
+	}
+}
+
+function Carregar(saveData, calculaOffline = false) {
 
 	var save = JSON.parse(saveData);
 	ValidarSave(save);
+	const vidasSalvas = [save.vidaInimigo1, save.vidaInimigo2, save.vidaInimigo3, save.vidaInimigo4];
 
 	function safeNumber(v) {
 		v = Number(v);
@@ -300,6 +654,18 @@ function Carregar(saveData) {
 	maxAndar = save.maxAndar ?? 0;
 	andarVolta = save.andarVolta ?? 20;
 	totalDerrotados = save.totalDerrotados ?? 0;
+	nivelJogador = save.nivelJogador ?? 1;
+	xpAtual = save.xpAtual ?? 0;
+	pontosHabilidade = save.pontosHabilidade ?? 0;
+	nivelSkillDano = save.nivelSkillDano ?? 0;
+	nivelSkillEletrica = save.nivelSkillEletrica ?? 0;
+	nivelSkillGold = save.nivelSkillGold ?? 0;
+	nivelSkillFuga = save.nivelSkillFuga ?? 0;
+	formigasVermelhas = save.formigasVermelhas ?? 0;
+	formigasAmarelas = save.formigasAmarelas ?? 0;
+	formigasMarrons = save.formigasMarrons ?? 0;
+	formigasPretas = save.formigasPretas ?? 0;
+	formigasCinzas = save.formigasCinzas ?? 0;
 
 	danoJogador = save.danoJogador ?? 1;
 	danoCritJogador = save.danoCritJogador ?? 2;
@@ -330,6 +696,17 @@ function Carregar(saveData) {
 
 	tempoAvancoInimigos = save.tempoAvancoInimigos ?? 120;
 	andarBoss = save.andarBoss ?? 10;
+	abatesCorrenteEletrica = save.abatesCorrenteEletrica ?? 0;
+	ataquesCorrenteEletrica = save.ataquesCorrenteEletrica ?? 0;
+	abatesBonusGoldAtaque = save.abatesBonusGoldAtaque ?? 0;
+	ataquesBonusGold = save.ataquesBonusGold ?? 0;
+	abatesPausaFuga = save.abatesPausaFuga ?? 0;
+	segundosPausaFuga = save.segundosPausaFuga ?? 0;
+	qtdCarregaHabilidade = save.qtdCarregaHabilidade ?? 0;
+	if (qtdCarregaHabilidade >= abateshabilidadeDano) {
+		qtdCarregaHabilidade = abateshabilidadeDano;
+		VerificaHabilidade();
+	}
 
 	progressoConquistaDano = save.progressoConquistaDano ?? 100;
 	progressoConquistaGold = save.progressoConquistaGold ?? 500;
@@ -390,12 +767,66 @@ function Carregar(saveData) {
 	lvlBau = save.lvlBau ?? 1;
 
 	RemoverInimigos();
-	CarregarStatus();
-	CriarInimigos();
 	AbreLoja();
-
 	Batalha?.();
-	return AutoSaveLocal();
+	const limiteInimigosAtuais = andar < 5 ? 1 : andar <= 14 ? 2 : andar <= 29 ? 3 : 4;
+	for (let indice = 0; indice < vidasSalvas.length; indice++) {
+		if (indice >= limiteInimigosAtuais) {
+			window["vidaInimigo" + (indice + 1)] = 0;
+		} else if (Number.isFinite(vidasSalvas[indice])) {
+			window["vidaInimigo" + (indice + 1)] = Math.max(0, vidasSalvas[indice]);
+		}
+	}
+	if (vidasSalvas.some(Number.isFinite)) {
+		const limite = limiteInimigosAtuais;
+		numInimigosTela = window["vidaInimigo1"] > 0 ? 1 : 0;
+		for (let indice = 2; indice <= limite; indice++) {
+			if (window["vidaInimigo" + indice] > 0) numInimigosTela++;
+		}
+		if (numInimigosTela === 0) {
+			CarregarStatus();
+			numInimigosTela = limite;
+		}
+		let inimigoComVida = 0;
+		for (let indice = 1; indice <= 4; indice++) {
+			const vida = window["vidaInimigo" + indice];
+			if (vida > 0 && indice <= limite) {
+				inimigoComVida = indice;
+			} else {
+				UI.removeEnemy(indice);
+			}
+		}
+		if (inimigoComVida) {
+			DesceVida(inimigoComVida);
+		} else {
+			UI.updateEnemyHealth(0, 0, vidaAndar);
+		}
+	}
+
+	recompensasOfflinePendentes = calculaOffline ? save.offlinePendingRewards ?? null : null;
+	progressoBauDourado = save.progressoBauDourado ?? 0;
+	bauDouradoPendente = save.bauDouradoPendente ?? 0;
+	ultimaDataSaveOffline = calculaOffline
+		? (save.offlineLastSavedAt ?? Date.now())
+		: Date.now();
+	bauDouradoEmJogo = false;
+	ultimaAtualizacaoBauDourado = calculaOffline
+		? (save.ultimaAtualizacaoBauDourado ?? Date.now())
+		: Date.now();
+	if (calculaOffline && save.ultimaAtualizacaoBauDourado !== undefined) {
+		AtualizaProgressoBauDourado();
+	}
+	bauDouradoEmJogo = document.visibilityState !== "hidden";
+	if (calculaOffline) CalculaProgressoOffline(ultimaDataSaveOffline);
+	UI.updateGoldenChestProgress();
+	UI.updateSkillProgress();
+
+	const salvou = AutoSaveLocal();
+	if (recompensasOfflinePendentes) {
+		if (typeof AtualizaEstadoPausa === "function") AtualizaEstadoPausa(true);
+		UI.showOfflineRewards(recompensasOfflinePendentes, RecebeProgressoOffline);
+	}
+	return salvou;
 }
 
 // =========================
@@ -441,7 +872,10 @@ function ChamaSom(som) {
 	if (el) {
 		el.volume = volumeAtual;
 		el.muted = volumeAtual === 0;
-		if (!el.muted) el.play();
+		if (!el.muted) {
+			el.currentTime = 0;
+			el.play();
+		}
 	}
 }
 
@@ -519,12 +953,97 @@ function Menu() {
 	window.location.href = "Caverna.html";
 }
 
+let menuOfflineTimer = null;
+
+function AtualizaProgressoBauDourado(agora = Date.now()) {
+	if (!Number.isFinite(ultimaAtualizacaoBauDourado) || ultimaAtualizacaoBauDourado <= 0) {
+		ultimaAtualizacaoBauDourado = agora;
+		UI.updateGoldenChestProgress();
+		return false;
+	}
+
+	const progressoAnterior = progressoBauDourado;
+	const tempoDecorrido = Math.max(0, agora - ultimaAtualizacaoBauDourado);
+	ultimaAtualizacaoBauDourado = agora;
+
+	if (bauDouradoPendente === 1) {
+		progressoBauDourado = TEMPO_BAU_DOURADO_JOGO;
+	} else {
+		const multiplicadorTempo = bauDouradoEmJogo
+			? 1
+			: TEMPO_BAU_DOURADO_JOGO / TEMPO_BAU_DOURADO_OFFLINE;
+		progressoBauDourado = Math.min(
+			TEMPO_BAU_DOURADO_JOGO,
+			Math.max(0, progressoBauDourado) + tempoDecorrido * multiplicadorTempo
+		);
+		if (progressoBauDourado >= TEMPO_BAU_DOURADO_JOGO) {
+			bauDouradoPendente = 1;
+			UI.showMilestone("Baú dourado disponível", "Abra o baú para receber sua recompensa!");
+		}
+	}
+
+	UI.updateGoldenChestProgress();
+	return progressoAnterior < TEMPO_BAU_DOURADO_JOGO
+		&& progressoBauDourado >= TEMPO_BAU_DOURADO_JOGO;
+}
+
+function AtualizaModoBauDourado() {
+	AtualizaProgressoBauDourado();
+	bauDouradoEmJogo = document.visibilityState !== "hidden";
+	if (!AutoSaveLocal()) {
+		UI.showInfo("Não foi possível salvar o progresso do baú dourado.");
+	}
+}
+
+function TickBauDourado() {
+	if (AtualizaProgressoBauDourado() && !AutoSaveLocal()) {
+		UI.showInfo("O baú dourado ficou pronto, mas não foi possível salvar o progresso.");
+	}
+}
+
+let eventosBauDouradoRegistrados = false;
+
+function AtualizaTempoOfflineMenu(timestampSalvo, quantidadeFormigasPretas = 0) {
+	const offlineTime = document.getElementById("menu-offline-time");
+	if (!offlineTime) return;
+
+	if (!Number.isFinite(timestampSalvo) || timestampSalvo <= 0) {
+		offlineTime.textContent = "O tempo offline começará a ser contado ao entrar na aventura.";
+		offlineTime.hidden = false;
+		return;
+	}
+
+	const limiteTempoOffline = LimiteTempoOffline(quantidadeFormigasPretas);
+	const tempoMs = Math.min(
+		limiteTempoOffline,
+		Math.max(0, Date.now() - timestampSalvo)
+	);
+	const formatarDuracao = valor => {
+		const minutosTotais = Math.floor(valor / 60000);
+		const horas = Math.floor(minutosTotais / 60);
+		const minutos = minutosTotais % 60;
+		const segundos = Math.floor(valor / 1000) % 60;
+		if (horas > 0) return minutos > 0 ? `${horas}h ${minutos}min` : `${horas}h`;
+		if (minutos > 0) return `${minutos}min ${segundos}s`;
+		return `${segundos}s`;
+	};
+	const limiteAtingido = tempoMs >= limiteTempoOffline;
+	const tempoFormatado = formatarDuracao(tempoMs);
+	const limiteFormatado = formatarDuracao(limiteTempoOffline);
+
+	offlineTime.textContent = limiteAtingido
+		? `Tempo offline acumulado: ${tempoFormatado} (limite máximo de ${limiteFormatado})`
+		: `Tempo offline acumulado: ${tempoFormatado} / ${limiteFormatado}`;
+	offlineTime.hidden = false;
+}
+
 function PrepararMenu() {
 	PrepararDesktop();
 	const status = document.getElementById("menu-save-status");
 	const details = document.getElementById("menu-save-details");
 	if (!status || !details) return;
 
+	if (menuOfflineTimer !== null) clearInterval(menuOfflineTimer);
 	const saveData = localStorage.getItem("autoSaveCaverna");
 	if (!saveData) return;
 
@@ -537,6 +1056,12 @@ function PrepararMenu() {
 		status.textContent = "Aventura salva encontrada";
 		details.textContent =
 			`Andar ${save.andar} · ${save.totalDerrotados} inimigos derrotados`;
+		const formigasPretasSalvas = save.formigasPretas ?? 0;
+		AtualizaTempoOfflineMenu(save.offlineLastSavedAt, formigasPretasSalvas);
+		menuOfflineTimer = setInterval(
+			() => AtualizaTempoOfflineMenu(save.offlineLastSavedAt, formigasPretasSalvas),
+			1000
+		);
 		document.getElementById("menu-save-card").classList.add("menu-save-card--active");
 		document.getElementById("btn-Jogar").textContent = "Continuar aventura";
 	} catch (error) {
@@ -559,9 +1084,15 @@ let intervalos = [];
 
 function PreCarregamento() {
 	PrepararDesktop();
+	bauDouradoEmJogo = document.visibilityState !== "hidden";
+	if (!eventosBauDouradoRegistrados) {
+		document.addEventListener("visibilitychange", AtualizaModoBauDourado);
+		window.addEventListener("pagehide", AtualizaModoBauDourado);
+		eventosBauDouradoRegistrados = true;
+	}
 
 	// tenta carregar auto save
-	CarregarAutoSave();
+	const saveCarregado = CarregarAutoSave();
 
 	const volumeSalvo = localStorage.getItem("volumeJogo");
 	if (volumeSalvo !== null) {
@@ -578,6 +1109,7 @@ function PreCarregamento() {
 	if (avancoInterval) clearInterval(avancoInterval);
 	avancoInterval = setInterval(AvancoInimigos, 1000);
 	intervalos.push(setInterval(AutoSaveLocal, 30000));
+	intervalos.push(setInterval(TickBauDourado, 1000));
 
 	intervalos.push(setInterval(DanoCompanheiros, 1000));
 	intervalos.push(setInterval(GoldCompanheiros, 1000));
@@ -588,11 +1120,13 @@ function PreCarregamento() {
 		intervalos.push(setInterval(() => MostraInfo(''), 25000));
 	}
 
-	Batalha();
+	if (!saveCarregado) Batalha();
 }
 
 //// Resetar
 function Resetar() {
+	recompensasOfflinePendentes = null;
+	ultimaDataSaveOffline = Date.now();
 	numInimigosTela = 1; //usada para validar quantos inimigos e
 	andar = 1;	//usada para contagem do andar atual do jogo (Necessario para calculos progressivos)
 	qtdInimigosAndar = 1; //quantidade necessaria de inimigos que devem ser derrotados para avançar para o proximo andar
@@ -617,6 +1151,23 @@ function Resetar() {
 	MaxValidaBater = 30; //tempo maximo para que se possa executar um ataque com o espaço
 
 	tempoAvancoInimigos = 120; //tempo para que o jogar seja obrigado a recuar um andar
+	nivelJogador = 1;
+	xpAtual = 0;
+	pontosHabilidade = 0;
+	nivelSkillDano = 0;
+	nivelSkillEletrica = 0;
+	nivelSkillGold = 0;
+	nivelSkillFuga = 0;
+	tempoHabilidadeDano = 30;
+	verificaHabilidadeDano = false;
+	qtdCarregaHabilidade = 0;
+	document.getElementById("habilidade1")?.remove();
+	abatesCorrenteEletrica = 0;
+	ataquesCorrenteEletrica = 0;
+	abatesBonusGoldAtaque = 0;
+	ataquesBonusGold = 0;
+	abatesPausaFuga = 0;
+	segundosPausaFuga = 0;
 	andarBoss = 10; //andar atual onde aparecerão inimigos mais fortes
 	missao = Array(" ", "Coleta de Gold", "Golpes", "Caça aos Mugs", "Tempo") //vetor usado para listagem das missões
 	missaoAtual; //variavel que determina a missão atual (1- coleta de gol, 2- tempo, 3- caça aos mugs)
@@ -671,6 +1222,10 @@ function Resetar() {
 	precoQTDAvanco = precoQTDAvanco * (1 - descontoLoja);
 
 	chanceBau = 0.1;
+
+	AtualizaLojaGold();
+	UI.updateSkillProgress();
+	if (document.getElementById("skillUpgradeModal")) UI.showSkillUpgradePanel();
 
 	mulGoldInicial = mulGold;
 	console.log("2 " + mulGoldInicial);
@@ -728,6 +1283,18 @@ function CriarObjetoSave() {
 		maxAndar,
 		andarVolta,
 		totalDerrotados,
+		nivelJogador,
+		xpAtual,
+		pontosHabilidade,
+		nivelSkillDano,
+		nivelSkillEletrica,
+		nivelSkillGold,
+		nivelSkillFuga,
+		formigasVermelhas,
+		formigasAmarelas,
+		formigasMarrons,
+		formigasPretas,
+		formigasCinzas,
 
 		danoJogador,
 		danoCritJogador,
@@ -756,6 +1323,13 @@ function CriarObjetoSave() {
 		numVoltas,
 		tempoAvancoInimigos,
 		andarBoss,
+		abatesCorrenteEletrica,
+		ataquesCorrenteEletrica,
+		abatesBonusGoldAtaque,
+		ataquesBonusGold,
+		abatesPausaFuga,
+		segundosPausaFuga,
+		qtdCarregaHabilidade,
 
 		progressoConquistaDano,
 		progressoConquistaGold,
@@ -813,14 +1387,22 @@ function CriarObjetoSave() {
 		chanceBau,
 		chanceEsmeraldaBau,
 		precoBau,
-		lvlBau
+		lvlBau,
+		offlineLastSavedAt: ultimaDataSaveOffline,
+		offlinePendingRewards: recompensasOfflinePendentes,
+		progressoBauDourado,
+		bauDouradoPendente,
+		ultimaAtualizacaoBauDourado
 	};
 }
 
 function AutoSaveLocal() {
 
+	const ultimaDataAnterior = ultimaDataSaveOffline;
 	try {
 
+		AtualizaProgressoBauDourado();
+		ultimaDataSaveOffline = Date.now();
 		const save = CriarObjetoSave();
 
 		localStorage.setItem(
@@ -833,6 +1415,7 @@ function AutoSaveLocal() {
 
 	} catch (e) {
 
+		ultimaDataSaveOffline = ultimaDataAnterior;
 		console.error("Erro Auto Save:", e);
 		return false;
 	}
@@ -850,7 +1433,7 @@ function CarregarAutoSave() {
 			return false;
 		}
 
-		Carregar(save);
+		Carregar(save, true);
 
 		MostraInfo?.("Auto Save carregado!");
 

@@ -16,6 +16,8 @@ const UI = {
         document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
         this.updateObjective();
         this.updateMission();
+        this.updateSkillProgress();
+        AtualizaHabilidadesCombate();
     },
 
     updateMission() {
@@ -116,7 +118,9 @@ const UI = {
             ["btn-Loja", ["Loja", "LojaEsm"].some(id =>
                 document.getElementById(id)?.style.visibility === "visible"
             )],
-            ["btn-Config", document.getElementById("container-SalvaCarrega")?.style.visibility === "visible"]
+            ["btn-Config", document.getElementById("container-SalvaCarrega")?.style.visibility === "visible"],
+            ["btn-Formigas", !!document.getElementById("antCollectionModal")],
+            ["btnSkills", !!document.getElementById("skillUpgradeModal")]
         ];
 
         states.forEach(([id, isOpen]) => {
@@ -127,9 +131,148 @@ const UI = {
         });
     },
 
+    updateSkillProgress() {
+        const level = document.getElementById("skill-player-level");
+        const points = document.getElementById("skill-player-points");
+        const progress = document.getElementById("skill-player-xp");
+        const fill = document.getElementById("skill-player-xp-fill");
+        const button = document.getElementById("btnSkills");
+        const badge = document.getElementById("skill-point-badge");
+        const nextLevelXP = XPNecessarioProximoNivel();
+        const percent = Math.max(0, Math.min(100, xpAtual * 100 / nextLevelXP));
+
+        if (level) level.textContent = `Nível ${nivelJogador}`;
+        if (points) points.textContent = `${pontosHabilidade} ${pontosHabilidade === 1 ? "ponto" : "pontos"} de habilidade`;
+        if (progress) {
+            progress.setAttribute("aria-valuenow", String(Math.min(xpAtual, nextLevelXP)));
+            progress.setAttribute("aria-valuemax", String(nextLevelXP));
+            progress.setAttribute("aria-valuetext", `${xpAtual} de ${nextLevelXP} XP`);
+        }
+        if (fill) fill.style.width = `${percent}%`;
+        const xpLabel = document.getElementById("skill-player-xp-label");
+        if (xpLabel) xpLabel.textContent = `${xpAtual} / ${nextLevelXP} XP para o próximo nível`;
+        if (button) button.setAttribute("aria-label", `Skills, nível ${nivelJogador}, ${pontosHabilidade} pontos disponíveis`);
+        if (badge) {
+            badge.textContent = String(pontosHabilidade);
+            badge.hidden = pontosHabilidade === 0;
+        }
+
+    },
+
+    showSkillUpgradePanel() {
+        document.getElementById("skillUpgradeModal")?.remove();
+
+        const overlay = document.createElement("div");
+        overlay.id = "skillUpgradeModal";
+        overlay.className = "ant-collection-overlay";
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.setAttribute("aria-labelledby", "skill-upgrade-title");
+
+        const panel = document.createElement("section");
+        panel.className = "ant-collection-panel skill-upgrade-panel";
+        const header = document.createElement("header");
+        header.className = "ant-collection-header";
+        const title = document.createElement("h2");
+        title.id = "skill-upgrade-title";
+        title.textContent = "Nível e habilidades";
+        const close = document.createElement("button");
+        close.type = "button";
+        close.className = "ant-collection-close";
+        close.setAttribute("aria-label", "Fechar habilidades");
+        close.textContent = "×";
+        const fechar = () => {
+            overlay.remove();
+            this.syncScreenButtons();
+            document.getElementById("btnSkills")?.focus();
+        };
+        close.addEventListener("click", fechar);
+        header.append(title, close);
+
+        const level = document.createElement("div");
+        level.className = "skill-player-summary";
+        const levelName = document.createElement("strong");
+        levelName.id = "skill-player-level";
+        const points = document.createElement("span");
+        points.id = "skill-player-points";
+        level.append(levelName, points);
+
+        const xpTrack = document.createElement("div");
+        xpTrack.id = "skill-player-xp";
+        xpTrack.className = "skill-player-xp";
+        xpTrack.setAttribute("role", "progressbar");
+        xpTrack.setAttribute("aria-label", "Experiência para o próximo nível");
+        xpTrack.setAttribute("aria-valuemin", "0");
+        xpTrack.setAttribute("aria-describedby", "skill-player-xp-label");
+        xpTrack.appendChild(document.createElement("div"));
+        xpTrack.firstElementChild.id = "skill-player-xp-fill";
+        const xpLabel = document.createElement("span");
+        xpLabel.id = "skill-player-xp-label";
+        xpLabel.className = "skill-player-xp-label";
+
+        const skillList = document.createElement("div");
+        skillList.className = "skill-upgrade-list";
+        for (const skill of SKILLS_UPGRADE) {
+            const skillLevel = NivelDaSkill(skill.id);
+            const unlocked = PisoMaximoAlcancado() >= skill.pisoDesbloqueio;
+            const card = document.createElement("article");
+            card.className = "skill-upgrade-card";
+            const details = document.createElement("div");
+            details.className = "skill-upgrade-details";
+            const name = document.createElement("h3");
+            name.textContent = `${skill.nome} · Nv. ${skillLevel}/${skill.maximo}`;
+            const description = document.createElement("p");
+            description.textContent = DescricaoEfeitoSkill(skill.id, skillLevel);
+            const requirement = document.createElement("span");
+            requirement.className = "skill-upgrade-requirement";
+            requirement.textContent = unlocked
+                ? skillLevel >= skill.maximo
+                    ? "Nível máximo"
+                    : "1 ponto por nível"
+                : `Desbloqueia no andar ${skill.pisoDesbloqueio}`;
+            details.append(name, description, requirement);
+
+            const upgrade = document.createElement("button");
+            upgrade.type = "button";
+            upgrade.className = "skill-upgrade-button";
+            upgrade.textContent = "Melhorar";
+            upgrade.disabled = !unlocked || pontosHabilidade === 0 || skillLevel >= skill.maximo;
+            upgrade.setAttribute("aria-label", `Melhorar ${skill.nome}`);
+            upgrade.addEventListener("click", () => {
+                if (EvoluiSkill(skill.id)) this.showSkillUpgradePanel();
+            });
+            card.append(details, upgrade);
+            skillList.appendChild(card);
+        }
+
+        panel.append(header, level, xpLabel, xpTrack, skillList);
+        overlay.appendChild(panel);
+        overlay.addEventListener("click", event => {
+            if (event.target === overlay) fechar();
+        });
+        overlay.addEventListener("keydown", event => {
+            if (event.key === "Escape") fechar();
+        });
+        document.body.appendChild(overlay);
+        this.updateSkillProgress();
+        this.syncScreenButtons();
+        close.focus();
+    },
+
+    toggleSkillUpgradePanel() {
+        if (document.getElementById("skillUpgradeModal")) {
+            document.getElementById("skillUpgradeModal").remove();
+            this.syncScreenButtons();
+            return;
+        }
+        document.getElementById("antCollectionModal")?.remove();
+        this.closeOtherPanels("skills");
+        this.showSkillUpgradePanel();
+    },
+
     closeOtherPanels(activePanel) {
         const mobileLayout = window.matchMedia(
-            "(max-width: 700px), (max-width: 900px) and (max-height: 520px) and (orientation: landscape), (min-width: 1000px) and (max-width: 1500px) and (min-height: 780px) and (max-height: 950px) and (orientation: landscape)"
+            "(max-width: 700px), (min-width: 701px) and (max-width: 900px) and (orientation: portrait), (max-width: 900px) and (max-height: 520px) and (orientation: landscape), (min-width: 1000px) and (max-width: 1500px) and (min-height: 780px) and (max-height: 950px) and (orientation: landscape)"
         ).matches;
         if (!mobileLayout) return;
 
@@ -214,6 +357,214 @@ const UI = {
     // MENSAGENS
     // =========================
 
+    showAntCollection() {
+        document.getElementById("antCollectionModal")?.remove();
+
+        const overlay = document.createElement("div");
+        overlay.id = "antCollectionModal";
+        overlay.className = "ant-collection-overlay";
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.setAttribute("aria-labelledby", "ant-collection-title");
+
+        const panel = document.createElement("section");
+        panel.className = "ant-collection-panel";
+
+        const header = document.createElement("header");
+        header.className = "ant-collection-header";
+        const title = document.createElement("h2");
+        title.id = "ant-collection-title";
+        title.textContent = "Coleção de formigas";
+        const close = document.createElement("button");
+        close.type = "button";
+        close.className = "ant-collection-close";
+        close.setAttribute("aria-label", "Fechar coleção");
+        close.textContent = "×";
+        const fechar = () => {
+            overlay.remove();
+            this.syncScreenButtons();
+            document.getElementById("btn-Formigas")?.focus();
+        };
+        close.addEventListener("click", fechar);
+        header.append(title, close);
+
+        const intro = document.createElement("p");
+        intro.className = "ant-collection-intro";
+        intro.textContent = FormigasDesbloqueadas()
+            ? "Desde que você alcançou o andar 20, inimigos podem deixar uma formiga (1% por abate), inclusive após o reset. Cada conjunto completo de 5 ativa e acumula seu bônus."
+            : "As formigas começam a aparecer a partir do andar 20. Sua coleção e os bônus desbloqueados são permanentes, inclusive após o reset.";
+
+        const list = document.createElement("div");
+        list.className = "ant-collection-list";
+        for (const formiga of FORMIGAS) {
+            const total = QuantidadeFormigas(formiga.id);
+            const sets = Math.floor(total / 5);
+            const progress = total % 5;
+            const card = document.createElement("article");
+            card.className = "ant-collection-card";
+
+            const marker = this.createAntSprite(formiga.cor);
+            marker.classList.add("ant-collection-marker");
+            const details = document.createElement("div");
+            details.className = "ant-collection-details";
+            const name = document.createElement("h3");
+            name.textContent = `Formigas ${formiga.nome}`;
+            const countRow = document.createElement("div");
+            countRow.className = "ant-collection-count-row";
+            const count = document.createElement("strong");
+            count.className = "ant-collection-count";
+            count.textContent = String(total);
+            count.setAttribute("aria-label", `${total} ${total === 1 ? "formiga coletada" : "formigas coletadas"}`);
+            const countLabel = document.createElement("span");
+            countLabel.className = "ant-collection-count-label";
+            countLabel.textContent = "coletadas";
+            const progressLabel = document.createElement("span");
+            progressLabel.className = "ant-collection-progress-label";
+            progressLabel.textContent = `${progress}/5 no próximo conjunto`;
+            const remaining = document.createElement("strong");
+            remaining.className = "ant-collection-remaining";
+            remaining.textContent = `${5 - progress} para o bônus`;
+            remaining.setAttribute("aria-label", `Faltam ${5 - progress} ${5 - progress === 1 ? "formiga" : "formigas"} para o próximo bônus`);
+            countRow.append(count, countLabel, progressLabel, remaining);
+            const bonus = document.createElement("p");
+            bonus.className = "ant-collection-bonus";
+            bonus.textContent = this.antBonusDescription(formiga.id, sets);
+            details.append(name, countRow, bonus);
+            card.append(marker, details);
+            list.appendChild(card);
+        }
+
+        panel.append(header, intro, list);
+        overlay.appendChild(panel);
+        overlay.addEventListener("click", event => {
+            if (event.target === overlay) {
+                fechar();
+            }
+        });
+        overlay.addEventListener("keydown", event => {
+            if (event.key === "Escape") fechar();
+        });
+        document.body.appendChild(overlay);
+        this.syncScreenButtons();
+        close.focus();
+    },
+
+    antBonusDescription(id, sets) {
+        if (id === "vermelhas") {
+            return `Bônus de dano: +${(sets * 5).toFixed(0)}% (${sets} × 5%).`;
+        }
+        if (id === "amarelas") {
+            return `Bônus de ganho de Gold: +${(sets * 5).toFixed(0)}% (${sets} × 5%).`;
+        }
+        if (id === "marrons") {
+            return `Gold recebido dos baús: +${(sets * 2).toFixed(0)}%. Chance de um baú extra por baú encontrado: +${(sets * 0.01).toFixed(2)}%.`;
+        }
+        if (id === "pretas") {
+            const minutes = Math.floor(LimiteTempoOffline() / 60000);
+            return `Limite de progresso offline: ${Math.floor(minutes / 60)}h ${minutes % 60}min (+2 min por conjunto).`;
+        }
+        return `Limite de baús offline: ${LimiteBausOffline()} (+1 por conjunto).`;
+    },
+
+    toggleAntCollection() {
+        if (document.getElementById("antCollectionModal")) {
+            document.getElementById("antCollectionModal").remove();
+            this.syncScreenButtons();
+            return;
+        }
+        document.getElementById("skillUpgradeModal")?.remove();
+        this.closeOtherPanels("ants");
+        this.showAntCollection();
+    },
+
+    showOfflineRewards(rewards, onClaim) {
+        const overlay = document.createElement("div");
+        overlay.className = "offline-rewards-overlay";
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.setAttribute("aria-labelledby", "offline-rewards-title");
+
+        const panel = document.createElement("section");
+        panel.className = "offline-rewards-panel";
+
+        const title = document.createElement("h2");
+        title.id = "offline-rewards-title";
+        title.textContent = "Ganhos durante sua ausência";
+
+        const seconds = Math.floor(rewards.tempoMs / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+        const duration = hours > 0
+            ? `${hours}h ${remainingMinutes}min`
+            : minutes > 0
+                ? `${minutes} min`
+                : `${Math.max(1, seconds)} s`;
+        const time = document.createElement("p");
+        time.className = "offline-rewards-time";
+        time.textContent = `Tempo considerado: ${duration}${rewards.tempoMs >= LimiteTempoOffline() ? " (limite máximo)" : ""}`;
+
+        const list = document.createElement("div");
+        list.className = "offline-rewards-list";
+        const damageRow = document.createElement("p");
+        damageRow.textContent = `Dano causado aos inimigos: ${FormatGold(rewards.dano)}`;
+        const goldRow = document.createElement("p");
+        goldRow.textContent = `Gold recebido: ${FormatGold(rewards.gold)}`;
+        const xpRow = document.createElement("p");
+        xpRow.textContent = `Experiência recebida: ${rewards.xp ?? Math.min(
+            Number.MAX_SAFE_INTEGER - xpAtual,
+            rewards.abates * XPPorInimigo(andar)
+        )} XP`;
+        list.append(damageRow, goldRow, xpRow);
+
+        const chestsTitle = document.createElement("p");
+        chestsTitle.className = "offline-rewards-chests-title";
+        chestsTitle.textContent = `Baús encontrados: ${rewards.baus.length}`;
+        list.appendChild(chestsTitle);
+
+        if (rewards.baus.length > 0) {
+            const chestList = document.createElement("ul");
+            chestList.className = "offline-rewards-chests";
+            rewards.baus.forEach((bau, index) => {
+                const item = document.createElement("li");
+                const rewardsText = [];
+                if (bau.gold > 0) rewardsText.push(`${FormatGold(bau.gold)} Gold`);
+                if (bau.esmeraldas > 0) {
+                    rewardsText.push(`${bau.esmeraldas} ${bau.esmeraldas === 1 ? "esmeralda" : "esmeraldas"}`);
+                }
+                item.textContent = `Baú ${index + 1}: ${rewardsText.join(" e ")}`;
+                chestList.appendChild(item);
+            });
+            list.appendChild(chestList);
+        }
+        const formigasRecebidas = rewards.formigas ?? FORMIGAS.map(() => 0);
+        const totalFormigas = formigasRecebidas.reduce((total, quantidade) => total + quantidade, 0);
+        const antsRow = document.createElement("p");
+        antsRow.textContent = totalFormigas > 0
+            ? `Formigas adicionadas à coleção: ${formigasRecebidas
+                .map((quantidade, index) => quantidade > 0
+                    ? `${quantidade} ${FORMIGAS[index].nome.toLowerCase()}`
+                    : "")
+                .filter(Boolean)
+                .join(", ")}`
+            : "Formigas encontradas: nenhuma";
+        list.appendChild(antsRow);
+
+        const claim = document.createElement("button");
+        claim.type = "button";
+        claim.className = "btn-Padrao offline-rewards-claim";
+        claim.textContent = "Receber";
+        claim.addEventListener("click", () => {
+            overlay.remove();
+            onClaim();
+        });
+
+        panel.append(title, time, list, claim);
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
+        claim.focus();
+    },
+
     showInfo(mensagem) {
         document.getElementById("Infos").innerHTML = mensagem;
     },
@@ -255,6 +606,74 @@ const UI = {
         label.textContent = type === "gold"
             ? `+${FormatGold(amount)} Gold`
             : `+${amount} ${amount === 1 ? "Esmeralda" : "Esmeraldas"}`;
+        marker.appendChild(label);
+        marker.style.left = `${rect.left + rect.width / 2}px`;
+        marker.style.top = `${rect.top + rect.height * 0.2 - stack * 24}px`;
+        document.body.appendChild(marker);
+        setTimeout(() => marker.remove(), 1100);
+    },
+
+    showXPGain(amount) {
+        const target = document.querySelector(".player");
+        if (!target || amount <= 0) return;
+
+        const rect = target.getBoundingClientRect();
+        const marker = document.createElement("div");
+        const stack = document.querySelectorAll(".reward-number").length;
+        marker.className = "floating-game-text reward-number reward-number--xp";
+        marker.setAttribute("aria-hidden", "true");
+        marker.textContent = `+${amount} XP`;
+        marker.style.left = `${rect.left + rect.width / 2}px`;
+        marker.style.top = `${rect.top + rect.height * 0.2 - stack * 24}px`;
+        document.body.appendChild(marker);
+        setTimeout(() => marker.remove(), 1100);
+    },
+
+    createAntSprite(color) {
+        const sprite = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        sprite.classList.add("ant-sprite");
+        sprite.setAttribute("viewBox", "0 0 48 40");
+        sprite.setAttribute("aria-hidden", "true");
+        sprite.style.setProperty("--ant-color", color);
+
+        const details = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        details.setAttribute("class", "ant-sprite__details");
+        details.setAttribute("d", "M17 17 10 10m9 7 1-9m5 10 7-8M20 23l-8 1m10 1-8 8m11-8 2 9m-1-11 9 5m-11-7 9-2");
+        const abdomen = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+        abdomen.setAttribute("class", "ant-sprite__abdomen");
+        abdomen.setAttribute("cx", "34");
+        abdomen.setAttribute("cy", "21");
+        abdomen.setAttribute("rx", "8");
+        abdomen.setAttribute("ry", "6");
+        const thorax = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        thorax.setAttribute("class", "ant-sprite__thorax");
+        thorax.setAttribute("cx", "23");
+        thorax.setAttribute("cy", "22");
+        thorax.setAttribute("r", "4");
+        const head = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        head.setAttribute("class", "ant-sprite__head");
+        head.setAttribute("cx", "13");
+        head.setAttribute("cy", "20");
+        head.setAttribute("r", "5");
+        sprite.append(details, abdomen, thorax, head);
+        return sprite;
+    },
+
+    showAntReward(formiga, amount = 1) {
+        const target = document.querySelector(".player");
+        if (!target || amount <= 0) return;
+
+        const rect = target.getBoundingClientRect();
+        const marker = document.createElement("div");
+        const stack = document.querySelectorAll(".reward-number").length;
+        marker.className = "floating-game-text reward-number reward-number--ant";
+        marker.setAttribute("aria-hidden", "true");
+        marker.style.setProperty("--ant-color", formiga.cor);
+        marker.appendChild(this.createAntSprite(formiga.cor));
+        const label = document.createElement("span");
+        label.textContent = amount === 1
+            ? `+1 Formiga ${formiga.singular}`
+            : `+${amount} Formigas ${formiga.nome}`;
         marker.appendChild(label);
         marker.style.left = `${rect.left + rect.width / 2}px`;
         marker.style.top = `${rect.top + rect.height * 0.2 - stack * 24}px`;
@@ -509,8 +928,9 @@ const UI = {
             const inimigo = document.getElementById("inimigo" + i);
 
             setTimeout(() => {
-
-                inimigo.style.visibility = "visible";
+                inimigo.style.visibility = window["vidaInimigo" + i] > 0
+                    ? "visible"
+                    : "hidden";
 
             }, 600);
 
@@ -562,20 +982,86 @@ const UI = {
     // UI EXTRAS (BAÚ / ETC)
     // =========================
 
-    spawnChest() {
+    updateGoldenChestProgress() {
+        const tracker = document.getElementById("golden-chest-tracker");
+        const progress = document.getElementById("golden-chest-progress");
+        const fill = document.getElementById("golden-chest-progress-fill");
+        const progressText = document.getElementById("golden-chest-progress-text");
+        const claim = document.getElementById("golden-chest-claim");
+        if (!tracker || !progress || !fill || !progressText || !claim) return;
+
+        const percent = Math.max(0, Math.min(
+            100,
+            progressoBauDourado * 100 / TEMPO_BAU_DOURADO_JOGO
+        ));
+        const minutes = Math.floor(progressoBauDourado / 60000);
+        const seconds = Math.floor(progressoBauDourado / 1000) % 60;
+        const current = `${minutes}:${String(seconds).padStart(2, "0")}`;
+        const ready = bauDouradoPendente === 1;
+        fill.style.width = `${percent}%`;
+        progress.setAttribute("aria-valuenow", String(Math.round(percent)));
+        progress.setAttribute("aria-valuetext", ready
+            ? "Baú dourado pronto para abrir"
+            : `${Math.floor(percent)}% concluído`);
+        progressText.textContent = ready ? "Recompensa disponível!" : `${current} / 20:00`;
+        claim.disabled = !ready;
+        claim.setAttribute("aria-label", ready ? "Abrir baú dourado" : "Baú dourado ainda carregando");
+        tracker.classList.toggle("is-ready", ready);
+    },
+
+    spawnChest(quantity = 1) {
+        this.removeChest();
         const bau = document.createElement("img");
 
         bau.src = "imagens/bau-aventura.svg";
         bau.className = "bau";
         bau.id = "bau";
         bau.onclick = ColetaBau;
+        bau.alt = "";
+        bau.setAttribute("role", "button");
+        bau.setAttribute("tabindex", "0");
+        bau.setAttribute("aria-label", quantity > 1 ? `Coletar um baú; ${quantity} disponíveis` : "Coletar baú");
+        bau.title = quantity > 1 ? `${quantity} baús disponíveis` : "Baú";
+        bau.addEventListener("keydown", event => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                ColetaBau();
+            }
+        });
 
         document.body.appendChild(bau);
+
+        if (quantity > 1) {
+            const count = document.createElement("span");
+            count.id = "bau-count";
+            count.className = "chest-stack-count";
+            count.setAttribute("aria-hidden", "true");
+            count.textContent = String(quantity);
+            document.body.appendChild(count);
+            const posicionaContagem = () => {
+                if (!bau.isConnected || !count.isConnected) return;
+                const rect = bau.getBoundingClientRect();
+                count.style.left = `${rect.right - 18}px`;
+                count.style.top = `${rect.top - 8}px`;
+            };
+            posicionaContagem();
+            if (this.chestResizeHandler) {
+                window.removeEventListener("resize", this.chestResizeHandler);
+            }
+            this.chestResizeHandler = posicionaContagem;
+            window.addEventListener("resize", posicionaContagem);
+            posicionaContagem();
+        }
     },
 
     removeChest() {
+        if (this.chestResizeHandler) {
+            window.removeEventListener("resize", this.chestResizeHandler);
+            this.chestResizeHandler = null;
+        }
         const el = document.getElementById("bau");
-        if (el) document.body.removeChild(el);
+        if (el) el.remove();
+        document.getElementById("bau-count")?.remove();
     },
 
     // =========================
@@ -678,29 +1164,35 @@ const UI = {
     },
 };
 
-let ultimaAnimacaoAtaque = 0;
-let animacoesAtaqueAtivas = 0;
+let animacaoAtaqueAtiva = false;
+
+function posicionaAnimacaoPersonagem(animation, player, scale, verticalAnchor) {
+    const rect = player.getBoundingClientRect();
+    animation.style.left = `${rect.left + rect.width / 2}px`;
+    animation.style.top = `${rect.top + rect.height * verticalAnchor}px`;
+    animation.style.width = `${rect.width * scale}px`;
+    animation.style.height = `${rect.height * scale}px`;
+}
+
+function acompanhaTamanhoPersonagem(animation, player, scale, verticalAnchor) {
+    const atualizarPosicao = () => posicionaAnimacaoPersonagem(animation, player, scale, verticalAnchor);
+    atualizarPosicao();
+    window.addEventListener("resize", atualizarPosicao);
+    return () => window.removeEventListener("resize", atualizarPosicao);
+}
 
 UI.playAttackAnimation = function(inimigoElement) {
-    const agora = Date.now();
-    if (agora - ultimaAnimacaoAtaque < 450) return;
-
     const player = document.querySelector(".player");
-    if (!player) return;
+    if (!player || animacaoAtaqueAtiva) return;
 
-    ultimaAnimacaoAtaque = agora;
-	animacoesAtaqueAtivas++;
-	player.classList.add("is-attacking-animation");
+    animacaoAtaqueAtiva = true;
+    player.classList.add("is-attacking-animation");
     const rect = player.getBoundingClientRect();
     const animation = document.createElement("div");
     animation.className = "game-sprite-animation attack-sprite-animation";
     animation.setAttribute("aria-hidden", "true");
-    animation.style.left = `${rect.left + rect.width / 2}px`;
-    animation.style.top = `${rect.top + rect.height * 0.52}px`;
-    animation.style.width = `${rect.width}px`;
-    animation.style.height = `${rect.height}px`;
+    const pararAcompanharTamanho = acompanhaTamanhoPersonagem(animation, player, 1, 0.52);
 
-    // Determinar direção baseada na posição do inimigo
     let faceRight = true; // padrão: player olha para direita
     if (inimigoElement) {
         const inimigoRect = inimigoElement.getBoundingClientRect();
@@ -709,12 +1201,11 @@ UI.playAttackAnimation = function(inimigoElement) {
         faceRight = inimigoCenterX > playerCenterX;
     }
 
-    if (!faceRight) {
-        animation.style.transform = "translate(-50%, -50%) scaleX(-1)";
-    }
+    if (!faceRight) animation.classList.add("is-facing-left");
 
     const frames = document.createElement("img");
     frames.className = "attack-sprite-frame";
+    frames.dataset.frame = "1";
     frames.alt = "";
     frames.src = "imagens/ataque/frames/ataque-1.png";
     animation.appendChild(frames);
@@ -724,16 +1215,20 @@ UI.playAttackAnimation = function(inimigoElement) {
     let currentFrame = 1;
     const frameTimer = setInterval(() => {
         currentFrame++;
-        if (currentFrame <= 6) frames.src = `imagens/ataque/frames/ataque-${currentFrame}.png`;
+        if (currentFrame <= 6) {
+            frames.dataset.frame = String(currentFrame);
+            frames.src = `imagens/ataque/frames/ataque-${currentFrame}.png`;
+        }
     }, 108); // 650ms / 6 frames ≈ 108ms per frame
 
     const finish = () => {
         if (concluded) return;
         concluded = true;
         clearInterval(frameTimer);
+        pararAcompanharTamanho();
         animation.remove();
-        animacoesAtaqueAtivas = Math.max(0, animacoesAtaqueAtivas - 1);
-        if (animacoesAtaqueAtivas === 0) player.classList.remove("is-attacking-animation");
+        animacaoAtaqueAtiva = false;
+        player.classList.remove("is-attacking-animation");
     };
     setTimeout(finish, 650);
 };
@@ -742,14 +1237,10 @@ UI.playEscapeAnimation = function() {
     const player = document.querySelector(".player");
     if (!player) return Promise.resolve();
 
-    const rect = player.getBoundingClientRect();
     const animation = document.createElement("div");
     animation.className = "game-sprite-animation escape-sprite-animation";
     animation.setAttribute("aria-hidden", "true");
-    animation.style.left = `${rect.left + rect.width / 2}px`;
-    animation.style.top = `${rect.top + rect.height * 0.42}px`;
-    animation.style.width = `${rect.width}px`;
-    animation.style.height = `${rect.height}px`;
+    const pararAcompanharTamanho = acompanhaTamanhoPersonagem(animation, player, 1.25, 0.48);
     const frames = document.createElement("img");
     frames.className = "escape-sprite-frame";
     frames.alt = "";
@@ -763,18 +1254,19 @@ UI.playEscapeAnimation = function() {
         let currentFrame = 1;
         const frameTimer = setInterval(() => {
             currentFrame++;
-            if (currentFrame <= 7) frames.src = `imagens/fugindo/frames/fuga-${currentFrame}.png`;
+            if (currentFrame <= 8) frames.src = `imagens/fugindo/frames/fuga-${currentFrame}.png`;
         }, 180);
         const finish = () => {
             if (concluded) return;
             concluded = true;
             clearInterval(frameTimer);
+            pararAcompanharTamanho();
             animation.remove();
             player.classList.remove("is-escaping");
             resolve();
         };
         animation.addEventListener("animationend", finish, { once: true });
-        setTimeout(finish, 1400);
+        setTimeout(finish, 1440);
     });
 };
 

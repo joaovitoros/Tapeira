@@ -91,7 +91,18 @@ function New-TransparentEscapeFrames {
                         if ($color.R -gt 210 -and $color.G -lt 110 -and $color.B -gt 170) {
                             $singleFrame.SetPixel($destinationLeft + $x, $y, [System.Drawing.Color]::Transparent)
                         } else {
-                            $singleFrame.SetPixel($destinationLeft + $x, $y, $color)
+                            $destinationX = $destinationLeft + $x
+                            $isAdjacentPoseFragment = switch ($frame) {
+                                2 { ($destinationX -lt 70 -and $y -gt 300) -or ($destinationX -gt 265 -and $y -lt 240) }
+                                3 { ($destinationX -lt 120 -and $y -gt 280) -or ($destinationX -gt 350 -and $y -gt 180) }
+                                4 { $destinationX -lt 75 -and $y -gt 280 }
+                                default { $false }
+                            }
+                            if ($isAdjacentPoseFragment) {
+                                $singleFrame.SetPixel($destinationX, $y, [System.Drawing.Color]::Transparent)
+                            } else {
+                                $singleFrame.SetPixel($destinationX, $y, $color)
+                            }
                         }
                     }
                 }
@@ -115,16 +126,17 @@ New-TransparentSpriteStrip `
     -Destination (Join-Path $projectRoot "imagens/fugindo/fugindo-sprites.png") `
     -Frames 7 -CropTop 160 -CropHeight 430 -FrameWidth 320
 
-# The escape sheet has poses with different widths, so their frame boundaries
-# are explicitly defined instead of evenly splitting the full image.
+# The escape sheet has eight poses with different widths. Keep each crop inside
+# its pose so adjacent characters do not leak into the animation frame.
 $escapeFrameBounds = @(
     @(0, 280),
-    @(300, 330),
-    @(620, 300),
-    @(930, 300),
-    @(1220, 320),
-    @(1530, 320),
-    @(1840, 332)
+    @(285, 290),
+    @(575, 365),
+    @(830, 321),
+    @(1120, 278),
+    @(1398, 244),
+    @(1657, 243),
+    @(1919, 253)
 )
 New-TransparentEscapeFrames `
     -Source (Join-Path $projectRoot "imagens/fugindo/fugindo.png") `

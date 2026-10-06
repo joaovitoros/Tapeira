@@ -179,14 +179,18 @@ function FormatarGold(valor) {
  * - FormatGold is not defined
  */
 
-function AddGold(valor) {
+function AddGold(valor, aplicaBonusFormigas = true) {
     if (!(gold instanceof GoldNumber)) {
         gold = new GoldNumber(gold);
     }
 
-    gold.add(valor);
+    const valorFinal = aplicaBonusFormigas && Number(valor) > 0
+        ? Number(valor) * MultiplicadorGoldFormigas()
+        : valor;
+    gold.add(valorFinal);
 
     AtualizaGoldTela();
+    return valorFinal;
 }
 
 function RemoveGold(valor) {
@@ -207,12 +211,16 @@ function TemGold(valor) {
     return gold.compare(valor) >= 0;
 }
 
-function AddTotalGold(valor) {
+function AddTotalGold(valor, aplicaBonusFormigas = true) {
     if (!(totalGold instanceof GoldNumber)) {
         totalGold = new GoldNumber(totalGold);
     }
 
-    totalGold.add(valor);
+    const valorFinal = aplicaBonusFormigas && Number(valor) > 0
+        ? Number(valor) * MultiplicadorGoldFormigas()
+        : valor;
+    totalGold.add(valorFinal);
+    return valorFinal;
 }
 
 function FormatGold(valor) {

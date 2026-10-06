@@ -70,6 +70,8 @@ function AlternaPausa() {
 }
 
 function AbrirConfirmacaoSaida() {
+    if (recompensasOfflinePendentes) return;
+
     if (!jogoPausado) {
         stopPlayerAttack();
         AtualizaEstadoPausa(true);

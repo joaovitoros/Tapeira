@@ -1,13 +1,11 @@
-function Bater(inimigo, validaDano) {
-	if (jogoPausado) return;
+function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
+	if (jogoPausado || fugaEmAndamento) return;
 
 	const inimigoElement = document.getElementById("inimigo" + inimigo);
-	// gatilho da animação de ataque removido (imagens em imagens/ataque/frames mantidas)
+	if (!inimigoElement) return;
 
 	var dano;
 	var danoCritico;
-	var goldAux;
-	var av;
 
 	if (validaDano) {
 		dano = danoJogador;
@@ -17,6 +15,10 @@ function Bater(inimigo, validaDano) {
 		danoCritico = danoCritJogador * danoComp1;
 	}
 
+	const ataqueJogador = validaDano && aplicaNovasHabilidades;
+	const vidaAnterior = window["vidaInimigo" + inimigo];
+	if (vidaAnterior <= 0) return;
+
 	if (missaoAtual == 2) {
 		MissaoGolpes();
 	}
@@ -24,69 +26,113 @@ function Bater(inimigo, validaDano) {
 	const critico = DanoCritico(danoCritico);
 	if (critico) {
 		dano = danoCritico;
-		ChamaSom('audio8');
-	} else {
-		ChamaSom('audio3');
+	}
+	dano *= MultiplicadorDanoFormigas();
+
+	if (validaDano) UI.playAttackAnimation(inimigoElement);
+
+	const danoBaseAtaque = dano;
+	let chainTarget = null;
+	if (ataqueJogador && ataquesCorrenteEletrica > 0) {
+		const targetRect = inimigoElement.getBoundingClientRect();
+		const targetCenterX = targetRect.left + targetRect.width / 2;
+		const targetCenterY = targetRect.top + targetRect.height / 2;
+		let nearestDistance = Infinity;
+
+		for (let candidate = 1; candidate <= 4; candidate++) {
+			if (candidate === inimigo || window["vidaInimigo" + candidate] <= 0) continue;
+			const candidateElement = document.getElementById("inimigo" + candidate);
+			if (!candidateElement || getComputedStyle(candidateElement).visibility !== "visible") continue;
+
+			const rect = candidateElement.getBoundingClientRect();
+			const distance = Math.hypot(
+				rect.left + rect.width / 2 - targetCenterX,
+				rect.top + rect.height / 2 - targetCenterY
+			);
+			if (distance < nearestDistance) {
+				nearestDistance = distance;
+				chainTarget = { id: candidate, element: candidateElement };
+			}
+		}
+
+		if (!chainTarget) {
+			dano *= 1 + (10 + NivelDaSkill("electric") * 2) / 100;
+		}
+		ChamaSom("audio5");
 	}
 
-	let vidaAtual = window["vidaInimigo" + inimigo];
-	const vidaAnterior = vidaAtual;
+	if (ataqueJogador && ataquesBonusGold > 0) {
+		const bonusGold = ((andar * mulGold) + 1) * ((25 + NivelDaSkill("gold") * 5) / 100);
+		const goldRecebido = AddGold(bonusGold);
+		AddTotalGold(goldRecebido, false);
+		UI.showCurrencyReward("gold", goldRecebido);
+	}
 
+	if (ataqueJogador && (ataquesCorrenteEletrica > 0 || ataquesBonusGold > 0)) {
+		ConsomeAtaqueHabilidades();
+	}
+
+	ChamaSom(critico ? "audio8" : "audio3");
+	let vidaAtual = vidaAnterior - dano;
+	window["vidaInimigo" + inimigo] = vidaAtual;
+	UI.showDamageNumber(inimigoElement, dano, critico);
+
+	if (chainTarget) {
+		const chainDamage = danoBaseAtaque * ((20 + NivelDaSkill("electric") * 5) / 100);
+		const chainHealth = Math.max(0, window["vidaInimigo" + chainTarget.id] - chainDamage);
+		window["vidaInimigo" + chainTarget.id] = chainHealth;
+		UI.showDamageNumber(chainTarget.element, chainDamage, false);
+		animarEfeitoEletrico(chainTarget.element);
+		if (chainHealth > 0) {
+			animarImpacto(chainTarget.element, false, true);
+		} else {
+			animarMorte(chainTarget.element);
+			chainTarget.element.style.visibility = "hidden";
+		}
+	}
 	if (vidaAtual > 0) {
-		vidaAtual -= dano;
-		window["vidaInimigo" + inimigo] = vidaAtual;
-	}
-
-	if (vidaAnterior > 0 && inimigoElement) {
-		UI.showDamageNumber(inimigoElement, dano, critico);
-	}
-
-	if (vidaAtual > 0 && inimigoElement) {
 		animarImpacto(inimigoElement, critico);
 	}
-
-	// inimigo morreu
 	if (vidaAtual <= 0) {
+		animarMorte(inimigoElement);
+	}
 
-		if (inimigoElement) {
-			animarMorte(inimigoElement);
-			inimigoElement.style.visibility = "hidden";
-		}
-			
+	const derrotados = [];
+	if (vidaAtual <= 0) derrotados.push(inimigo);
+	if (chainTarget && window["vidaInimigo" + chainTarget.id] <= 0) {
+		derrotados.push(chainTarget.id);
+	}
 
-		ChamaSom('audio2');
-
-		av = Avancar();
-
-		inimigosDerrotados += av;
-		totalDerrotados += av;
+	let formigaObtida = false;
+	for (const inimigoDerrotado of derrotados) {
+		ChamaSom("audio2");
+		formigaObtida = RegistraDropFormiga() || formigaObtida;
+		const avancoAbates = Avancar();
+		GanhaXP(avancoAbates, andar);
+		inimigosDerrotados += avancoAbates;
+		totalDerrotados += avancoAbates;
 		numInimigosTela--;
-		if (inimigosDerrotados >= qtdInimigosAndar) {
-			UI.showObjectiveComplete();
-		} else {
-			UI.updateObjective();
-		}
-
-		let recompensaGold = ((andar * mulGold) * av)+1;
-
-		AddGold(recompensaGold);
-		AddTotalGold(recompensaGold);
-		UI.showCurrencyReward("gold", recompensaGold);
-
-		if (missaoAtual == 3) {
-			MissaoCaca();
-		}
-
-		if (missaoAtual == 1) {
-			goldAux = (andar * mulGold);
-			MissaoColetaGold(goldAux);
-		}
-
 		qtdCarregaHabilidade++;
 		VerificaHabilidade();
+		RegistrarAbateHabilidades();
+
+		const recompensaGold = ((andar * mulGold) * avancoAbates) + 1;
+		const goldRecebido = AddGold(recompensaGold);
+		AddTotalGold(goldRecebido, false);
+		UI.showCurrencyReward("gold", goldRecebido);
+
+		if (missaoAtual == 3) MissaoCaca();
+		if (missaoAtual == 1) MissaoColetaGold(andar * mulGold);
+	}
+
+	if (inimigosDerrotados >= qtdInimigosAndar) {
+		UI.showObjectiveComplete();
+	} else {
+		UI.updateObjective();
 	}
 
 	DesceVida(inimigo);
+	if (chainTarget) DesceVida(chainTarget.id);
 
 	// UI separada (agora ideal mover pra ui.js depois)
 	if (typeof MostraStatus === "function") MostraStatus();
@@ -97,7 +143,7 @@ function Bater(inimigo, validaDano) {
 	UI.updateObjective();
 
 	// nova wave
-	if (numInimigosTela == 0) {
+	if (numInimigosTela <= 0) {
 		RemoverInimigos();
 		CarregarStatus();
 		CriarInimigos();
@@ -120,9 +166,9 @@ function Bater(inimigo, validaDano) {
 			let bonusAndar =
 				((andar * mulGold) + (vidaAndar * mulGold) * mulGoldAvanco);
 
-			AddGold(bonusAndar);
-			AddTotalGold(bonusAndar);
-			UI.showCurrencyReward("gold", bonusAndar);
+			const goldRecebido = AddGold(bonusAndar);
+			AddTotalGold(goldRecebido, false);
+			UI.showCurrencyReward("gold", goldRecebido);
 
 			const elAndar = document.getElementById("contAndar");
 			const elTitulo = document.getElementById("titulo");
@@ -154,6 +200,10 @@ function Bater(inimigo, validaDano) {
 		tempoAvancoInimigos = 120;
 		UI.render();
 	}
+	AtualizaHabilidadesCombate();
+	if (formigaObtida && !AutoSaveLocal()) {
+		UI.showInfo("A formiga foi coletada, mas não foi possível salvar a coleção localmente.");
+	}
 }
 
 function DanoAutomatico(indentificador, habilidade) {
@@ -177,7 +227,7 @@ function DanoAutomatico(indentificador, habilidade) {
 		if (andar < 5) {
 
 			if (vidaInimigo1 > 0) {
-				Bater(1, indentificador);
+				Bater(1, indentificador, !habilidade);
 			} else {
 				CarregarStatus();
 				CriarInimigos();
@@ -186,31 +236,31 @@ function DanoAutomatico(indentificador, habilidade) {
 		} else if (andar >= 5 && andar <= 14) {
 
 			if (vidaInimigo2 > 0) {
-				Bater(2, indentificador);
+				Bater(2, indentificador, !habilidade);
 			} else {
-				Bater(1, indentificador);
+				Bater(1, indentificador, !habilidade);
 			}
 
 		} else if (andar >= 15 && andar <= 29) {
 
 			if (vidaInimigo3 > 0) {
-				Bater(3, indentificador);
+				Bater(3, indentificador, !habilidade);
 			} else if (vidaInimigo2 > 0) {
-				Bater(2, indentificador);
+				Bater(2, indentificador, !habilidade);
 			} else {
-				Bater(1, indentificador);
+				Bater(1, indentificador, !habilidade);
 			}
 
 		} else if (andar >= 30) {
 
 			if (vidaInimigo4 > 0) {
-				Bater(4, indentificador);
+				Bater(4, indentificador, !habilidade);
 			} else if (vidaInimigo3 > 0) {
-				Bater(3, indentificador);
+				Bater(3, indentificador, !habilidade);
 			} else if (vidaInimigo2 > 0) {
-				Bater(2, indentificador);
+				Bater(2, indentificador, !habilidade);
 			} else {
-				Bater(1, indentificador);
+				Bater(1, indentificador, !habilidade);
 			}
 		}
 
@@ -231,17 +281,27 @@ function Avancar() {
 	}
 }
 
-function animarImpacto(el, critico) {
+function animarImpacto(el, critico, eletrico = false) {
 	const rect = el.getBoundingClientRect();
-	const recuo = rect.left + rect.width / 2 < window.innerWidth / 2 ? -12 : 12;
+	const recuoBase = eletrico ? 18 : 12;
+	const recuo = rect.left + rect.width / 2 < window.innerWidth / 2 ? -recuoBase : recuoBase;
 	const facing = getComputedStyle(el).getPropertyValue("--facing").trim() || "1";
-
-	el.animate([
+	const frames = [
 		{ transform: `translateX(0) scaleX(${facing}) scaleY(1) rotate(0)` },
-		{ transform: `translateX(${recuo}px) scaleX(${facing}) scaleY(0.82) rotate(${recuo / 4}deg)`, offset: 0.35 },
+		{
+			transform: `translateX(${recuo}px) scaleX(${facing}) scaleY(${eletrico ? 0.76 : 0.82}) rotate(${recuo / 4}deg)`,
+			offset: 0.35
+		},
 		{ transform: `translateX(0) scaleX(${facing}) scaleY(1) rotate(0)` }
-	], {
-		duration: 260,
+	];
+
+	if (eletrico) {
+		frames[1].filter = "brightness(1.8) saturate(2.2) hue-rotate(145deg)";
+		frames[2].filter = "brightness(1) saturate(1) hue-rotate(0deg)";
+	}
+
+	el.animate(frames, {
+		duration: eletrico ? 390 : 260,
 		easing: "ease-out"
 	});
 
@@ -266,6 +326,21 @@ function animarImpacto(el, critico) {
 	impacto.style.top = rect.top + rect.height * 0.62 + "px";
 	document.body.appendChild(impacto);
 	impacto.addEventListener("animationend", () => impacto.remove(), { once: true });
+}
+
+function animarEfeitoEletrico(el) {
+	const rect = el.getBoundingClientRect();
+	const effect = document.createElement("img");
+	effect.className = "enemy-electric-impact";
+	effect.src = "imagens/efeito-eletrico.svg";
+	effect.alt = "";
+	effect.setAttribute("aria-hidden", "true");
+	effect.style.left = `${rect.left + window.scrollX + rect.width * 0.08}px`;
+	effect.style.top = `${rect.top + window.scrollY + rect.height * 0.04}px`;
+	effect.style.width = `${rect.width * 0.84}px`;
+	effect.style.height = `${rect.height * 0.84}px`;
+	document.body.appendChild(effect);
+	effect.addEventListener("animationend", () => effect.remove(), { once: true });
 }
 
 function DanoCritico(critico) {
