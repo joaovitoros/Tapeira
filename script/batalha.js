@@ -64,7 +64,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	}
 
 	if (ataqueJogador && ataquesBonusGold > 0) {
-		const bonusGold = ((andar * mulGold) + 1) * ((25 + NivelDaSkill("gold") * 5) / 100);
+		const bonusGold = ((andar * mulGold) + 1) * ((50 + NivelDaSkill("gold") * 5) / 100);
 		const goldRecebido = AddGold(bonusGold);
 		AddTotalGold(goldRecebido, false);
 		UI.showCurrencyReward("gold", goldRecebido);

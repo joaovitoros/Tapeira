@@ -543,7 +543,7 @@ function DescricaoEfeitoSkill(id, nivel = NivelDaSkill(id)) {
 	if (id === "electric") {
 		return `Dano encadeado: ${25 + nivel * 5}% · bônus sem alvo próximo: ${10 + nivel * 2}%.`;
 	}
-	if (id === "gold") return `Gold extra por ataque: ${25 + nivel * 5}% (+5% por nível).`;
+	if (id === "gold") return `Gold extra por ataque: ${50 + nivel * 5}% (+5% por nível).`;
 	return `Pausa da fuga: ${10 + nivel * 2} s (+2 s por nível).`;
 }
 
