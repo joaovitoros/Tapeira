@@ -4557,20 +4557,31 @@ input:focus-visible {
 		touch-action: manipulation;
 	}
 
+	/* Neste intervalo a linha de botões ocupa a faixa inferior (#container-opcoes em
+	   bottom: 12px com botões de 50px, ou seja, topo em y = altura - 62). A barra de
+	   carga e a espada da habilidade de dano precisam ficar ACIMA dessa linha
+	   (bottom: 70px) e alinhadas à base (12rem/15rem), senão ficam por baixo dos
+	   botões (z-index) e impossíveis de clicar. O painel de skills de combate sobe
+	   junto, mantendo a ordem base: barra -> espada -> painel. */
 	#BaraQTDHab1Borda {
 		right: auto;
-		bottom: 16px;
-		left: 430px;
+		bottom: 70px;
+		left: 12rem;
 		width: 36px;
 		height: 78px;
 	}
 
 	.habilidade1 {
 		right: auto;
-		bottom: 16px;
-		left: 476px;
+		bottom: 70px;
+		left: 15rem;
 		width: 58px;
 		height: 58px;
+	}
+
+	.skill-unlock-panel {
+		bottom: 70px;
+		left: 22rem;
 	}
 
 	#container-Loja,
