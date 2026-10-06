@@ -250,7 +250,7 @@ function CompraDCrit(){
 
 		gold.add(-N(precoDCrit));
 
-		multiplicadorMaximoDanoCritico += 0.05;
+		multiplicadorMaximoDanoCritico += 0.1;
 		sobeDCrit = N(sobeDCrit) * 1.025;
 		danoCritJogador = N(danoCritJogador) + ((N(danoJogador)/2) * (2 + N(sobeDCrit)));
 		LimitaDanoCritico();
