@@ -1,0 +1,72 @@
+{
+  "name": "tapeira",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TAPeira - uma aventura sob a montanha",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start:pc": "electron .",
+    "build:pc": "electron-builder --win nsis",
+    "prepare:web": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-animation-sprites.ps1 && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-web.ps1 && esbuild scripts/android-save-entry.js --bundle --platform=browser --format=iife --outfile=www/script/android-save.bundle.js",
+    "android:init": "npm run prepare:web && cap add android && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-android-icons.ps1",
+    "android:sync": "npm run prepare:web && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-android-icons.ps1 && cap sync android",
+    "android:debug": "npm run android:sync && cd android && gradlew.bat assembleDebug",
+    "android:release": "npm run android:sync && cd android && gradlew.bat assembleRelease",
+    "android:open": "cap open android"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^7.4.3",
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12",
+    "esbuild": "^0.25.5"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/filesystem": "^7.1.4",
+    "@capacitor/share": "^7.0.2",
+    "playwright": "^1.63.0"
+  },
+  "build": {
+    "appId": "com.tapeira.desktop",
+    "productName": "TAPeira",
+    "asar": true,
+    "directories": {
+      "output": "dist/pc"
+    },
+    "files": [
+      "index.html",
+      "Caverna.html",
+      "css/**/*",
+      "imagens/**/*",
+      "media/**/*",
+      "script/**/*",
+      "desktop/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "assets/tapeira.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "installerIcon": "assets/tapeira.ico",
+      "uninstallerIcon": "assets/tapeira.ico",
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "TAPeira"
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

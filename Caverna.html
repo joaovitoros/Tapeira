@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title id="titulo"></title>
+	<link rel="stylesheet" href="css/estilos.css">
+	<script src="script/break_infinity.min.js"></script>
+	<script src="script/sistema.js"></script>
+	<script src="script/gold.js"></script>
+	<script src="script/keymap.js"></script>
+	<script src="script/script.js"></script>
+	<script src="script/ui.js"></script>
+	<script src="script/batalha.js"></script>
+	<script src="script/loja.js"></script>
+	<script src="script/FileSaver.js"></script>
+</head>
+
+<body class="Batalha" onload="PreCarregamento()">
+
+	<div id="game-root">
+
+		<audio id="audio1" src="media/Red Carpet Wooden Floor.mp3"></audio>
+		<audio id="audio2" src="media/crunchy.wav"></audio>
+		<audio id="audio3" src="media/miss.wav"></audio>
+		<audio id="audio4" src="media/open.wav"></audio>
+		<audio id="audio5" src="media/electric.wav"></audio>
+		<audio id="audio6" src="media/cash_register.wav"></audio>
+		<audio id="audio7" src="media/wood1.wav"></audio>
+		<audio id="audio8" src="media/switch1.wav"></audio>
+
+		<div id="container-AndarManter">
+			<div id="container-Andar">
+				<label>Andar: </label>
+				<div class="contAndar" id="contAndar"></div>
+			</div>
+
+			<div id="container-ManterAndar">
+				<label id="lblManter" for="manterAndar">
+					<span class="manter-label-desktop">Manter no andar:</span>
+					<span class="manter-label-mobile" aria-hidden="true">Manter:</span>
+				</label>
+				<input type="checkbox" id="manterAndar" aria-label="Manter no andar" onclick="MostraInfo('Só pode ser ativado a partir do andar 5')">
+			</div>
+
+			<div>
+				<input type="button" value="Voltar andar" id="btnAndar" class="btn-Padrao" onclick="VoltaAndar()">
+			</div>
+		</div>
+
+		<div id="container-Fugir">
+			<span class="fuga-clock" aria-hidden="true"></span>
+			<div class="fuga-label">
+				<span class="fuga-label-desktop">Tempo para fugir</span>
+				<span class="fuga-label-mobile" aria-hidden="true">Fuga em</span>
+			</div>
+			<div class="contTempo" id="contTempo" role="timer" aria-label="Tempo restante para a fuga dos inimigos"></div>
+			<button type="button" id="btnPause" class="pause-button" aria-label="Pausar jogo"
+				title="Pausar jogo" onclick="AlternaPausa()">
+				<span class="pause-button-icon" aria-hidden="true">Ⅱ</span>
+				<span class="pause-button-label">Pausar</span>
+			</button>
+		</div>
+
+		<div id="container-GoldEsmeraldas">
+			<div id="container-Gold">
+				<div class="contGoldlbl">Gold:</div>
+				<div class="contGold" id="contGold"></div>
+			</div>
+
+			<div id="container-Esmeraldas">
+				<div class="contEmeraldaslbl">Esmeraldas:</div>
+				<div class="contEmeraldas" id="contEmeraldas"></div>
+			</div>
+		</div>
+
+		<div id="container-DerrotouResta">
+			<div id="container-TotalAbatidos">
+				<div class="contDerrotadoslbl">Total Abatidos:</div>
+				<div class="contDerrotados" id="contDerrotados"></div>
+			</div>
+		</div>
+
+		<div id="container-Metas">
+			<div id="container-Objetivo" aria-live="polite">
+				<div id="objetivoTitulo">OBJETIVO DO ANDAR</div>
+				<div id="objetivoDescricao">Limpe a caverna</div>
+				<div id="objetivoProgresso"
+					role="progressbar"
+					aria-label="Progresso para limpar a caverna"
+					aria-valuemin="0"
+					aria-valuemax="1"
+					aria-valuenow="0">
+					<div id="objetivoProgressoPreenchido"></div>
+				</div>
+				<div id="objetivoContagem"></div>
+			</div>
+
+			<div id="container-Missao" aria-live="polite" hidden>
+				<div id="missaoTitulo">MISSÃO ATUAL</div>
+				<div id="missaoDescricao"></div>
+				<div id="missaoProgresso"
+					role="progressbar"
+					aria-label="Progresso da missão"
+					aria-valuemin="0"
+					aria-valuemax="1"
+					aria-valuenow="0">
+					<div id="missaoProgressoPreenchido"></div>
+				</div>
+				<div id="missaoContagem"></div>
+			</div>
+		</div>
+
+		<div id="container-Infos">
+			<label id="lblInf">Infos:</label>
+			<textarea type="textarea" id="Infos" readonly="True" rows="5" cols="30"></textarea>
+		</div>
+
+		<img src="imagens/player.png" class="player">
+		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo1" id="inimigo1" onclick="Bater(1, true)">
+		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo2" id="inimigo2" onclick="Bater(2, true)">
+		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo3" id="inimigo3" onclick="Bater(3, true)">
+		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo4" id="inimigo4" onclick="Bater(4, true)">
+
+		<div id="container-Habilidades">
+			<div id="BaraQTDHab1Borda">
+				<div id="BaraQTDHab1">
+					<div id="QTDTempoHab1"></div>
+				</div>
+			</div>
+
+		</div>
+
+		<div id="container-opcoes">
+			<div id="container-Botoes">
+				<button type="button" id="btnStatus" class="btn-Padrao screen-nav-button screen-nav-button--status"
+					aria-controls="DivStatus" aria-expanded="false" onclick="SobeStatus()">
+					<span class="screen-nav-icon screen-nav-icon--status" aria-hidden="true"></span>
+					<span>Status</span>
+				</button>
+				<button type="button" id="btn-Loja" class="btn-Padrao screen-nav-button screen-nav-button--shop"
+					aria-controls="container-Loja" aria-expanded="false" onclick="AbreLoja()">
+					<span class="screen-nav-icon screen-nav-icon--shop" aria-hidden="true"></span>
+					<span>Loja</span>
+				</button>
+				<button type="button" id="btn-Config" class="btn-Padrao screen-nav-button screen-nav-button--config"
+					aria-controls="container-SalvaCarrega" aria-expanded="false" onclick="AbreConfig()">
+					<span class="screen-nav-icon screen-nav-icon--config" aria-hidden="true"></span>
+					<span>Config</span>
+				</button>
+			</div>
+
+			<div id="container-Status">
+
+				<div id="DivStatus" style="visibility:hidden">
+
+					<table id="TabStatus">
+						<caption>Status</caption>
+
+						<tbody id="StatusBody">
+
+						</tbody>
+					</table>
+
+				</div>
+
+			</div>
+
+
+
+			<div id="container-SalvaCarrega" style="visibility:hidden">
+				<div id="divSalvar">
+					<div class="tituloConfig">Salvar Jogo</div>
+					<div class="save-help">Exporte uma cópia JSON antes de atualizar ou para levar seu progresso a outro dispositivo.</div>
+
+					<input type="button" value="Salvar Arquivo" id="btnSalvarJogo" onclick="Salvar()" />
+					<input type="button" value="Salvar e voltar ao menu" id="btnSalvarVoltarMenu"
+						onclick="SalvarEVoltarMenu()" />
+					<input type="button" value="Apagar Auto Save" id="btnApagarSave" onclick="LimparAutoSave()" />
+				</div>
+
+				<div id="divCarregar">
+					<div class="tituloConfig">Carregar Save</div>
+					<div class="save-help">Selecione um arquivo JSON exportado pelo TAPeira. Saves antigos continuam compatíveis.</div>
+					<input type="file" id="txtfiletoread" accept=".json,application/json" onchange="CarregarArquivo(this)" aria-label="Importar save JSON" />
+					<div id="filecontents"> </div>
+				</div>
+				<div id="divVolume">
+
+					<div class="tituloConfig">
+						Volume
+					</div>
+
+					<div id="divVolumeBotoes">
+						<div id="volumeRotulo">
+							<label for="volumeControle">Volume geral</label>
+							<output id="volumeValor" for="volumeControle">5%</output>
+						</div>
+						<input type="range" id="volumeControle" min="0" max="100" step="1" value="5"
+							aria-label="Volume geral do jogo" oninput="AtualizaVolume(this.value)" />
+					</div>
+
+				</div>
+				<div id="divDesktopDisplay" hidden>
+					<div class="tituloConfig">Tela (PC)</div>
+					<label class="desktop-setting-row" for="resolucaoJogo">
+						<span>Resolução da janela</span>
+						<select id="resolucaoJogo" onchange="AtualizaConfiguracaoTela()">
+							<option value="1024x768">1024 × 768</option>
+							<option value="1280x800">1280 × 800</option>
+							<option value="1366x768">1366 × 768</option>
+							<option value="1600x900">1600 × 900</option>
+							<option value="1920x1080">1920 × 1080</option>
+						</select>
+					</label>
+					<label class="desktop-setting-row desktop-fullscreen-row" for="telaCheiaJogo">
+						<span>Tela cheia</span>
+						<input type="checkbox" id="telaCheiaJogo" onchange="AtualizaConfiguracaoTela()" />
+					</label>
+					<div class="save-help" id="desktopDisplayStatus" role="status"></div>
+				</div>
+			</div>
+
+		</div>
+
+		<div id="container-Loja">
+			<div id="Loja" style="visibility:hidden">
+				<table id="TabLoja">
+					<caption>Loja</caption>
+					<thead>
+						<tr>
+							<th>Item</th>
+							<th>Preço</th>
+							<th>Nivel</th>
+							<th>Comprar</th>
+							<th>
+								<button type="button" class="btnLojaE" onclick="LojaEsmeralda()">&gt;</button>
+							</th>
+						</tr>
+					</thead>
+					<tr>
+						<td>+Dano</td>
+						<td align="center">
+							<div id="precoDano"></div>
+						</td>
+						<td align="center">
+							<div id="lvlDano"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraDano()"></td>
+					</tr>
+
+					<tr>
+						<td>Chance Bau</td>
+						<td align="center">
+							<div id="precoBau"></div>
+						</td>
+						<td align="center">
+							<div id="lvlBau"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraBau()"></td>
+					</tr>
+
+					<tr>
+						<td>- Tempo bater(Espaço)</td>
+						<td align="center">
+							<div id="precoBEspaco"></div>
+						</td>
+						<td align="center">
+							<div id="lvlBEspaco"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraBEspaco()"></td>
+					</tr>
+
+					<tr>
+						<td>Mult Gold</td>
+						<td align="center">
+							<div id="precoGold"></div>
+						</td>
+						<td align="center">
+							<div id="lvlGold"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraGold()"></td>
+					</tr>
+
+					<tr>
+						<td>Avanço Rapido</td>
+						<td align="center">
+							<div id="precoAvan"></div>
+						</td>
+						<td align="center">
+							<div id="lvlAvan"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraAvanco()"></td>
+					</tr>
+
+					<tr>
+						<td>Dano critico</td>
+						<td align="center">
+							<div id="precoDCrit"></div>
+						</td>
+						<td align="center">
+							<div id="lvlDCrit"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraDCrit()"></td>
+					</tr>
+
+					<tr>
+						<td>Subtrair vida Mug</td>
+						<td align="center">
+							<div id="precoVidaInimigo"></div>
+						</td>
+						<td align="center">
+							<div id="lvlSubVida"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraSubVida()"></td>
+					</tr>
+
+					<tr>
+						<td>Chance critico</td>
+						<td align="center">
+							<div id="precoCCrit"></div>
+						</td>
+						<td align="center">
+							<div id="lvlCCrit"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraCCrit()"></td>
+					</tr>
+
+					<tr>
+						<td>Quantidade Avanço Rapido</td>
+						<td align="center">
+							<div id="precoQTDAvan"></div>
+						</td>
+						<td align="center">
+							<div id="lvlQTDAvan"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraQTDAvanco()"></td>
+					</tr>
+
+				</table>
+
+
+			</div>
+			<div id="LojaEsm" style="visibility:hidden">
+				<table id="TabLojaEsm">
+					<caption>Loja de Esmeralda</caption>
+					<thead>
+						<tr>
+							<th>Bonus</th>
+							<th>Preço</th>
+							<th>Nivel</th>
+							<th>Comprar</th>
+							<th>
+								<button type="button" class="btnLojaE" onclick="LojaEsmeralda()">&lt;</button>
+							</th>
+						</tr>
+					</thead>
+					<tr>
+						<td>Companheiro 1(DPS)</td>
+						<td align="center">
+							<div id="precoComp1"></div>
+						</td>
+						<td align="center">
+							<div id="lvlComp1"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraComp1()"></td>
+					</tr>
+
+					<tr>
+						<td>Avanço Gold</td>
+						<td align="center">
+							<div id="precoAvGold"></div>
+						</td>
+						<td align="center">
+							<div id="lvlAvGold"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraAvGold()"></td>
+					</tr>
+
+					<tr>
+						<td>Companheiro 2(GoldPS)</td>
+						<td align="center">
+							<div id="precoComp2"></div>
+						</td>
+						<td align="center">
+							<div id="lvlComp2"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraComp2()"></td>
+					</tr>
+
+					<tr>
+						<td>Companheiro 3(Bonus tempo)</td>
+						<td align="center">
+							<div id="precoComp3"></div>
+						</td>
+						<td align="center">
+							<div id="lvlComp3"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraComp3()"></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+
+
+	<!--<input type="button" value="Status" id="Status" class="btn-Padrao" onclick="SobeStatus()">-->
+
+
+
+
+
+
+
+</body>
+
+</html>

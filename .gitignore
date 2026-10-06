@@ -1,0 +1,29 @@
+# Dependências do Node
+node_modules/
+
+# Saídas de build - PC (electron-builder)
+dist/
+
+# Saídas de build - Android (Gradle / Capacitor)
+android/.gradle/
+android/build/
+android/app/build/
+android/captures/
+local.properties
+*.apk
+*.aab
+
+# Assets web gerados por "npm run prepare:web" e "cap sync"
+www/
+android/app/src/main/assets/
+
+# Logs e temporários
+*.log
+debug.log
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+*.iml
