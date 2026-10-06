@@ -846,8 +846,15 @@ const UI = {
         target.classList.add("enemy-targeted");
 
         const rect = target.getBoundingClientRect();
-        indicator.style.left = `${rect.left + rect.width / 2}px`;
-        indicator.style.top = `${Math.max(8, rect.top - 48)}px`;
+        // O indicador usa translateX(-50%): "left" é o centro dele. Sem estas margens ele
+        // ultrapassava a borda quando o inimigo estava junto nela (cortava o nome e a barra).
+        const meioLargura = indicator.offsetWidth / 2;
+        const centroMin = meioLargura + 8;
+        const centroMax = Math.max(centroMin, window.innerWidth - meioLargura - 8);
+        const centro = Math.min(Math.max(rect.left + rect.width / 2, centroMin), centroMax);
+        const topoMax = Math.max(8, window.innerHeight - indicator.offsetHeight - 8);
+        indicator.style.left = `${centro}px`;
+        indicator.style.top = `${Math.min(Math.max(8, rect.top - 48), topoMax)}px`;
 
         const percentage = Math.max(0, Math.min(100, health * 100 / maxHealth));
         document.getElementById("enemyHealthName").textContent =
