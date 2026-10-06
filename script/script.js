@@ -472,7 +472,7 @@ function UsaHabilidadeDano(){
 
 const habilidadesCombate = [
 	{ id: "electric", unlockFloor: 15, killsRequired: 20 },
-	{ id: "gold", unlockFloor: 25, killsRequired: 25 },
+	{ id: "gold", unlockFloor: 25, killsRequired: 30 },
 	{ id: "escape", unlockFloor: 35, killsRequired: 15 }
 ];
 
