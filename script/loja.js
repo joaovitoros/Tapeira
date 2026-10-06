@@ -429,7 +429,7 @@ function CompraComp1(){
 	NormalizaPrecosLoja();
 	if(N(esmeraldas) >= N(precoComp1)){
 		esmeraldas = N(esmeraldas) - N(precoComp1);
-		danoComp1 = N(danoComp1) + 0.05;
+		danoComp1 = N(danoComp1) + 0.1;
 		danoComp = N(danoJogador) * N(danoComp1);
 		precoComp1 = N(precoComp1) * 2;
 		lvlComp1++;
