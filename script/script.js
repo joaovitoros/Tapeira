@@ -877,7 +877,7 @@ function Conquistas(){
 	}
 	
 	if(totalGold>=progressoConquistaGold){
-		progressoConquistaGold = progressoConquistaGold*2;
+		progressoConquistaGold = progressoConquistaGold*5;
 		
 		precoDano = precoDano*0.99;
 		precoBEspaco = precoBEspaco*0.99;
