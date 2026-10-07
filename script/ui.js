@@ -1574,6 +1574,14 @@ function MostraConquista() {
 				${(totalDerrotados * 100 / progressoConquistaDano).toFixed(2)}%
 			</div>
 
+			<div>
+				Bônus de dano: ${(Number(danoBonus) || 0) > 0 ? "+" + (Number(danoBonus)).toFixed(2) : "nenhum"}
+			</div>
+
+			<div>
+				Bônus de crítico: ${(Number(bonusCritConquista) || 0) > 0 ? "+" + (Number(bonusCritConquista)).toFixed(2) : "nenhum"}
+			</div>
+
 		</div>
 	`;
 
@@ -1594,8 +1602,14 @@ function MostraConquista() {
 				${(totalGold * 100 / progressoConquistaGold).toFixed(2)}%
 			</div>
 
+			<div>
+				Bônus de gold: ${(Number(descontoLoja) || 0) > 0 ? "-" + (Number(descontoLoja) * 100).toFixed(0) + "% nos preços" : "nenhum"}
+			</div>
+
 		</div>
 	`;
+
+    const bonusNivel = Math.floor(Math.max(0, totalNiveis | 0) / 100);
 
     conquista += `
 		<div style="margin-top:1.2em;">
@@ -1613,7 +1627,7 @@ function MostraConquista() {
 			</div>
 
 			<div>
-				Bônus atual: -${Math.floor(Math.max(0, totalNiveis | 0) / 100)} inimigo(s) para avançar
+				Bônus atual: ${bonusNivel > 0 ? "-" + bonusNivel + " " + (bonusNivel === 1 ? "inimigo" : "inimigos") + " para avançar" : "nenhum"}
 			</div>
 
 		</div>

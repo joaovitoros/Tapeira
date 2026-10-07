@@ -33,6 +33,7 @@ var progressoConquistaDano = 100; //multiplicador e quantidade necessaria para p
 var progressoConquistaGold = 500; //multiplicador e quantidade necessaria para premiação e conclusão da conquista atual de gold
 var validaConquista = 1; //variavel de valdiação para determinar onde será atribuido o bonus de conclusão da conquista (1- dano, 2- gold, 3- dano critico)
 var totalNiveis = 0; //total de níveis ganhos acumulado entre resets (conquista de nível: a cada 100 → -1 inimigo para avançar)
+var bonusCritConquista = 0; //pontos de dano crítico ganhos por conquistas (permanente)
 var missao = Array(" ","Coleta de Gold", "Golpes", "Caça aos Mugs", "Tempo") //vetor usado para listagem das missões
 var missaoAtual; //variavel que determina a missão atual (1- coleta de gol, 2- tempo, 3- caça aos mugs)
 var missaoColeta = 500, missaoColetaAtual = 0.0; //Gold necessario para completar a missão "Coleta de gold"
@@ -845,6 +846,7 @@ function Conquistas(){
 		if(validaConquista==1){
 			danoJogador = danoJogador*((1+(totalDerrotados/100))/2);
 			danoCritJogador = danoCritJogador+(danoJogador*(2+sobeDCrit));
+			bonusCritConquista = bonusCritConquista + (danoJogador*(2+sobeDCrit));
 			danoBonus = danoBonus + (1+(totalDerrotados/100))/2;
 			if(lvlComp1>0){
 				danoComp = danoJogador*danoComp1;
@@ -862,7 +864,9 @@ function Conquistas(){
 			UI.showInfo("Conquista desbloqueada!\nVoce recebeu um bonus de gold");
 			UI.showMilestone("Conquista desbloqueada", "Bônus de Gold recebido");
 		}else{
-			danoCritJogador = danoCritJogador*((1+(totalDerrotados/100))/2);
+			const fatorCrit = (1+(totalDerrotados/100))/2;
+			bonusCritConquista = bonusCritConquista + danoCritJogador*(fatorCrit-1);
+			danoCritJogador = danoCritJogador*fatorCrit;
 			validaConquista = 1;
 			UI.showInfo("Conquista desbloqueada!\nVoce recebeu um bonus de dano critico");
 			UI.showMilestone("Conquista desbloqueada", "Bônus de dano crítico recebido");
