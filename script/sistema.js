@@ -744,7 +744,7 @@ function Carregar(saveData, calculaOffline = false) {
 	sobeAvanco = save.sobeAvanco ?? 0.01;
 	lvlAvan = save.lvlAvan ?? 0;
 
-	precoDCrit = save.precoDCrit ?? 100;
+	precoDCrit = save.precoDCrit ?? 150;
 	sobeDCrit = save.sobeDCrit ?? 0.1;
 	lvlDCrit = save.lvlDCrit ?? 1;
 
@@ -758,6 +758,10 @@ function Carregar(saveData, calculaOffline = false) {
 
 	precoAvGold = save.precoAvGold ?? 2;
 	lvlAvGold = save.lvlAvGold ?? 1;
+	//repara saves antigos: resets anteriores apagavam mulGoldAvanco mas mantinham lvlAvGold
+	if (Number(mulGoldAvanco) < Math.pow(1.1, Math.max(0, lvlAvGold - 1))) {
+		mulGoldAvanco = Math.pow(1.1, Math.max(0, lvlAvGold - 1));
+	}
 
 	precoComp2 = save.precoComp2 ?? 3;
 	goldComp2 = save.goldComp2 ?? 0.5;
@@ -1360,7 +1364,7 @@ function Resetar() {
 	andar = 1;	//usada para contagem do andar atual do jogo (Necessario para calculos progressivos)
 	qtdInimigosAndar = 1; //quantidade necessaria de inimigos que devem ser derrotados para avançar para o proximo andar
 	inimigosDerrotados = 0; //quantidade de inimigos derrotados naquele andar
-	limiteInimigos; //usada para controlar quantos inimigos podem ser criados na tela ao mesmo tempo
+	limiteInimigos = 1; //usada para controlar quantos inimigos podem ser criados na tela ao mesmo tempo
 	gold = new GoldNumber(0); //quantidade de dinheiro do jogador
 	totalGold = new GoldNumber(0); //quantidade total de dinheiro do jogador
 	saveAnd = 10; //andar que será efetuado o salvamento automatico
@@ -1369,12 +1373,8 @@ function Resetar() {
 	danoCritJogador = 2; //dano critico atual do jogador
 	multiplicadorMaximoDanoCritico = 4;
 	chanceCrit = 0.01; //chance em porcentagem de se causar um dano critico
-	vidaAndar; //usado para marcar a vida maximo que os inimigos podem ter no andar atual
-	vidaInimigo1; //vida atual do inimigo 1
-	vidaInimigo2; //vida atual do inimigo 2
-	vidaInimigo3; //vida atual do inimigo 3
-	vidaInimigo4; //vida atual do inimigo 4
-	mulGoldAvanco = 1; //variavel utilizada para efetuar acrescimo de dinheiro ao avançar andares
+	//as vidas dos inimigos sao recalculadas por CarregarStatus logo apos o reset
+	//mulGoldAvanco NAO e mais zerado aqui: e um item permanente da loja de esmeraldas
 	avanco = 0; //variavel utilizada para calculo de probabilidade de um avanço rapido entre andares
 	qtdAvanco = 2;////variavel que determina quantos inimigos serão derrotados noa vanço rapido
 	ValidaBater = 30; //tempo atual para que se possa executar um ataque com o espaço
@@ -1392,6 +1392,8 @@ function Resetar() {
 	verificaHabilidadeDano = false;
 	qtdCarregaHabilidade = 0;
 	document.getElementById("habilidade1")?.remove();
+	const chkManterAndar = document.getElementById("manterAndar");
+	if (chkManterAndar) chkManterAndar.checked = false;
 	abatesCorrenteEletrica = 0;
 	ataquesCorrenteEletrica = 0;
 	abatesBonusGoldAtaque = 0;
@@ -1400,11 +1402,11 @@ function Resetar() {
 	segundosPausaFuga = 0;
 	andarBoss = 10; //andar atual onde aparecerão inimigos mais fortes
 	missao = Array(" ", "Coleta de Gold", "Golpes", "Caça aos Mugs", "Tempo") //vetor usado para listagem das missões
-	missaoAtual; //variavel que determina a missão atual (1- coleta de gol, 2- tempo, 3- caça aos mugs)
+	missaoAtual = 0; //nenhuma missao ativa ate o proximo sorteio
 	missaoColeta = 500, missaoColetaAtual = 0.0; //Gold necessario para completar a missão "Coleta de gold"
 	missaoGolpe = 100, missaoGolpeAtual = 0; //Quantidade de golpes necessarios para concluir a missão "Golpes"
 	missaoCacaMugs = 50, missaoCacaMugsAtual = 0; //Quantidade de mugs necessarios para completar a missão "Caça aos Mugs"
-	missaoTempo = 10000, missaoTempoAtual = 0; //tempo em milissegundos necessarios para concluir a missão "Tempo"
+	missaoTempo = 600, missaoTempoAtual = 0; //segundos necessarios para concluir a missão "Tempo"
 	qtdMissoes = 4; //Quantidade de missões disponiveis
 	statusMissao = true; //Verifica se a missão pode ser iniciada
 	////
@@ -1425,7 +1427,7 @@ function Resetar() {
 	sobeAvanco = 0.01;
 	lvlAvan = 0;
 
-	precoDCrit = 100;
+	precoDCrit = 150;
 	sobeDCrit = 0.2;
 	lvlDCrit = 1;
 

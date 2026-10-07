@@ -39,7 +39,8 @@ var missaoAtual; //variavel que determina a missão atual (1- coleta de gol, 2- 
 var missaoColeta = 500, missaoColetaAtual = 0.0; //Gold necessario para completar a missão "Coleta de gold"
 var missaoGolpe = 100, missaoGolpeAtual = 0; //Quantidade de golpes necessarios para concluir a missão "Golpes"
 var missaoCacaMugs = 50, missaoCacaMugsAtual = 0; //Quantidade de mugs necessarios para completar a missão "Caça aos Mugs"
-var missaoTempo = 10000, missaoTempoAtual = 0; //tempo em milissegundos necessarios para concluir a missão "Tempo"
+var missaoTempo = 600, missaoTempoAtual = 0; //segundos necessarios para concluir a missão "Tempo"
+var intervaloMissaoTempo = null; //identificador do unico timer da missão Tempo
 var qtdMissoes = 4; //Quantidade de missões disponiveis
 var statusMissao = true; //Verifica se a missão pode ser iniciada
 var chanceBau = 0.1;
@@ -188,7 +189,7 @@ var precoAvan = 80;
 var sobeAvanco = 0.01;
 var lvlAvan = 0;
 
-var precoDCrit = 100;
+var precoDCrit = 150;
 var sobeDCrit = 0.1;
 var lvlDCrit = 1;
 
@@ -894,15 +895,31 @@ function Conquistas(){
 }
 
 //funçoes de controles das missoes
+function AlternaManterAndar(){
+	const chk = document.getElementById("manterAndar");
+	if(!chk) return;
+	if(chk.checked && andar <= 4){
+		chk.checked = false;
+		UI.showInfo("Só pode ser ativado a partir do andar 5");
+		return;
+	}
+	UI.showInfo(chk.checked ? "Manter no andar ativado: voce vai ficar farmando neste andar." : "Manter no andar desativado: avanco automatico reativado.");
+}
+
 function Missao(){
 	if(statusMissao){
 		geraMissao = Math.random()*(qtdMissoes-1)+1;
 		geraMissao = Math.round(geraMissao);
 		missaoAtual = geraMissao;
 		statusMissao = false;
+		//nova missao comeca do zero
+		missaoColetaAtual = 0;
+		missaoGolpeAtual = 0;
+		missaoCacaMugsAtual = 0;
+		missaoTempoAtual = 0;
 	}
-	if(missaoAtual==4){
-		window.onload = setInterval("MissaoTempo()", 1000);
+	if(missaoAtual==4 && !intervaloMissaoTempo){
+		intervaloMissaoTempo = setInterval(MissaoTempo, 1000);
 	}
 	UI.updateMission();
 }
@@ -927,7 +944,7 @@ function MissaoColetaGold(AuxMissao){
 function MissaoGolpes(){
 	//Verificação de conclusão da missão Golpes
 	missaoGolpeAtual++;
-	if(missaoGolpeAtual==missaoGolpe){
+	if(missaoGolpeAtual>=missaoGolpe){
 		const goldRecebido = AddGold(missaoGolpe);
 		AddTotalGold(goldRecebido, false);
 		UI.showInfo("Missao Concluida!\nVoce recebeu um bonus de "+FormatGold(goldRecebido)+" de gold");
@@ -944,7 +961,7 @@ function MissaoGolpes(){
 function MissaoCaca(){
 	//Verificação de conclusão da missão Golpes
 	missaoCacaMugsAtual++;
-	if(missaoCacaMugsAtual==missaoCacaMugs){
+	if(missaoCacaMugsAtual>=missaoCacaMugs){
 		const goldRecebido = AddGold(missaoCacaMugs);
 		AddTotalGold(goldRecebido, false);
 		UI.showInfo("Missao Concluida!\nVoce recebeu um bonus de "+FormatGold(goldRecebido)+" de gold");
@@ -964,13 +981,13 @@ function MissaoTempo(){
 	if(missaoAtual==4){
 		missaoTempoAtual++;
 	}
-	if(missaoTempoAtual==missaoTempo){
-		const goldRecebido = AddGold(missaoTempo / 60);
+	if(missaoTempoAtual>=missaoTempo){
+		const goldRecebido = AddGold(missaoTempo / 4);
 		AddTotalGold(goldRecebido, false);
 		UI.showInfo("Missao Concluida!\nVoce recebeu um bonus de "+FormatGold(goldRecebido)+" de gold");
 		UI.showMilestone("Missão concluída", "Meta de tempo alcançada. Bônus de Gold recebido");
 		UI.showCurrencyReward("gold", goldRecebido);
-		missaoTempo = missaoTempo*1.5;
+		missaoTempo = Math.ceil(missaoTempo*1.5);
 		UI.render();
 		statusMissao = true;
 		Missao();
