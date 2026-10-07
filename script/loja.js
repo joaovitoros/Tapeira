@@ -97,7 +97,7 @@ function AtualizaMaximosLoja() {
 	}
 }
 
-function AbreLoja(){
+function AbreLoja(exibirTutorial){
 	if(document.getElementById("Loja").style.visibility=="hidden"){
 		document.getElementById("Loja").style.visibility="visible";
 	}else{
@@ -112,6 +112,11 @@ function AbreLoja(){
 		UI.closeOtherPanels("shop");
 	}
 	UI.syncScreenButtons();
+
+	// Tutorial do comp1: só quando o jogador abre a loja (não em chamadas internas)
+	if(exibirTutorial && document.getElementById("Loja").style.visibility=="visible"){
+		MostraTutorialComp1();
+	}
 }
 
 function FechaLoja(){
@@ -465,6 +470,17 @@ function CompraComp1(){
 		CriarCompanheiros();
 	}else{
 		MostraInfo("Voce não tem esmeraldas o suficiente para essa compra!");
+	}
+}
+
+// Botão do tutorial: compra o comp1 e só fecha a janela se a compra deu certo
+function CompraTutorialComp1(){
+	const antes = N(lvlComp1);
+	CompraComp1();
+
+	if(N(lvlComp1) > antes){
+		const modal = document.getElementById("gameModal");
+		if(modal) modal.remove();
 	}
 }
 

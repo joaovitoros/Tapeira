@@ -262,7 +262,7 @@ document.onkeypress = function(evt) {
 	if(comando==32){
 		return;
 	}else if(comando==108){
-		AbreLoja();
+		AbreLoja(true);
 	}else if(comando==115){
 		UI.toggleStatus();
 	}else if(comando==99){

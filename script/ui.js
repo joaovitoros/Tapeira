@@ -22,6 +22,7 @@ const UI = {
         document.getElementById("contGold").innerHTML = FormatGold(gold);
         document.getElementById("contEmeraldas").innerHTML = esmeraldas;
         document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
+        this.updateResetAviso();
         this.updateObjective();
         this.updateMission();
         this.updateSkillProgress();
@@ -482,6 +483,24 @@ const UI = {
         progress.setAttribute("aria-valuenow", String(derrotados));
         fill.style.width = `${porcentagem}%`;
         container.classList.remove("objetivo-concluido");
+    },
+
+    updateResetAviso() {
+        const aviso = document.getElementById("avisoReset");
+        const botao = document.getElementById("btnAndar");
+        if (!aviso || !botao) return;
+
+        const faltam = andarVolta - andar;
+        const pronto = faltam <= 0;
+
+        const texto = pronto
+            ? "Reset disponível no botão Voltar andar!"
+            : "Próximo reset: andar " + andarVolta + " (faltam " + faltam + ")";
+
+        if (aviso.textContent !== texto) aviso.textContent = texto;
+
+        aviso.classList.toggle("aviso-reset--pronto", pronto);
+        botao.classList.toggle("btn-reset-pronto", pronto);
     },
 
     showObjectiveComplete() {
@@ -1357,8 +1376,12 @@ const UI = {
         let modal = document.getElementById("gameModal");
 
         if (modal) {
+            // visível: nova chamada fecha (toggle). Escondido (fechado com X):
+            // remove e recria abaixo, senão a janela nunca reabriria.
+            const estavaVisivel = modal.style.display === "flex";
             modal.remove();
-            return;
+            if (estavaVisivel) return;
+            modal = null;
         }
 
         // cria uma única vez
@@ -1742,6 +1765,51 @@ function MostraMissao() {
             </div>
         `
     );
+}
+
+// Tutorial do 1º reset: força a compra do Companheiro de Dano (se ainda não tiver)
+function TutorialComp1Pendente() {
+    return andarVolta > 15 && N(lvlComp1) === 0;
+}
+
+function MostraTutorialComp1() {
+    if (!TutorialComp1Pendente()) return;
+
+    const titulo = "Compre o Companheiro de Dano";
+    const preco = Math.max(1, N(precoComp1));
+
+    const conteudo = `
+            <div class="modal-tutorial-texto">
+                O <b>Companheiro de Dano</b> ataca junto com voce em toda batalha
+                e é essencial para avançar de andar. Voce ganha esmeraldas a cada
+                reset — use-as agora!
+            </div>
+
+            <div class="modal-tutorial-info">
+                <span>Esmeraldas: <b>${N(esmeraldas)}</b></span>
+                <span>Preço: <b>${preco} esmeralda${preco === 1 ? "" : "s"}</b></span>
+            </div>
+
+            <button type="button" class="btn-Padrao btn-tutorial-comp1" onclick="CompraTutorialComp1()">
+                Comprar Companheiro de Dano (${preco} esmeralda${preco === 1 ? "" : "s"})
+            </button>
+
+            <div class="modal-tutorial-dica">
+                ESC ou X fecha a janela — ela reabre ao abrir a loja até voce comprar.
+            </div>
+        `;
+
+    const atual = document.getElementById("gameModal");
+    if (atual && atual.style.display === "flex") {
+        // já é o nosso modal aberto: atualiza só o conteúdo (valores podem ter mudado);
+        // outro modal visível: não interrompe (a condição continua pendente)
+        if (document.getElementById("gameModalTitle")?.innerHTML === titulo) {
+            document.getElementById("gameModalBody").innerHTML = conteudo;
+        }
+        return;
+    }
+
+    UI.showModal(titulo, conteudo);
 }
 
 function MostraInfos() {

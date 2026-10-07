@@ -182,7 +182,7 @@ var precoBEspaco = 45;
 var lvlBEspaco = 1;
 
 var precoGold = 50;
-var sobeGold = 0.1;
+var sobeGold = 0.5;
 var lvlGold = 1;
 
 var precoAvan = 80;
@@ -835,6 +835,8 @@ function VoltaAndar(){
 		Batalha();
 		UI.showCurrencyReward("emerald", esmeraldasRecebidas);
 		UI.showInfo("Voce voltou ao primeiro andar e recebeu " + esmeraldasRecebidas + " esmeraldas.");
+		UI.updateResetAviso();
+		if (TutorialComp1Pendente()) MostraTutorialComp1();
 	}else{
 		UI.showInfo("É necessario chegar no andar "+andarVolta +" para poder voltar");
 	}
