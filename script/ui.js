@@ -901,18 +901,20 @@ const UI = {
     },
 
     showStatus() {
+        // dano real aplicado no inimigo = base × multiplicador de formigas × bônus de nível
+        const multDanoTotal = MultiplicadorDanoFormigas() * MultiplicadorDanoNivel();
 
         const stats = [
-            ["Dano", danoJogador.toFixed(2)],
+            ["Dano", (danoJogador * multDanoTotal).toFixed(2)],
             ["Multiplicador Gold", mulGold.toFixed(2)],
             ["Gold por inimigo", FormatGold(andar * mulGold)],
             ["Gold total", FormatGold(totalGold)],
             ["Bonus avanço", (((andar * mulGold) + (vidaAndar * mulGold) * mulGoldAvanco)).toFixed(2)],
             ["Chance avanço", (avanco * 100).toFixed(2) + "%"],
             ["Qtd avanço", qtdAvanco],
-            ["Dano crítico", danoCritJogador.toFixed(2)],
+            ["Dano crítico", (danoCritJogador * multDanoTotal).toFixed(2)],
             ["Chance crítica", (chanceCrit * 100).toFixed(2) + "%"],
-            ["DPS companheiros", danoComp.toFixed(2)],
+            ["DPS companheiros", (danoComp * multDanoTotal).toFixed(2)],
             ["GoldPS companions", goldCompanheiro.toFixed(2)],
             ["Tempo bônus", tempoEsperaCompanheiro + " seg"],
             ["Vida Mug", (subVidaInimigo * 100).toFixed(2) + "%"],
