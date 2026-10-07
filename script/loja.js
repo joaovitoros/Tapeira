@@ -79,7 +79,7 @@ function AtualizaMaximosLoja() {
 	const itens = [
 		{ preco: "precoBau", max: N(chanceBau) >= 0.75, valor: FormatGold(precoBau) },
 		{ preco: "precoAvan", max: N(avanco) >= 0.5, valor: FormatGold(precoAvan) },
-		{ preco: "precoVidaInimigo", max: N(lvlSubVida) >= 25, valor: FormatGold(precoVidaInimigo) },
+		{ preco: "precoVidaInimigo", max: N(lvlSubVida) >= 50, valor: FormatGold(precoVidaInimigo) },
 		{ preco: "precoCCrit", max: N(chanceCrit) >= 0.7, valor: FormatGold(precoCCrit) },
 		{ preco: "precoBEspaco", max: N(lvlBEspaco) >= 15, valor: FormatGold(precoBEspaco) },
 		{ preco: "precoQTDAvan", max: N(lvlQTDAvanco) > 20, valor: FormatGold(precoQTDAvanco) }
@@ -289,7 +289,7 @@ function CompraDCrit(){
 
 function CompraSubVida(){
 	NormalizaPrecosLoja();
-	if(lvlSubVida < 25){
+	if(lvlSubVida < 50){
 		if(GE(gold, N(precoVidaInimigo))){
 
 			gold.add(-N(precoVidaInimigo));
@@ -314,7 +314,7 @@ function CompraSubVida(){
 				}
 			}
 
-			precoVidaInimigo = N(precoVidaInimigo) * 1.5;
+			precoVidaInimigo = N(precoVidaInimigo) * 1.25;
 			lvlSubVida++;
 
 			ChamaSom('audio6');
