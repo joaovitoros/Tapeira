@@ -176,7 +176,7 @@ function CompraBau(){
 			gold.add(-N(precoBau));
 
 			chanceBau = N(chanceBau) + 0.05;
-			precoBau = N(precoBau) * 2;
+			precoBau = N(precoBau) * 2.2;
 			lvlBau++;
 
 			ChamaSom('audio6');

@@ -783,7 +783,7 @@ function Carregar(saveData, calculaOffline = false) {
 
 	chanceBau = save.chanceBau ?? 0.1;
 	chanceEsmeraldaBau = save.chanceEsmeraldaBau ?? 0.01;
-	precoBau = save.precoBau ?? 10;
+	precoBau = save.precoBau ?? 25;
 	lvlBau = save.lvlBau ?? 1;
 
 	RemoverInimigos();
@@ -1440,7 +1440,7 @@ function Resetar() {
 	subVidaInimigo = 0.01;
 	lvlSubVida = 0;
 
-	precoBau = 10;
+	precoBau = 25;
 	lvlBau = 1;
 
 	precoDano = precoDano * (1 - descontoLoja);

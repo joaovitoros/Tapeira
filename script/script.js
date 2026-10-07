@@ -203,7 +203,7 @@ var precoVidaInimigo = 150;
 var subVidaInimigo = 0.00;
 var lvlSubVida = 0;
 
-var precoBau = 10;
+var precoBau = 25;
 var lvlBau = 1;
 
 
