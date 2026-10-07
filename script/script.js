@@ -9,7 +9,14 @@ var gold = new GoldNumber(0); //quantidade de dinheiro do jogador
 var saveAnd = 10; //andar que será efetuado o salvamento automatico
 var qtdSave = 0; //Quantidade de vezes que o jogo foi salvo
 var maxAndar = 0; //andar maximo atingido
+var marcoGoldRun = 0; //ultimo marco de 10 andares que deu +10% de gold nesta run
 var andarVolta = 15; //andar necessario para que se possa utilizar o reset
+var gateDanoPago = 10; //ultimo portão de reset (>= 35) que já pagou o +5% de dano
+var danoResetQtd = 0; //quantidade de bonus permanentes de +5% de dano ganhos no reset
+var perkDano = 0; //níveis de perk do Dano automático (+25% de dano cada, máx 4)
+var perkEletrica = 0; //níveis de perk da Corrente elétrica (+1 inimigo atingido cada, máx 3)
+var perkGold = 0; //níveis de perk do Bônus de Gold (+25% no drop do kill com skill ativa cada, máx 4)
+var perkFuga = 0; //níveis de perk da Pausa da fuga (10% de restaurar o tempo de fuga cada, máx 50%)
 var totalDerrotados = 0; //total de inimigos derrotados durante todo o jogo
 var totalGold = new GoldNumber(0); //total de gold coletado durante todo o jogo
 var danoJogador = 1; //dano atual do jogador
@@ -41,8 +48,13 @@ var missaoGolpe = 100, missaoGolpeAtual = 0; //Quantidade de golpes necessarios 
 var missaoCacaMugs = 50, missaoCacaMugsAtual = 0; //Quantidade de mugs necessarios para completar a missão "Caça aos Mugs"
 var missaoTempo = 600, missaoTempoAtual = 0; //segundos necessarios para concluir a missão "Tempo"
 var intervaloMissaoTempo = null; //identificador do unico timer da missão Tempo
-var qtdMissoes = 4; //Quantidade de missões disponiveis
+var qtdMissoes = 5; //Quantidade de missões disponiveis (4 estatísticas + 1 desafio)
 var statusMissao = true; //Verifica se a missão pode ser iniciada
+var missaoDesafioSub = 0; //tipo do desafio: 1=sem gold, 2=sem habilidades, 3=contra o tempo
+var missaoDesafioAlvo = 10, missaoDesafioAtual = 0; //inimigos exigidos / abatidos no desafio
+var missaoDesafioTempo = 0; //segundos restantes no desafio contra o tempo
+var intervaloDesafio = null; //identificador do unico timer do desafio contra o tempo
+var desafioFalhando = false; //evita falha em reentrada durante a troca de missão
 var chanceBau = 0.1;
 var chanceEsmeraldaBau = 0.01;
 var qtdCarregaHabilidade = 0; //Quantidade de inimigos derrotados para carregar Habilidade
@@ -68,6 +80,14 @@ const SKILLS_UPGRADE = [
 	{ id: "electric", nome: "Corrente elétrica", pisoDesbloqueio: 15, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillEletrica" },
 	{ id: "gold", nome: "Bônus de Gold", pisoDesbloqueio: 25, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillGold" },
 	{ id: "escape", nome: "Pausa da fuga", pisoDesbloqueio: 35, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillFuga" }
+];
+// Perks especiais: 1 ponto por portão de reset >= 35 (únicos, como o +5% de dano).
+// O nível de perk é permanente (não zera no reset) e independe do nível da skill.
+const PERKS = [
+	{ skillId: "damage", varName: "perkDano", nome: "Dano automático", efeito: "+25% de dano por nível", maximo: 4 },
+	{ skillId: "electric", varName: "perkEletrica", nome: "Corrente elétrica", efeito: "+1 inimigo atingido por nível", maximo: 3 },
+	{ skillId: "gold", varName: "perkGold", nome: "Bônus de Gold", efeito: "+25% no drop do kill feito com a skill ativa por nível", maximo: 4 },
+	{ skillId: "escape", varName: "perkFuga", nome: "Pausa da fuga", efeito: "10% de restaurar o tempo de fuga por nível (máx 50%)", maximo: 5 }
 ];
 var fugaEmAndamento = false;
 var maxTempoProgressoOffline = 5 * 60 * 60 * 1000;
@@ -181,8 +201,8 @@ var lvlDano = 1;
 var precoBEspaco = 45;
 var lvlBEspaco = 1;
 
-var precoGold = 50;
-var sobeGold = 0.5;
+var precoGold = 100;
+var sobeGold = 0.3;
 var lvlGold = 1;
 
 var precoAvan = 80;
@@ -193,7 +213,7 @@ var precoDCrit = 150;
 var sobeDCrit = 0.1;
 var lvlDCrit = 1;
 
-var precoCCrit = 200;
+var precoCCrit = 250;
 var sobeCCrit = 0.02;
 var lvlCCrit = 1;
 
@@ -235,21 +255,23 @@ var lvlXP = 0;
 ////
 
 function CarregarStatus(){
-	var pow;
-	if(andar>15 && andar<=40){
-		pow=1.8;
-	}else if (andar>40){
-		pow=2.5;
-	}else{
-		pow=1.25;
-	}
-	
-	
-	vidaAndar = Math.pow(andar, pow);
-	
-	if(vidaAndar<5){
-		vidaAndar = vidaAndar*2;
-	}
+	// Curva "patamares por década": crescimento contínuo por andar (sem os saltos
+	// de expoente do antigo pow, tipo 15→16 ×5 e 40→41 ×14) + degrau a cada 10
+	// andares. Andares de chefe (múltiplos de 10) multiplicam a vida por 1,5 no
+	// bloco abaixo — ou seja, cada década começa com um degrau visível (patamar
+	// ×1.6 e chefe ×1,5 no mesmo andar).
+	// Constantes calibram a curva:
+	//   BASE_VIDA    = vida no andar 1 (5 = 2,5× o original; o ouro continua
+	//                  igual porque BonusGoldAvanco() usa ×0.4 na conversão)
+	//   RAZAO_VIDA   = multiplicador por andar (contínuo)
+	//   PATAMAR_VIDA = multiplicador extra ao entrar em cada década (10, 20, 30...)
+	const BASE_VIDA = 5;
+	const RAZAO_VIDA = 1.15;
+	const PATAMAR_VIDA = 1.6;
+
+	vidaAndar = BASE_VIDA
+		* Math.pow(RAZAO_VIDA, Math.max(0, andar - 1))
+		* Math.pow(PATAMAR_VIDA, Math.floor(Math.max(0, andar) / 10));
 
 	vidaAndar = vidaAndar*(1-subVidaInimigo);
 	
@@ -262,15 +284,15 @@ function CarregarStatus(){
 		Missao();
 	}
 	
-	// Andares de chefe (múltiplos de 10): o dobro de vida precisa valer em todas as ondas
-	// do andar. Antes o boost era aplicado só uma vez, porque andarBoss era incrementado
-	// junto, e nos respawns seguintes os inimigos voltavam com metade da vida.
+	// Andares de chefe (múltiplos de 10): o extra de ×1,5 de vida precisa valer em
+	// todas as ondas do andar. Antes o boost era aplicado só uma vez, porque andarBoss
+	// era incrementado junto, e nos respawns seguintes os inimigos voltavam sem o boost.
 	if (andar >= 10 && andar % 10 === 0) {
-		vidaAndar = vidaAndar*2;
-		vidaInimigo1 = vidaInimigo1*2;
-		vidaInimigo2 = vidaInimigo2*2;
-		vidaInimigo3 = vidaInimigo3*2;
-		vidaInimigo4 = vidaInimigo4*2;
+		vidaAndar = vidaAndar*1.5;
+		vidaInimigo1 = vidaInimigo1*1.5;
+		vidaInimigo2 = vidaInimigo2*1.5;
+		vidaInimigo3 = vidaInimigo3*1.5;
+		vidaInimigo4 = vidaInimigo4*1.5;
 
 		if (andarBoss==andar) {
 			UI.showInfo("Inimigos mais fortes...");
@@ -363,8 +385,16 @@ function ColetaBau(){
 	AutoSaveLocal();
 }
 
+// Bônus base de gold do avanço/baú: gold fixo do andar + (vida do andar que vira
+// gold). A vida saiu de 2 para 5 (2,5×) e a fração 0.4 mantém o gold exatamente
+// igual ao de antes (×2,5 ×0,4 = 1) — único lugar para tunar isso.
+function BonusGoldAvanco(){
+	const FRACAO_VIDA_GOLD = 0.4;
+	return ((andar * mulGold) + (vidaAndar * mulGold) * FRACAO_VIDA_GOLD * mulGoldAvanco);
+}
+
 function ValorGoldBau() {
-	return (((andar * mulGold) + (vidaAndar * mulGold) * mulGoldAvanco) * 5)
+	return (BonusGoldAvanco() * 5)
 		* MultiplicadorGoldBauFormigas();
 }
 
@@ -588,6 +618,21 @@ function EvoluiSkill(id) {
 	return true;
 }
 
+// Aplica 1 ponto de perk na skill (permanente; pontos vêm dos portões de reset >= 35)
+function CompraPerk(skillId){
+	const perk = PERKS.find(item => item.skillId === skillId);
+	if (!perk) return false;
+	const nivel = Number(window[perk.varName]) || 0;
+	if (nivel >= perk.maximo || PontosPerkDisponiveis() <= 0) return false;
+
+	window[perk.varName] = nivel + 1;
+	UI.showInfo(`${perk.nome}: perk de nível ${nivel + 1}/${perk.maximo} aplicado! (${perk.efeito})`);
+	if (!AutoSaveLocal()) {
+		UI.showInfo("O perk foi aplicado, mas não foi possível salvar o progresso localmente.");
+	}
+	return true;
+}
+
 function AtualizaHabilidadesCombate() {
 	const panel = document.getElementById("skill-unlock-panel");
 	if (!panel) return;
@@ -662,21 +707,30 @@ function AtivaHabilidadeCombate(id) {
 	const skill = habilidadesCombate.find(item => item.id === id);
 	if (!skill || maxAndar < skill.unlockFloor) return;
 
+	let habilidadeAtivada = false;
 	if (id === "electric" && abatesCorrenteEletrica >= skill.killsRequired && ataquesCorrenteEletrica === 0) {
+		habilidadeAtivada = true;
 		abatesCorrenteEletrica = 0;
 		ataquesCorrenteEletrica = 20;
 		ChamaSom("audio5");
 		UI.showInfo("Corrente elétrica ativa por 20 ataques!");
 	} else if (id === "gold" && abatesBonusGoldAtaque >= skill.killsRequired && ataquesBonusGold === 0) {
+		habilidadeAtivada = true;
 		abatesBonusGoldAtaque = 0;
 		ataquesBonusGold = 25;
 		ChamaSom("audio6");
 		UI.showInfo("Bônus de Gold ativo por 25 ataques!");
 	} else if (id === "escape" && abatesPausaFuga >= skill.killsRequired && segundosPausaFuga === 0 && !fugaEmAndamento) {
+		habilidadeAtivada = true;
 		abatesPausaFuga = 0;
 		segundosPausaFuga = 10 + NivelDaSkill("escape") * 2;
 		ChamaSom("audio7");
 		UI.showInfo(`Relógio de fuga pausado por ${segundosPausaFuga} segundos!`);
+	}
+
+	//desafio "sem habilidades": só ativar de verdade falha (tentativa sem carga não conta)
+	if (habilidadeAtivada && missaoAtual === 5 && missaoDesafioSub === 2) {
+		FalhaDesafio("Habilidade ativada");
 	}
 
 	AtualizaHabilidadesCombate();
@@ -777,6 +831,14 @@ function AvancoInimigos() {
 */
     if (tempoAvancoInimigos <= 0) {
         if (andar > 1) {
+			// perk da Pausa da fuga: chance de não fugir — o tempo do andar volta ao máximo
+			const chancePerkFuga = Math.min(50, perkFuga * 10);
+			if (chancePerkFuga > 0 && Math.random() * 100 < chancePerkFuga) {
+				tempoAvancoInimigos = 120;
+				document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
+				UI.showInfo("O tempo para fugir deste andar voltou ao máximo! (chance de perk: " + chancePerkFuga + "%)");
+				return;
+			}
 			fugaEmAndamento = true;
 			UI.showInfo("Inimigos te alcançaram, fugindo...");
 			UI.playEscapeAnimation().then(() => {
@@ -798,18 +860,65 @@ function AvancoInimigos() {
     }
 }
 
+// Portões de dano permanente: múltiplos de 5 a partir do andar 35. Cada portão
+// paga +5% UMA única vez — gateDanoPago só avança, então nunca se paga de novo.
+function GatesDanoPendentes(piso){
+	const primeiro = Math.max(35, gateDanoPago + 5);
+	const ate = Math.floor(piso / 5) * 5;
+	if (ate < primeiro) return 0;
+	return Math.floor((ate - primeiro) / 5) + 1;
+}
+
+// Paga de uma vez todos os portões não reivindicados até o piso do reset
+// (resetar no 45 com o 40 pendente = +10%; os dois ficam gastos pra sempre)
+function PagaDanoReset(piso){
+	const qtd = GatesDanoPendentes(piso);
+	if (qtd <= 0) return 0;
+	const primeiro = Math.max(35, gateDanoPago + 5);
+	gateDanoPago = primeiro + (qtd - 1) * 5;
+	danoResetQtd = danoResetQtd + qtd;
+	return qtd * 5;
+}
+
+// Pontos de perk: 1 por portão de dano pago (>= 35) — derivados do gateDanoPago,
+// então quem já pagou portões ganha os pontos retroativos ao carregar o save.
+function PontosPerkGanhos(){
+	const g = Number(gateDanoPago);
+	if (!Number.isFinite(g) || g < 35) return 0;
+	return Math.floor((g - 35) / 5) + 1;
+}
+
+function PontosPerkDisponiveis(){
+	const gastos = perkDano + perkEletrica + perkGold + perkFuga;
+	return Math.max(0, PontosPerkGanhos() - gastos);
+}
+
+// Esmeraldas neste reset? Portões de esmeralda (≡5 em 10: 15/25/35/45/55...)
+// continuam iguais; intermediários (40, 50...) só dão dano. Se o reset cobre
+// 2+ portões, algum é de esmeralda ⇒ dá esmeraldas (nunca se perde).
+function EhPortaoEsmeralda(piso){
+	const primeiro = Math.max(35, gateDanoPago + 5);
+	const ate = Math.floor(piso / 5) * 5;
+	if (ate < primeiro) return andarVolta % 10 === 5; // fase antiga: 15/25/35
+	if (ate === primeiro) return ate % 10 === 5;
+	return true;
+}
+
 function VoltaAndar(){
 	console.log("ENTROU NO VOLTA ANDAR");
 	if(andar>=andarVolta){
 		console.log("PODE VOLTAR");
 		const andarAnterior = andar;
-		let esmeraldasRecebidas;
-		if(andar>=maxAndar){
+		// bônus de dano: cada portão >= 35 paga +5% uma vez só (com acumulado)
+		const ehPortaoEsmeralda = EhPortaoEsmeralda(andar);
+		const danoRecebido = PagaDanoReset(andar);
+		let esmeraldasRecebidas = 0;
+		if(ehPortaoEsmeralda && andar>=maxAndar){
 			console.log(numVoltas);
 			numVoltas++;
 			esmeraldasRecebidas = numVoltas;
 			esmeraldas = esmeraldas+numVoltas;
-		}else{
+		}else if(ehPortaoEsmeralda){
 			var auxEsmeraldas = Math.round(esmeraldas/andar);
 			
 			if(auxEsmeraldas<1){
@@ -819,7 +928,12 @@ function VoltaAndar(){
 			esmeraldas = esmeraldas+auxEsmeraldas;
 		}
 		
-		andarVolta=andarVolta+10;
+		// portão avança: pós-35 = próximo portão não reivindicado (+5); antes = +10
+		if (danoRecebido > 0) {
+			andarVolta = gateDanoPago + 5;
+		} else {
+			andarVolta = andarVolta + 10;
+		}
 		
 		andar=1;
 		qtdInimigosAndar=1;
@@ -834,8 +948,8 @@ function VoltaAndar(){
 		Resetar();
 		RemoverInimigos();
 		Batalha();
-		UI.showCurrencyReward("emerald", esmeraldasRecebidas);
-		UI.MostraCelebracaoReset(esmeraldasRecebidas, andarAnterior, andarVolta);
+		if (esmeraldasRecebidas > 0) UI.showCurrencyReward("emerald", esmeraldasRecebidas);
+		UI.MostraCelebracaoReset(esmeraldasRecebidas, andarAnterior, andarVolta, danoRecebido);
 		UI.updateResetAviso();
 		if (TutorialComp1Pendente()) MostraTutorialComp1();
 	}else{
@@ -850,31 +964,39 @@ function PedeReset() {
 		return;
 	}
 
-	let premio;
-	if (andar >= maxAndar) {
-		// recorde: recompensa igual à que VoltaAndar vai dar (numVoltas + 1)
-		premio = numVoltas + 1;
-	} else {
-		premio = Math.max(1, Math.round(N(esmeraldas) / andar));
+	const ehPortaoEsmeralda = EhPortaoEsmeralda(andar);
+	let premio = 0;
+	if (ehPortaoEsmeralda) {
+		if (andar >= maxAndar) {
+			// recorde: recompensa igual à que VoltaAndar vai dar (numVoltas + 1)
+			premio = numVoltas + 1;
+		} else {
+			premio = Math.max(1, Math.round(N(esmeraldas) / andar));
+		}
 	}
 
 	const total = N(esmeraldas) + premio;
-	const proximo = andarVolta + 10;
+	const pendentes = GatesDanoPendentes(andar);
+	const danoPendente = pendentes * 5;
+	const proximo = pendentes > 0
+		? Math.max(35, gateDanoPago + 5) + danoPendente
+		: andarVolta + 10;
 
 	UI.showModal("Voltar ao 1º andar?", `
 		<div class="modal-tutorial-texto">
-			Você está no andar <b>${andar}</b> e voltará para o <b>1º andar</b> ganhando
-			esmeraldas no caminho.
+			Você está no andar <b>${andar}</b> e voltará para o <b>1º andar</b>
+			${ehPortaoEsmeralda ? "ganhando esmeraldas no caminho" : "coletando o bônus de dano permanente"}.
 		</div>
 
 		<div class="modal-tutorial-info">
-			<span>Recompensa: <b>+${premio} esmeralda${premio === 1 ? "" : "s"}</b></span>
+			<span>Recompensa: <b>${premio > 0 ? "+" + premio + " esmeralda" + (premio === 1 ? "" : "s") : "sem esmeraldas (portão intermediário)"}</b></span>
+			${danoPendente > 0 ? `<span>Bônus: <b>+${danoPendente}% de dano permanente</b></span>` : ""}
 			<span>Total: <b>${total}</b></span>
 		</div>
 
 		<div class="reset-confirm-lista">
 			<div><span class="reset-tag reset-tag--reseta">Reseta</span> gold, loja de gold, nível/XP e habilidades</div>
-			<div><span class="reset-tag reset-tag--fica">Fica</span> esmeraldas, loja de esmeraldas e conquistas · base de gold +25%</div>
+			<div><span class="reset-tag reset-tag--fica">Fica</span> esmeraldas, loja de esmeraldas, conquistas e bônus de dano de reset · base de gold +25%</div>
 			<div><span class="reset-tag reset-tag--prox">Próximo</span> reset liberado no andar ${proximo}</div>
 		</div>
 
@@ -896,10 +1018,12 @@ function Conquistas(){
 	if(totalDerrotados>=progressoConquistaDano ){
 		progressoConquistaDano = progressoConquistaDano*2;
 		if(validaConquista==1){
-			danoJogador = danoJogador*((1+(totalDerrotados/100))/2);
+			// ×1.1: +10% sobre o ganho de antes e a 1ª conquista (100 kills, fator 1.0) deixa de ser sem efeito
+			const fatorDano = ((1+(totalDerrotados/100))/2) * 1.1;
+			danoJogador = danoJogador*fatorDano;
 			danoCritJogador = danoCritJogador+(danoJogador*(2+sobeDCrit));
 			bonusCritConquista = bonusCritConquista + (danoJogador*(2+sobeDCrit));
-			danoBonus = danoBonus + (1+(totalDerrotados/100))/2;
+			danoBonus = danoBonus + fatorDano;
 			if(lvlComp1>0){
 				danoComp = danoJogador*danoComp1;
 			}
@@ -907,7 +1031,7 @@ function Conquistas(){
 			UI.showInfo("Conquista desbloqueada!\nVoce recebeu um bonus de dano");
 			UI.showMilestone("Conquista desbloqueada", "Bônus de dano recebido");
 		} else if(validaConquista==2){
-			goldAux = gold+(((andar*mulGold)+(vidaAndar*mulGold)*mulGoldAvanco))*2;
+			goldAux = gold + BonusGoldAvanco() * 2;
 			const bonusGoldConquista = goldAux*(totalDerrotados/100);
 			const goldRecebido = AddGold(bonusGoldConquista);
 			AddTotalGold(goldRecebido, false);
@@ -916,7 +1040,8 @@ function Conquistas(){
 			UI.showInfo("Conquista desbloqueada!\nVoce recebeu um bonus de gold");
 			UI.showMilestone("Conquista desbloqueada", "Bônus de Gold recebido");
 		}else{
-			const fatorCrit = (1+(totalDerrotados/100))/2;
+			// ×0.75: crítico ganha 25% a menos que antes
+			const fatorCrit = ((1+(totalDerrotados/100))/2) * 0.75;
 			bonusCritConquista = bonusCritConquista + danoCritJogador*(fatorCrit-1);
 			danoCritJogador = danoCritJogador*fatorCrit;
 			validaConquista = 1;
@@ -930,16 +1055,16 @@ function Conquistas(){
 	if(totalGold>=progressoConquistaGold){
 		progressoConquistaGold = progressoConquistaGold*5;
 		
-		precoDano = precoDano*0.99;
-		precoBEspaco = precoBEspaco*0.99;
-		precoGold = precoGold*0.99;
-		precoAvan = precoAvan*0.99;
-		precoDCrit = precoDCrit*0.99;
-		precoCCrit = precoCCrit*0.99;
-		precoQTDAvanco = precoQTDAvanco*0.99;
-		UI.showInfo("Conquista desbloqueada!\nVoce recebeu um bonus de -1% nos preços da loja!");
-		UI.showMilestone("Conquista de Gold", "Desconto de 1% liberado na loja");
-		descontoLoja = descontoLoja+0.01;
+		precoDano = precoDano*0.995;
+		precoBEspaco = precoBEspaco*0.995;
+		precoGold = precoGold*0.995;
+		precoAvan = precoAvan*0.995;
+		precoDCrit = precoDCrit*0.995;
+		precoCCrit = precoCCrit*0.995;
+		precoQTDAvanco = precoQTDAvanco*0.995;
+		UI.showInfo("Conquista desbloqueada!\nVoce recebeu um bonus de -0,5% nos preços da loja!");
+		UI.showMilestone("Conquista de Gold", "Desconto de 0,5% liberado na loja");
+		descontoLoja = descontoLoja+0.005;
 		AbreLoja();
 		AbreLoja();
 	}
@@ -959,8 +1084,8 @@ function AlternaManterAndar(){
 
 function Missao(){
 	if(statusMissao){
-		geraMissao = Math.random()*(qtdMissoes-1)+1;
-		geraMissao = Math.round(geraMissao);
+		//sorteio uniforme entre 1..qtdMissoes (o arredondamento antigo dava meio peso nas pontas)
+		geraMissao = Math.floor(Math.random() * qtdMissoes) + 1;
 		missaoAtual = geraMissao;
 		statusMissao = false;
 		//nova missao comeca do zero
@@ -968,9 +1093,14 @@ function Missao(){
 		missaoGolpeAtual = 0;
 		missaoCacaMugsAtual = 0;
 		missaoTempoAtual = 0;
+		missaoDesafioAtual = 0;
+		if (missaoAtual === 5) SorteiaDesafio();
 	}
 	if(missaoAtual==4 && !intervaloMissaoTempo){
 		intervaloMissaoTempo = setInterval(MissaoTempo, 1000);
+	}
+	if(missaoAtual===5 && missaoDesafioSub===3 && !intervaloDesafio){
+		intervaloDesafio = setInterval(TickDesafio, 1000);
 	}
 	UI.updateMission();
 }
@@ -1044,4 +1174,59 @@ function MissaoTempo(){
 		Missao();
 	}
 	UI.updateMission();
+}
+
+// ===== Missão 5: desafio com restrição (violou = troca de missão sem recompensa) =====
+
+//Sorteia o tipo do desafio e monta o texto
+function SorteiaDesafio() {
+	missaoDesafioSub = Math.floor(Math.random() * 3) + 1; //1=sem gold, 2=sem habilidades, 3=contra o tempo
+	missaoDesafioTempo = missaoDesafioAlvo * 60; //60 segundos por inimigo exigido
+	if (missaoDesafioSub === 1) {
+		missao[5] = "Desafio sem gold";
+	} else if (missaoDesafioSub === 2) {
+		missao[5] = "Desafio sem habilidades";
+	} else {
+		missao[5] = "Desafio contra o tempo";
+	}
+}
+
+//Progresso do desafio: contado por abate (igual à Caça aos Mugs)
+function MissaoDesafio() {
+	if (missaoAtual !== 5) return;
+	missaoDesafioAtual++;
+	if (missaoDesafioAtual >= missaoDesafioAlvo) {
+		//recompensa escala com o andar: mesma base do bônus de avanço ×5 (≈ 5 baús)
+		const goldRecebido = AddGold(BonusGoldAvanco() * 5);
+		AddTotalGold(goldRecebido, false);
+		UI.showInfo("Desafio concluído!\nVoce recebeu um bonus de " + FormatGold(goldRecebido) + " de gold");
+		UI.showMilestone("Desafio concluído", "Restrição cumprida. Bônus de Gold recebido");
+		UI.showCurrencyReward("gold", goldRecebido);
+		missaoDesafioAlvo *= 2;
+		UI.render();
+		statusMissao = true;
+		Missao();
+	}
+	UI.updateMission();
+}
+
+//Falha do desafio: troca a missão sem recompensa (guarda contra reentrada)
+function FalhaDesafio(motivo) {
+	if (missaoAtual !== 5 || desafioFalhando) return;
+	desafioFalhando = true;
+	UI.showMilestone("Desafio falhou", motivo + " — nova missão sorteada");
+	statusMissao = true;
+	Missao();
+	desafioFalhando = false;
+}
+
+//Timer do desafio contra o tempo (subtipo 3)
+function TickDesafio() {
+	if (jogoPausado || missaoAtual !== 5 || missaoDesafioSub !== 3) return;
+	missaoDesafioTempo--;
+	if (missaoDesafioTempo <= 0) {
+		FalhaDesafio("Tempo esgotado");
+	} else {
+		UI.updateMission();
+	}
 }

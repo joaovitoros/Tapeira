@@ -28,3 +28,33 @@ Registro de propostas e evoluções futuras do TAPeira.
 
 - O progresso e o baú dourado pendente são salvos entre sessões.
 - O baú pode ser aberto na interface quando a barra completa.
+
+## Tiers da auditoria (50 princípios)
+
+> A auditoria contra os 50 princípios de design organizou o trabalho em Tiers. O Tier 0 (5 bugs: intervalo da missão Tempo, armadilha "Manter no andar", Avanço Gold apagado no reset, contadores de missão e no-ops do Resetar) foi corrigido no commit `221e0a2`.
+
+### Tier 1 — Quick wins (UI/legibilidade) — ✅ concluído
+
+| # | Ideia | Status |
+|---|---|---|
+| 1 | Botão "Voltar andar" com estado pronto (destaque/pulsação quando andar ≥ andarVolta) + contador "faltam X andares para o reset" | ✅ `bef281b` (#avisoReset) |
+| 2 | Modal de confirmação do reset: o que ganha (+X esmeraldas, base de gold +25%, próxima porta andar Y) e o que perde | ✅ `22ff474` |
+| 3 | Pós-reset: celebração (banner animado em vez de linha de texto) | ✅ `22ff474` |
+| 4 | Status: decomposição do dano (base × formigas × nível × crítico...) | ✅ `22ff474` |
+| 5 | Loja: preview "após upgrade: dano 5 → 6" nos 14 itens de compra | ✅ `22ff474` |
+
+### Tier 2 — Design (esforço médio) — 🟡 em andamento (3/5 ✅)
+
+| # | Ideia | Princípios |
+|---|---|---|
+| 1 ✅ | Marcos/breakpoints por andar: recompensa a cada 10 andares (ex: +25% gold no andar 20/30...) | 13/14 |
+| 2 | Eventos aleatórios (comércio, meteoro) — bônus por presença | 33/34 |
+| 3 ✅ | Novos desbloqueios pós-35: hoje o conteúdo acaba após a skill do andar 35 (novo item de loja, nova skill, novo tema...) | — |
+| 4 ✅ | Missões com desafio (não só estatística) / conquistas comportamentais | 43 |
+| 5 | Bônus de retorno ao voltar (recompensar quem volta ao jogo) | 35 |
+
+**#1 (feito):** +10% de gold por marco, a cada 10 andares, por run — botão "Marcos" no painel de skills e `marcoGoldRun` persistido no save.
+
+**#4 (feito):** missão tipo 5 no sorteio (~20%) com restrição — "sem gold" (qualquer compra com gold falha), "sem habilidades" (só ativação real falha) e "contra o tempo" (60s por inimigo exigido). Falha = troca de missão sem recompensa; sucesso ≈ 5 baús (`BonusGoldAvanco ×5`) e o alvo dobra. Conquistas comportamentais ficaram de fora (passo seguinte).
+
+**#3 (feito):** sistema de reset pós-35 — os portões 15/25/35 continuam de 10 em 10; a partir do 35 sobem **+5** (40, 45, 50...). Cada portão ≥ 35 carrega **+5% de dano permanente pago UMA única vez** (`gateDanoPago`/`danoResetQtd` no save; portões pagos nunca pagam de novo). Portões terminados em 5 (45, 55...) mantêm as esmeraldas de sempre; os intermediários (40, 50...) dão só dano. Reset num portão maior paga o acumulado do que faltou (pular o 40 e resetar no 45 = +10%). Modal, aviso, celebração e Decomposição do dano mostram o bônus; `ValidarSave` rejeita save com portão incoerente (anti-trapaça). 4ª skill ficou pra depois.

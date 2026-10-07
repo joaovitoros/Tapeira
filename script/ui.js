@@ -65,6 +65,10 @@ const UI = {
             atual = missaoTempoAtual;
             maximo = missaoTempo;
             textoProgresso = `${Math.floor(atual)} / ${Math.floor(maximo)} seg`;
+        } else if (missaoAtual === 5) {
+            atual = missaoDesafioAtual;
+            maximo = missaoDesafioAlvo;
+            textoProgresso = `${Math.floor(atual)} / ${Math.floor(maximo)} inimigos${missaoDesafioSub === 3 ? ` · ${missaoDesafioTempo}s` : ""}`;
         } else {
             container.hidden = true;
             metaContainer.classList.remove("has-mission");
@@ -328,7 +332,7 @@ const UI = {
         close.addEventListener("click", fechar);
         header.append(title, close);
 
-        // atalhos no topo do painel para abrir as telas de conquistas e missões
+        // atalhos no topo do painel para abrir as telas de conquistas, missões e marcos
         const atalhos = document.createElement("div");
         atalhos.className = "skill-upgrade-shortcuts";
         const abreTela = (mostrar) => {
@@ -348,7 +352,13 @@ const UI = {
         botaoMissoes.textContent = "Missões";
         botaoMissoes.setAttribute("aria-label", "Abrir tela de missões");
         botaoMissoes.addEventListener("click", () => abreTela(MostraMissao));
-        atalhos.append(botaoConquistas, botaoMissoes);
+        const botaoMarcos = document.createElement("button");
+        botaoMarcos.type = "button";
+        botaoMarcos.className = "skill-upgrade-shortcut";
+        botaoMarcos.textContent = "Marcos";
+        botaoMarcos.setAttribute("aria-label", "Abrir tela de marcos de gold");
+        botaoMarcos.addEventListener("click", () => abreTela(MostraMarcos));
+        atalhos.append(botaoConquistas, botaoMissoes, botaoMarcos);
 
         const level = document.createElement("div");
         level.className = "skill-player-summary";
@@ -407,10 +417,47 @@ const UI = {
                 if (EvoluiSkill(skill.id)) this.showSkillUpgradePanel();
             });
             card.append(details, upgrade);
+
+            const perk = PERKS.find(item => item.skillId === skill.id);
+            if (perk) {
+                const perkNivel = Number(window[perk.varName]) || 0;
+                const perkInfo = document.createElement("div");
+                perkInfo.className = "skill-upgrade-details";
+                const perkNome = document.createElement("p");
+                const perkNomeForte = document.createElement("strong");
+                perkNomeForte.textContent = `Perk ${perkNivel}/${perk.maximo} · ${perk.efeito}`;
+                perkNome.appendChild(perkNomeForte);
+                const perkCusto = document.createElement("span");
+                perkCusto.className = "skill-upgrade-requirement";
+                perkCusto.textContent = unlocked
+                    ? perkNivel >= perk.maximo
+                        ? "Perk no máximo"
+                        : "1 ponto de perk por nível"
+                    : `Desbloqueia no andar ${skill.pisoDesbloqueio}`;
+                perkInfo.append(perkNome, perkCusto);
+
+                const perkButton = document.createElement("button");
+                perkButton.type = "button";
+                perkButton.className = "skill-upgrade-button";
+                perkButton.textContent = "Perk";
+                perkButton.disabled = !unlocked || PontosPerkDisponiveis() <= 0 || perkNivel >= perk.maximo;
+                perkButton.setAttribute("aria-label", `Aplicar perk em ${perk.nome} — ${perkNivel}/${perk.maximo}`);
+                perkButton.addEventListener("click", () => {
+                    if (CompraPerk(perk.skillId)) this.showSkillUpgradePanel();
+                });
+                card.append(perkInfo, perkButton);
+            }
             skillList.appendChild(card);
         }
 
-        panel.append(header, atalhos, level, bonus, xpLabel, xpTrack, skillList);
+        const perkLine = document.createElement("div");
+        perkLine.id = "skill-player-perk";
+        perkLine.className = "skill-player-bonus";
+        const perkDisp = PontosPerkDisponiveis();
+        const perkGanhos = PontosPerkGanhos();
+        perkLine.textContent = `Pontos de perk: ${perkDisp} ${perkDisp === 1 ? "disponível" : "disponíveis"} de ${perkGanhos} · +1 por portão de reset (andar 35+)`;
+
+        panel.append(header, atalhos, level, bonus, perkLine, xpLabel, xpTrack, skillList);
         overlay.appendChild(panel);
         overlay.addEventListener("click", event => {
             if (event.target === overlay) fechar();
@@ -493,9 +540,11 @@ const UI = {
         const faltam = andarVolta - andar;
         const pronto = faltam <= 0;
 
+        const danoPct = GatesDanoPendentes(andar) * 5;
+        const sufixoDano = danoPct > 0 ? " · +" + danoPct + "% dano" : "";
         const texto = pronto
-            ? "Reset disponível no botão Voltar andar!"
-            : "Próximo reset: andar " + andarVolta + " (faltam " + faltam + ")";
+            ? "Reset disponível no botão Voltar andar!" + sufixoDano
+            : "Próximo reset: andar " + andarVolta + " (faltam " + faltam + ")" + sufixoDano;
 
         if (aviso.textContent !== texto) aviso.textContent = texto;
 
@@ -504,7 +553,7 @@ const UI = {
     },
 
     // Celebração pós-reset: banner transitório no topo (some sozinho ou com clique/ESC)
-    MostraCelebracaoReset(recebidas, andarAnterior, proximoAndar) {
+    MostraCelebracaoReset(recebidas, andarAnterior, proximoAndar, danoRecebido = 0) {
         const antigo = document.getElementById("celebracaoReset");
         if (antigo) antigo.remove();
         if (UI.celebracaoTimeout) {
@@ -512,13 +561,18 @@ const UI = {
             UI.celebracaoTimeout = null;
         }
 
+        const premios = [];
+        if (recebidas > 0) premios.push(`+${recebidas} esmeralda${recebidas === 1 ? "" : "s"}`);
+        if (danoRecebido > 0) premios.push(`+${danoRecebido}% de dano permanente`);
+        if (premios.length === 0) premios.push("Reset realizado");
+
         const div = document.createElement("div");
         div.id = "celebracaoReset";
         div.className = "celebracao-reset";
         div.setAttribute("role", "status");
         div.innerHTML = `
             <div class="celebracao-reset-titulo">Reset realizado!</div>
-            <div class="celebracao-reset-premio">+${recebidas} esmeralda${recebidas === 1 ? "" : "s"}</div>
+            <div class="celebracao-reset-premio">${premios.join(" · ")}</div>
             <div class="celebracao-reset-info">Andar ${andarAnterior} → 1 · próximo reset no andar ${proximoAndar}</div>
         `;
         div.addEventListener("click", () => UI.FechaCelebracaoReset());
@@ -989,7 +1043,7 @@ const UI = {
             ["Multiplicador Gold", mulGold.toFixed(2)],
             ["Gold por inimigo", FormatGold(andar * mulGold)],
             ["Gold total", FormatGold(totalGold)],
-            ["Bonus avanço", (((andar * mulGold) + (vidaAndar * mulGold) * mulGoldAvanco)).toFixed(2)],
+            ["Bonus avanço", BonusGoldAvanco().toFixed(2)],
             ["Chance avanço", (avanco * 100).toFixed(2) + "%"],
             ["Qtd avanço", qtdAvanco],
             ["Dano crítico", (danoCritJogador * multDanoTotal).toFixed(2)],
@@ -1695,7 +1749,7 @@ function MostraConquista() {
 			</div>
 
 			<div>
-				Bônus de gold: ${(Number(descontoLoja) || 0) > 0 ? "-" + (Number(descontoLoja) * 100).toFixed(0) + "% nos preços" : "nenhum"}
+				Bônus de gold: ${(Number(descontoLoja) || 0) > 0 ? "-" + (Number(descontoLoja) * 100).toFixed(1).replace(/\.0$/, "") + "% nos preços" : "nenhum"}
 			</div>
 
 		</div>
@@ -1774,10 +1828,21 @@ function MostraMissao() {
 
         progressoAtual = missaoTempoAtual;
         progressoMax = missaoTempo;
+    } else if (missaoAtual == 5) {
+
+        progressoAtual = missaoDesafioAtual;
+        progressoMax = missaoDesafioAlvo;
     }
 
     const porcentagem =
         ((progressoAtual * 100) / progressoMax).toFixed(2);
+
+    const regraDesafio = missaoAtual == 5 ? [
+        "",
+        "Qualquer compra com gold falha o desafio.",
+        "Ativar qualquer habilidade de combate falha o desafio.",
+        `Faltam ${missaoDesafioTempo} segundos — o tempo zerado falha o desafio.`
+    ][missaoDesafioSub] : "";
 
     UI.showModal(
         "Missões",
@@ -1790,6 +1855,8 @@ function MostraMissao() {
                         ${missao[missaoAtual]}
                     </span>
                 </div>
+
+                ${regraDesafio ? `<div class="modal-info">${regraDesafio}</div>` : ""}
 
                 <div class="modal-linha">
                     <span class="modal-label">Progresso:</span>
@@ -1807,6 +1874,76 @@ function MostraMissao() {
 
                 <div class="modal-porcentagem">
                     ${porcentagem}%
+                </div>
+
+            </div>
+        `
+    );
+}
+
+// Marcos de gold desta run: +10% de gold a cada 10 andares (zeram no reset)
+function MostraMarcos() {
+    const marcos = Math.max(0, Math.floor(marcoGoldRun / 10));
+    const bonusComposto = (Math.pow(1.1, marcos) - 1) * 100;
+    const proximoMarco = marcoGoldRun + 10;
+    const faltam = Math.max(0, proximoMarco - andar);
+    const progresso = Math.max(0, Math.min(100, ((andar - marcoGoldRun) / 10) * 100));
+
+    const casas = bonusComposto < 100 ? 1 : 0;
+    const bonusTexto = marcos === 0
+        ? "nenhum"
+        : "+" + bonusComposto.toFixed(casas).replace(/\.0$/, "") + "%";
+
+    // lista limitada: últimos marcos atingidos + os próximos
+    const inicio = marcoGoldRun > 0 ? Math.max(10, marcoGoldRun - 20) : 10;
+    const itens = [];
+    if (inicio > 10) itens.push("…");
+    for (let m = inicio; m <= marcoGoldRun + 30; m += 10) {
+        if (m <= marcoGoldRun) itens.push(m + " ✓");
+        else itens.push(m === proximoMarco ? m + " (próximo)" : String(m));
+    }
+
+    UI.showModal(
+        "Marcos de Gold",
+        `
+            <div class="modal-section">
+
+                <div class="modal-linha">
+                    <span class="modal-label">Andar atual:</span>
+                    <span class="modal-value">${andar}</span>
+                </div>
+
+                <div class="modal-linha">
+                    <span class="modal-label">Marcos atingidos:</span>
+                    <span class="modal-value">${marcos} (1 a cada 10 andares)</span>
+                </div>
+
+                <div class="modal-linha">
+                    <span class="modal-label">Bônus desta run:</span>
+                    <span class="modal-value">${bonusTexto}</span>
+                </div>
+
+                <div class="modal-linha">
+                    <span class="modal-label">Próximo marco:</span>
+                    <span class="modal-value">
+                        andar ${proximoMarco} — faltam ${faltam} ${faltam === 1 ? "andar" : "andares"}
+                    </span>
+                </div>
+
+                <div class="modal-barra">
+                    <div class="modal-barra-fill" style="width:${progresso}%"></div>
+                </div>
+
+                <div class="modal-porcentagem">${progresso.toFixed(0)}%</div>
+
+                <div class="modal-linha">
+                    <span class="modal-label">Marcos:</span>
+                    <span class="modal-value">${itens.join(" · ")}</span>
+                </div>
+
+                <div class="modal-info">
+                    Cada marco dá +10% de gold multiplicativo nesta run e mostra um
+                    aviso na tela. O bônus zera ao resetar.
                 </div>
 
             </div>
@@ -1904,6 +2041,13 @@ function MostraDecomposicaoDano() {
         html += `
         <div class="decomp-grupo">Bônus permanente</div>
         ${linha("Bônus das conquistas (reaplicado no reset)", "×" + N(danoBonus).toFixed(2))}
+        `;
+    }
+
+    if (N(danoResetQtd) > 0) {
+        html += `
+        <div class="decomp-grupo">Bônus de reset (reaplicado a cada reset)</div>
+        ${linha("Portões pagos: " + N(danoResetQtd) + " (+" + (N(danoResetQtd) * 5) + "%)", "×" + Math.pow(1.05, N(danoResetQtd)).toFixed(2))}
         `;
     }
 

@@ -73,6 +73,7 @@ function Salvar() {
 
 		numInimigosTela,
 		andar,
+		marcoGoldRun,
 		qtdInimigosAndar,
 		inimigosDerrotados,
 		limiteInimigos,
@@ -90,6 +91,12 @@ function Salvar() {
 		qtdSave,
 		maxAndar,
 		andarVolta,
+		gateDanoPago,
+		danoResetQtd,
+		perkDano,
+		perkEletrica,
+		perkGold,
+		perkFuga,
 		totalDerrotados,
 		nivelJogador,
 		xpAtual,
@@ -317,6 +324,58 @@ function ValidarSave(save) {
 		throw new TypeError("O save não contém um andar válido.");
 	}
 
+	if (save.marcoGoldRun !== undefined
+		&& (!Number.isSafeInteger(save.marcoGoldRun) || save.marcoGoldRun < 0
+			|| save.marcoGoldRun % 10 !== 0)) {
+		throw new TypeError("O marco de gold da run no save é inválido.");
+	}
+
+	if (save.gateDanoPago !== undefined
+		&& (!Number.isSafeInteger(save.gateDanoPago) || save.gateDanoPago < 5
+			|| save.gateDanoPago % 5 !== 0)) {
+		throw new TypeError("O portão de dano do reset no save é inválido.");
+	}
+
+	if (save.danoResetQtd !== undefined
+		&& (!Number.isSafeInteger(save.danoResetQtd) || save.danoResetQtd < 0
+			|| save.danoResetQtd > 10000)) {
+		throw new TypeError("O bônus de dano de reset no save é inválido.");
+	}
+
+	// coerência: pós-35 o portão pago é sempre o anterior ao próximo reset
+	// (impede "reivindicar" um portão antigo de novo editando o save)
+	if (save.gateDanoPago >= 35 && save.andarVolta !== save.gateDanoPago + 5) {
+		throw new TypeError("O portão de dano não bate com o próximo reset do save.");
+	}
+	if (save.gateDanoPago < 35 && save.andarVolta > 35) {
+		throw new TypeError("O portão de dano não bate com o próximo reset do save.");
+	}
+
+	// perks: inteiros dentro do teto de cada um; gastos não podem exceder os
+	// pontos dos portões pagos (1 ponto por portão pago >= 35)
+	const perkKeys = [
+		["perkDano", 0, 4],
+		["perkEletrica", 0, 3],
+		["perkGold", 0, 4],
+		["perkFuga", 0, 5]
+	];
+	let perkGastos = 0;
+	for (const [key, minimo, maximo] of perkKeys) {
+		const valor = save[key];
+		if (valor === undefined) continue;
+		if (!Number.isSafeInteger(valor) || valor < minimo || valor > maximo) {
+			throw new TypeError("Os níveis de perk do save são inválidos.");
+		}
+		perkGastos = perkGastos + valor;
+	}
+	if (perkGastos > 0) {
+		const gatePerks = save.gateDanoPago ?? ((save.andarVolta ?? 1) - 5);
+		const perkGanhos = gatePerks >= 35 ? Math.floor((gatePerks - 35) / 5) + 1 : 0;
+		if (perkGastos > perkGanhos) {
+			throw new TypeError("Os perks do save excedem os pontos dos portões pagos.");
+		}
+	}
+
 	for (const key of ["gold", "totalGold"]) {
 		const currency = save[key];
 		if (!currency || typeof currency !== "object"
@@ -469,8 +528,7 @@ function CriaBausOffline(avancos) {
 	const chanceExtra = ChanceBauExtraFormigas();
 	const extrasGarantidos = Math.floor(chanceExtra);
 	const chanceExtraFracionada = chanceExtra - extrasGarantidos;
-	const bonusGoldBau = Math.max(0, (((andar * mulGold)
-		+ (vidaAndar * mulGold) * mulGoldAvanco) * 5)
+	const bonusGoldBau = Math.max(0, (BonusGoldAvanco() * 5)
 		* MultiplicadorGoldBauFormigas() * MultiplicadorGoldFormigas()
 		* multiplicadorProgressoOffline);
 
@@ -643,6 +701,9 @@ function Carregar(saveData, calculaOffline = false) {
 
 	numInimigosTela = save.numInimigosTela ?? 1;
 	andar = save.andar ?? 1;
+	// marcos de gold desta run: vêm no save (não regredir ao fugir e recarregar);
+	// saves antigos caem na derivação pelo andar
+	marcoGoldRun = save.marcoGoldRun ?? Math.floor(Math.max(1, andar) / 10) * 10;
 	qtdInimigosAndar = save.qtdInimigosAndar ?? 1;
 	inimigosDerrotados = save.inimigosDerrotados ?? 0;
 	limiteInimigos = save.limiteInimigos ?? 1;
@@ -665,6 +726,14 @@ function Carregar(saveData, calculaOffline = false) {
 	maxAndar = save.maxAndar ?? 0;
 	andarVolta = save.andarVolta ?? 15;
 	if (andarVolta === 20) andarVolta = 15; // saves antigos: 20 era o gate do 1º reset (agora é 15)
+	// saves antigos: começa a contar do portão atual (sem bônus retroativo)
+	gateDanoPago = save.gateDanoPago ?? (andarVolta - 5);
+	danoResetQtd = save.danoResetQtd ?? 0;
+	// perks de portão: permanentes (não zeram no reset)
+	perkDano = save.perkDano ?? 0;
+	perkEletrica = save.perkEletrica ?? 0;
+	perkGold = save.perkGold ?? 0;
+	perkFuga = save.perkFuga ?? 0;
 	totalDerrotados = save.totalDerrotados ?? 0;
 	nivelJogador = save.nivelJogador ?? 1;
 	xpAtual = save.xpAtual ?? 0;
@@ -736,8 +805,8 @@ function Carregar(saveData, calculaOffline = false) {
 	precoBEspaco = save.precoBEspaco ?? 45;
 	lvlBEspaco = save.lvlBEspaco ?? 1;
 
-	precoGold = save.precoGold ?? 50;
-	sobeGold = 0.5; // mult gold fixo em 0.5 em todo save (pedido do jogador)
+	precoGold = save.precoGold ?? 100;
+	sobeGold = 0.3; // mult gold fixo em 0.3 em todo save (nerf médio pedido pelo jogador)
 	lvlGold = save.lvlGold ?? 1;
 
 	precoAvan = save.precoAvan ?? 80;
@@ -748,7 +817,7 @@ function Carregar(saveData, calculaOffline = false) {
 	sobeDCrit = save.sobeDCrit ?? 0.1;
 	lvlDCrit = save.lvlDCrit ?? 1;
 
-	precoCCrit = save.precoCCrit ?? 200;
+	precoCCrit = save.precoCCrit ?? 250;
 	sobeCCrit = save.sobeCCrit ?? 0.02;
 	lvlCCrit = save.lvlCCrit ?? 1;
 
@@ -1362,6 +1431,7 @@ function Resetar() {
 	ultimaDataSaveOffline = Date.now();
 	numInimigosTela = 1; //usada para validar quantos inimigos e
 	andar = 1;	//usada para contagem do andar atual do jogo (Necessario para calculos progressivos)
+	marcoGoldRun = 0;
 	qtdInimigosAndar = 1; //quantidade necessaria de inimigos que devem ser derrotados para avançar para o proximo andar
 	inimigosDerrotados = 0; //quantidade de inimigos derrotados naquele andar
 	limiteInimigos = 1; //usada para controlar quantos inimigos podem ser criados na tela ao mesmo tempo
@@ -1407,7 +1477,11 @@ function Resetar() {
 	missaoGolpe = 100, missaoGolpeAtual = 0; //Quantidade de golpes necessarios para concluir a missão "Golpes"
 	missaoCacaMugs = 50, missaoCacaMugsAtual = 0; //Quantidade de mugs necessarios para completar a missão "Caça aos Mugs"
 	missaoTempo = 600, missaoTempoAtual = 0; //segundos necessarios para concluir a missão "Tempo"
-	qtdMissoes = 4; //Quantidade de missões disponiveis
+	missaoDesafioSub = 0;
+	missaoDesafioAlvo = 10, missaoDesafioAtual = 0;
+	missaoDesafioTempo = 0;
+	desafioFalhando = false;
+	qtdMissoes = 5; //Quantidade de missões disponiveis (4 estatísticas + 1 desafio)
 	statusMissao = true; //Verifica se a missão pode ser iniciada
 	////
 
@@ -1419,8 +1493,8 @@ function Resetar() {
 	precoBEspaco = 45;
 	lvlBEspaco = 1;
 
-	precoGold = 50;
-	sobeGold = 0.5;
+	precoGold = 100;
+	sobeGold = 0.3;
 	lvlGold = 1;
 
 	precoAvan = 80;
@@ -1431,7 +1505,7 @@ function Resetar() {
 	sobeDCrit = 0.2;
 	lvlDCrit = 1;
 
-	precoCCrit = 200;
+	precoCCrit = 250;
 	sobeCCrit = 0.02;
 	lvlCCrit = 1;
 
@@ -1468,6 +1542,20 @@ function Resetar() {
 		LimitaDanoCritico();
 	}
 
+	// Bônus permanente de dano dos resets (+5% por portão >= 35, único por portão)
+	if (danoResetQtd > 0 && isFinite(danoResetQtd)) {
+		danoJogador = danoJogador * Math.pow(1.05, danoResetQtd);
+		LimitaDanoCritico();
+	}
+
+	// Crítico das conquistas é permanente: devolve o bônus acumulado (Conquistas()).
+	// Base é 2 (valor inicial do reset); os LimitaDanoCritico intermediários podem
+	// ter subido o crítico pro piso do dano — recalcular da base evita somar o piso 2x.
+	if (bonusCritConquista > 0 && isFinite(bonusCritConquista)) {
+		danoCritJogador = 2 + bonusCritConquista;
+		LimitaDanoCritico();
+	}
+
 	if (lvlComp1 > 0) {
 		danoComp = danoJogador * danoComp1;
 	}
@@ -1497,6 +1585,7 @@ function CriarObjetoSave() {
 
 		numInimigosTela,
 		andar,
+		marcoGoldRun,
 		qtdInimigosAndar,
 		inimigosDerrotados,
 		limiteInimigos,
@@ -1515,6 +1604,12 @@ function CriarObjetoSave() {
 		qtdSave,
 		maxAndar,
 		andarVolta,
+		gateDanoPago,
+		danoResetQtd,
+		perkDano,
+		perkEletrica,
+		perkGold,
+		perkFuga,
 		totalDerrotados,
 		nivelJogador,
 		xpAtual,

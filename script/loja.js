@@ -137,12 +137,18 @@ document.addEventListener("DOMContentLoaded", () => {
 	});
 });
 
+//Deduz o gold de uma compra da loja; no desafio "sem gold" a compra falha o desafio
+function PagaLoja(preco) {
+	if (missaoAtual === 5 && missaoDesafioSub === 1) FalhaDesafio("Gold gasto na loja");
+	gold.add(-N(preco));
+}
+
 function CompraDano(){
 	NormalizaPrecosLoja();
 
 	if(GE(gold, precoDano)){
 
-		gold.add(-N(precoDano));
+		PagaLoja(precoDano);
 
 		danoJogador = N(danoJogador) + N(mulDano);
 		// Começo mais amigável: os 5 primeiros níveis sobem 40% em vez de 50%
@@ -178,7 +184,7 @@ function CompraBau(){
 	if(N(chanceBau) < 0.75){
 		if(GE(gold, N(precoBau))){
 
-			gold.add(-N(precoBau));
+			PagaLoja(precoBau);
 
 			chanceBau = N(chanceBau) + 0.05;
 			precoBau = N(precoBau) * 2.2;
@@ -204,7 +210,7 @@ function CompraGold(){
 	NormalizaPrecosLoja();
 	if(GE(gold, N(precoGold))){
 
-		gold.add(-N(precoGold));
+		PagaLoja(precoGold);
 
 		mulGold = N(mulGold) * (1 + N(sobeGold));
 		if(lvlGold<= 5){
@@ -215,7 +221,7 @@ function CompraGold(){
 			precoGold = N(precoGold) * 3;
 		} 
 
-		sobeGold = Math.min(N(sobeGold) + 0.1, 0.5);
+		sobeGold = Math.min(N(sobeGold) + 0.1, 0.3);
 		lvlGold++;
 
 		if(lvlComp2 > 0){
@@ -240,7 +246,7 @@ function CompraAvanco(){
 	if(N(avanco) < 0.5){
 		if(GE(gold, N(precoAvan))){
 
-			gold.add(-N(precoAvan));
+			PagaLoja(precoAvan);
 
 			avanco = N(avanco) + N(sobeAvanco);
 			precoAvan = N(precoAvan) * 2;
@@ -271,7 +277,7 @@ function CompraDCrit(){
 	NormalizaPrecosLoja();
 	if(GE(gold, N(precoDCrit))){
 
-		gold.add(-N(precoDCrit));
+		PagaLoja(precoDCrit);
 
 		multiplicadorMaximoDanoCritico += 0.1;
 		sobeDCrit = N(sobeDCrit) * 1.025;
@@ -297,7 +303,7 @@ function CompraSubVida(){
 	if(lvlSubVida < 50){
 		if(GE(gold, N(precoVidaInimigo))){
 
-			gold.add(-N(precoVidaInimigo));
+			PagaLoja(precoVidaInimigo);
 
 			// Aplica apenas o desconto novo (1%), e não o total acumulado: usar o total
 			// multiplicava o desconto em dobro a cada compra e a vida "voltava" no respawn,
@@ -345,7 +351,7 @@ function CompraCCrit(){
 	if(N(chanceCrit) < 0.7){
 		if(GE(gold, N(precoCCrit))){
 
-			gold.add(-N(precoCCrit));
+			PagaLoja(precoCCrit);
 
 			chanceCrit = N(chanceCrit) + N(sobeCCrit);
 			precoCCrit = N(precoCCrit) * 1.5;
@@ -377,7 +383,7 @@ function CompraBEspaco(){
 	if(GE(gold, N(precoBEspaco))){
 		if(lvlBEspaco < 15){
 
-			gold.add(-N(precoBEspaco));
+			PagaLoja(precoBEspaco);
 
 			MaxValidaBater--;
 			precoBEspaco = N(precoBEspaco) * 1.5;
@@ -402,7 +408,7 @@ function CompraQTDAvanco(){
 	if(lvlQTDAvanco <= 20){
 		if(GE(gold, N(precoQTDAvanco))){
 
-			gold.add(-N(precoQTDAvanco));
+			PagaLoja(precoQTDAvanco);
 
 			qtdAvanco++;
 			precoQTDAvanco = N(precoQTDAvanco) * 2;

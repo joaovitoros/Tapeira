@@ -28,6 +28,10 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	if (critico) {
 		dano = danoCritico;
 	}
+	// perk do Dano automático: +25% por nível no hit da habilidade (não afeta cliques nem companheiro)
+	if (validaDano && !aplicaNovasHabilidades && perkDano > 0) {
+		dano = dano * (1 + 0.25 * perkDano);
+	}
 	TocaSomSintetico(critico ? "critico" : "impacto");
 	dano *= MultiplicadorDanoFormigas();
 	dano *= MultiplicadorDanoNivel();
@@ -35,12 +39,12 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	if (validaDano) UI.playAttackAnimation(inimigoElement);
 
 	const danoBaseAtaque = dano;
-	let chainTarget = null;
+	let chainTargets = [];
 	if (ataqueCorrenteEletrica) {
 		const targetRect = inimigoElement.getBoundingClientRect();
 		const targetCenterX = targetRect.left + targetRect.width / 2;
 		const targetCenterY = targetRect.top + targetRect.height / 2;
-		let nearestDistance = Infinity;
+		const candidatos = [];
 
 		for (let candidate = 1; candidate <= 4; candidate++) {
 			if (candidate === inimigo || window["vidaInimigo" + candidate] <= 0) continue;
@@ -52,17 +56,21 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 				rect.left + rect.width / 2 - targetCenterX,
 				rect.top + rect.height / 2 - targetCenterY
 			);
-			if (distance < nearestDistance) {
-				nearestDistance = distance;
-				chainTarget = { id: candidate, element: candidateElement };
-			}
+			candidatos.push({ id: candidate, element: candidateElement, distance: distance });
 		}
 
-		if (!chainTarget) {
+		// perk da Corrente elétrica: 1 alvo base + 1 por nível (máx 3 = todos na tela)
+		candidatos.sort((a, b) => a.distance - b.distance);
+		chainTargets = candidatos.slice(0, 1 + perkEletrica);
+
+		if (chainTargets.length === 0) {
 			dano *= 1 + (10 + NivelDaSkill("electric") * 2) / 100;
 		}
 		ChamaSom("audio5");
 	}
+
+	// perk do Bônus de Gold: o kill feito com o golpe da skill ativa dropa +25% por nível
+	const killComSkillGold = ataqueJogador && ataquesBonusGold > 0 && perkGold > 0;
 
 	if (ataqueJogador && ataquesBonusGold > 0) {
 		const bonusGold = ((andar * mulGold) + 1) * ((35 + NivelDaSkill("gold") * 5) / 100);
@@ -80,17 +88,19 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	window["vidaInimigo" + inimigo] = vidaAtual;
 	UI.showDamageNumber(inimigoElement, dano, critico);
 
-	if (chainTarget) {
+	if (chainTargets.length > 0) {
 		const chainDamage = danoBaseAtaque * ((25 + NivelDaSkill("electric") * 5) / 100);
-		const chainHealth = Math.max(0, window["vidaInimigo" + chainTarget.id] - chainDamage);
-		window["vidaInimigo" + chainTarget.id] = chainHealth;
-		UI.showDamageNumber(chainTarget.element, chainDamage, false);
-		animarEfeitoEletrico(chainTarget.element);
-		if (chainHealth > 0) {
-			animarImpacto(chainTarget.element, false, true);
-		} else {
-			animarMorte(chainTarget.element);
-			chainTarget.element.style.visibility = "hidden";
+		for (const alvo of chainTargets) {
+			const chainHealth = Math.max(0, window["vidaInimigo" + alvo.id] - chainDamage);
+			window["vidaInimigo" + alvo.id] = chainHealth;
+			UI.showDamageNumber(alvo.element, chainDamage, false);
+			animarEfeitoEletrico(alvo.element);
+			if (chainHealth > 0) {
+				animarImpacto(alvo.element, false, true);
+			} else {
+				animarMorte(alvo.element);
+				alvo.element.style.visibility = "hidden";
+			}
 		}
 	}
 	if (vidaAtual > 0) {
@@ -102,8 +112,8 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 
 	const derrotados = [];
 	if (vidaAtual <= 0) derrotados.push(inimigo);
-	if (chainTarget && window["vidaInimigo" + chainTarget.id] <= 0) {
-		derrotados.push(chainTarget.id);
+	for (const alvo of chainTargets) {
+		if (window["vidaInimigo" + alvo.id] <= 0) derrotados.push(alvo.id);
 	}
 
 	let formigaObtida = false;
@@ -119,13 +129,18 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		VerificaHabilidade();
 		RegistrarAbateHabilidades();
 
-		const recompensaGold = ((andar * mulGold) * avancoAbates) + 1;
+		let recompensaGold = ((andar * mulGold) * avancoAbates) + 1;
+		if (inimigoDerrotado === inimigo && killComSkillGold) {
+			// perk do Bônus de Gold: +25% por nível no drop do kill feito com a skill ativa
+			recompensaGold = recompensaGold * (1 + 0.25 * perkGold);
+		}
 		const goldRecebido = AddGold(recompensaGold);
 		AddTotalGold(goldRecebido, false);
 		UI.showCurrencyReward("gold", goldRecebido);
 
 		if (missaoAtual == 3) MissaoCaca();
 		if (missaoAtual == 1) MissaoColetaGold(andar * mulGold);
+		if (missaoAtual == 5) MissaoDesafio();
 	}
 
 	if (inimigosDerrotados >= QuotaAndar()) {
@@ -135,7 +150,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	}
 
 	DesceVida(inimigo);
-	if (chainTarget) DesceVida(chainTarget.id);
+	for (const alvo of chainTargets) DesceVida(alvo.id);
 
 	// UI separada (agora ideal mover pra ui.js depois)
 	if (typeof MostraStatus === "function") MostraStatus();
@@ -163,11 +178,20 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 
 			if (andar > maxAndar) maxAndar = andar;
 
+			// Marco a cada 10 andares: +10% de gold nesta run (não re-dispara se o jogador fugir e subir de novo)
+			if (andar % 10 === 0 && andar > marcoGoldRun) {
+				marcoGoldRun = andar;
+				mulGold = N(mulGold) * 1.1;
+				if (lvlComp2 > 0) {
+					goldCompanheiro = N(lvlComp2) * N(mulGold);
+				}
+				UI.showMilestone("Marco do andar " + andar, "+10% de gold nesta run");
+			}
+
 			RemoverInimigos();
 			RemoveBau();
 
-			let bonusAndar =
-				((andar * mulGold) + (vidaAndar * mulGold) * mulGoldAvanco);
+			let bonusAndar = BonusGoldAvanco();
 
 			const goldRecebido = AddGold(bonusAndar);
 			AddTotalGold(goldRecebido, false);
