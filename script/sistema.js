@@ -449,7 +449,7 @@ function SimulaDanoOffline(dano) {
 }
 
 function ContaAvancosVirtuais(abates) {
-	const abatesParaProximoAndar = Math.max(1, Math.ceil(qtdInimigosAndar - inimigosDerrotados));
+	const abatesParaProximoAndar = Math.max(1, Math.ceil(QuotaAndar() - inimigosDerrotados));
 	const b = 2 * abatesParaProximoAndar - 1;
 	const avancos = Math.floor((Math.sqrt(b * b + 8 * abates) - b) / 2);
 	return Number.isFinite(avancos) ? Math.max(0, avancos) : Number.MAX_SAFE_INTEGER;

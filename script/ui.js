@@ -282,6 +282,11 @@ const UI = {
         if (fill) fill.style.width = `${percent}%`;
         const xpLabel = document.getElementById("skill-player-xp-label");
         if (xpLabel) xpLabel.textContent = `${xpAtual} / ${nextLevelXP} XP para o próximo nível`;
+        const bonus = document.getElementById("skill-player-bonus");
+        if (bonus) {
+            const bonusNiveis = Math.max(0, nivelJogador - 1);
+            bonus.textContent = `Bônus atual: +${bonusNiveis * 10}% de dano · −${bonusNiveis} ${bonusNiveis === 1 ? "inimigo" : "inimigos"} para avançar`;
+        }
         if (button) button.setAttribute("aria-label", `Skills, nível ${nivelJogador}, ${pontosHabilidade} pontos disponíveis`);
         if (badge) {
             badge.textContent = String(pontosHabilidade);
@@ -327,6 +332,10 @@ const UI = {
         const points = document.createElement("span");
         points.id = "skill-player-points";
         level.append(levelName, points);
+
+        const bonus = document.createElement("div");
+        bonus.id = "skill-player-bonus";
+        bonus.className = "skill-player-bonus";
 
         const xpTrack = document.createElement("div");
         xpTrack.id = "skill-player-xp";
@@ -376,7 +385,7 @@ const UI = {
             skillList.appendChild(card);
         }
 
-        panel.append(header, level, xpLabel, xpTrack, skillList);
+        panel.append(header, level, bonus, xpLabel, xpTrack, skillList);
         overlay.appendChild(panel);
         overlay.addEventListener("click", event => {
             if (event.target === overlay) fechar();
@@ -439,7 +448,7 @@ const UI = {
 
         if (!progress || !fill || !count || !container) return;
 
-        const total = Math.max(1, qtdInimigosAndar);
+        const total = QuotaAndar();
         const derrotados = Math.max(0, Math.min(inimigosDerrotados, total));
         const porcentagem = derrotados * 100 / total;
 
@@ -466,8 +475,8 @@ const UI = {
 
         description.textContent = "Andar concluído!";
         count.textContent = "Avançando para o próximo andar";
-        progress.setAttribute("aria-valuemax", String(Math.max(1, qtdInimigosAndar)));
-        progress.setAttribute("aria-valuenow", String(Math.max(1, qtdInimigosAndar)));
+        progress.setAttribute("aria-valuemax", String(QuotaAndar()));
+        progress.setAttribute("aria-valuenow", String(QuotaAndar()));
         fill.style.width = "100%";
         container.classList.add("objetivo-concluido");
 

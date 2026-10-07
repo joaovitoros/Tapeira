@@ -5382,6 +5382,12 @@ input:focus-visible {
 	font-variant-numeric: tabular-nums;
 }
 
+.skill-player-bonus {
+	margin-top: 7px;
+	color: #8fe6a8;
+	font-size: 13px;
+}
+
 .skill-player-xp {
 	height: 12px;
 	margin: 8px 0 16px;

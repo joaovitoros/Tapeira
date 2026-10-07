@@ -30,6 +30,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	}
 	TocaSomSintetico(critico ? "critico" : "impacto");
 	dano *= MultiplicadorDanoFormigas();
+	dano *= MultiplicadorDanoNivel();
 
 	if (validaDano) UI.playAttackAnimation(inimigoElement);
 
@@ -127,7 +128,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		if (missaoAtual == 1) MissaoColetaGold(andar * mulGold);
 	}
 
-	if (inimigosDerrotados >= qtdInimigosAndar) {
+	if (inimigosDerrotados >= QuotaAndar()) {
 		UI.showObjectiveComplete();
 	} else {
 		UI.updateObjective();
@@ -152,7 +153,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	}
 
 	// subir andar
-	if (inimigosDerrotados >= qtdInimigosAndar) {
+	if (inimigosDerrotados >= QuotaAndar()) {
 
 		if (document.getElementById("manterAndar")?.checked && andar > 4) {
 			inimigosDerrotados = 0;

@@ -484,6 +484,16 @@ function XPNecessarioProximoNivel(nivel = nivelJogador) {
 	return 50 + 25 * Math.max(0, nivel - 1);
 }
 
+// Bônus por nível do jogador: a cada nível ganho, +10% de dano e
+// −1 inimigo exigido para avançar de andar (quota mínima de 1).
+function MultiplicadorDanoNivel() {
+	return 1 + Math.max(0, nivelJogador - 1) * 0.1;
+}
+
+function QuotaAndar() {
+	return Math.max(1, qtdInimigosAndar - Math.max(0, nivelJogador - 1));
+}
+
 function XPPorInimigo(piso = andar) {
 	return 1 + Math.floor((Math.max(1, piso) - 1) / 10);
 }
@@ -523,8 +533,9 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 		pontosHabilidade = Math.min(Number.MAX_SAFE_INTEGER, pontosHabilidade + niveisGanhos);
 		UI.showMilestone(
 			niveisGanhos === 1 ? "Nível aumentado!" : `${niveisGanhos} níveis aumentados!`,
-			`Você alcançou o nível ${nivelJogador} e recebeu ${niveisGanhos} ${niveisGanhos === 1 ? "ponto de habilidade" : "pontos de habilidade"}.`
+			`Você alcançou o nível ${nivelJogador} e recebeu ${niveisGanhos} ${niveisGanhos === 1 ? "ponto de habilidade" : "pontos de habilidade"}. Bônus: +${niveisGanhos * 10}% de dano e −${niveisGanhos} ${niveisGanhos === 1 ? "inimigo" : "inimigos"} para avançar.`
 		);
+		UI.updateObjective();
 	}
 
 	UI.showXPGain(xpGanho);
