@@ -737,7 +737,7 @@ function Carregar(saveData, calculaOffline = false) {
 	lvlBEspaco = save.lvlBEspaco ?? 1;
 
 	precoGold = save.precoGold ?? 50;
-	sobeGold = save.sobeGold ?? 0.05;
+	sobeGold = save.sobeGold ?? 0.1;
 	lvlGold = save.lvlGold ?? 1;
 
 	precoAvan = save.precoAvan ?? 80;
@@ -1418,7 +1418,7 @@ function Resetar() {
 	lvlBEspaco = 1;
 
 	precoGold = 50;
-	sobeGold = 0.05;
+	sobeGold = 0.1;
 	lvlGold = 1;
 
 	precoAvan = 80;
