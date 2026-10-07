@@ -1615,7 +1615,7 @@ function MostraConquista() {
 		<div style="margin-top:1.2em;">
 
 			<div style="color:#8fe6a8;font-weight:bold;">
-				Conquista de Nível (permanente)
+				Conquista de Nível
 			</div>
 
 			<div>
