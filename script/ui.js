@@ -327,6 +327,28 @@ const UI = {
         close.addEventListener("click", fechar);
         header.append(title, close);
 
+        // atalhos no topo do painel para abrir as telas de conquistas e missões
+        const atalhos = document.createElement("div");
+        atalhos.className = "skill-upgrade-shortcuts";
+        const abreTela = (mostrar) => {
+            fechar();
+            document.getElementById("gameModal")?.remove();
+            mostrar();
+        };
+        const botaoConquistas = document.createElement("button");
+        botaoConquistas.type = "button";
+        botaoConquistas.className = "skill-upgrade-shortcut";
+        botaoConquistas.textContent = "Conquistas";
+        botaoConquistas.setAttribute("aria-label", "Abrir tela de conquistas");
+        botaoConquistas.addEventListener("click", () => abreTela(MostraConquista));
+        const botaoMissoes = document.createElement("button");
+        botaoMissoes.type = "button";
+        botaoMissoes.className = "skill-upgrade-shortcut";
+        botaoMissoes.textContent = "Missões";
+        botaoMissoes.setAttribute("aria-label", "Abrir tela de missões");
+        botaoMissoes.addEventListener("click", () => abreTela(MostraMissao));
+        atalhos.append(botaoConquistas, botaoMissoes);
+
         const level = document.createElement("div");
         level.className = "skill-player-summary";
         const levelName = document.createElement("strong");
@@ -387,7 +409,7 @@ const UI = {
             skillList.appendChild(card);
         }
 
-        panel.append(header, level, bonus, xpLabel, xpTrack, skillList);
+        panel.append(header, atalhos, level, bonus, xpLabel, xpTrack, skillList);
         overlay.appendChild(panel);
         overlay.addEventListener("click", event => {
             if (event.target === overlay) fechar();

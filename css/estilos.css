@@ -5470,6 +5470,30 @@ input:focus-visible {
 	cursor: not-allowed;
 }
 
+/* Atalhos no topo do painel de skills: Conquistas e Missões */
+.skill-upgrade-shortcuts {
+	display: flex;
+	gap: 8px;
+}
+
+.skill-upgrade-shortcut {
+	flex: 1 1 0;
+	min-height: 38px;
+	padding: 7px 10px;
+	border: 1px solid #4a7fb5;
+	border-radius: 7px;
+	background: linear-gradient(145deg, #235a8c, #163a5e);
+	color: #eaf4ff;
+	font: inherit;
+	font-size: 13px;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.skill-upgrade-shortcut:hover {
+	background: linear-gradient(145deg, #2d6fa8, #1b4874);
+}
+
 /* Baú dourado por tempo */
 .chest-opening {
 	position: fixed;
