@@ -447,7 +447,8 @@
 							<th>Nivel</th>
 							<th>Comprar</th>
 							<th>
-								<button type="button" class="btnLojaE" onclick="LojaEsmeralda()">&lt;</button>
+								<button type="button" class="btnLojaE" onclick="LojaEsmeralda()" aria-label="Loja de gold">&lt;</button>
+								<button type="button" class="btnLojaE" onclick="LojaConhecimento()" aria-label="Loja do Conhecimento">&gt;</button>
 							</th>
 						</tr>
 					</thead>
@@ -509,6 +510,135 @@
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
 								onclick="CompraXP()"></td>
+					</tr>
+
+					<tr>
+						<td>CM em dobro (x2 no Conhecimento Mug)</td>
+						<td align="center">
+							<div id="precoEsmCM"></div>
+						</td>
+						<td align="center">
+							<div id="lvlEsmCM"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraEsmCM()"></td>
+					</tr>
+				</table>
+			</div>
+			<div id="LojaCM" style="visibility:hidden">
+				<div class="preview-compra" hidden></div>
+				<table id="TabLojaCM">
+					<caption>Loja do Conhecimento · <span id="lojaCMsaldo">0</span> CM<button type="button"
+							class="btnLojaE btnLojaFechar" onclick="FechaLoja()" aria-label="Fechar loja">×</button></caption>
+					<thead>
+						<tr>
+							<th>Bonus permanente</th>
+							<th>Preço</th>
+							<th>Nivel</th>
+							<th>Comprar</th>
+							<th>
+								<button type="button" class="btnLojaE" onclick="FechaLojaCM()" aria-label="Voltar à loja de esmeraldas">&lt;</button>
+							</th>
+						</tr>
+					</thead>
+					<tr>
+						<td>+1% de dano</td>
+						<td align="center">
+							<div id="precoCMDano"></div>
+						</td>
+						<td align="center">
+							<div id="lvlCMDano"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraCM('dano')"></td>
+					</tr>
+					<tr>
+						<td>+1% de gold</td>
+						<td align="center">
+							<div id="precoCMGold"></div>
+						</td>
+						<td align="center">
+							<div id="lvlCMGold"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraCM('gold')"></td>
+					</tr>
+					<tr>
+						<td>+1% de XP</td>
+						<td align="center">
+							<div id="precoCMXp"></div>
+						</td>
+						<td align="center">
+							<div id="lvlCMXp"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraCM('xp')"></td>
+					</tr>
+					<tr>
+						<td>+1 no tempo de fuga</td>
+						<td align="center">
+							<div id="precoCMFuga"></div>
+						</td>
+						<td align="center">
+							<div id="lvlCMFuga"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraCM('fuga')"></td>
+					</tr>
+					<tr>
+						<td>+1% de dano crítico e +0,1 no teto</td>
+						<td align="center">
+							<div id="precoCMCrit"></div>
+						</td>
+						<td align="center">
+							<div id="lvlCMCrit"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraCM('crit')"></td>
+					</tr>
+					<tr>
+						<td>+1% de chance de formiga aleatória (máx 50)</td>
+						<td align="center">
+							<div id="precoCMFormiga"></div>
+						</td>
+						<td align="center">
+							<div id="lvlCMFormiga"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraCM('formiga')"></td>
+					</tr>
+					<tr>
+						<td>+1% de chance de vir 2 formigas (máx 100)</td>
+						<td align="center">
+							<div id="precoCMDuas"></div>
+						</td>
+						<td align="center">
+							<div id="lvlCMDuas"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraCM('duasformigas')"></td>
+					</tr>
+					<tr>
+						<td>+1% de dano de companheiro</td>
+						<td align="center">
+							<div id="precoCMComp"></div>
+						</td>
+						<td align="center">
+							<div id="lvlCMComp"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraCM('comp')"></td>
+					</tr>
+					<tr>
+						<td>+1% de gold do companheiro 2</td>
+						<td align="center">
+							<div id="precoCMGoldComp2"></div>
+						</td>
+						<td align="center">
+							<div id="lvlCMGoldComp2"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraCM('goldcomp2')"></td>
 					</tr>
 				</table>
 			</div>

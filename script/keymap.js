@@ -158,7 +158,7 @@ function FechaJanelasAbertas() {
     }
 
     // Painéis abertos por visibility (loja, status, salvar/carregar)
-    ["Loja", "LojaEsm", "DivStatus", "container-SalvaCarrega"].forEach(id => {
+    ["Loja", "LojaEsm", "LojaCM", "DivStatus", "container-SalvaCarrega"].forEach(id => {
         const el = document.getElementById(id);
         if (el && el.style.visibility === "visible") {
             el.style.visibility = "hidden";

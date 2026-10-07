@@ -69,6 +69,17 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		ChamaSom("audio5");
 	}
 
+	// perk do Bônus de Gold nível 1+: quando carregada, ativa sozinha no ataque
+	// do jogador ou do companheiro (o hit da skill Dano automático não conta; e
+	// no desafio "sem habilidades" fica parada pra não falhar o desafio)
+	const goldSkill = habilidadesCombate.find(s => s.id === "gold");
+	const goldCarregada = goldSkill && abatesBonusGoldAtaque >= goldSkill.killsRequired;
+	if (perkGold >= 1 && goldCarregada && ataquesBonusGold === 0
+		&& (ataqueJogador || !validaDano)
+		&& !(missaoAtual === 5 && missaoDesafioSub === 2)) {
+		AtivaHabilidadeCombate("gold");
+	}
+
 	// perk do Bônus de Gold: o kill feito com o golpe da skill ativa dropa +25% por nível
 	const killComSkillGold = ataqueJogador && ataquesBonusGold > 0 && perkGold > 0;
 
@@ -124,6 +135,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		GanhaXP(avancoAbates, andar);
 		inimigosDerrotados += avancoAbates;
 		totalDerrotados += avancoAbates;
+		derrotadosRun += avancoAbates; //base da conversão em Conhecimento Mug no reset
 		numInimigosTela--;
 		qtdCarregaHabilidade++;
 		VerificaHabilidade();
@@ -177,13 +189,14 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 			andar++;
 
 			if (andar > maxAndar) maxAndar = andar;
+			andarMaxRun = Math.max(andarMaxRun, andar); //pico da run (base dos pontos de perk)
 
 			// Marco a cada 10 andares: +10% de gold nesta run (não re-dispara se o jogador fugir e subir de novo)
 			if (andar % 10 === 0 && andar > marcoGoldRun) {
 				marcoGoldRun = andar;
 				mulGold = N(mulGold) * 1.1;
 				if (lvlComp2 > 0) {
-					goldCompanheiro = N(lvlComp2) * N(mulGold);
+					goldCompanheiro = N(lvlComp2) * N(mulGold) * MultiplicadorGoldComp2();
 				}
 				UI.showMilestone("Marco do andar " + andar, "+10% de gold nesta run");
 			}
@@ -225,7 +238,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 
 		// O cronometro continua ativo no proximo andar. Cancela-lo aqui fazia
 		// o contador reiniciar em 120 e permanecer parado.
-		tempoAvancoInimigos = 120;
+		tempoAvancoInimigos = TempoFugaMax();
 		UI.render();
 	}
 	AtualizaHabilidadesCombate();

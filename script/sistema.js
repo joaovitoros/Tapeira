@@ -92,11 +92,23 @@ function Salvar() {
 		maxAndar,
 		andarVolta,
 		gateDanoPago,
+		andarMaxRun,
 		danoResetQtd,
 		perkDano,
 		perkEletrica,
 		perkGold,
 		perkFuga,
+		conhecimentoMug,
+		derrotadosRun,
+		cmNivelDano,
+		cmNivelGold,
+		cmNivelXp,
+		cmNivelFuga,
+		cmNivelCrit,
+		cmNivelFormiga,
+		cmNivelDuasFormigas,
+		cmNivelComp,
+		cmNivelGoldComp2,
 		totalDerrotados,
 		nivelJogador,
 		xpAtual,
@@ -193,6 +205,9 @@ function Salvar() {
 
 		precoXP,
 		lvlXP,
+
+		precoEsmCM,
+		lvlEsmCM,
 
 		descontoLoja,
 		mulGoldInicial,
@@ -291,6 +306,15 @@ function ValidarRecompensasOffline(recompensas, limiteTempo, limiteBaus) {
 	}
 }
 
+// Pico de andar da run: fonte dos pontos de perk. Saves antigos, sem o campo,
+// valem pelo portão pago (a mesma regra antiga dos pontos).
+function PicoRunDoSave(save) {
+	const pico = save.andarMaxRun !== undefined
+		? save.andarMaxRun
+		: Math.max(save.andar ?? 1, save.gateDanoPago ?? ((save.andarVolta ?? 1) - 5));
+	return Math.max(pico, save.andar ?? 1, 1);
+}
+
 function ValidarSave(save) {
 	if (!save || typeof save !== "object" || Array.isArray(save)) {
 		throw new TypeError("O arquivo não contém um save válido.");
@@ -336,6 +360,11 @@ function ValidarSave(save) {
 		throw new TypeError("O portão de dano do reset no save é inválido.");
 	}
 
+	if (save.andarMaxRun !== undefined
+		&& (!Number.isSafeInteger(save.andarMaxRun) || save.andarMaxRun < 1)) {
+		throw new TypeError("O pico de andar da run no save é inválido.");
+	}
+
 	if (save.danoResetQtd !== undefined
 		&& (!Number.isSafeInteger(save.danoResetQtd) || save.danoResetQtd < 0
 			|| save.danoResetQtd > 10000)) {
@@ -352,7 +381,7 @@ function ValidarSave(save) {
 	}
 
 	// perks: inteiros dentro do teto de cada um; gastos não podem exceder os
-	// pontos dos portões pagos (1 ponto por portão pago >= 35)
+	// pontos do pico de andar desta run (1 ponto por portão >= 35 alcançado)
 	const perkKeys = [
 		["perkDano", 0, 4],
 		["perkEletrica", 0, 3],
@@ -369,11 +398,44 @@ function ValidarSave(save) {
 		perkGastos = perkGastos + valor;
 	}
 	if (perkGastos > 0) {
-		const gatePerks = save.gateDanoPago ?? ((save.andarVolta ?? 1) - 5);
-		const perkGanhos = gatePerks >= 35 ? Math.floor((gatePerks - 35) / 5) + 1 : 0;
+		const picoRun = PicoRunDoSave(save);
+		const perkGanhos = picoRun >= 35 ? Math.floor((picoRun - 35) / 5) + 1 : 0;
 		if (perkGastos > perkGanhos) {
-			throw new TypeError("Os perks do save excedem os pontos dos portões pagos.");
+			throw new TypeError("Os perks do save excedem os pontos do pico da run.");
 		}
+	}
+
+	// item de 1 nível da loja de esmeraldas: dobra o CM ganho (0 ou 1)
+	if (save.lvlEsmCM !== undefined
+		&& (!Number.isSafeInteger(save.lvlEsmCM) || save.lvlEsmCM < 0 || save.lvlEsmCM > 1)) {
+		throw new TypeError("O nível do item de CM da loja de esmeraldas é inválido.");
+	}
+
+	// Conhecimento Mug: inteiros não negativos; níveis respeitam o teto de cada item
+	const cmKeys = [
+		["conhecimentoMug", 0, 1000000000],
+		["derrotadosRun", 0, 1000000000],
+		["cmNivelDano", 0, 10000],
+		["cmNivelGold", 0, 10000],
+		["cmNivelXp", 0, 10000],
+		["cmNivelFuga", 0, 10000],
+		["cmNivelCrit", 0, 10000],
+		["cmNivelFormiga", 0, 50],
+		["cmNivelDuasFormigas", 0, 100],
+		["cmNivelComp", 0, 10000],
+		["cmNivelGoldComp2", 0, 10000]
+	];
+	for (const [key, minimo, maximo] of cmKeys) {
+		const valor = save[key];
+		if (valor === undefined) continue;
+		if (!Number.isSafeInteger(valor) || valor < minimo || valor > maximo) {
+			throw new TypeError("Os dados de Conhecimento Mug do save são inválidos.");
+		}
+	}
+	// anti-cheat: os abates desta run não podem superar o total de abates
+	if (save.derrotadosRun !== undefined && save.totalDerrotados !== undefined
+		&& save.derrotadosRun > save.totalDerrotados) {
+		throw new TypeError("Os abates da run do save excedem o total de abates.");
 	}
 
 	for (const key of ["gold", "totalGold"]) {
@@ -729,11 +791,25 @@ function Carregar(saveData, calculaOffline = false) {
 	// saves antigos: começa a contar do portão atual (sem bônus retroativo)
 	gateDanoPago = save.gateDanoPago ?? (andarVolta - 5);
 	danoResetQtd = save.danoResetQtd ?? 0;
-	// perks de portão: permanentes (não zeram no reset)
+	// perks: valem para a run (zeram no Resetar; dentro da run ficam no save)
 	perkDano = save.perkDano ?? 0;
 	perkEletrica = save.perkEletrica ?? 0;
 	perkGold = save.perkGold ?? 0;
 	perkFuga = save.perkFuga ?? 0;
+	// pico de andar da run (base dos pontos de perk; saves antigos valem pelo portão pago)
+	andarMaxRun = PicoRunDoSave(save);
+	// Conhecimento Mug: moeda e níveis permanentes (não zeram no reset)
+	conhecimentoMug = save.conhecimentoMug ?? 0;
+	derrotadosRun = save.derrotadosRun ?? 0;
+	cmNivelDano = save.cmNivelDano ?? 0;
+	cmNivelGold = save.cmNivelGold ?? 0;
+	cmNivelXp = save.cmNivelXp ?? 0;
+	cmNivelFuga = save.cmNivelFuga ?? 0;
+	cmNivelCrit = save.cmNivelCrit ?? 0;
+	cmNivelFormiga = save.cmNivelFormiga ?? 0;
+	cmNivelDuasFormigas = save.cmNivelDuasFormigas ?? 0;
+	cmNivelComp = save.cmNivelComp ?? 0;
+	cmNivelGoldComp2 = save.cmNivelGoldComp2 ?? 0;
 	totalDerrotados = save.totalDerrotados ?? 0;
 	nivelJogador = save.nivelJogador ?? 1;
 	xpAtual = save.xpAtual ?? 0;
@@ -751,6 +827,12 @@ function Carregar(saveData, calculaOffline = false) {
 	danoJogador = save.danoJogador ?? 1;
 	danoCritJogador = save.danoCritJogador ?? 2;
 	multiplicadorMaximoDanoCritico = save.multiplicadorMaximoDanoCritico ?? 4;
+	// saves antigos compraram crítico do CM antes do teto virar item do CM:
+	// garante o piso (4 + +0,1 por nível); o valor salvo vale se for maior
+	// (inclui os +0,1 da loja de gold comprados nesta run)
+	multiplicadorMaximoDanoCritico = Math.max(
+		multiplicadorMaximoDanoCritico,
+		Math.round((4 + 0.1 * cmNivelCrit) * 10) / 10);
 	LimitaDanoCritico();
 	chanceCrit = save.chanceCrit ?? 0.01;
 
@@ -777,7 +859,7 @@ function Carregar(saveData, calculaOffline = false) {
 	esmeraldas = save.esmeraldas ?? 0;
 	numVoltas = save.numVoltas ?? 0;
 
-	tempoAvancoInimigos = save.tempoAvancoInimigos ?? 120;
+	tempoAvancoInimigos = save.tempoAvancoInimigos ?? TempoFugaMax();
 	andarBoss = save.andarBoss ?? 10;
 	abatesCorrenteEletrica = save.abatesCorrenteEletrica ?? 0;
 	ataquesCorrenteEletrica = save.ataquesCorrenteEletrica ?? 0;
@@ -842,6 +924,9 @@ function Carregar(saveData, calculaOffline = false) {
 
 	precoXP = save.precoXP ?? 2;
 	lvlXP = save.lvlXP ?? 0;
+
+	precoEsmCM = save.precoEsmCM ?? 10;
+	lvlEsmCM = save.lvlEsmCM ?? 0;
 
 	descontoLoja = save.descontoLoja ?? 0;
 	mulGoldInicial = save.mulGoldInicial ?? mulGold;
@@ -1434,6 +1519,14 @@ function Resetar() {
 	marcoGoldRun = 0;
 	qtdInimigosAndar = 1; //quantidade necessaria de inimigos que devem ser derrotados para avançar para o proximo andar
 	inimigosDerrotados = 0; //quantidade de inimigos derrotados naquele andar
+	derrotadosRun = 0; //abates da run zerados (a conversão em CM acontece antes, no VoltaAndar)
+	// perks são por run: níveis e pontos zeram a cada reset
+	// (o +5% de dano por portão >= 35 continua permanente — gateDanoPago)
+	andarMaxRun = 1;
+	perkDano = 0;
+	perkEletrica = 0;
+	perkGold = 0;
+	perkFuga = 0;
 	limiteInimigos = 1; //usada para controlar quantos inimigos podem ser criados na tela ao mesmo tempo
 	gold = new GoldNumber(0); //quantidade de dinheiro do jogador
 	totalGold = new GoldNumber(0); //quantidade total de dinheiro do jogador
@@ -1441,7 +1534,9 @@ function Resetar() {
 	qtdSave = 0; //Quantidade de vezes que o jogo foi salvo
 	danoJogador = 1; //dano atual do jogador
 	danoCritJogador = 2; //dano critico atual do jogador
-	multiplicadorMaximoDanoCritico = 4;
+	// teto ×4 + +0,1 por nível do Conhecimento (permanente; o +0,1 da loja de
+	// gold é por run e é reconstruído nas compras da run)
+	multiplicadorMaximoDanoCritico = Math.round((4 + 0.1 * cmNivelCrit) * 10) / 10;
 	chanceCrit = 0.01; //chance em porcentagem de se causar um dano critico
 	//as vidas dos inimigos sao recalculadas por CarregarStatus logo apos o reset
 	//mulGoldAvanco NAO e mais zerado aqui: e um item permanente da loja de esmeraldas
@@ -1450,7 +1545,7 @@ function Resetar() {
 	ValidaBater = 30; //tempo atual para que se possa executar um ataque com o espaço
 	MaxValidaBater = 30; //tempo maximo para que se possa executar um ataque com o espaço
 
-	tempoAvancoInimigos = 120; //tempo para que o jogar seja obrigado a recuar um andar
+	tempoAvancoInimigos = TempoFugaMax(); //tempo para que o jogar seja obrigado a recuar um andar (base 120 + bônus do Conhecimento)
 	nivelJogador = 1;
 	xpAtual = 0;
 	pontosHabilidade = 0;
@@ -1548,11 +1643,23 @@ function Resetar() {
 		LimitaDanoCritico();
 	}
 
+	// Loja do Conhecimento: +1% de dano permanente por nível
+	if (cmNivelDano > 0 && isFinite(cmNivelDano)) {
+		danoJogador = danoJogador * Math.pow(1.01, cmNivelDano);
+		LimitaDanoCritico();
+	}
+
 	// Crítico das conquistas é permanente: devolve o bônus acumulado (Conquistas()).
 	// Base é 2 (valor inicial do reset); os LimitaDanoCritico intermediários podem
 	// ter subido o crítico pro piso do dano — recalcular da base evita somar o piso 2x.
 	if (bonusCritConquista > 0 && isFinite(bonusCritConquista)) {
 		danoCritJogador = 2 + bonusCritConquista;
+		LimitaDanoCritico();
+	}
+
+	// Loja do Conhecimento: +1% de dano crítico por nível (dentro do teto ×4)
+	if (cmNivelCrit > 0 && isFinite(cmNivelCrit)) {
+		danoCritJogador = danoCritJogador * Math.pow(1.01, cmNivelCrit);
 		LimitaDanoCritico();
 	}
 
@@ -1605,11 +1712,23 @@ function CriarObjetoSave() {
 		maxAndar,
 		andarVolta,
 		gateDanoPago,
+		andarMaxRun,
 		danoResetQtd,
 		perkDano,
 		perkEletrica,
 		perkGold,
 		perkFuga,
+		conhecimentoMug,
+		derrotadosRun,
+		cmNivelDano,
+		cmNivelGold,
+		cmNivelXp,
+		cmNivelFuga,
+		cmNivelCrit,
+		cmNivelFormiga,
+		cmNivelDuasFormigas,
+		cmNivelComp,
+		cmNivelGoldComp2,
 		totalDerrotados,
 		nivelJogador,
 		xpAtual,
@@ -1706,6 +1825,9 @@ function CriarObjetoSave() {
 
 		precoXP,
 		lvlXP,
+
+		precoEsmCM,
+		lvlEsmCM,
 
 		descontoLoja,
 		mulGoldInicial,

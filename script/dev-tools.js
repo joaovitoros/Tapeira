@@ -138,9 +138,10 @@
         RemoveBau();
         andar = floor;
         maxAndar = Math.max(maxAndar, andar);
+        andarMaxRun = Math.max(andarMaxRun, andar);
         qtdInimigosAndar = andar;
         inimigosDerrotados = 0;
-        tempoAvancoInimigos = 120;
+        tempoAvancoInimigos = TempoFugaMax();
         andarBoss = Math.ceil(andar / 10) * 10;
         CarregarStatus();
         UI.render();

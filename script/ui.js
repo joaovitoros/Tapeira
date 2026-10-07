@@ -251,7 +251,7 @@ const UI = {
     syncScreenButtons() {
         const states = [
             ["btnStatus", document.getElementById("DivStatus")?.style.visibility === "visible"],
-            ["btn-Loja", ["Loja", "LojaEsm"].some(id =>
+            ["btn-Loja", ["Loja", "LojaEsm", "LojaCM"].some(id =>
                 document.getElementById(id)?.style.visibility === "visible"
             )],
             ["btn-Config", document.getElementById("container-SalvaCarrega")?.style.visibility === "visible"],
@@ -455,7 +455,7 @@ const UI = {
         perkLine.className = "skill-player-bonus";
         const perkDisp = PontosPerkDisponiveis();
         const perkGanhos = PontosPerkGanhos();
-        perkLine.textContent = `Pontos de perk: ${perkDisp} ${perkDisp === 1 ? "disponível" : "disponíveis"} de ${perkGanhos} · +1 por portão de reset (andar 35+)`;
+        perkLine.textContent = `Pontos de perk: ${perkDisp} ${perkDisp === 1 ? "disponível" : "disponíveis"} de ${perkGanhos} · +1 por portão desta run (andar 35+) · zeram no reset`;
 
         panel.append(header, atalhos, level, bonus, perkLine, xpLabel, xpTrack, skillList);
         overlay.appendChild(panel);
@@ -494,6 +494,7 @@ const UI = {
         if (activePanel !== "shop") {
             document.getElementById("Loja").style.visibility = "hidden";
             document.getElementById("LojaEsm").style.visibility = "hidden";
+            document.getElementById("LojaCM").style.visibility = "hidden";
         }
         if (activePanel !== "config") {
             document.getElementById("container-SalvaCarrega").style.visibility = "hidden";
@@ -537,14 +538,18 @@ const UI = {
         const botao = document.getElementById("btnAndar");
         if (!aviso || !botao) return;
 
-        const faltam = andarVolta - andar;
+        // reset fica livre a partir do andar 20; o portão continua no seu andar
+        const alvo = Math.min(andarVolta, 20);
+        const faltam = alvo - andar;
         const pronto = faltam <= 0;
 
         const danoPct = GatesDanoPendentes(andar) * 5;
         const sufixoDano = danoPct > 0 ? " · +" + danoPct + "% dano" : "";
         const texto = pronto
-            ? "Reset disponível no botão Voltar andar!" + sufixoDano
-            : "Próximo reset: andar " + andarVolta + " (faltam " + faltam + ")" + sufixoDano;
+            ? (andar >= andarVolta
+                ? "Reset disponível no botão Voltar andar!" + sufixoDano
+                : "Reset livre disponível! +" + Math.round(derrotadosRun * MultiplicadorCM()) + " CM")
+            : "Próximo reset: andar " + alvo + " (faltam " + faltam + ")" + sufixoDano;
 
         if (aviso.textContent !== texto) aviso.textContent = texto;
 
@@ -553,7 +558,7 @@ const UI = {
     },
 
     // Celebração pós-reset: banner transitório no topo (some sozinho ou com clique/ESC)
-    MostraCelebracaoReset(recebidas, andarAnterior, proximoAndar, danoRecebido = 0) {
+    MostraCelebracaoReset(recebidas, andarAnterior, proximoAndar, danoRecebido = 0, cmRecebido = 0) {
         const antigo = document.getElementById("celebracaoReset");
         if (antigo) antigo.remove();
         if (UI.celebracaoTimeout) {
@@ -564,6 +569,7 @@ const UI = {
         const premios = [];
         if (recebidas > 0) premios.push(`+${recebidas} esmeralda${recebidas === 1 ? "" : "s"}`);
         if (danoRecebido > 0) premios.push(`+${danoRecebido}% de dano permanente`);
+        if (cmRecebido > 0) premios.push(`+${cmRecebido} Conhecimento Mug`);
         if (premios.length === 0) premios.push("Reset realizado");
 
         const div = document.createElement("div");
@@ -1041,7 +1047,7 @@ const UI = {
         const stats = [
             ["Dano", (danoJogador * multDanoTotal).toFixed(2)],
             ["Multiplicador Gold", mulGold.toFixed(2)],
-            ["Gold por inimigo", FormatGold(andar * mulGold)],
+            ["Gold por inimigo", FormatGold(andar * mulGold * MultiplicadorGoldConhecimento() * MultiplicadorGoldFormigas())],
             ["Gold total", FormatGold(totalGold)],
             ["Bonus avanço", BonusGoldAvanco().toFixed(2)],
             ["Chance avanço", (avanco * 100).toFixed(2) + "%"],
@@ -1052,6 +1058,9 @@ const UI = {
             ["GoldPS companions", goldCompanheiro.toFixed(2)],
             ["Tempo bônus", tempoEsperaCompanheiro + " seg"],
             ["Bônus XP", "+" + Math.max(0, lvlXP | 0)],
+            ["XP por inimigo", (XPPorInimigo() * BonusXPConhecimento()).toFixed(2)],
+            ["Conhecimento gold", "+" + cmNivelGold + "%"],
+            ["Conhecimento XP", "+" + cmNivelXp + "%"],
             ["Vida Mug", (subVidaInimigo * 100).toFixed(2) + "%"],
             ["Chance baú", (chanceBau * 100).toFixed(2) + "%"],
             ["Chance esmeralda", (chanceEsmeraldaBau * 100).toFixed(2) + "%"]
@@ -1091,6 +1100,12 @@ const UI = {
             (div.style.visibility === "hidden")
                 ? "visible"
                 : "hidden";
+
+        // re-renderiza a cada abertura: senão o painel mostra os valores
+        // do momento em que foi montado (compras na loja não apareciam)
+        if (div.style.visibility === "visible") {
+            this.showStatus();
+        }
 
         if (div.style.visibility === "visible" && !window.matchMedia("(min-width: 1600px)").matches) {
             document.getElementById("container-SalvaCarrega").style.visibility = "hidden";

@@ -26,7 +26,8 @@ function NormalizaPrecosLoja() {
 	const nomesPrecos = [
 		"precoDano", "precoBau", "precoGold", "precoBEspaco", "precoAvan",
 		"precoDCrit", "precoVidaInimigo", "precoCCrit", "precoQTDAvanco",
-		"precoComp1", "precoAvGold", "precoComp2", "precoComp3", "precoXP"
+		"precoComp1", "precoAvGold", "precoComp2", "precoComp3", "precoXP",
+		"precoEsmCM"
 	];
 
 	nomesPrecos.forEach(nome => {
@@ -108,6 +109,9 @@ function AbreLoja(exibirTutorial){
 	if(document.getElementById("LojaEsm").style.visibility=="visible"){
 		document.getElementById("LojaEsm").style.visibility="hidden";
 	}
+	if(document.getElementById("LojaCM").style.visibility=="visible"){
+		document.getElementById("LojaCM").style.visibility="hidden";
+	}
 	if(document.getElementById("Loja").style.visibility=="visible"){
 		UI.closeOtherPanels("shop");
 	}
@@ -122,12 +126,13 @@ function AbreLoja(exibirTutorial){
 function FechaLoja(){
 	document.getElementById("Loja").style.visibility="hidden";
 	document.getElementById("LojaEsm").style.visibility="hidden";
+	document.getElementById("LojaCM").style.visibility="hidden";
 	UI.syncScreenButtons();
 }
 
 // Mantém o × de fechar fixo no topo do painel mesmo quando a loja rola
 document.addEventListener("DOMContentLoaded", () => {
-	["Loja", "LojaEsm"].forEach(id => {
+	["Loja", "LojaEsm", "LojaCM"].forEach(id => {
 		const painel = document.getElementById(id);
 		if (!painel) return;
 		painel.addEventListener("scroll", () => {
@@ -136,6 +141,125 @@ document.addEventListener("DOMContentLoaded", () => {
 		}, { passive: true });
 	});
 });
+
+// =========================
+// LOJA DO CONHECIMENTO MUG
+// =========================
+// Navegação em cadeia: Loja → Loja de Esmeralda → Loja do Conhecimento (setas do cabeçalho)
+function LojaConhecimento() {
+	const painel = document.getElementById("LojaCM");
+	if (!painel) return;
+	if (painel.style.visibility === "hidden") {
+		document.getElementById("Loja").style.visibility = "hidden";
+		document.getElementById("LojaEsm").style.visibility = "hidden";
+		painel.style.visibility = "visible";
+		AtualizaLojaCM();
+		UI.closeOtherPanels("shop");
+		UI.syncScreenButtons();
+	}
+}
+
+// Volta da Loja do Conhecimento para a Loja de Esmeralda (que fica visível de novo)
+function FechaLojaCM() {
+	document.getElementById("LojaCM").style.visibility = "hidden";
+	LojaEsmeralda();
+	UI.syncScreenButtons();
+}
+
+function AtualizaLojaCM() {
+	const saldo = document.getElementById("lojaCMsaldo");
+	if (saldo) saldo.innerHTML = conhecimentoMug;
+
+	const itens = [
+		{ nivel: cmNivelDano, preco: "precoCMDano", lvl: "lvlCMDano" },
+		{ nivel: cmNivelGold, preco: "precoCMGold", lvl: "lvlCMGold" },
+		{ nivel: cmNivelXp, preco: "precoCMXp", lvl: "lvlCMXp" },
+		{ nivel: cmNivelFuga, preco: "precoCMFuga", lvl: "lvlCMFuga" },
+		{ nivel: cmNivelCrit, preco: "precoCMCrit", lvl: "lvlCMCrit" },
+		{ nivel: cmNivelFormiga, preco: "precoCMFormiga", lvl: "lvlCMFormiga" },
+		{ nivel: cmNivelDuasFormigas, preco: "precoCMDuas", lvl: "lvlCMDuas" },
+		{ nivel: cmNivelComp, preco: "precoCMComp", lvl: "lvlCMComp" },
+		{ nivel: cmNivelGoldComp2, preco: "precoCMGoldComp2", lvl: "lvlCMGoldComp2" }
+	];
+
+	for (const item of itens) {
+		const elPreco = document.getElementById(item.preco);
+		const elLvl = document.getElementById(item.lvl);
+		if (elPreco) elPreco.innerHTML = PrecoLojaCM(item.nivel);
+		if (elLvl) elLvl.innerHTML = item.nivel;
+	}
+}
+
+function CompraCM(tipo) {
+	const niveis = {
+		dano: cmNivelDano, gold: cmNivelGold, xp: cmNivelXp,
+		fuga: cmNivelFuga, crit: cmNivelCrit,
+		formiga: cmNivelFormiga, duasformigas: cmNivelDuasFormigas,
+		comp: cmNivelComp, goldcomp2: cmNivelGoldComp2
+	};
+	const nivel = niveis[tipo];
+	if (nivel === undefined) return;
+
+	// tetos: formiga 50 níveis, duas formigas 100 níveis.
+	// crítico não trava mais no teto ×4: cada nível dele também dá +0,1 no teto
+	if (tipo === "formiga" && nivel >= 50) {
+		MostraInfo("Item no nível máximo!");
+		return;
+	}
+	if (tipo === "duasformigas" && nivel >= 100) {
+		MostraInfo("Item no nível máximo!");
+		return;
+	}
+
+	const preco = PrecoLojaCM(nivel);
+	if (conhecimentoMug < preco) {
+		MostraInfo("Você não tem Conhecimento Mug suficiente!");
+		return;
+	}
+
+	conhecimentoMug = conhecimentoMug - preco;
+	if (tipo === "dano") {
+		cmNivelDano++;
+		// efeito imediato; no reset o Resetar remonta tudo com ×1.01 por nível
+		danoJogador = danoJogador * 1.01;
+		LimitaDanoCritico();
+		if (danoComp1 > 0) danoComp = danoJogador * danoComp1;
+	} else if (tipo === "gold") {
+		cmNivelGold++;
+	} else if (tipo === "xp") {
+		cmNivelXp++;
+	} else if (tipo === "fuga") {
+		cmNivelFuga++;
+		tempoAvancoInimigos = tempoAvancoInimigos + 1;
+	} else if (tipo === "crit") {
+		cmNivelCrit++;
+		// o teto sobe ANTES do ×1.01: sem isso o LimitaDanoCritico engoliria
+		// o +1% comprado quando o crítico está encostado no teto
+		SobeTetoCritico();
+		danoCritJogador = danoCritJogador * 1.01;
+		LimitaDanoCritico();
+	} else if (tipo === "formiga") {
+		cmNivelFormiga++;
+	} else if (tipo === "duasformigas") {
+		cmNivelDuasFormigas++;
+	} else if (tipo === "comp") {
+		cmNivelComp++;
+		// o bônus fica embutido em danoComp1 (permanente: vem no save e não
+		// zera no Resetar), então todo recálculo de danoComp já o inclui
+		danoComp1 = danoComp1 * 1.01;
+		if (lvlComp1 > 0) danoComp = danoJogador * danoComp1;
+	} else if (tipo === "goldcomp2") {
+		cmNivelGoldComp2++;
+		// recompõe do zero (lvlComp2 × mulGold × bônus) — nunca conta em dobro
+		if (N(lvlComp2) > 0) goldCompanheiro = N(lvlComp2) * N(mulGold) * MultiplicadorGoldComp2();
+	}
+
+	ChamaSom('audio6');
+	AtualizaLojaCM();
+	document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
+	MostraStatus();
+	AutoSaveLocal();
+}
 
 //Deduz o gold de uma compra da loja; no desafio "sem gold" a compra falha o desafio
 function PagaLoja(preco) {
@@ -225,7 +349,7 @@ function CompraGold(){
 		lvlGold++;
 
 		if(lvlComp2 > 0){
-			goldCompanheiro = N(lvlComp2) * N(mulGold);
+			goldCompanheiro = N(lvlComp2) * N(mulGold) * MultiplicadorGoldComp2();
 		}
 
 		ChamaSom('audio6');
@@ -279,7 +403,7 @@ function CompraDCrit(){
 
 		PagaLoja(precoDCrit);
 
-		multiplicadorMaximoDanoCritico += 0.1;
+		SobeTetoCritico();
 		sobeDCrit = N(sobeDCrit) * 1.025;
 		danoCritJogador = N(danoCritJogador) + ((N(danoJogador)/2) * (2 + N(sobeDCrit)));
 		LimitaDanoCritico();
@@ -451,6 +575,9 @@ function LojaEsmeralda(){
 		document.getElementById("precoXP").innerHTML=precoXP;
 		document.getElementById("lvlXP").innerHTML=lvlXP;
 
+		document.getElementById("precoEsmCM").innerHTML=precoEsmCM;
+		document.getElementById("lvlEsmCM").innerHTML=lvlEsmCM;
+
 	}else{
 		document.getElementById("LojaEsm").style.visibility="hidden";
 		document.getElementById("Loja").style.visibility="visible";
@@ -515,7 +642,7 @@ function CompraComp2(){
 	if(N(esmeraldas) >= N(precoComp2)){
 		esmeraldas = N(esmeraldas) - N(precoComp2);
 		lvlComp2++;
-		goldCompanheiro = N(lvlComp2) * N(mulGold);
+		goldCompanheiro = N(lvlComp2) * N(mulGold) * MultiplicadorGoldComp2();
 		precoComp2 = N(precoComp2) * 2;
 
 		ChamaSom('audio6');
@@ -564,6 +691,29 @@ function CompraXP(){
 		document.getElementById("contEmeraldas").innerHTML=N(esmeraldas);
 		document.getElementById("precoXP").innerHTML=N(precoXP);
 		document.getElementById("lvlXP").innerHTML=lvlXP;
+
+		MostraStatus();
+	}else{
+		MostraInfo("Voce não tem esmeraldas o suficiente para essa compra!");
+	}
+}
+
+// Item de 1 nível: duplica a quantidade de Conhecimento Mug ganha no reset
+function CompraEsmCM(){
+	NormalizaPrecosLoja();
+	if(N(lvlEsmCM) >= 1){
+		MostraInfo("Item no nível máximo!");
+		return;
+	}
+	if(N(esmeraldas) >= N(precoEsmCM)){
+		esmeraldas = N(esmeraldas) - N(precoEsmCM);
+		lvlEsmCM = 1;
+
+		ChamaSom('audio6');
+
+		document.getElementById("contEmeraldas").innerHTML=N(esmeraldas);
+		document.getElementById("precoEsmCM").innerHTML=N(precoEsmCM);
+		document.getElementById("lvlEsmCM").innerHTML=lvlEsmCM;
 
 		MostraStatus();
 	}else{
@@ -636,7 +786,7 @@ const PREVIEWS_LOJA = {
 		return "Bônus de gold do avanço: " + N(mulGoldAvanco).toFixed(2) + " → " + prox.toFixed(2);
 	},
 	CompraComp2() {
-		const prox = (N(lvlComp2) + 1) * N(mulGold);
+		const prox = (N(lvlComp2) + 1) * N(mulGold) * MultiplicadorGoldComp2();
 		return "Gold do companheiro: " + FormatGold(N(goldCompanheiro)) + " → " + FormatGold(prox) + "/seg";
 	},
 	CompraComp3() {
@@ -645,6 +795,10 @@ const PREVIEWS_LOJA = {
 	},
 	CompraXP() {
 		return "Bônus de XP: +" + (N(lvlXP) | 0) + " → +" + ((N(lvlXP) | 0) + 1) + " por abate";
+	},
+	CompraEsmCM() {
+		if (N(lvlEsmCM) >= 1) return "CM ganho: no nível máximo (×2)";
+		return "CM ganho no reset: ×" + MultiplicadorCM() + " → ×" + (MultiplicadorCM() * 2);
 	}
 };
 

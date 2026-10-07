@@ -648,7 +648,7 @@ tr, td, th{
 	color: #e6edf3;
 }
 
-#TabLoja, #TabLojaEsm{
+#TabLoja, #TabLojaEsm, #TabLojaCM{
 	position: Absolute;
 	width: 100%; /* ocupa a nova largura do container */
 	border-spacing: 0px;
@@ -657,7 +657,7 @@ tr, td, th{
 	font-size: 0.95vw; /* diminui altura geral */
 }
 
-#TabLoja th, #TabLojaEsm th{
+#TabLoja th, #TabLojaEsm th, #TabLojaCM th{
 	background: linear-gradient(145deg, #2a3242, #1c2230);
 	color: #f2f6ff;
 
@@ -669,7 +669,7 @@ tr, td, th{
 	letter-spacing: 0.05em;
 }
 
-#TabLoja td, #TabLojaEsm td{
+#TabLoja td, #TabLojaEsm td, #TabLojaCM td{
 	padding: 0.3vw 0.4vw;
 }
 
@@ -685,7 +685,7 @@ tr, td, th{
 	color: #ffd84a;
 }
 
-#TabLojaEsm td:nth-child(2) {
+#TabLojaEsm td:nth-child(2) , #TabLojaCM td:nth-child(2) {
 	color: #4dff88;
 }
 
@@ -1718,7 +1718,7 @@ body {
 }
 
 #container-Loja > #Loja,
-#container-Loja > #LojaEsm {
+#container-Loja > #LojaEsm , #container-Loja > #LojaCM {
 	position: relative;
 	box-sizing: border-box;
 	height: 100%;
@@ -1726,13 +1726,13 @@ body {
 	pointer-events: auto;
 }
 
-#container-Loja > #LojaEsm {
+#container-Loja > #LojaEsm , #container-Loja > #LojaCM {
 	position: absolute;
 	inset: 0;
 }
 
 #TabLoja,
-#TabLojaEsm {
+#TabLojaEsm , #TabLojaCM {
 	position: static;
 	font-size: clamp(13px, 1vw, 18px);
 	width: 100%;
@@ -1740,7 +1740,7 @@ body {
 }
 
 #TabLoja td,
-#TabLojaEsm td {
+#TabLojaEsm td , #TabLojaCM td {
 	padding: 4px 6px;
 }
 
@@ -2881,7 +2881,7 @@ body.desktop-app img {
 }
 
 #container-Loja > #Loja,
-#container-Loja > #LojaEsm {
+#container-Loja > #LojaEsm , #container-Loja > #LojaCM {
 	padding: clamp(8px, 1vw, 14px);
 	background:
 		linear-gradient(145deg, rgba(20, 24, 33, 0.97), rgba(11, 14, 21, 0.94));
@@ -2892,7 +2892,7 @@ body.desktop-app img {
 }
 
 #TabLoja,
-#TabLojaEsm,
+#TabLojaEsm, #TabLojaCM,
 #TabStatus {
 	border-spacing: 0;
 	border-collapse: separate;
@@ -2902,7 +2902,7 @@ body.desktop-app img {
 }
 
 #TabLoja caption,
-#TabLojaEsm caption,
+#TabLojaEsm caption, #TabLojaCM caption,
 #TabStatus caption {
 	padding: 12px 14px;
 	background: linear-gradient(145deg, rgba(55, 44, 31, 0.98), rgba(30, 28, 29, 0.98));
@@ -2914,7 +2914,7 @@ body.desktop-app img {
 }
 
 #TabLoja th,
-#TabLojaEsm th {
+#TabLojaEsm th , #TabLojaCM th {
 	padding: 9px 7px;
 	background: rgba(255, 255, 255, 0.055);
 	border: 0;
@@ -2925,7 +2925,7 @@ body.desktop-app img {
 }
 
 #TabLoja td,
-#TabLojaEsm td {
+#TabLojaEsm td , #TabLojaCM td {
 	padding: 8px 7px;
 	background: rgba(7, 10, 16, 0.42);
 	border: 0;
@@ -2934,17 +2934,17 @@ body.desktop-app img {
 }
 
 #TabLoja tr:last-child td,
-#TabLojaEsm tr:last-child td {
+#TabLojaEsm tr:last-child td , #TabLojaCM tr:last-child td {
 	border-bottom: 0;
 }
 
 #TabLoja tr:hover td,
-#TabLojaEsm tr:hover td {
+#TabLojaEsm tr:hover td , #TabLojaCM tr:hover td {
 	background: rgba(229, 183, 96, 0.075);
 }
 
 #TabLoja .Loja,
-#TabLojaEsm .Loja {
+#TabLojaEsm .Loja , #TabLojaCM .Loja {
 	min-width: 78px;
 	min-height: 32px;
 	padding: 5px 10px;
@@ -2960,13 +2960,13 @@ body.desktop-app img {
 }
 
 #TabLoja .Loja:hover,
-#TabLojaEsm .Loja:hover {
+#TabLojaEsm .Loja:hover , #TabLojaCM .Loja:hover {
 	filter: brightness(1.12);
 	transform: translateY(-1px);
 }
 
 #TabLoja .Loja:active,
-#TabLojaEsm .Loja:active {
+#TabLojaEsm .Loja:active , #TabLojaCM .Loja:active {
 	transform: translateY(1px);
 }
 
@@ -3027,7 +3027,7 @@ body.desktop-app img {
 }
 
 #container-Loja > #Loja,
-#container-Loja > #LojaEsm,
+#container-Loja > #LojaEsm, #container-Loja > #LojaCM,
 #DivStatus,
 #container-SalvaCarrega {
 	scrollbar-color: #9b763e rgba(8, 11, 17, 0.78);
@@ -3035,7 +3035,7 @@ body.desktop-app img {
 }
 
 #container-Loja > #Loja::-webkit-scrollbar,
-#container-Loja > #LojaEsm::-webkit-scrollbar,
+#container-Loja > #LojaEsm::-webkit-scrollbar, #container-Loja > #LojaCM::-webkit-scrollbar,
 #DivStatus::-webkit-scrollbar,
 #container-SalvaCarrega::-webkit-scrollbar {
 	width: 8px;
@@ -3043,7 +3043,7 @@ body.desktop-app img {
 }
 
 #container-Loja > #Loja::-webkit-scrollbar-track,
-#container-Loja > #LojaEsm::-webkit-scrollbar-track,
+#container-Loja > #LojaEsm::-webkit-scrollbar-track, #container-Loja > #LojaCM::-webkit-scrollbar-track,
 #DivStatus::-webkit-scrollbar-track,
 #container-SalvaCarrega::-webkit-scrollbar-track {
 	background: rgba(8, 11, 17, 0.78);
@@ -3051,7 +3051,7 @@ body.desktop-app img {
 }
 
 #container-Loja > #Loja::-webkit-scrollbar-thumb,
-#container-Loja > #LojaEsm::-webkit-scrollbar-thumb,
+#container-Loja > #LojaEsm::-webkit-scrollbar-thumb, #container-Loja > #LojaCM::-webkit-scrollbar-thumb,
 #DivStatus::-webkit-scrollbar-thumb,
 #container-SalvaCarrega::-webkit-scrollbar-thumb {
 	background: linear-gradient(180deg, #d7b36b, #84602d);
@@ -3060,7 +3060,7 @@ body.desktop-app img {
 }
 
 #container-Loja > #Loja::-webkit-scrollbar-thumb:hover,
-#container-Loja > #LojaEsm::-webkit-scrollbar-thumb:hover,
+#container-Loja > #LojaEsm::-webkit-scrollbar-thumb:hover, #container-Loja > #LojaCM::-webkit-scrollbar-thumb:hover,
 #DivStatus::-webkit-scrollbar-thumb:hover,
 #container-SalvaCarrega::-webkit-scrollbar-thumb:hover {
 	background: linear-gradient(180deg, #f0d58e, #a77a39);
@@ -3140,7 +3140,7 @@ input:focus-visible {
 @media (prefers-reduced-motion: reduce) {
 	#btn-Jogar,
 	#TabLoja .Loja,
-	#TabLojaEsm .Loja,
+	#TabLojaEsm .Loja, #TabLojaCM .Loja,
 	#btnSalvarVoltarMenu,
 	#container-Botoes button,
 	#container-Missao,
@@ -3834,7 +3834,7 @@ input:focus-visible {
 	}
 
 	#container-Loja > #Loja,
-	#container-Loja > #LojaEsm {
+	#container-Loja > #LojaEsm , #container-Loja > #LojaCM {
 		padding: 6px;
 		border-radius: 10px;
 		overscroll-behavior: contain;
@@ -3842,66 +3842,66 @@ input:focus-visible {
 	}
 
 	#TabLoja,
-	#TabLojaEsm {
+	#TabLojaEsm , #TabLojaCM {
 		table-layout: fixed;
 		font-size: 10px;
 	}
 
 	#TabLoja th,
-	#TabLojaEsm th,
+	#TabLojaEsm th, #TabLojaCM th,
 	#TabLoja td,
-	#TabLojaEsm td {
+	#TabLojaEsm td , #TabLojaCM td {
 		box-sizing: border-box;
 		padding: 3px 2px;
 		overflow-wrap: anywhere;
 	}
 
 	#TabLoja th,
-	#TabLojaEsm th {
+	#TabLojaEsm th , #TabLojaCM th {
 		font-size: 8px;
 	}
 
 	#TabLoja td,
-	#TabLojaEsm td {
+	#TabLojaEsm td , #TabLojaCM td {
 		font-size: 9px;
 	}
 
 	#TabLoja th:nth-child(1),
-	#TabLojaEsm th:nth-child(1),
+	#TabLojaEsm th:nth-child(1), #TabLojaCM th:nth-child(1),
 	#TabLoja td:nth-child(1),
-	#TabLojaEsm td:nth-child(1) {
+	#TabLojaEsm td:nth-child(1) , #TabLojaCM td:nth-child(1) {
 		width: 35%;
 	}
 
 	#TabLoja th:nth-child(2),
-	#TabLojaEsm th:nth-child(2),
+	#TabLojaEsm th:nth-child(2), #TabLojaCM th:nth-child(2),
 	#TabLoja td:nth-child(2),
-	#TabLojaEsm td:nth-child(2) {
+	#TabLojaEsm td:nth-child(2) , #TabLojaCM td:nth-child(2) {
 		width: 22%;
 	}
 
 	#TabLoja th:nth-child(3),
-	#TabLojaEsm th:nth-child(3),
+	#TabLojaEsm th:nth-child(3), #TabLojaCM th:nth-child(3),
 	#TabLoja td:nth-child(3),
-	#TabLojaEsm td:nth-child(3) {
+	#TabLojaEsm td:nth-child(3) , #TabLojaCM td:nth-child(3) {
 		width: 12%;
 	}
 
 	#TabLoja th:nth-child(4),
-	#TabLojaEsm th:nth-child(4),
+	#TabLojaEsm th:nth-child(4), #TabLojaCM th:nth-child(4),
 	#TabLoja td:nth-child(4),
-	#TabLojaEsm td:nth-child(4) {
+	#TabLojaEsm td:nth-child(4) , #TabLojaCM td:nth-child(4) {
 		width: 22%;
 	}
 
 	#TabLoja th:nth-child(5),
-	#TabLojaEsm th:nth-child(5) {
+	#TabLojaEsm th:nth-child(5) , #TabLojaCM th:nth-child(5) {
 		width: 9%;
 		padding: 2px;
 	}
 
 	#TabLoja .Loja,
-	#TabLojaEsm .Loja {
+	#TabLojaEsm .Loja , #TabLojaCM .Loja {
 		width: 100%;
 		min-width: 0;
 		min-height: 30px;
@@ -4161,7 +4161,7 @@ input:focus-visible {
 	}
 
 	#container-Loja > #Loja,
-	#container-Loja > #LojaEsm,
+	#container-Loja > #LojaEsm, #container-Loja > #LojaCM,
 	#container-Status,
 	#container-SalvaCarrega {
 		overscroll-behavior: contain;
@@ -4188,29 +4188,29 @@ input:focus-visible {
 	}
 
 	#TabLoja,
-	#TabLojaEsm {
+	#TabLojaEsm , #TabLojaCM {
 		font-size: 9px;
 	}
 
 	#TabLoja th,
-	#TabLojaEsm th,
+	#TabLojaEsm th, #TabLojaCM th,
 	#TabLoja td,
-	#TabLojaEsm td {
+	#TabLojaEsm td , #TabLojaCM td {
 		padding: 2px;
 	}
 
 	#TabLoja th,
-	#TabLojaEsm th {
+	#TabLojaEsm th , #TabLojaCM th {
 		font-size: 8px;
 	}
 
 	#TabLoja td,
-	#TabLojaEsm td {
+	#TabLojaEsm td , #TabLojaCM td {
 		font-size: 9px;
 	}
 
 	#TabLoja .Loja,
-	#TabLojaEsm .Loja {
+	#TabLojaEsm .Loja , #TabLojaCM .Loja {
 		min-height: 28px;
 		padding: 2px 1px;
 		font-size: 9px;
@@ -4595,14 +4595,14 @@ input:focus-visible {
 	}
 
 	#TabLoja caption,
-	#TabLojaEsm caption {
+	#TabLojaEsm caption , #TabLojaCM caption {
 		padding: 4px 8px;
 		font-size: 12px;
 		line-height: 1.1;
 	}
 
 	#TabLoja th,
-	#TabLojaEsm th {
+	#TabLojaEsm th , #TabLojaCM th {
 		padding: 1px 2px;
 		line-height: 1.05;
 	}
@@ -5095,7 +5095,7 @@ input:focus-visible {
 	}
 
 	#container-Loja > #Loja,
-	#container-Loja > #LojaEsm {
+	#container-Loja > #LojaEsm , #container-Loja > #LojaCM {
 		box-sizing: border-box;
 		width: 100%;
 		height: 100%;

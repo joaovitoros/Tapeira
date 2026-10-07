@@ -2,6 +2,7 @@
 var avancoInterval;
 var numInimigosTela = 1; //usada para validar quantos inimigos e
 var andar = 1;	//usada para contagem do andar atual do jogo (Necessario para calculos progressivos)
+var andarMaxRun = 1; //pico de andar desta run (base dos pontos de perk; zera no reset)
 var qtdInimigosAndar = 1; //quantidade necessaria de inimigos que devem ser derrotados para avançar para o proximo andar
 var inimigosDerrotados = 0; //quantidade de inimigos derrotados naquele andar
 var limiteInimigos; //usada para controlar quantos inimigos podem ser criados na tela ao mesmo tempo
@@ -17,6 +18,17 @@ var perkDano = 0; //níveis de perk do Dano automático (+25% de dano cada, máx
 var perkEletrica = 0; //níveis de perk da Corrente elétrica (+1 inimigo atingido cada, máx 3)
 var perkGold = 0; //níveis de perk do Bônus de Gold (+25% no drop do kill com skill ativa cada, máx 4)
 var perkFuga = 0; //níveis de perk da Pausa da fuga (10% de restaurar o tempo de fuga cada, máx 50%)
+var conhecimentoMug = 0; //moeda permanente da Loja do Conhecimento (1 abate = 1 CM no reset a partir do andar 20)
+var derrotadosRun = 0; //abates desde o último reset (base da conversão em Conhecimento Mug)
+var cmNivelDano = 0; //níveis da Loja do Conhecimento: +1% de dano permanente cada
+var cmNivelGold = 0; //níveis da Loja do Conhecimento: +1% de gold cada
+var cmNivelXp = 0; //níveis da Loja do Conhecimento: +1% de XP cada
+var cmNivelFuga = 0; //níveis da Loja do Conhecimento: +1 no tempo máximo de fuga cada
+var cmNivelCrit = 0; //níveis da Loja do Conhecimento: +1% de dano crítico cada
+var cmNivelFormiga = 0; //níveis da Loja do Conhecimento: +1% na chance de drop de formiga por abate (máx 50)
+var cmNivelDuasFormigas = 0; //níveis da Loja do Conhecimento: +1% de o drop de formiga sair com 2 (máx 100)
+var cmNivelComp = 0; //níveis da Loja do Conhecimento: +1% de dano de companheiro cada (baked em danoComp1)
+var cmNivelGoldComp2 = 0; //níveis da Loja do Conhecimento: +1% de gold do companheiro 2 cada
 var totalDerrotados = 0; //total de inimigos derrotados durante todo o jogo
 var totalGold = new GoldNumber(0); //total de gold coletado durante todo o jogo
 var danoJogador = 1; //dano atual do jogador
@@ -81,12 +93,12 @@ const SKILLS_UPGRADE = [
 	{ id: "gold", nome: "Bônus de Gold", pisoDesbloqueio: 25, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillGold" },
 	{ id: "escape", nome: "Pausa da fuga", pisoDesbloqueio: 35, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillFuga" }
 ];
-// Perks especiais: 1 ponto por portão de reset >= 35 (únicos, como o +5% de dano).
-// O nível de perk é permanente (não zera no reset) e independe do nível da skill.
+// Perks: 1 ponto por portão alcançado no pico de andar desta run (>= 35).
+// O nível de perk é por run (zeramos no reset) e independe do nível da skill.
 const PERKS = [
-	{ skillId: "damage", varName: "perkDano", nome: "Dano automático", efeito: "+25% de dano por nível", maximo: 4 },
+	{ skillId: "damage", varName: "perkDano", nome: "Dano automático", efeito: "+25% de dano por nível; no nível máximo a skill ativa sozinha quando carregada", maximo: 4 },
 	{ skillId: "electric", varName: "perkEletrica", nome: "Corrente elétrica", efeito: "+1 inimigo atingido por nível", maximo: 3 },
-	{ skillId: "gold", varName: "perkGold", nome: "Bônus de Gold", efeito: "+25% no drop do kill feito com a skill ativa por nível", maximo: 4 },
+	{ skillId: "gold", varName: "perkGold", nome: "Bônus de Gold", efeito: "+25% no drop do kill feito com a skill ativa por nível; do nível 1 em diante a skill ativa sozinha quando carregada", maximo: 4 },
 	{ skillId: "escape", varName: "perkFuga", nome: "Pausa da fuga", efeito: "10% de restaurar o tempo de fuga por nível (máx 50%)", maximo: 5 }
 ];
 var fugaEmAndamento = false;
@@ -157,11 +169,56 @@ function ChanceBauExtraFormigas() {
 	return ConjuntosFormigas("marrons") * 0.01;
 }
 
+// =========================
+// CONHECIMENTO MUG
+// =========================
+// Preço dos itens da loja: base 10 CM, escalonado ×1.5 por nível (10, 15, 23, 34...)
+function PrecoLojaCM(nivel) {
+	return Math.round(10 * Math.pow(1.5, Math.max(0, Number(nivel) || 0)));
+}
+
+// +1% de gold por nível — aplicado em todo ganho de gold (AddGold)
+function MultiplicadorGoldConhecimento() {
+	return 1 + cmNivelGold * 0.01;
+}
+
+// +1% de XP por nível — aplicado em toda XP ganha (GanhaXP)
+function BonusXPConhecimento() {
+	return 1 + cmNivelXp * 0.01;
+}
+
+// Tempo máximo do cronômetro de fuga: base 120 + bônus da loja
+function TempoFugaMax() {
+	return 120 + cmNivelFuga;
+}
+
+// Chance de drop de formiga aleatória por abate: 1% base + 1% por nível (máx 51%)
+function ChanceDropFormiga() {
+	return 0.01 + Math.min(cmNivelFormiga, 50) * 0.01;
+}
+
+// +1% de gold do companheiro 2 por nível — aplicado em todo recálculo de goldCompanheiro
+function MultiplicadorGoldComp2() {
+	return 1 + cmNivelGoldComp2 * 0.01;
+}
+
+// Loja de esmeralda "CM em dobro": ×2 no Conhecimento Mug ganho por nível
+// (1 nível por enquanto; item permanente da loja de esmeraldas)
+function MultiplicadorCM() {
+	return Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
+}
+
 function LimitaDanoCritico() {
 	const danoNormal = Number(danoJogador);
 	const danoCritico = Number(danoCritJogador);
 	if (!Number.isFinite(danoNormal) || !Number.isFinite(danoCritico)) return;
 	danoCritJogador = Math.min(Math.max(danoNormal, danoCritico), danoNormal * multiplicadorMaximoDanoCritico);
+}
+
+// Sobe o teto do crítico em +0,1 (loja de gold e Loja do Conhecimento).
+// Arredonda pra 1 casa: somar 0,1 repetidamente acumula erro de flutuante.
+function SobeTetoCritico() {
+	multiplicadorMaximoDanoCritico = Math.round((multiplicadorMaximoDanoCritico + 0.1) * 10) / 10;
 }
 
 function LimiteTempoOffline(quantidadePretas = QuantidadeFormigas("pretas")) {
@@ -178,7 +235,8 @@ function SorteiaFormigas(abates) {
 
 	let abatesRestantes = Math.max(0, Math.floor(abates));
 	while (abatesRestantes > 0) {
-		const distanciaAteDrop = Math.floor(Math.log1p(-Math.random()) / Math.log(0.99)) + 1;
+		// mesma chance do drop por abate (1% base + 1% por nível da Loja do Conhecimento)
+		const distanciaAteDrop = Math.floor(Math.log1p(-Math.random()) / Math.log(1 - ChanceDropFormiga())) + 1;
 		if (distanciaAteDrop > abatesRestantes) break;
 		abatesRestantes -= distanciaAteDrop;
 		resultado[Math.floor(Math.random() * FORMIGAS.length)]++;
@@ -187,9 +245,13 @@ function SorteiaFormigas(abates) {
 }
 
 function RegistraDropFormiga() {
-	if (!FormigasDesbloqueadas() || Math.random() >= 0.01) return false;
+	if (!FormigasDesbloqueadas() || Math.random() >= ChanceDropFormiga()) return false;
 	const formiga = FORMIGAS[Math.floor(Math.random() * FORMIGAS.length)];
 	ConcedeFormigaColecao(formiga);
+	// Loja do Conhecimento: +1% por nível de o drop sair com 2 formigas (máx 100)
+	if (Math.random() < Math.min(cmNivelDuasFormigas, 100) * 0.01) {
+		ConcedeFormigaColecao(FORMIGAS[Math.floor(Math.random() * FORMIGAS.length)]);
+	}
 	return true;
 }
 
@@ -252,6 +314,9 @@ var lvlComp3 = 0;
 
 var precoXP = 2;
 var lvlXP = 0;
+
+var precoEsmCM = 10;
+var lvlEsmCM = 0; //0/1: item de 1 nível da loja de esmeraldas — duplica o CM ganho no reset
 ////
 
 function CarregarStatus(){
@@ -464,6 +529,11 @@ function RemoveBau(){
 
 function VerificaHabilidade(){
 	if(qtdCarregaHabilidade==abateshabilidadeDano && !document.getElementById("habilidade1")){
+		// perk do Dano automático no nível máximo: ativa sozinha quando carregada
+		if (PerkNoMaximo("damage")) {
+			UsaHabilidadeDano();
+			return;
+		}
 		habilidade = document.createElement("img");
 		att1 = document.createAttribute("src");
 		att2 = document.createAttribute("class");
@@ -498,7 +568,8 @@ function AtualizaQTDHabildiade1(){
 }
 
 function UsaHabilidadeDano(){
-	document.body.removeChild(document.getElementById("habilidade1"));
+	// ícone pode não existir quando a ativação é automática (perk no máximo)
+	document.getElementById("habilidade1")?.remove();
 	ChamaSom('audio5');
 	verificaHabilidadeDano = true;
 	tempoHabilidadeDano = 30 + NivelDaSkill("damage") * 5;
@@ -550,7 +621,9 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 		: abates >= Math.ceil(limiteXP / xpPorAbate)
 			? limiteXP
 			: abates * xpPorAbate;
-	const xpBase = xpCalculado;
+	// +1% de XP por nível da Loja do Conhecimento (arredonda pra baixo e
+	// respeita o teto de XP restante — nunca estoura o limite seguro)
+	const xpBase = Math.min(limiteXP, Math.floor(xpCalculado * BonusXPConhecimento()));
 	if (!Number.isSafeInteger(xpBase) || xpBase < 0) {
 		throw new TypeError("A quantidade de experiência precisa ser um inteiro não negativo.");
 	}
@@ -618,7 +691,13 @@ function EvoluiSkill(id) {
 	return true;
 }
 
-// Aplica 1 ponto de perk na skill (permanente; pontos vêm dos portões de reset >= 35)
+// true se o perk da skill está no nível máximo
+function PerkNoMaximo(skillId){
+	const perk = PERKS.find(item => item.skillId === skillId);
+	return !!perk && (Number(window[perk.varName]) || 0) >= perk.maximo;
+}
+
+// Aplica 1 ponto de perk na skill (por run; pontos vêm do pico de andar desta run >= 35)
 function CompraPerk(skillId){
 	const perk = PERKS.find(item => item.skillId === skillId);
 	if (!perk) return false;
@@ -626,6 +705,11 @@ function CompraPerk(skillId){
 	if (nivel >= perk.maximo || PontosPerkDisponiveis() <= 0) return false;
 
 	window[perk.varName] = nivel + 1;
+	// perk do Dano automático chegou no máximo com a skill já carregada: ativa na hora
+	if (perk.varName === "perkDano" && PerkNoMaximo("damage")
+		&& qtdCarregaHabilidade >= abateshabilidadeDano) {
+		UsaHabilidadeDano();
+	}
 	UI.showInfo(`${perk.nome}: perk de nível ${nivel + 1}/${perk.maximo} aplicado! (${perk.efeito})`);
 	if (!AutoSaveLocal()) {
 		UI.showInfo("O perk foi aplicado, mas não foi possível salvar o progresso localmente.");
@@ -834,7 +918,7 @@ function AvancoInimigos() {
 			// perk da Pausa da fuga: chance de não fugir — o tempo do andar volta ao máximo
 			const chancePerkFuga = Math.min(50, perkFuga * 10);
 			if (chancePerkFuga > 0 && Math.random() * 100 < chancePerkFuga) {
-				tempoAvancoInimigos = 120;
+				tempoAvancoInimigos = TempoFugaMax();
 				document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
 				UI.showInfo("O tempo para fugir deste andar voltou ao máximo! (chance de perk: " + chancePerkFuga + "%)");
 				return;
@@ -846,7 +930,7 @@ function AvancoInimigos() {
 				andar--;
 				inimigosDerrotados = 0;
 				qtdInimigosAndar--;
-				tempoAvancoInimigos = 120;
+				tempoAvancoInimigos = TempoFugaMax();
 				UI.render();
 				CarregarStatus();
 				UI.spawnEnemies();
@@ -856,7 +940,7 @@ function AvancoInimigos() {
 			return;
         }
 
-        tempoAvancoInimigos = 120;
+        tempoAvancoInimigos = TempoFugaMax();
     }
 }
 
@@ -880,12 +964,12 @@ function PagaDanoReset(piso){
 	return qtd * 5;
 }
 
-// Pontos de perk: 1 por portão de dano pago (>= 35) — derivados do gateDanoPago,
-// então quem já pagou portões ganha os pontos retroativos ao carregar o save.
+// Pontos de perk (por run): 1 por portão alcançado no pico de andar desta run
+// (>= 35). O pico não cai quando você foge, e tudo zera no reset.
 function PontosPerkGanhos(){
-	const g = Number(gateDanoPago);
-	if (!Number.isFinite(g) || g < 35) return 0;
-	return Math.floor((g - 35) / 5) + 1;
+	const picoRun = Math.max(Number(andarMaxRun) || 1, Number(andar) || 1);
+	if (picoRun < 35) return 0;
+	return Math.floor((picoRun - 35) / 5) + 1;
 }
 
 function PontosPerkDisponiveis(){
@@ -906,12 +990,15 @@ function EhPortaoEsmeralda(piso){
 
 function VoltaAndar(){
 	console.log("ENTROU NO VOLTA ANDAR");
-	if(andar>=andarVolta){
+	// reset livre a partir do andar 20; portão de reset quando andar >= andarVolta
+	if(andar>=Math.min(andarVolta, 20)){
 		console.log("PODE VOLTAR");
 		const andarAnterior = andar;
+		const ehPortao = andar >= andarVolta;
 		// bônus de dano: cada portão >= 35 paga +5% uma vez só (com acumulado)
-		const ehPortaoEsmeralda = EhPortaoEsmeralda(andar);
-		const danoRecebido = PagaDanoReset(andar);
+		// reset livre (sem portão) não reivindica esmeralda nem dano
+		const ehPortaoEsmeralda = ehPortao && EhPortaoEsmeralda(andar);
+		const danoRecebido = ehPortao ? PagaDanoReset(andar) : 0;
 		let esmeraldasRecebidas = 0;
 		if(ehPortaoEsmeralda && andar>=maxAndar){
 			console.log(numVoltas);
@@ -928,11 +1015,22 @@ function VoltaAndar(){
 			esmeraldas = esmeraldas+auxEsmeraldas;
 		}
 		
-		// portão avança: pós-35 = próximo portão não reivindicado (+5); antes = +10
-		if (danoRecebido > 0) {
-			andarVolta = gateDanoPago + 5;
-		} else {
-			andarVolta = andarVolta + 10;
+		// portão avança: pós-35 = próximo portão não reivindicado (+5); antes = +10.
+		// reset livre mantém andarVolta como está (o portão continua pendente)
+		if (ehPortao) {
+			if (danoRecebido > 0) {
+				andarVolta = gateDanoPago + 5;
+			} else {
+				andarVolta = andarVolta + 10;
+			}
+		}
+		
+		// Conhecimento Mug: a partir do andar 20, 1 abate desta run = 1 CM
+		// (o item da loja de esmeraldas "CM em dobro" duplica o ganho)
+		let cmRecebido = 0;
+		if (andarAnterior >= 20) {
+			cmRecebido = Math.round(derrotadosRun * MultiplicadorCM());
+			conhecimentoMug = conhecimentoMug + cmRecebido;
 		}
 		
 		andar=1;
@@ -942,29 +1040,31 @@ function VoltaAndar(){
 		mulGold = mulGold*1.25;
 
 		if(lvlComp2>0){
-			goldCompanheiro = lvlComp2*mulGold;
+			goldCompanheiro = lvlComp2*mulGold*MultiplicadorGoldComp2();
 		}
 		
-		Resetar();
+		Resetar(); // zera derrotadosRun (a conversão em CM já foi feita acima)
 		RemoverInimigos();
 		Batalha();
 		if (esmeraldasRecebidas > 0) UI.showCurrencyReward("emerald", esmeraldasRecebidas);
-		UI.MostraCelebracaoReset(esmeraldasRecebidas, andarAnterior, andarVolta, danoRecebido);
+		if (cmRecebido > 0) UI.showInfo("Você ganhou " + cmRecebido + " Conhecimento Mug!");
+		UI.MostraCelebracaoReset(esmeraldasRecebidas, andarAnterior, andarVolta, danoRecebido, cmRecebido);
 		UI.updateResetAviso();
 		if (TutorialComp1Pendente()) MostraTutorialComp1();
 	}else{
-		UI.showInfo("É necessario chegar no andar "+andarVolta +" para poder voltar");
+		UI.showInfo("É necessario chegar no andar "+Math.min(andarVolta, 20)+" para poder voltar");
 	}
 }
 
 // Pede confirmação antes de resetar; se ainda não pode voltar, só avisa (fluxo antigo)
 function PedeReset() {
-	if (andar < andarVolta) {
+	if (andar < Math.min(andarVolta, 20)) {
 		VoltaAndar();
 		return;
 	}
 
-	const ehPortaoEsmeralda = EhPortaoEsmeralda(andar);
+	const ehPortao = andar >= andarVolta;
+	const ehPortaoEsmeralda = ehPortao && EhPortaoEsmeralda(andar);
 	let premio = 0;
 	if (ehPortaoEsmeralda) {
 		if (andar >= maxAndar) {
@@ -978,26 +1078,29 @@ function PedeReset() {
 	const total = N(esmeraldas) + premio;
 	const pendentes = GatesDanoPendentes(andar);
 	const danoPendente = pendentes * 5;
-	const proximo = pendentes > 0
+	const cmRecebido = andar >= 20 ? Math.round(derrotadosRun * MultiplicadorCM()) : 0;
+	// próximo portão; o reset fica livre a partir do andar 20 em qualquer run
+	const proximoPortao = pendentes > 0
 		? Math.max(35, gateDanoPago + 5) + danoPendente
-		: andarVolta + 10;
+		: (ehPortao ? andarVolta + 10 : andarVolta);
 
 	UI.showModal("Voltar ao 1º andar?", `
 		<div class="modal-tutorial-texto">
 			Você está no andar <b>${andar}</b> e voltará para o <b>1º andar</b>
-			${ehPortaoEsmeralda ? "ganhando esmeraldas no caminho" : "coletando o bônus de dano permanente"}.
+			${ehPortaoEsmeralda ? "ganhando esmeraldas no caminho" : ehPortao ? "coletando o bônus de dano permanente" : "convertendo seus abates em Conhecimento Mug"}.
 		</div>
 
 		<div class="modal-tutorial-info">
-			<span>Recompensa: <b>${premio > 0 ? "+" + premio + " esmeralda" + (premio === 1 ? "" : "s") : "sem esmeraldas (portão intermediário)"}</b></span>
+			<span>Recompensa: <b>${premio > 0 ? "+" + premio + " esmeralda" + (premio === 1 ? "" : "s") : ehPortao ? "sem esmeraldas (portão intermediário)" : "sem esmeraldas (reset livre)"}</b></span>
 			${danoPendente > 0 ? `<span>Bônus: <b>+${danoPendente}% de dano permanente</b></span>` : ""}
-			<span>Total: <b>${total}</b></span>
+			${cmRecebido > 0 ? `<span>Conhecimento Mug: <b>+${cmRecebido} CM</b> (${derrotadosRun} abates × ${MultiplicadorCM()})</span>` : ""}
+			<span>Total de esmeraldas: <b>${total}</b></span>
 		</div>
 
 		<div class="reset-confirm-lista">
-			<div><span class="reset-tag reset-tag--reseta">Reseta</span> gold, loja de gold, nível/XP e habilidades</div>
-			<div><span class="reset-tag reset-tag--fica">Fica</span> esmeraldas, loja de esmeraldas, conquistas e bônus de dano de reset · base de gold +25%</div>
-			<div><span class="reset-tag reset-tag--prox">Próximo</span> reset liberado no andar ${proximo}</div>
+			<div><span class="reset-tag reset-tag--reseta">Reseta</span> gold, loja de gold, nível/XP, habilidades e perks</div>
+			<div><span class="reset-tag reset-tag--fica">Fica</span> esmeraldas, loja de esmeraldas, conquistas, conhecimento mug e bônus de dano de reset · base de gold +25%</div>
+			<div><span class="reset-tag reset-tag--prox">Próximo</span> reset livre no andar 20${proximoPortao > 20 ? " · portão no andar " + proximoPortao : ""}</div>
 		</div>
 
 		<div class="reset-confirm-acoes">

@@ -184,9 +184,14 @@ function AddGold(valor, aplicaBonusFormigas = true) {
         gold = new GoldNumber(gold);
     }
 
-    const valorFinal = aplicaBonusFormigas && Number(valor) > 0
-        ? Number(valor) * MultiplicadorGoldFormigas()
-        : valor;
+    let valorFinal = valor;
+    if (Number(valor) > 0) {
+        // bônus permanente da Loja do Conhecimento: +1% de gold por nível
+        valorFinal = Number(valor) * MultiplicadorGoldConhecimento();
+        if (aplicaBonusFormigas) {
+            valorFinal = valorFinal * MultiplicadorGoldFormigas();
+        }
+    }
     gold.add(valorFinal);
 
     AtualizaGoldTela();
