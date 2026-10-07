@@ -32,6 +32,7 @@ var andarBoss = 10; //andar atual onde aparecerão inimigos mais fortes
 var progressoConquistaDano = 100; //multiplicador e quantidade necessaria para premiação e conclusão da conquista atual de dano
 var progressoConquistaGold = 500; //multiplicador e quantidade necessaria para premiação e conclusão da conquista atual de gold
 var validaConquista = 1; //variavel de valdiação para determinar onde será atribuido o bonus de conclusão da conquista (1- dano, 2- gold, 3- dano critico)
+var totalNiveis = 0; //total de níveis ganhos acumulado entre resets (conquista de nível: a cada 100 → -1 inimigo para avançar)
 var missao = Array(" ","Coleta de Gold", "Golpes", "Caça aos Mugs", "Tempo") //vetor usado para listagem das missões
 var missaoAtual; //variavel que determina a missão atual (1- coleta de gol, 2- tempo, 3- caça aos mugs)
 var missaoColeta = 500, missaoColetaAtual = 0.0; //Gold necessario para completar a missão "Coleta de gold"
@@ -494,7 +495,10 @@ function MultiplicadorDanoNivel() {
 }
 
 function QuotaAndar() {
-	return Math.max(1, qtdInimigosAndar - Math.max(0, nivelJogador - 1));
+	const bonusNivel = Math.max(0, nivelJogador - 1);
+	const bonusConquista = Math.floor(Math.max(0, totalNiveis | 0) / 100);
+	// mínimo de 1: mesmo com bônus acumulados, nunca avança sem pelo menos um abate
+	return Math.max(1, qtdInimigosAndar - bonusNivel - bonusConquista);
 }
 
 function XPPorInimigo(piso = andar) {
@@ -535,10 +539,15 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 	if (niveisGanhos > 0) {
 		nivelJogador = Math.min(Number.MAX_SAFE_INTEGER, nivelJogador + niveisGanhos);
 		pontosHabilidade = Math.min(Number.MAX_SAFE_INTEGER, pontosHabilidade + niveisGanhos);
+		const conquistaAntes = Math.floor(Math.max(0, totalNiveis | 0) / 100);
+		totalNiveis = Math.min(Number.MAX_SAFE_INTEGER, (totalNiveis | 0) + niveisGanhos);
 		UI.showMilestone(
 			niveisGanhos === 1 ? "Nível aumentado!" : `${niveisGanhos} níveis aumentados!`,
 			`Você alcançou o nível ${nivelJogador} e recebeu ${niveisGanhos} ${niveisGanhos === 1 ? "ponto de habilidade" : "pontos de habilidade"}. Bônus: +${niveisGanhos * 10}% de dano e −${niveisGanhos} ${niveisGanhos === 1 ? "inimigo" : "inimigos"} para avançar.`
 		);
+		if (Math.floor(totalNiveis / 100) > conquistaAntes) {
+			UI.showInfo("Conquista desbloqueada!\nA cada 100 níveis: -1 inimigo necessário para avançar!");
+		}
 		UI.updateObjective();
 	}
 

@@ -284,8 +284,10 @@ const UI = {
         if (xpLabel) xpLabel.textContent = `${xpAtual} / ${nextLevelXP} XP para o próximo nível`;
         const bonus = document.getElementById("skill-player-bonus");
         if (bonus) {
-            const bonusNiveis = Math.max(0, nivelJogador - 1);
-            bonus.textContent = `Bônus atual: +${bonusNiveis * 10}% de dano · −${bonusNiveis} ${bonusNiveis === 1 ? "inimigo" : "inimigos"} para avançar`;
+            const niveis = Math.max(0, nivelJogador - 1);
+            const conquistas = Math.floor(Math.max(0, totalNiveis | 0) / 100);
+            const reducao = niveis + conquistas;
+            bonus.textContent = `Bônus atual: +${niveis * 10}% de dano · −${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} para avançar`;
         }
         if (button) button.setAttribute("aria-label", `Skills, nível ${nivelJogador}, ${pontosHabilidade} pontos disponíveis`);
         if (badge) {
@@ -1590,6 +1592,28 @@ function MostraConquista() {
 			<div>
 				Progresso:
 				${(totalGold * 100 / progressoConquistaGold).toFixed(2)}%
+			</div>
+
+		</div>
+	`;
+
+    conquista += `
+		<div style="margin-top:1.2em;">
+
+			<div style="color:#8fe6a8;font-weight:bold;">
+				Conquista de Nível (permanente)
+			</div>
+
+			<div>
+				${totalNiveis} níveis acumulados — a cada 100 níveis: -1 inimigo
+			</div>
+
+			<div>
+				Progresso: ${totalNiveis % 100}% para o próximo -1
+			</div>
+
+			<div>
+				Bônus atual: -${Math.floor(Math.max(0, totalNiveis | 0) / 100)} inimigo(s) para avançar
 			</div>
 
 		</div>

@@ -143,6 +143,7 @@ function Salvar() {
 		progressoConquistaDano,
 		progressoConquistaGold,
 		validaConquista,
+		totalNiveis,
 
 		precoDano,
 		mulDano,
@@ -723,6 +724,8 @@ function Carregar(saveData, calculaOffline = false) {
 	progressoConquistaDano = save.progressoConquistaDano ?? 100;
 	progressoConquistaGold = save.progressoConquistaGold ?? 500;
 	validaConquista = save.validaConquista ?? 1;
+	// conquista de nível: total acumulado entre resets; saves antigos usam o nível do run atual como base
+	totalNiveis = save.totalNiveis ?? Math.max(0, nivelJogador - 1);
 
 	precoDano = save.precoDano ?? 5;
 	mulDano = save.mulDano ?? 1;
@@ -1561,6 +1564,7 @@ function CriarObjetoSave() {
 		progressoConquistaDano,
 		progressoConquistaGold,
 		validaConquista,
+		totalNiveis,
 
 		precoDano,
 		mulDano,
