@@ -182,6 +182,9 @@ function Salvar() {
 		tempoComp3,
 		lvlComp3,
 
+		precoXP,
+		lvlXP,
+
 		descontoLoja,
 		mulGoldInicial,
 		danoBonus,
@@ -758,6 +761,9 @@ function Carregar(saveData, calculaOffline = false) {
 	precoComp3 = save.precoComp3 ?? 4;
 	tempoComp3 = save.tempoComp3 ?? 1;
 	lvlComp3 = save.lvlComp3 ?? 0;
+
+	precoXP = save.precoXP ?? 2;
+	lvlXP = save.lvlXP ?? 0;
 
 	descontoLoja = save.descontoLoja ?? 0;
 	mulGoldInicial = save.mulGoldInicial ?? mulGold;
@@ -1593,6 +1599,9 @@ function CriarObjetoSave() {
 		precoComp3,
 		tempoComp3,
 		lvlComp3,
+
+		precoXP,
+		lvlXP,
 
 		descontoLoja,
 		mulGoldInicial,

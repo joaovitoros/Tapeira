@@ -26,7 +26,7 @@ function NormalizaPrecosLoja() {
 	const nomesPrecos = [
 		"precoDano", "precoBau", "precoGold", "precoBEspaco", "precoAvan",
 		"precoDCrit", "precoVidaInimigo", "precoCCrit", "precoQTDAvanco",
-		"precoComp1", "precoAvGold", "precoComp2", "precoComp3"
+		"precoComp1", "precoAvGold", "precoComp2", "precoComp3", "precoXP"
 	];
 
 	nomesPrecos.forEach(nome => {
@@ -437,6 +437,9 @@ function LojaEsmeralda(){
 		document.getElementById("precoComp3").innerHTML=precoComp3;
 		document.getElementById("lvlComp3").innerHTML=lvlComp3;
 
+		document.getElementById("precoXP").innerHTML=precoXP;
+		document.getElementById("lvlXP").innerHTML=lvlXP;
+
 	}else{
 		document.getElementById("LojaEsm").style.visibility="hidden";
 		document.getElementById("Loja").style.visibility="visible";
@@ -522,6 +525,25 @@ function CompraComp3(){
 
 		MostraStatus();
 		CriarCompanheiros();
+	}else{
+		MostraInfo("Voce não tem esmeraldas o suficiente para essa compra!");
+	}
+}
+
+function CompraXP(){
+	NormalizaPrecosLoja();
+	if(N(esmeraldas) >= N(precoXP)){
+		esmeraldas = N(esmeraldas) - N(precoXP);
+		precoXP = N(precoXP) * 2;
+		lvlXP++;
+
+		ChamaSom('audio6');
+
+		document.getElementById("contEmeraldas").innerHTML=N(esmeraldas);
+		document.getElementById("precoXP").innerHTML=N(precoXP);
+		document.getElementById("lvlXP").innerHTML=lvlXP;
+
+		MostraStatus();
 	}else{
 		MostraInfo("Voce não tem esmeraldas o suficiente para essa compra!");
 	}

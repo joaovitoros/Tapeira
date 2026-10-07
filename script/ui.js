@@ -917,6 +917,7 @@ const UI = {
             ["DPS companheiros", (danoComp * multDanoTotal).toFixed(2)],
             ["GoldPS companions", goldCompanheiro.toFixed(2)],
             ["Tempo bônus", tempoEsperaCompanheiro + " seg"],
+            ["Bônus XP", "+" + Math.max(0, lvlXP | 0)],
             ["Vida Mug", (subVidaInimigo * 100).toFixed(2) + "%"],
             ["Chance baú", (chanceBau * 100).toFixed(2) + "%"],
             ["Chance esmeralda", (chanceEsmeraldaBau * 100).toFixed(2) + "%"]

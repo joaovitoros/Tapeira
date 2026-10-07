@@ -226,6 +226,9 @@ var lvlComp2 = 0;
 var precoComp3 = 4;
 var tempoComp3 = 1;
 var lvlComp3 = 0;
+
+var precoXP = 2;
+var lvlXP = 0;
 ////
 
 function CarregarStatus(){
@@ -495,7 +498,8 @@ function QuotaAndar() {
 }
 
 function XPPorInimigo(piso = andar) {
-	return 1 + Math.floor((Math.max(1, piso) - 1) / 10);
+	// bônus da loja de esmeraldas: +1 de XP por abate a cada nível do item
+	return Math.max(0, lvlXP | 0) + 1 + Math.floor((Math.max(1, piso) - 1) / 10);
 }
 
 function GanhaXP(abates, piso = andar, xpFixo) {
