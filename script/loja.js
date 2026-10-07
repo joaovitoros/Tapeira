@@ -114,6 +114,24 @@ function AbreLoja(){
 	UI.syncScreenButtons();
 }
 
+function FechaLoja(){
+	document.getElementById("Loja").style.visibility="hidden";
+	document.getElementById("LojaEsm").style.visibility="hidden";
+	UI.syncScreenButtons();
+}
+
+// Mantém o × de fechar fixo no topo do painel mesmo quando a loja rola
+document.addEventListener("DOMContentLoaded", () => {
+	["Loja", "LojaEsm"].forEach(id => {
+		const painel = document.getElementById(id);
+		if (!painel) return;
+		painel.addEventListener("scroll", () => {
+			const btn = painel.querySelector(".btnLojaFechar");
+			if (btn) btn.style.top = (painel.scrollTop + 5) + "px";
+		}, { passive: true });
+	});
+});
+
 function CompraDano(){
 	NormalizaPrecosLoja();
 

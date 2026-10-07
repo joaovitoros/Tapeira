@@ -333,6 +333,16 @@ tr, td, th{
 .btnLojaE:active{
 	transform: scale(0.95);
 }
+/* Fechar a loja (Android não tem tecla ESC) */
+.btnLojaFechar {
+	position: absolute;
+	top: 5px;
+	right: 6px;
+	z-index: 1;
+	width: clamp(24px, 2vw, 32px);
+	height: clamp(24px, 2vw, 32px);
+	font-size: clamp(14px, 1.2vw, 17px);
+}
 #container-opcoes{
 	margin-top: 18%;
 	display: flex;
