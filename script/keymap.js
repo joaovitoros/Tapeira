@@ -175,6 +175,13 @@ function FechaJanelasAbertas() {
         }
     });
 
+    // Celebração de reset (banner temporário)
+    const celebracao = document.getElementById("celebracaoReset");
+    if (celebracao) {
+        UI.FechaCelebracaoReset();
+        fechou = true;
+    }
+
     // Modal de missões/conquistas (aberto com display:flex)
     const gameModal = document.getElementById("gameModal");
     if (gameModal && gameModal.style.display === "flex") {

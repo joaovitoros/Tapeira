@@ -564,3 +564,125 @@ function CompraXP(){
 		MostraInfo("Voce não tem esmeraldas o suficiente para essa compra!");
 	}
 }
+
+// =========================
+// PREVIEW DE COMPRA (hover/foco nos botões da loja)
+// =========================
+
+function FormataPct(x, casas) {
+	return (N(x) * 100).toFixed(casas === undefined ? 2 : casas) + "%";
+}
+
+const PREVIEWS_LOJA = {
+	CompraDano() {
+		const prox = N(danoJogador) + N(mulDano);
+		const extra = (N(lvlDano) === 9) ? " · nível 10 dá +20%!" : "";
+		return "Dano: " + N(danoJogador).toFixed(2) + " → " + prox.toFixed(2)
+			+ " (+" + N(mulDano).toFixed(2) + ")" + extra;
+	},
+	CompraBau() {
+		if (N(chanceBau) >= 0.75) return "Chance de baú: no máximo (75%)";
+		return "Chance de baú: " + FormataPct(chanceBau, 0) + " → "
+			+ FormataPct(Math.min(0.75, N(chanceBau) + 0.05), 0) + " (máx 75%)";
+	},
+	CompraBEspaco() {
+		if (N(lvlBEspaco) >= 15) return "Recarga do espaço: no nível máximo";
+		return "Recarga do espaço: " + N(MaxValidaBater) + " → " + (N(MaxValidaBater) - 1) + " (quanto menor, mais rápido)";
+	},
+	CompraGold() {
+		const prox = N(mulGold) * (1 + N(sobeGold));
+		return "Multiplicador gold: " + N(mulGold).toFixed(2) + " → " + prox.toFixed(2);
+	},
+	CompraAvanco() {
+		if (N(avanco) >= 0.5) return "Avanço rápido: no máximo (50%)";
+		const prox = Math.min(0.5, N(avanco) + N(sobeAvanco));
+		return "Chance de avanço: " + FormataPct(avanco) + " → " + FormataPct(prox) + " (máx 50%)";
+	},
+	CompraDCrit() {
+		const proxMult = N(multiplicadorMaximoDanoCritico) + 0.1;
+		const proxSobe = N(sobeDCrit) * 1.025;
+		let proxCrit = N(danoCritJogador) + (N(danoJogador) / 2) * (2 + proxSobe);
+		proxCrit = Math.min(proxCrit, N(danoJogador) * proxMult);
+		return "Dano crítico: " + N(danoCritJogador).toFixed(2) + " → " + proxCrit.toFixed(2)
+			+ " (máx ×" + proxMult.toFixed(1) + ")";
+	},
+	CompraSubVida() {
+		if (N(lvlSubVida) >= 50) return "Vida dos inimigos: no nível máximo";
+		return "Redução de vida: " + FormataPct(subVidaInimigo, 0) + " → "
+			+ FormataPct(Math.min(0.5, N(subVidaInimigo) + 0.01), 0) + " (máx 50%)";
+	},
+	CompraCCrit() {
+		if (N(chanceCrit) >= 0.7) return "Chance crítica: no máximo (70%)";
+		const prox = Math.min(0.7, N(chanceCrit) + N(sobeCCrit));
+		return "Chance crítica: " + FormataPct(chanceCrit) + " → " + FormataPct(prox) + " (máx 70%)";
+	},
+	CompraQTDAvanco() {
+		if (N(lvlQTDAvanco) > 20) return "Quantidade de avanço: no nível máximo";
+		return "Qtd de avanço: " + N(qtdAvanco) + " → " + (N(qtdAvanco) + 1) + " inimigos";
+	},
+	CompraComp1() {
+		const prox = N(danoComp1) + 0.1;
+		return "Dano do companheiro: " + FormataPct(danoComp1, 0) + " → "
+			+ FormataPct(prox, 0) + " do seu dano";
+	},
+	CompraAvGold() {
+		const prox = N(mulGoldAvanco) * 1.1;
+		return "Bônus de gold do avanço: " + N(mulGoldAvanco).toFixed(2) + " → " + prox.toFixed(2);
+	},
+	CompraComp2() {
+		const prox = (N(lvlComp2) + 1) * N(mulGold);
+		return "Gold do companheiro: " + FormatGold(N(goldCompanheiro)) + " → " + FormatGold(prox) + "/seg";
+	},
+	CompraComp3() {
+		return "Tempo bônus do companheiro: " + N(tempoEsperaCompanheiro) + "s → "
+			+ (N(tempoEsperaCompanheiro) + N(tempoComp3)) + "s";
+	},
+	CompraXP() {
+		return "Bônus de XP: +" + (N(lvlXP) | 0) + " → +" + ((N(lvlXP) | 0) + 1) + " por abate";
+	}
+};
+
+function NomeFuncaoCompra(btn) {
+	const attr = btn.getAttribute("onclick") || "";
+	const m = attr.match(/^\s*([A-Za-z_$][\w$]*)\s*\(/);
+	return m ? m[1] : null;
+}
+
+// ids no HTML que não batem com o nome da variável de preço
+const ALIAS_PRECO = { precoQTDAvan: "precoQTDAvanco" };
+
+function MostraPreviewCompra(btn) {
+	const nome = NomeFuncaoCompra(btn);
+	const calc = PREVIEWS_LOJA[nome];
+	const painel = btn.closest("#Loja, #LojaEsm");
+	if (!calc || !painel) return;
+
+	const div = painel.querySelector(".preview-compra");
+	if (!div) return;
+
+	div.textContent = calc();
+	div.hidden = false;
+
+	// cor: dá para pagar?
+	let podePagar = true;
+	const linha = btn.closest("tr");
+	const celulaPreco = linha ? linha.querySelector("td:nth-child(2) > div") : null;
+	const idPreco = celulaPreco ? (ALIAS_PRECO[celulaPreco.id] || celulaPreco.id) : "";
+	if (/^preco/.test(idPreco) && window[idPreco] !== undefined) {
+		const preco = window[idPreco];
+		podePagar = (painel.id === "LojaEsm")
+			? N(esmeraldas) >= N(preco)
+			: GE(gold, preco);
+	}
+	div.classList.toggle("preview-compra--nao-pode", !podePagar);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+	document.querySelectorAll("#Loja input.Loja, #LojaEsm input.Loja").forEach(btn => {
+		const mostrar = () => MostraPreviewCompra(btn);
+		btn.addEventListener("mouseenter", mostrar);
+		btn.addEventListener("focus", mostrar);
+		// após o clique inline (compra já aplicada), atualiza o preview
+		btn.addEventListener("click", mostrar);
+	});
+});

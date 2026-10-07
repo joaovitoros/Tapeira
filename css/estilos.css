@@ -6018,3 +6018,228 @@ input:focus-visible {
 		padding: 9px;
 	}
 }
+
+/* =========================
+   TIER 1: confirmação de reset, celebração pós-reset,
+   preview de compra e decomposição do dano
+   ========================= */
+
+/* --- Confirmação do reset --- */
+.reset-confirm-lista {
+	display: grid;
+	gap: 0.4em;
+	margin-bottom: 1em;
+	font-size: 0.85em;
+	color: #d7e2ef;
+}
+
+.reset-tag {
+	display: inline-block;
+	min-width: 4.6em;
+	margin-right: 0.5em;
+	padding: 0.05em 0.45em;
+	border-radius: 0.3em;
+	font-size: 0.85em;
+	font-weight: 700;
+	text-align: center;
+}
+
+.reset-tag--reseta {
+	background: rgba(255, 120, 120, 0.16);
+	color: #ff9b9b;
+	border: 1px solid rgba(255, 120, 120, 0.35);
+}
+
+.reset-tag--fica {
+	background: rgba(77, 255, 136, 0.14);
+	color: #4dff88;
+	border: 1px solid rgba(77, 255, 136, 0.35);
+}
+
+.reset-tag--prox {
+	background: rgba(120, 170, 255, 0.14);
+	color: #9ccfff;
+	border: 1px solid rgba(120, 170, 255, 0.35);
+}
+
+.reset-confirm-acoes {
+	display: flex;
+	gap: 0.6em;
+}
+
+.btn-reset-confirmar,
+.btn-reset-cancelar {
+	flex: 1;
+	margin: 0;
+	padding: 0.6em 0.8em;
+	font-weight: 700;
+}
+
+.btn-reset-confirmar {
+	color: #06241a;
+	text-shadow: none;
+	background: linear-gradient(to bottom, #4dff88, #1fae5f);
+	border: 2px solid #9dffc6;
+	box-shadow: 0 0 10px rgba(77, 255, 136, 0.3);
+}
+
+.btn-reset-confirmar:hover {
+	background: linear-gradient(to bottom, #6dff9e, #28c96e);
+}
+
+.btn-reset-cancelar {
+	color: #e6edf3;
+	background: linear-gradient(to bottom, #3a4658, #2a3345);
+	border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.btn-reset-cancelar:hover {
+	background: linear-gradient(to bottom, #46536a, #34405a);
+}
+
+/* --- Celebração pós-reset --- */
+#celebracaoReset {
+	position: fixed;
+	top: 10px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 1000000;
+
+	max-width: min(92vw, 460px);
+	box-sizing: border-box;
+	cursor: pointer;
+}
+
+.celebracao-reset {
+	padding: 0.55em 1.4em;
+	text-align: center;
+	border-radius: 0.6em;
+
+	background: linear-gradient(145deg, rgba(10, 46, 30, 0.96), rgba(6, 26, 18, 0.96));
+	border: 2px solid rgba(77, 255, 136, 0.75);
+	box-shadow: 0 0 22px rgba(77, 255, 136, 0.45), 0 6px 18px rgba(0, 0, 0, 0.5);
+
+	animation: celebracaoEntra 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.celebracao-reset--saindo {
+	animation: celebracaoSai 0.35s ease-in forwards;
+}
+
+.celebracao-reset-titulo {
+	font-size: clamp(15px, 1.4vw, 22px);
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #a9ffd0;
+	text-shadow: 0 0 10px rgba(77, 255, 136, 0.7);
+}
+
+.celebracao-reset-premio {
+	font-size: clamp(14px, 1.2vw, 20px);
+	font-weight: 800;
+	color: #4dff88;
+}
+
+.celebracao-reset-info {
+	font-size: clamp(11px, 0.9vw, 14px);
+	color: #cfe8db;
+}
+
+@keyframes celebracaoEntra {
+	0% { opacity: 0; transform: translateX(-50%) scale(0.55); }
+	70% { opacity: 1; transform: translateX(-50%) scale(1.06); }
+	100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes celebracaoSai {
+	0% { opacity: 1; transform: translateX(-50%) scale(1); }
+	100% { opacity: 0; transform: translateX(-50%) scale(0.9); }
+}
+
+/* --- Preview de compra (loja) --- */
+.preview-compra {
+	position: sticky;
+	top: 0;
+
+	padding: 6px 8px;
+	font-size: 0.85em;
+	font-weight: 600;
+	text-align: center;
+	color: #9ccfff;
+
+	background: rgba(8, 14, 24, 0.94);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.preview-compra--nao-pode {
+	color: #ff9b9b;
+}
+
+/* --- Decomposição do dano --- */
+.decomp-grupo {
+	margin: 0.9em 0 0.3em;
+	padding-bottom: 2px;
+	font-size: 0.78em;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #7f92a9;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.decomp-grupo:first-child {
+	margin-top: 0;
+}
+
+.decomp-linha {
+	display: flex;
+	justify-content: space-between;
+	gap: 1em;
+	padding: 0.12em 0;
+	color: #d7e2ef;
+}
+
+.decomp-valor {
+	font-weight: 700;
+	color: #ffd84a;
+	white-space: nowrap;
+}
+
+.decomp-linha--total {
+	margin-top: 0.35em;
+	padding-top: 0.4em;
+	font-weight: 800;
+	border-top: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.decomp-linha--total .decomp-valor {
+	color: #4dff88;
+}
+
+.decomp-nota {
+	font-size: 0.85em;
+	font-style: italic;
+	color: #7f92a9;
+}
+
+/* --- Botão no painel de status --- */
+.statusDetalhes {
+	padding: 6px 4px;
+	text-align: center;
+}
+
+.btn-status-dano {
+	display: block;
+	width: 100%;
+	margin: 0;
+	padding: 0.45em 0.6em;
+	font-size: 0.85em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.celebracao-reset,
+	.celebracao-reset--saindo {
+		animation: none;
+	}
+}

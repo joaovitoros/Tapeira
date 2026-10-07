@@ -503,6 +503,43 @@ const UI = {
         botao.classList.toggle("btn-reset-pronto", pronto);
     },
 
+    // Celebração pós-reset: banner transitório no topo (some sozinho ou com clique/ESC)
+    MostraCelebracaoReset(recebidas, andarAnterior, proximoAndar) {
+        const antigo = document.getElementById("celebracaoReset");
+        if (antigo) antigo.remove();
+        if (UI.celebracaoTimeout) {
+            clearTimeout(UI.celebracaoTimeout);
+            UI.celebracaoTimeout = null;
+        }
+
+        const div = document.createElement("div");
+        div.id = "celebracaoReset";
+        div.className = "celebracao-reset";
+        div.setAttribute("role", "status");
+        div.innerHTML = `
+            <div class="celebracao-reset-titulo">Reset realizado!</div>
+            <div class="celebracao-reset-premio">+${recebidas} esmeralda${recebidas === 1 ? "" : "s"}</div>
+            <div class="celebracao-reset-info">Andar ${andarAnterior} → 1 · próximo reset no andar ${proximoAndar}</div>
+        `;
+        div.addEventListener("click", () => UI.FechaCelebracaoReset());
+        document.body.appendChild(div);
+
+        UI.celebracaoTimeout = setTimeout(() => UI.FechaCelebracaoReset(), 3400);
+    },
+
+    FechaCelebracaoReset() {
+        if (UI.celebracaoTimeout) {
+            clearTimeout(UI.celebracaoTimeout);
+            UI.celebracaoTimeout = null;
+        }
+
+        const div = document.getElementById("celebracaoReset");
+        if (!div || div.classList.contains("celebracao-reset--saindo")) return;
+
+        div.classList.add("celebracao-reset--saindo");
+        setTimeout(() => div.remove(), 380);
+    },
+
     showObjectiveComplete() {
         const container = document.getElementById("container-Objetivo");
         const description = document.getElementById("objetivoDescricao");
@@ -978,6 +1015,16 @@ const UI = {
         `;
 
         });
+
+        html += `
+            <tr>
+                <td colspan="2" class="statusDetalhes">
+                    <button type="button" class="btn-Padrao btn-status-dano" onclick="MostraDecomposicaoDano()">
+                        Decomposição do dano
+                    </button>
+                </td>
+            </tr>
+        `;
 
         document.getElementById("StatusBody").innerHTML = html;
     },
@@ -1810,6 +1857,57 @@ function MostraTutorialComp1() {
     }
 
     UI.showModal(titulo, conteudo);
+}
+
+// Decomposição do dano: de onde sai cada ponto de dano do golpe
+function MostraDecomposicaoDano() {
+    const multFormigas = MultiplicadorDanoFormigas();
+    const multNivel = MultiplicadorDanoNivel();
+    const multTotal = multFormigas * multNivel;
+    const conjuntos = ConjuntosFormigas("vermelhas");
+    const danoEfetivo = N(danoJogador) * multTotal;
+    const critEfetivo = N(danoCritJogador) * multTotal;
+
+    const linha = (rotulo, valor) => `
+        <div class="decomp-linha">
+            <span>${rotulo}</span>
+            <span class="decomp-valor">${valor}</span>
+        </div>`;
+
+    let html = `
+        <div class="decomp-grupo">Por golpe</div>
+        ${linha("Dano base da loja (nível " + (N(lvlDano) | 0) + ")", N(danoJogador).toFixed(2))}
+        ${linha("× Bônus de nível (nível " + (N(nivelJogador) | 0) + ")", "×" + multNivel.toFixed(2))}
+        ${linha("× Formigas vermelhas (" + conjuntos + " conjunto" + (conjuntos === 1 ? "" : "s") + ")", "×" + multFormigas.toFixed(2))}
+        <div class="decomp-linha decomp-linha--total">
+            <span>= Dano efetivo por golpe</span>
+            <span class="decomp-valor">${danoEfetivo.toFixed(2)}</span>
+        </div>
+
+        <div class="decomp-grupo">Crítico</div>
+        ${linha("Dano crítico efetivo", critEfetivo.toFixed(2))}
+        ${linha("Chance crítica", (N(chanceCrit) * 100).toFixed(2) + "%")}
+        ${linha("Multiplicador crítico máximo", "×" + N(multiplicadorMaximoDanoCritico).toFixed(1))}
+        ${N(bonusCritConquista) > 0 ? linha("Bônus crítico das conquistas", "+" + N(bonusCritConquista).toFixed(2)) : ""}
+
+        <div class="decomp-grupo">Companheiro de dano</div>
+    `;
+
+    if (N(lvlComp1) > 0) {
+        html += linha("Dano do companheiro (nível " + (N(lvlComp1) | 0) + ")", (N(danoComp) * multTotal).toFixed(2));
+        html += linha("= " + (N(danoComp1) * 100).toFixed(0) + "% do seu dano", "×" + N(danoComp1).toFixed(2));
+    } else {
+        html += `<div class="decomp-nota">Ainda sem companheiro — compre na loja de esmeraldas após o 1º reset.</div>`;
+    }
+
+    if (N(danoBonus) > 0 && isFinite(N(danoBonus))) {
+        html += `
+        <div class="decomp-grupo">Bônus permanente</div>
+        ${linha("Bônus das conquistas (reaplicado no reset)", "×" + N(danoBonus).toFixed(2))}
+        `;
+    }
+
+    UI.showModal("Decomposição do dano", html);
 }
 
 function MostraInfos() {

@@ -45,7 +45,7 @@
 			</div>
 
 			<div>
-				<input type="button" value="Voltar andar" id="btnAndar" class="btn-Padrao" onclick="VoltaAndar()">
+				<input type="button" value="Voltar andar" id="btnAndar" class="btn-Padrao" onclick="PedeReset()">
 			</div>
 		</div>
 
@@ -308,6 +308,7 @@
 
 		<div id="container-Loja">
 			<div id="Loja" style="visibility:hidden">
+				<div class="preview-compra" hidden></div>
 				<table id="TabLoja">
 					<caption>Loja<button type="button" class="btnLojaE btnLojaFechar"
 							onclick="FechaLoja()" aria-label="Fechar loja">×</button></caption>
@@ -435,6 +436,7 @@
 
 			</div>
 			<div id="LojaEsm" style="visibility:hidden">
+				<div class="preview-compra" hidden></div>
 				<table id="TabLojaEsm">
 					<caption>Loja de Esmeralda<button type="button" class="btnLojaE btnLojaFechar"
 							onclick="FechaLoja()" aria-label="Fechar loja">×</button></caption>

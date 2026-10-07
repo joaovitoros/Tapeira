@@ -802,6 +802,7 @@ function VoltaAndar(){
 	console.log("ENTROU NO VOLTA ANDAR");
 	if(andar>=andarVolta){
 		console.log("PODE VOLTAR");
+		const andarAnterior = andar;
 		let esmeraldasRecebidas;
 		if(andar>=maxAndar){
 			console.log(numVoltas);
@@ -834,12 +835,60 @@ function VoltaAndar(){
 		RemoverInimigos();
 		Batalha();
 		UI.showCurrencyReward("emerald", esmeraldasRecebidas);
-		UI.showInfo("Voce voltou ao primeiro andar e recebeu " + esmeraldasRecebidas + " esmeraldas.");
+		UI.MostraCelebracaoReset(esmeraldasRecebidas, andarAnterior, andarVolta);
 		UI.updateResetAviso();
 		if (TutorialComp1Pendente()) MostraTutorialComp1();
 	}else{
 		UI.showInfo("É necessario chegar no andar "+andarVolta +" para poder voltar");
 	}
+}
+
+// Pede confirmação antes de resetar; se ainda não pode voltar, só avisa (fluxo antigo)
+function PedeReset() {
+	if (andar < andarVolta) {
+		VoltaAndar();
+		return;
+	}
+
+	let premio;
+	if (andar >= maxAndar) {
+		// recorde: recompensa igual à que VoltaAndar vai dar (numVoltas + 1)
+		premio = numVoltas + 1;
+	} else {
+		premio = Math.max(1, Math.round(N(esmeraldas) / andar));
+	}
+
+	const total = N(esmeraldas) + premio;
+	const proximo = andarVolta + 10;
+
+	UI.showModal("Voltar ao 1º andar?", `
+		<div class="modal-tutorial-texto">
+			Você está no andar <b>${andar}</b> e voltará para o <b>1º andar</b> ganhando
+			esmeraldas no caminho.
+		</div>
+
+		<div class="modal-tutorial-info">
+			<span>Recompensa: <b>+${premio} esmeralda${premio === 1 ? "" : "s"}</b></span>
+			<span>Total: <b>${total}</b></span>
+		</div>
+
+		<div class="reset-confirm-lista">
+			<div><span class="reset-tag reset-tag--reseta">Reseta</span> gold, loja de gold, nível/XP e habilidades</div>
+			<div><span class="reset-tag reset-tag--fica">Fica</span> esmeraldas, loja de esmeraldas e conquistas · base de gold +25%</div>
+			<div><span class="reset-tag reset-tag--prox">Próximo</span> reset liberado no andar ${proximo}</div>
+		</div>
+
+		<div class="reset-confirm-acoes">
+			<button type="button" class="btn-Padrao btn-reset-confirmar" onclick="ConfirmaReset()">Confirmar reset</button>
+			<button type="button" class="btn-Padrao btn-reset-cancelar" onclick="UI.closeModal()">Cancelar</button>
+		</div>
+	`);
+}
+
+function ConfirmaReset() {
+	const modal = document.getElementById("gameModal");
+	if (modal) modal.remove();
+	VoltaAndar();
 }
 
 //funçoes de controle das conquistas
