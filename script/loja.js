@@ -238,7 +238,7 @@ function CompraAvanco(){
 			gold.add(-N(precoAvan));
 
 			avanco = N(avanco) + N(sobeAvanco);
-			precoAvan = N(precoAvan) * 1.2;
+			precoAvan = N(precoAvan) * 2;
 			sobeAvanco = N(sobeAvanco) * 1.005;
 			lvlAvan++;
 
@@ -400,7 +400,7 @@ function CompraQTDAvanco(){
 			gold.add(-N(precoQTDAvanco));
 
 			qtdAvanco++;
-			precoQTDAvanco = N(precoQTDAvanco) * 1.5;
+			precoQTDAvanco = N(precoQTDAvanco) * 2;
 			lvlQTDAvanco++;
 
 			ChamaSom('audio6');
