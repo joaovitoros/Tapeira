@@ -658,7 +658,8 @@ function Carregar(saveData, calculaOffline = false) {
 	saveAnd = save.saveAnd ?? 10;
 	qtdSave = save.qtdSave ?? 0;
 	maxAndar = save.maxAndar ?? 0;
-	andarVolta = save.andarVolta ?? 20;
+	andarVolta = save.andarVolta ?? 15;
+	if (andarVolta === 20) andarVolta = 15; // saves antigos: 20 era o gate do 1º reset (agora é 15)
 	totalDerrotados = save.totalDerrotados ?? 0;
 	nivelJogador = save.nivelJogador ?? 1;
 	xpAtual = save.xpAtual ?? 0;
