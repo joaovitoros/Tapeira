@@ -5859,6 +5859,53 @@ input:focus-visible {
 	font-weight: 700;
 }
 
+/* Toggles de automação (Tier 3 #2): auto-coleta na linha do rastreador do
+   baú dourado e auto-compra no cabeçalho da loja. Ficam acinzentados
+   (auto-toggle--locked) enquanto o andar máximo não chega nos pisos 40/50. */
+.golden-chest-tracker__auto {
+	margin-top: 6px;
+}
+
+.auto-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	font-size: 11px;
+	font-weight: 700;
+	cursor: pointer;
+	user-select: none;
+	white-space: nowrap;
+}
+
+.auto-toggle--loja {
+	margin-left: 10px;
+	/* a caption da loja tem 16-20px — o toggle entra em escala própria */
+	font-size: 0.62em;
+	letter-spacing: 0.02em;
+	vertical-align: middle;
+}
+
+.auto-toggle input {
+	margin: 0;
+	accent-color: #72e7c1;
+	cursor: inherit;
+}
+
+.auto-toggle--locked {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.auto-toggle--locked input {
+	cursor: not-allowed;
+}
+
+.auto-toggle:focus-within {
+	outline: 2px solid rgba(255, 224, 138, 0.7);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 #golden-chest-claim {
 	min-width: 58px;
 	min-height: 30px;

@@ -187,7 +187,12 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 
 			andar++;
 
-			if (andar > maxAndar) maxAndar = andar;
+			if (andar > maxAndar) {
+				const maxAndarAnterior = maxAndar;
+				maxAndar = andar;
+				// desbloqueios de automação (pisos 40 e 50) comemoram na hora
+				VerificaDesbloqueioAutomacao(maxAndarAnterior, maxAndar);
+			}
 			andarMaxRun = Math.max(andarMaxRun, andar); //pico da run (base dos pontos de perk)
 
 			// Marco a cada 10 andares: +10% de gold nesta run (não re-dispara se o jogador fugir e subir de novo)

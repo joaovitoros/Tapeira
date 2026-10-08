@@ -16,6 +16,7 @@
 	<script src="script/loja.js"></script>
 	<script src="script/FileSaver.js"></script>
 	<script src="script/eventos.js"></script>
+	<script src="script/automacao.js"></script>
 </head>
 
 <body class="Batalha" onload="PreCarregamento()">
@@ -188,6 +189,14 @@
 					Abrir
 				</button>
 			</div>
+			<div class="golden-chest-tracker__auto">
+				<label class="auto-toggle" id="autoColetaWrap">
+					<input type="checkbox" id="autoColetaToggle"
+						onchange="AlternaAutoColeta(this.checked)"
+						aria-label="Auto-coleta de baús" />
+					<span>Auto-coleta</span>
+				</label>
+			</div>
 		</section>
 
 		<div id="container-opcoes">
@@ -311,7 +320,10 @@
 			<div id="Loja" style="visibility:hidden">
 				<div class="preview-compra" hidden></div>
 				<table id="TabLoja">
-					<caption>Loja<button type="button" class="btnLojaE btnLojaFechar"
+					<caption>Loja<label class="auto-toggle auto-toggle--loja" id="autoCompraWrap"><input
+								type="checkbox" id="autoCompraToggle"
+								onchange="AlternaAutoCompra(this.checked)" aria-label="Auto-compra da loja" /><span>Auto-compra</span></label><button
+							type="button" class="btnLojaE btnLojaFechar"
 							onclick="FechaLoja()" aria-label="Fechar loja">×</button></caption>
 					<thead>
 						<tr>

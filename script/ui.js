@@ -1979,14 +1979,18 @@ function MostraMarcos() {
     const faltamNiveis = proximoNiveis - niveisAcum;
 
     // --- Desbloqueios por andar (andar máximo = permanente) ---
-    const desbloqueios = SKILLS_UPGRADE
-        .filter(skill => skill.pisoDesbloqueio > 1)
-        .map(skill => {
-            const aberto = maxAndar >= skill.pisoDesbloqueio;
-            return aberto
-                ? linha(skill.nome, "✓ andar " + skill.pisoDesbloqueio, "modal-value--ok")
-                : linha(skill.nome, "andar " + skill.pisoDesbloqueio + " — faltam " + (skill.pisoDesbloqueio - maxAndar), "modal-value--pend");
-        }).join("");
+    const desbloqueios = [
+        ...SKILLS_UPGRADE
+            .filter(skill => skill.pisoDesbloqueio > 1)
+            .map(skill => ({ nome: skill.nome, piso: skill.pisoDesbloqueio })),
+        { nome: "Auto-coleta de baús", piso: ANDAR_AUTO_COLETA },
+        { nome: "Auto-compra da loja", piso: ANDAR_AUTO_COMPRA }
+    ].map(desbloqueio => {
+        const aberto = maxAndar >= desbloqueio.piso;
+        return aberto
+            ? linha(desbloqueio.nome, "✓ andar " + desbloqueio.piso, "modal-value--ok")
+            : linha(desbloqueio.nome, "andar " + desbloqueio.piso + " — faltam " + (desbloqueio.piso - maxAndar), "modal-value--pend");
+    }).join("");
 
     UI.showModal(
         "Marcos",
@@ -2052,7 +2056,9 @@ function MostraMarcos() {
 
                 <div class="modal-info">
                     O desbloqueio usa o andar máximo já atingido (${maxAndar}) e não
-                    é perdido no reset.
+                    é perdido no reset. Andar 40 libera a auto-coleta dos baús e
+                    andar 50 a auto-compra da loja (toggles no rastreador do baú
+                    dourado e no cabeçalho da loja).
                 </div>
             </div>
         `

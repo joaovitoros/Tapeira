@@ -227,7 +227,9 @@ function Salvar() {
 		lvlBau,
 		progressoBauDourado,
 		bauDouradoPendente,
-		ultimaAtualizacaoBauDourado
+		ultimaAtualizacaoBauDourado,
+		autoColeta,
+		autoCompra
 	};
 
 	save.saveFormat = "tapeira-save";
@@ -498,6 +500,18 @@ function ValidarSave(save) {
 			|| save.bauDouradoPendente < 0
 			|| save.bauDouradoPendente > 1)) {
 		throw new TypeError("O estado do baú dourado no save é inválido.");
+	}
+	if (save.autoColeta !== undefined
+		&& (!Number.isInteger(save.autoColeta)
+			|| save.autoColeta < 0
+			|| save.autoColeta > 1)) {
+		throw new TypeError("O estado da auto-coleta no save é inválido.");
+	}
+	if (save.autoCompra !== undefined
+		&& (!Number.isInteger(save.autoCompra)
+			|| save.autoCompra < 0
+			|| save.autoCompra > 1)) {
+		throw new TypeError("O estado da auto-compra no save é inválido.");
 	}
 	if (save.ultimaAtualizacaoBauDourado !== undefined
 		&& (!Number.isFinite(save.ultimaAtualizacaoBauDourado)
@@ -1039,6 +1053,10 @@ function Carregar(saveData, calculaOffline = false) {
 	recompensasOfflinePendentes = calculaOffline ? save.offlinePendingRewards ?? null : null;
 	progressoBauDourado = save.progressoBauDourado ?? 0;
 	bauDouradoPendente = save.bauDouradoPendente ?? 0;
+	// automação: ausentes em saves antigos nascem ligadas (o desbloqueio é o
+	// próprio maxAndar — salvo quem já passou dos pisos 40/50 ganha na hora)
+	autoColeta = save.autoColeta ?? 1;
+	autoCompra = save.autoCompra ?? 1;
 	ultimaDataSaveOffline = calculaOffline
 		? (save.offlineLastSavedAt ?? Date.now())
 		: Date.now();
@@ -1552,6 +1570,7 @@ function PreCarregamento() {
 	avancoInterval = setInterval(AvancoInimigos, 1000);
 	intervalos.push(setInterval(AutoSaveLocal, 30000));
 	intervalos.push(setInterval(TickBauDourado, 1000));
+	intervalos.push(setInterval(TickAutomacao, 1000));
 
 	intervalos.push(setInterval(DanoCompanheiros, 1000));
 	intervalos.push(setInterval(GoldCompanheiros, 1000));
@@ -1905,7 +1924,9 @@ function CriarObjetoSave() {
 		offlinePendingRewards: recompensasOfflinePendentes,
 		progressoBauDourado,
 		bauDouradoPendente,
-		ultimaAtualizacaoBauDourado
+		ultimaAtualizacaoBauDourado,
+		autoColeta,
+		autoCompra
 	};
 }
 
