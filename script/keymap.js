@@ -198,6 +198,12 @@ function FechaJanelasAbertas() {
         fechou = true;
     }
 
+    // Evento aleatório aberto (comercio, meteoro, névoa): ESC encerra ele
+    if (typeof eventoAtivo !== "undefined" && (eventoAtivo || eventoPendente)) {
+        EncerraEvento();
+        fechou = true;
+    }
+
     if (fechou) UI.syncScreenButtons();
     return fechou;
 }

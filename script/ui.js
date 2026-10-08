@@ -671,7 +671,7 @@ const UI = {
         const intro = document.createElement("p");
         intro.className = "ant-collection-intro";
         intro.textContent = FormigasDesbloqueadas()
-            ? "Desde que você alcançou o andar 20, inimigos podem deixar uma formiga (1% por abate), inclusive após o reset. Cada conjunto completo de 5 ativa e acumula seu bônus."
+            ? `Desde que você alcançou o andar 20, inimigos podem deixar uma formiga (${FormataPct(ChanceDropFormiga(), 1).replace(".0%", "%")} por abate), inclusive após o reset. Cada conjunto completo de 5 ativa e acumula seu bônus.`
             : "As formigas começam a aparecer a partir do andar 20. Sua coleção e os bônus desbloqueados são permanentes, inclusive após o reset.";
 
         const list = document.createElement("div");
@@ -1683,6 +1683,9 @@ function RemoverInimigos() {
 }
 
 function CriarInimigos() {
+    // carimbo de onda: eventos (chuva de meteoros) usam pra detectar que a
+    // tela mudou no meio de um hit e parar de bater os alvos da onda antiga
+    window.ondaAtual = (window.ondaAtual || 0) + 1;
 
     UI.spawnEnemies();
 }

@@ -69,29 +69,25 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		ChamaSom("audio5");
 	}
 
-	// perk do Bônus de Gold nível 1+: quando carregada, ativa sozinha no ataque
-	// do jogador ou do companheiro (o hit da skill Dano automático não conta; e
-	// no desafio "sem habilidades" fica parada pra não falhar o desafio)
-	const goldSkill = habilidadesCombate.find(s => s.id === "gold");
-	const goldCarregada = goldSkill && abatesBonusGoldAtaque >= goldSkill.killsRequired;
-	if (perkGold >= 1 && goldCarregada && ataquesBonusGold === 0
-		&& (ataqueJogador || !validaDano)
-		&& !(missaoAtual === 5 && missaoDesafioSub === 2)) {
-		AtivaHabilidadeCombate("gold");
-	}
+	// perk do Bônus de Gold nível 1+: o companheiro também usa a skill ativa
+	// (gera o bônus de gold e consome os ataques, igual ao clique do jogador;
+	// o hit da skill Dano automático não conta). A ativação é só pelo botão —
+	// no desafio "sem habilidades" só a ativação real falha, como sempre.
+	const usaSkillGold = ataquesBonusGold > 0
+		&& (ataqueJogador || (perkGold >= 1 && !validaDano));
 
 	// perk do Bônus de Gold: o kill feito com o golpe da skill ativa dropa +25% por nível
-	const killComSkillGold = ataqueJogador && ataquesBonusGold > 0 && perkGold > 0;
+	const killComSkillGold = usaSkillGold && perkGold > 0;
 
-	if (ataqueJogador && ataquesBonusGold > 0) {
+	if (usaSkillGold) {
 		const bonusGold = ((andar * mulGold) + 1) * ((35 + NivelDaSkill("gold") * 5) / 100);
 		const goldRecebido = AddGold(bonusGold);
 		AddTotalGold(goldRecebido, false);
 		UI.showCurrencyReward("gold", goldRecebido);
 	}
 
-	if (ataqueCorrenteEletrica || (ataqueJogador && ataquesBonusGold > 0)) {
-		ConsomeAtaqueHabilidades(ataqueCorrenteEletrica, ataqueJogador);
+	if (ataqueCorrenteEletrica || usaSkillGold) {
+		ConsomeAtaqueHabilidades(ataqueCorrenteEletrica, usaSkillGold);
 	}
 
 	ChamaSom(critico ? "audio8" : "audio3");
@@ -136,6 +132,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		inimigosDerrotados += avancoAbates;
 		totalDerrotados += avancoAbates;
 		derrotadosRun += avancoAbates; //base da conversão em Conhecimento Mug no reset
+		EventoAbateCM(avancoAbates); //Névoa do CM: +CM imediato durante o evento
 		numInimigosTela--;
 		qtdCarregaHabilidade++;
 		VerificaHabilidade();
@@ -234,6 +231,8 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 
 			CarregarStatus();
 			CriarInimigos();
+
+			TentaEventoAndar(); //eventos aleatórios rolam só ao subir de andar
 		}
 
 		// O cronometro continua ativo no proximo andar. Cancela-lo aqui fazia

@@ -8,6 +8,8 @@ Registro de propostas e evoluções futuras do TAPeira.
 
 > O bônus por tempo foi implementado com um baú dourado: a barra carrega em 20 minutos com o jogo visível ou 40 minutos fora dele e acumula no máximo um baú. As recompensas são 50% Gold (5x o Gold de um baú comum), 30% formiga aleatória após desbloquear a coleção e 20% para carregar ao máximo todas as habilidades desbloqueadas. Antes do desbloqueio das formigas, a chance de formiga é sorteada novamente entre Gold e habilidades, mantendo a proporção 50:20.
 
+> Os eventos aleatórios do Tier 2 foram implementados com 3 tipos: **Comércio** (2 ofertas por 45s — esmeralda, baú, recarga de habilidades e Conhecimento Mug, preço em gold que escala com o andar), **Chuva de meteoros** (30s: hit grátis do jogador em cada inimigo vivo + fragmentos clicáveis no chão com gold e chance de esmeralda, que somem sozinhos em 5s) e **Névoa do Conhecimento** (45s, andar 20+: cada abate concede na hora o CM que valeria no reset, dobrando o valor dos abates; o item "CM em dobro" vale aqui também). O sorteio rola 12% ao subir de andar com 3 minutos de intervalo mínimo, só no jogo ao vivo (nunca no progresso offline), pausa junto com o jogo e encerra no fim do tempo, no ✕ ou no ESC. O estado é transitório por run: nenhum campo novo no save. Ideias restantes de eventos ficam registradas abaixo da tabela do Tier 2.
+
 > O sistema de experiência e melhorias de habilidades foi implementado: cada inimigo concede 1 XP nos andares 1–10, aumentando em 1 XP a cada dez andares; o próximo nível custa 50 XP e aumenta em 25 XP por nível. Cada nível concede um ponto para melhorar quatro habilidades: dano automático (+5 s, máximo 6 níveis), corrente elétrica (25% de dano encadeado inicial, +5% por nível e +2% sem alvo próximo), Gold (+5% por ataque) e pausa da fuga (+2 s). A corrente elétrica também pode ser acionada por ataques da habilidade de dano automático e do companheiro. As três últimas têm máximo de 5 níveis e desbloqueiam nos andares 15, 25 e 35. XP, nível e melhorias reiniciam junto ao reset e são salvos entre sessões.
 
 > O primeiro pacote de polimento foi implementado: ambiente sonoro sintetizado com controle de volume independente, efeitos curtos de impacto e acerto crítico, e transição visual/sonora ao avançar de andar, com destaque especial a cada dez andares e assinatura sonora grave exclusiva para guardiões.
@@ -43,12 +45,12 @@ Registro de propostas e evoluções futuras do TAPeira.
 | 4 | Status: decomposição do dano (base × formigas × nível × crítico...) | ✅ `22ff474` |
 | 5 | Loja: preview "após upgrade: dano 5 → 6" nos 14 itens de compra | ✅ `22ff474` |
 
-### Tier 2 — Design (esforço médio) — 🟡 em andamento (3/5 ✅)
+### Tier 2 — Design (esforço médio) — 🟡 em andamento (4/5 ✅)
 
 | # | Ideia | Princípios |
 |---|---|---|
 | 1 ✅ | Marcos/breakpoints por andar: recompensa a cada 10 andares (ex: +25% gold no andar 20/30...) | 13/14 |
-| 2 | Eventos aleatórios (comércio, meteoro) — bônus por presença | 33/34 |
+| 2 ✅ | Eventos aleatórios (comércio, meteoro) — bônus por presença | 33/34 |
 | 3 ✅ | Novos desbloqueios pós-35: hoje o conteúdo acaba após a skill do andar 35 (novo item de loja, nova skill, novo tema...) | — |
 | 4 ✅ | Missões com desafio (não só estatística) / conquistas comportamentais | 43 |
 | 5 | Bônus de retorno ao voltar (recompensar quem volta ao jogo) | 35 |
@@ -58,3 +60,12 @@ Registro de propostas e evoluções futuras do TAPeira.
 **#4 (feito):** missão tipo 5 no sorteio (~20%) com restrição — "sem gold" (qualquer compra com gold falha), "sem habilidades" (só ativação real falha) e "contra o tempo" (60s por inimigo exigido). Falha = troca de missão sem recompensa; sucesso ≈ 5 baús (`BonusGoldAvanco ×5`) e o alvo dobra. Conquistas comportamentais ficaram de fora (passo seguinte).
 
 **#3 (feito):** sistema de reset pós-35 — os portões 15/25/35 continuam de 10 em 10; a partir do 35 sobem **+5** (40, 45, 50...). Cada portão ≥ 35 carrega **+5% de dano permanente pago UMA única vez** (`gateDanoPago`/`danoResetQtd` no save; portões pagos nunca pagam de novo). Portões terminados em 5 (45, 55...) mantêm as esmeraldas de sempre; os intermediários (40, 50...) dão só dano. Reset num portão maior paga o acumulado do que faltou (pular o 40 e resetar no 45 = +10%). Modal, aviso, celebração e Decomposição do dano mostram o bônus; `ValidarSave` rejeita save com portão incoerente (anti-trapaça). 4ª skill ficou pra depois.
+
+**#2 (feito):** 3 primeiros eventos em `script/eventos.js` — **Comércio** (45s, 2 ofertas sorteadas de um pool de 4: esmeralda, baú, recarga de habilidades e +15 CM; preço em gold = k × gold do andar, não rola no desafio "sem gold"), **Chuva de meteoros** (30s: hit do jogador em cada inimigo vivo a cada 5s + fragmentos clicáveis por 5s com gold e 25% de chance de esmeralda) e **Névoa do Conhecimento** (45s no andar ≥ 20: +1 CM por abate na hora — o abate continua contando em `derrotadosRun`, então vale o dobro no total; o item "CM em dobro" também vale). Sorteio de 12% ao subir de andar, cooldown de 3 min, início adiado 1,6s pra depois da transição, contador pausa com o jogo, encerra sozinho no fim/✕/ESC e não sobrevive a reset ou load. Estado transitório: nenhum campo novo no save.
+
+**Ideias de eventos que ficaram de fora (extensões futuras do #2):**
+
+- **Veia de esmeralda** — ~60s com chance extra de esmeralda por abate (andar 20+).
+- **Fissura temporal** — congela o cronômetro de fuga por 30s (recompensa quem acompanha o combate).
+- **Inseto fugaz** — criatura cruza a tela e some em ~4s; clicar dá um prêmio pequeno garantido (puro presença, custo quase zero).
+- **Emboscada** — onda extra e mais dura aparece; vencer dá ouro em dobro + chance de baú, fugir = nada (risk/reward). Toca no timer de fuga e na onda, os lados mais sensíveis do balance — fazer por último.

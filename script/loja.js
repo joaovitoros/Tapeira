@@ -200,9 +200,9 @@ function CompraCM(tipo) {
 	const nivel = niveis[tipo];
 	if (nivel === undefined) return;
 
-	// tetos: formiga 50 níveis, duas formigas 100 níveis.
+	// tetos: formiga 48 níveis (chance de drop máx 25%), duas formigas 100 níveis.
 	// crítico não trava mais no teto ×4: cada nível dele também dá +0,1 no teto
-	if (tipo === "formiga" && nivel >= 50) {
+	if (tipo === "formiga" && nivel >= 48) {
 		MostraInfo("Item no nível máximo!");
 		return;
 	}
@@ -477,7 +477,9 @@ function CompraCCrit(){
 
 			PagaLoja(precoCCrit);
 
-			chanceCrit = N(chanceCrit) + N(sobeCCrit);
+			// a partir de 30% cada compra vale metade do passo (o teto segue 70%)
+			const passo = N(sobeCCrit) * (N(chanceCrit) >= 0.3 ? 0.5 : 1);
+			chanceCrit = N(chanceCrit) + passo;
 			precoCCrit = N(precoCCrit) * 1.5;
 			sobeCCrit = N(sobeCCrit) * 1.1;
 			lvlCCrit++;
@@ -769,8 +771,11 @@ const PREVIEWS_LOJA = {
 	},
 	CompraCCrit() {
 		if (N(chanceCrit) >= 0.7) return "Chance crítica: no máximo (70%)";
-		const prox = Math.min(0.7, N(chanceCrit) + N(sobeCCrit));
-		return "Chance crítica: " + FormataPct(chanceCrit) + " → " + FormataPct(prox) + " (máx 70%)";
+		const meio = N(chanceCrit) >= 0.3;
+		const passo = N(sobeCCrit) * (meio ? 0.5 : 1);
+		const prox = Math.min(0.7, N(chanceCrit) + passo);
+		return "Chance crítica: " + FormataPct(chanceCrit) + " → " + FormataPct(prox)
+			+ " (máx 70%" + (meio ? " · ganho pela metade" : " · a partir de 30% cai pela metade") + ")";
 	},
 	CompraQTDAvanco() {
 		if (N(lvlQTDAvanco) > 20) return "Quantidade de avanço: no nível máximo";

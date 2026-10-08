@@ -21,6 +21,17 @@
             <input type="checkbox" data-repeat>
             Repetir a animação selecionada
         </label>
+        <div class="game-dev-tools__section">Eventos especiais</div>
+        <div class="game-dev-tools__actions">
+            <button type="button" data-forca-evento="comercio">Forçar Comércio</button>
+            <button type="button" data-forca-evento="meteoro">Forçar Meteoro</button>
+            <button type="button" data-forca-evento="nevoa">Forçar Névoa do CM</button>
+            <button type="button" data-encerra-evento>Encerrar evento</button>
+            <button type="button" data-limpa-cooldown-evento>Limpar cooldown</button>
+        </div>
+        <div class="game-dev-tools__readout" aria-live="polite">
+            <span data-evento-status>Evento: -</span>
+        </div>
         <div class="game-dev-tools__section">Estado de teste</div>
         <div class="game-dev-tools__setting">
             <label for="dev-gold">Gold atual</label>
@@ -37,11 +48,23 @@
             </div>
         </div>
         <div class="game-dev-tools__setting">
+            <label for="dev-cm">Conhecimento Mug</label>
+            <div class="game-dev-tools__input-row">
+                <input id="dev-cm" type="number" min="0" max="9007199254740991" step="1" inputmode="numeric">
+                <button type="button" data-set-currency="cm">Definir</button>
+            </div>
+        </div>
+        <div class="game-dev-tools__setting">
             <label for="dev-floor">Andar</label>
             <div class="game-dev-tools__input-row">
                 <input id="dev-floor" type="number" min="1" max="1000000" step="1" inputmode="numeric">
                 <button type="button" data-set-floor>Ir</button>
             </div>
+        </div>
+        <div class="game-dev-tools__section">Progresso</div>
+        <div class="game-dev-tools__actions">
+            <button type="button" data-recarrega-habilidades>Recarregar habilidades</button>
+            <button type="button" data-bau-dourado>Liberar baú dourado</button>
         </div>
         <div class="game-dev-tools__readout" aria-live="polite">
             <span data-playback>Status: pronto</span>
@@ -64,6 +87,8 @@
     const goldInput = panel.querySelector("#dev-gold");
     const emeraldsInput = panel.querySelector("#dev-emeralds");
     const floorInput = panel.querySelector("#dev-floor");
+    const cmInput = panel.querySelector("#dev-cm");
+    const eventoStatusReadout = panel.querySelector("[data-evento-status]");
     const gameStateReadout = panel.querySelector("[data-game-state]");
     let playing = false;
 
@@ -78,6 +103,7 @@
             ? String(goldValue)
             : "";
         emeraldsInput.value = String(esmeraldas);
+        cmInput.value = String(conhecimentoMug);
         floorInput.value = String(andar);
     }
 
@@ -99,21 +125,26 @@
             input.focus();
             return;
         }
-        if (currency === "emeralds" && !Number.isSafeInteger(value)) {
-            reportGameState("Erro: esmeraldas devem ser um número inteiro.", true);
+        if ((currency === "emeralds" || currency === "cm") && !Number.isSafeInteger(value)) {
+            reportGameState("Erro: esmeraldas e Conhecimento Mug devem ser números inteiros.", true);
             input.focus();
             return;
         }
 
         if (currency === "gold") {
             gold = new GoldNumber(value);
+        } else if (currency === "cm") {
+            conhecimentoMug = value;
+            if (typeof AtualizaLojaCM === "function") AtualizaLojaCM();
         } else {
             esmeraldas = value;
         }
         UI.updateResources();
         UI.showStatus();
         updateStateInputs();
-        reportGameState(`${currency === "gold" ? "Gold" : "Esmeraldas"} atualizado.`);
+        const nomeMoeda = currency === "gold" ? "Gold"
+            : currency === "cm" ? "Conhecimento Mug" : "Esmeraldas";
+        reportGameState(`${nomeMoeda} atualizado.`);
     }
 
     function setFloor() {
@@ -148,6 +179,69 @@
         CriarInimigos();
         updateStateInputs();
         reportGameState(`Alterado para o andar ${andar}.`);
+    }
+
+    function updateEventoStatus() {
+        if (!eventoStatusReadout || typeof eventoAtivo === "undefined") return;
+        let texto;
+        if (eventoAtivo) {
+            const info = typeof EVENTO_INFO !== "undefined" ? EVENTO_INFO[eventoAtivo] : null;
+            const restante = Math.max(0, Math.ceil((eventoFimMs - Date.now()) / 1000));
+            texto = `Evento: ${info ? info.titulo : eventoAtivo} · restam ${restante}s`;
+        } else if (eventoPendente) {
+            texto = "Evento: agendado (iniciando...)";
+        } else if (typeof EVENTO_COOLDOWN_MS !== "undefined") {
+            const cooldown = Math.max(0, EVENTO_COOLDOWN_MS - (Date.now() - eventoUltimoMs));
+            texto = cooldown > 0
+                ? `Evento: nenhum · cooldown ${Math.ceil(cooldown / 1000)}s`
+                : "Evento: nenhum · pronto pro sorteio";
+        } else {
+            texto = "Evento: -";
+        }
+        if (eventoStatusReadout.textContent !== texto) eventoStatusReadout.textContent = texto;
+    }
+
+    function forcaEvento(nome) {
+        if (typeof IniciaEvento !== "function" || typeof ElegivelEvento !== "function") {
+            reportGameState("Erro: sistema de eventos não encontrado.", true);
+            return;
+        }
+        if (jogoPausado) {
+            reportGameState("Erro: despause o jogo para forçar um evento.", true);
+            return;
+        }
+        // troca o evento atual (ou limpa o pendente) antes de iniciar outro
+        if (eventoAtivo || eventoPendente) EncerraEvento(true);
+        // força ignora a elegibilidade (andar mínimo, missão...) — é dev tool
+        const elegibilidadeOriginal = ElegivelEvento;
+        ElegivelEvento = () => true;
+        try {
+            IniciaEvento(nome);
+        } finally {
+            ElegivelEvento = elegibilidadeOriginal;
+        }
+        updateEventoStatus();
+        if (eventoAtivo === nome) {
+            const info = typeof EVENTO_INFO !== "undefined" ? EVENTO_INFO[nome] : null;
+            reportGameState(`Evento "${info ? info.titulo : nome}" forçado.`);
+        } else {
+            reportGameState("Erro: o evento não pôde iniciar.", true);
+        }
+    }
+
+    function encerraEventoAtual() {
+        if (typeof EncerraEvento !== "function") {
+            reportGameState("Erro: sistema de eventos não encontrado.", true);
+            return;
+        }
+        if (!eventoAtivo && !eventoPendente) {
+            reportGameState("Nenhum evento ativo ou pendente.");
+            updateEventoStatus();
+            return;
+        }
+        EncerraEvento(true);
+        updateEventoStatus();
+        reportGameState("Evento encerrado.");
     }
 
     function updateGeometry() {
@@ -241,12 +335,42 @@
         updatePauseButton();
     });
 
+    const inputsMoeda = { gold: goldInput, emeralds: emeraldsInput, cm: cmInput };
     panel.querySelectorAll("[data-set-currency]").forEach(button => {
         button.addEventListener("click", () => {
-            setCurrency(button.dataset.setCurrency === "gold" ? goldInput : emeraldsInput, button.dataset.setCurrency);
+            const currency = button.dataset.setCurrency;
+            setCurrency(inputsMoeda[currency], currency);
         });
     });
     panel.querySelector("[data-set-floor]").addEventListener("click", setFloor);
+
+    panel.querySelectorAll("[data-forca-evento]").forEach(button => {
+        button.addEventListener("click", () => forcaEvento(button.dataset.forcaEvento));
+    });
+    panel.querySelector("[data-encerra-evento]").addEventListener("click", encerraEventoAtual);
+    panel.querySelector("[data-limpa-cooldown-evento]").addEventListener("click", () => {
+        eventoUltimoMs = 0;
+        updateEventoStatus();
+        reportGameState("Cooldown de eventos limpo.");
+    });
+    panel.querySelector("[data-recarrega-habilidades]").addEventListener("click", () => {
+        if (typeof CarregaHabilidadesDesbloqueadas !== "function") {
+            reportGameState("Erro: função de recarga não encontrada.", true);
+            return;
+        }
+        CarregaHabilidadesDesbloqueadas(false);
+        reportGameState("Habilidades desbloqueadas recarregadas.");
+    });
+    panel.querySelector("[data-bau-dourado]").addEventListener("click", () => {
+        if (typeof UI === "undefined" || typeof UI.updateGoldenChestProgress !== "function") {
+            reportGameState("Erro: UI do baú não encontrada.", true);
+            return;
+        }
+        bauDouradoPendente = 1;
+        progressoBauDourado = TEMPO_BAU_DOURADO_JOGO;
+        UI.updateGoldenChestProgress();
+        reportGameState("Baú dourado liberado para coleta.");
+    });
 
     closeButton.addEventListener("click", () => {
         panel.hidden = !panel.hidden;
@@ -271,7 +395,9 @@
         updateFrame();
         updatePauseButton();
     }, 50);
+    window.setInterval(updateEventoStatus, 500);
     updateGeometry();
     updatePauseButton();
     updateStateInputs();
+    updateEventoStatus();
 })();

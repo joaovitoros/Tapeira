@@ -25,7 +25,7 @@ var cmNivelGold = 0; //níveis da Loja do Conhecimento: +1% de gold cada
 var cmNivelXp = 0; //níveis da Loja do Conhecimento: +1% de XP cada
 var cmNivelFuga = 0; //níveis da Loja do Conhecimento: +1 no tempo máximo de fuga cada
 var cmNivelCrit = 0; //níveis da Loja do Conhecimento: +1% de dano crítico cada
-var cmNivelFormiga = 0; //níveis da Loja do Conhecimento: +1% na chance de drop de formiga por abate (máx 50)
+var cmNivelFormiga = 0; //níveis da Loja do Conhecimento: +0,5% na chance de drop de formiga por abate (48 níveis = chance máx 25%)
 var cmNivelDuasFormigas = 0; //níveis da Loja do Conhecimento: +1% de o drop de formiga sair com 2 (máx 100)
 var cmNivelComp = 0; //níveis da Loja do Conhecimento: +1% de dano de companheiro cada (baked em danoComp1)
 var cmNivelGoldComp2 = 0; //níveis da Loja do Conhecimento: +1% de gold do companheiro 2 cada
@@ -98,7 +98,7 @@ const SKILLS_UPGRADE = [
 const PERKS = [
 	{ skillId: "damage", varName: "perkDano", nome: "Dano automático", efeito: "+25% de dano por nível; no nível máximo a skill ativa sozinha quando carregada", maximo: 4 },
 	{ skillId: "electric", varName: "perkEletrica", nome: "Corrente elétrica", efeito: "+1 inimigo atingido por nível", maximo: 3 },
-	{ skillId: "gold", varName: "perkGold", nome: "Bônus de Gold", efeito: "+25% no drop do kill feito com a skill ativa por nível; do nível 1 em diante a skill ativa sozinha quando carregada", maximo: 4 },
+	{ skillId: "gold", varName: "perkGold", nome: "Bônus de Gold", efeito: "+25% no drop do kill feito com a skill ativa por nível; do nível 1 em diante o companheiro também usa a skill ativa", maximo: 4 },
 	{ skillId: "escape", varName: "perkFuga", nome: "Pausa da fuga", efeito: "10% de restaurar o tempo de fuga por nível (máx 50%)", maximo: 5 }
 ];
 var fugaEmAndamento = false;
@@ -192,9 +192,10 @@ function TempoFugaMax() {
 	return 120 + cmNivelFuga;
 }
 
-// Chance de drop de formiga aleatória por abate: 1% base + 1% por nível (máx 51%)
+// Chance de drop de formiga aleatória por abate: 1% base + 0,5% por nível da
+// loja do Conhecimento (chance máxima 25%, batida no nível 48)
 function ChanceDropFormiga() {
-	return 0.01 + Math.min(cmNivelFormiga, 50) * 0.01;
+	return Math.min(0.25, 0.01 + Math.min(cmNivelFormiga, 48) * 0.005);
 }
 
 // +1% de gold do companheiro 2 por nível — aplicado em todo recálculo de goldCompanheiro
@@ -276,7 +277,7 @@ var sobeDCrit = 0.1;
 var lvlDCrit = 1;
 
 var precoCCrit = 250;
-var sobeCCrit = 0.02;
+var sobeCCrit = 0.02; //passo da chance crítica (cresce ×1,1 por compra; de 30% em diante só metade é aplicada)
 var lvlCCrit = 1;
 
 var precoQTDAvanco = 200;
@@ -471,7 +472,8 @@ function ConcedeFormigaColecao(formiga) {
 	if (document.getElementById("antCollectionModal")) UI.showAntCollection();
 }
 
-function CarregaHabilidadesDesbloqueadas() {
+// notificar=false pula os avisos (usado pelo comerciante dos eventos aleatórios)
+function CarregaHabilidadesDesbloqueadas(notificar = true) {
 	qtdCarregaHabilidade = abateshabilidadeDano;
 	VerificaHabilidade();
 
@@ -482,6 +484,7 @@ function CarregaHabilidadesDesbloqueadas() {
 		if (skill.id === "escape") abatesPausaFuga = skill.killsRequired;
 	});
 	AtualizaHabilidadesCombate();
+	if (!notificar) return;
 	UI.showInfo("Todas as habilidades desbloqueadas estão carregadas!");
 	UI.showMilestone("Baú dourado", "Todas as habilidades desbloqueadas foram carregadas");
 }
@@ -758,6 +761,10 @@ function AtualizaHabilidadesCombate() {
 		meterTrack.setAttribute("aria-valuetext", active > 0
 			? skill.id === "escape" ? `Ativa por ${active} segundos` : `Ativa por ${active} ataques`
 			: `${kills} de ${skill.killsRequired} abates`);
+
+		// ícone só aparece quando a skill está carregada (pronta ou ativa);
+		// enquanto carrega, o botão mostra apenas a barra de progresso
+		button.classList.toggle("is-charging", active === 0 && kills < skill.killsRequired);
 
 		if (active > 0) {
 			progress.textContent = skill.id === "escape"

@@ -754,6 +754,7 @@ function Carregar(saveData, calculaOffline = false) {
 
 	var save = JSON.parse(saveData);
 	ValidarSave(save);
+	EncerraEvento(true); //estado transitório de evento não atravessa o load
 	const vidasSalvas = [save.vidaInimigo1, save.vidaInimigo2, save.vidaInimigo3, save.vidaInimigo4];
 
 	function safeNumber(v) {
@@ -1512,6 +1513,7 @@ function PreCarregamento() {
 
 //// Resetar
 function Resetar() {
+	EncerraEvento(true); //evento aleatório não sobrevive ao reset
 	recompensasOfflinePendentes = null;
 	ultimaDataSaveOffline = Date.now();
 	numInimigosTela = 1; //usada para validar quantos inimigos e
