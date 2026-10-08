@@ -1,33 +1,46 @@
 // ============================================================
 // Eventos aleatórios (Tier 2 #2 — "bônus por presença", princípios 33/34)
 //
-// Três eventos: Comércio, Chuva de meteoros e Névoa do Conhecimento.
+// Sete eventos: Comércio, Chuva de meteoros, Névoa do Conhecimento,
+// Veia de esmeralda, Inseto fugaz, Fissura temporal e Emboscada.
 // Regras transversais:
 //  - gatilho só rola ao subir de andar no jogo ao vivo (nunca no offline);
-//  - raro (12% por subida) com cooldown de 3 min — presença, não farm;
+//  - raro (15% por subida) com cooldown de 3 min — presença, não farm;
 //  - estado 100% transitório por run: NENHUM campo novo no save/ValidarSave;
 //  - o contador pausa junto com o jogo e o ESC (FechaJanelasAbertas) encerra;
 //  - duração limitada: o evento some sozinho no fim do tempo.
 // ============================================================
 
-var eventoAtivo = null; // null | "comercio" | "meteoro" | "nevoa"
+var eventoAtivo = null; // null | "comercio" | "meteoro" | "nevoa" | "veia" | "inseto" | "fissura" | "emboscada"
 var eventoFimMs = 0; // timestamp de término do evento ativo
 var eventoUltimoMs = 0; // timestamp do último evento (cooldown)
 var eventoProximoMeteoroMs = 0; // próxima queda durante a chuva
 var eventoCM = 0; // CM ganho na Névoa (contador exibido no painel)
+var eventoVeiaQtd = 0; // esmeraldas soltas na Veia (contador do painel)
+var eventoEmboscadaAlvos = []; // ids da onda que precisam morrer pra vencer
+var eventoEmboscadaQtd = 0; // tamanho inicial da onda (progresso do painel)
+var eventoEmboscadaGold = 0; // gold ganho na emboscada (bônus = "em dobro")
+var eventoEmboscadaVidas = {}; // vida original de cada alvo (desfaz o +50%)
+var eventoEmboscadaOnda = 0; // carimbo da onda no início (mesma onda = desfaz)
+var eventoAndarBase = 0; // andar quando a emboscada começou (trocar = perdeu)
 var eventoOfertas = []; // ofertas sorteadas no Comércio
 var eventoTick = null; // loop de 250ms enquanto há evento
 var eventoPendente = null; // início adiado (espera a transição de andar)
 var eventoPausaDesde = 0; // início da pausa atual (congela a contagem do evento)
 
 var EVENTO_COOLDOWN_MS = 3 * 60 * 1000;
-var EVENTO_CHANCE = 0.12; // por subida de andar
+var EVENTO_CHANCE = 0.15; // por subida de andar
 var EVENTO_ATRASO_MS = 1600; // transição de andar dura 1450ms
-var EVENTO_DURACAO_MS = { comercio: 45000, meteoro: 30000, nevoa: 45000 };
+var EVENTO_VEIA_CHANCE = 0.1; // chance de esmeralda por abate na Veia
+var EVENTO_DURACAO_MS = { comercio: 45000, meteoro: 30000, nevoa: 45000, veia: 60000, inseto: 5500, fissura: 30000, emboscada: 45000 };
 var EVENTO_INFO = {
 	comercio: { icone: "🪙", titulo: "Comerciante itinerante", dica: "Ofertas especiais enquanto durar o evento!" },
 	meteoro: { icone: "☄️", titulo: "Chuva de meteoros", dica: "Fragmentos caem no chão — clique pra coletar!" },
-	nevoa: { icone: "🌫️", titulo: "Névoa do Conhecimento", dica: "Abates valem CM em dobro até o fim do evento!" }
+	nevoa: { icone: "🌫️", titulo: "Névoa do Conhecimento", dica: "Abates valem CM em dobro até o fim do evento!" },
+	veia: { icone: "💎", titulo: "Veia de esmeralda", dica: "Abates podem soltar esmeraldas até o fim do evento!" },
+	inseto: { icone: "🪲", titulo: "Inseto fugaz", dica: "Um inseto cruza a tela — clique nele antes que escape!" },
+	fissura: { icone: "⏳", titulo: "Fissura temporal", dica: "O cronômetro de fuga ficou congelado até o fim do evento!" },
+	emboscada: { icone: "⚠️", titulo: "Emboscada", dica: "Onda mais dura! Vencer dá ouro em dobro e chance de baú — fugir, nada." }
 };
 
 // Ofertas do comerciante: preço = k × gold do andar atual (escala sozinho).
@@ -69,6 +82,8 @@ var EVENTO_OFERTAS_POOL = [
 function ElegivelEvento(nome) {
 	// Névoa é conteúdo do Conhecimento Mug: só a partir do andar 20
 	if (nome === "nevoa" && andar < 20) return false;
+	// Veia de esmeralda é conteúdo de mid/late game: também andar 20
+	if (nome === "veia" && andar < 20) return false;
 	// No desafio "sem gold" comprar falharia o desafio — não oferece
 	if (nome === "comercio" && missaoAtual === 5 && missaoDesafioSub === 1) return false;
 	return true;
@@ -81,7 +96,7 @@ function TentaEventoAndar() {
 	if (Date.now() - eventoUltimoMs < EVENTO_COOLDOWN_MS) return;
 	if (Math.random() >= EVENTO_CHANCE) return;
 
-	const elegiveis = ["comercio", "meteoro", "nevoa"].filter(ElegivelEvento);
+	const elegiveis = ["comercio", "meteoro", "nevoa", "veia", "inseto", "fissura", "emboscada"].filter(ElegivelEvento);
 	if (elegiveis.length === 0) return;
 	const nome = elegiveis[Math.floor(Math.random() * elegiveis.length)];
 
@@ -99,10 +114,24 @@ function IniciaEvento(nome) {
 	eventoUltimoMs = Date.now();
 	eventoFimMs = Date.now() + EVENTO_DURACAO_MS[nome];
 	eventoCM = 0;
+	eventoVeiaQtd = 0;
+	eventoEmboscadaAlvos = [];
+	eventoEmboscadaQtd = 0;
+	eventoEmboscadaGold = 0;
+	eventoEmboscadaVidas = {};
+	eventoEmboscadaOnda = 0;
+	eventoAndarBase = 0;
 	eventoOfertas = [];
 
 	if (nome === "comercio") SorteiaOfertasComercio();
 	if (nome === "meteoro") eventoProximoMeteoroMs = Date.now() + 1500;
+	if (nome === "inseto") CriaInseto();
+	if (nome === "emboscada" && !PreparaEmboscada()) {
+		// sem onda viva na tela não há o que defender — aborta sem anunciar
+		// (o cooldown já rola desde o sorteio)
+		EncerraEvento();
+		return;
+	}
 
 	const info = EVENTO_INFO[nome];
 	UI.showMilestone(info.titulo, info.dica);
@@ -118,9 +147,25 @@ function EncerraEvento(resetarCooldown) {
 		clearTimeout(eventoPendente);
 		eventoPendente = null;
 	}
+	// Emboscada: desfaz o +50% de vida se ainda for a mesma onda do snapshot
+	// (em fuga/avanço a onda já mudou e os inimigos nem existem mais). Nunca
+	// cura além do original: Math.min preserva o dano que o jogador deu.
+	if (eventoEmboscadaOnda > 0 && window.ondaAtual === eventoEmboscadaOnda) {
+		for (const id in eventoEmboscadaVidas) {
+			const atual = N(window["vidaInimigo" + id]);
+			if (atual > 0) window["vidaInimigo" + id] = Math.min(N(eventoEmboscadaVidas[id]), atual);
+		}
+	}
+	eventoEmboscadaVidas = {};
+	eventoEmboscadaOnda = 0;
 	eventoAtivo = null;
 	eventoOfertas = [];
 	eventoCM = 0;
+	eventoVeiaQtd = 0;
+	eventoEmboscadaAlvos = [];
+	eventoEmboscadaQtd = 0;
+	eventoEmboscadaGold = 0;
+	eventoAndarBase = 0;
 	eventoPausaDesde = 0;
 	if (eventoTick) {
 		clearInterval(eventoTick);
@@ -146,6 +191,7 @@ function EventoTick() {
 	// contagem congela (senão voltar de uma pausa longa mataria o evento)
 	if (jogoPausado) {
 		if (!eventoPausaDesde) eventoPausaDesde = agora;
+		PausaInseto(true);
 		return;
 	}
 	if (eventoPausaDesde) {
@@ -153,13 +199,22 @@ function EventoTick() {
 		eventoFimMs += pausaMs;
 		eventoProximoMeteoroMs += pausaMs;
 		eventoPausaDesde = 0;
+		PausaInseto(false);
 	}
 
 	if (eventoAtivo === "meteoro" && agora >= eventoProximoMeteoroMs) {
 		eventoProximoMeteoroMs = agora + 5000;
 		Meteora();
 	}
+	// Emboscada: mudou de andar (fuga ou quota) sem limpar a onda = perdeu
+	if (eventoAtivo === "emboscada" && andar !== eventoAndarBase) {
+		EncerraEvento();
+		return;
+	}
 	if (agora >= eventoFimMs) {
+		// o bônus some com o tempo: avisa que era pra estar correndo
+		if (eventoAtivo === "inseto") UI.showInfo("O inseto escapou sem prêmio.");
+		if (eventoAtivo === "emboscada") UI.showInfo("A emboscada dissipou sem recompensa.");
 		EncerraEvento();
 		return;
 	}
@@ -197,11 +252,18 @@ function MontaPainelEvento() {
 					</button>
 				</div>
 			</div>`).join("");
-	} else if (eventoAtivo === "meteoro") {
-		corpo = `<div class="evento-dica">${info.dica}</div>`;
-	} else {
+	} else if (eventoAtivo === "nevoa") {
 		corpo = `<div class="evento-dica">${info.dica}</div>
 			<div class="evento-nevoa-contador">Ganho nesta névoa: <b id="eventoCMContador">+${eventoCM} CM</b></div>`;
+	} else if (eventoAtivo === "veia") {
+		corpo = `<div class="evento-dica">${info.dica}</div>
+			<div class="evento-nevoa-contador">Esmeraldas nesta veia: <b id="eventoVeiaContador">+${eventoVeiaQtd}</b></div>`;
+	} else if (eventoAtivo === "emboscada") {
+		corpo = `<div class="evento-dica">${info.dica}</div>
+			<div class="evento-nevoa-contador">Onda: <b id="eventoEmboscadaContador">${eventoEmboscadaQtd - eventoEmboscadaAlvos.length}/${eventoEmboscadaQtd}</b> de alvos abatida</div>`;
+	} else {
+		// meteoro, inseto e fissura: só a dica
+		corpo = `<div class="evento-dica">${info.dica}</div>`;
 	}
 
 	painel.innerHTML = `
@@ -228,6 +290,14 @@ function AtualizaPainelEvento() {
 	if (eventoAtivo === "nevoa") {
 		const contador = document.getElementById("eventoCMContador");
 		if (contador) contador.textContent = "+" + eventoCM + " CM";
+	}
+	if (eventoAtivo === "veia") {
+		const contador = document.getElementById("eventoVeiaContador");
+		if (contador) contador.textContent = "+" + eventoVeiaQtd;
+	}
+	if (eventoAtivo === "emboscada") {
+		const contador = document.getElementById("eventoEmboscadaContador");
+		if (contador) contador.textContent = (eventoEmboscadaQtd - eventoEmboscadaAlvos.length) + "/" + eventoEmboscadaQtd;
 	}
 }
 
@@ -397,6 +467,56 @@ function GaranteContainerFragmentos() {
 }
 
 // ---------------------------------------------------------
+// Inseto fugaz
+// ---------------------------------------------------------
+
+// Um bicho cruza a tela (animação CSS, ~4s); clicar nele — ou Enter/Espaço —
+// garante o prêmio e encerra o evento. Sem clique até o fim, some junto com
+// o evento. Com movimento reduzido ele aparece parado em vez de cruzar.
+function CriaInseto() {
+	const cont = GaranteContainerFragmentos();
+	const el = document.createElement("img");
+	el.className = "evento-inseto";
+	el.id = "eventoInseto";
+	el.src = "imagens/inimigo.png";
+	el.alt = "";
+	el.setAttribute("role", "button");
+	el.setAttribute("tabindex", "0");
+	el.setAttribute("aria-label", "Inseto fugaz — clique pra coletar o prêmio");
+	el.addEventListener("click", () => PremioInseto(el));
+	el.addEventListener("keydown", (evt) => {
+		if (evt.key === "Enter" || evt.key === " ") {
+			evt.preventDefault();
+			PremioInseto(el);
+		}
+	});
+	cont.appendChild(el);
+}
+
+function PremioInseto(el) {
+	if (eventoAtivo !== "inseto" || !el || !el.parentNode) return;
+	el.remove();
+	ChamaSom("audio4");
+
+	// prêmio pequeno e garantido: mesmo valor de um fragmento de gold
+	const bonus = N(andar) * N(mulGold) * 10 + 5;
+	const recebido = AddGold(bonus);
+	AddTotalGold(recebido, false);
+	document.getElementById("contGold").innerHTML = FormatGold(gold);
+	UI.showCurrencyReward("gold", recebido);
+	UI.showMilestone("Pegou o inseto!", "+" + FormatGold(recebido) + " Gold");
+	EncerraEvento(); //acabou cedo: o cooldown já rola desde o início
+	AutoSaveLocal();
+}
+
+// A travessia é animação CSS: durante a pausa do jogo ela congela junto
+// com o tempo do evento (que já congela no EventoTick).
+function PausaInseto(paused) {
+	const el = document.getElementById("eventoInseto");
+	if (el) el.style.animationPlayState = paused ? "paused" : "running";
+}
+
+// ---------------------------------------------------------
 // Névoa do Conhecimento
 // ---------------------------------------------------------
 
@@ -414,6 +534,27 @@ function EventoAbateCM(avancoAbates) {
 	FloatCM(ganho);
 }
 
+// ---------------------------------------------------------
+// Veia de esmeralda
+// ---------------------------------------------------------
+
+// Chamado no loop de kills (batalha.js): cada abate tem chance de soltar
+// esmeralda na hora enquanto o evento durar. Esmeralda é moeda permanente
+// (mesma regra das ofertas do Comércio) — nenhum campo novo no save.
+function EventoAbateVeia(avancoAbates) {
+	if (eventoAtivo !== "veia") return;
+	let qtd = 0;
+	for (let i = 0; i < avancoAbates; i++) {
+		if (Math.random() < EVENTO_VEIA_CHANCE) qtd++;
+	}
+	if (!qtd) return;
+
+	esmeraldas += qtd;
+	eventoVeiaQtd += qtd;
+	document.getElementById("contEmeraldas").innerHTML = esmeraldas;
+	UI.showCurrencyReward("emerald", qtd);
+}
+
 // Float "+N CM" no mesmo padrão dos floats de gold/XP (ui.js)
 function FloatCM(quantidade) {
 	const alvo = document.querySelector(".player");
@@ -429,4 +570,92 @@ function FloatCM(quantidade) {
 	marker.style.top = `${rect.top + rect.height * 0.2 - stack * 24}px`;
 	document.body.appendChild(marker);
 	setTimeout(() => marker.remove(), 1100);
+}
+
+// ---------------------------------------------------------
+// Emboscada (risk/reward — feita por último: toca nos lados sensíveis)
+// ---------------------------------------------------------
+
+// Snapshot da onda atual: os alvos que precisam morrer pra "vencer". A onda
+// fica com +50% de vida (mais dura) e o bônus só sai se ela for limpa SEM
+// mudar de andar. O timer de fuga e a cota do andar NÃO são alterados: o
+// risco é o próprio cronômetro correndo enquanto você bate numa onda reforçada.
+function PreparaEmboscada() {
+	eventoAndarBase = andar;
+	eventoEmboscadaOnda = window.ondaAtual || 0;
+
+	let alvos = ContaInimigosVivos();
+	if (alvos.length === 0) {
+		// janela entre ondas: puxa a próxima pra não sortear emboscada vazia
+		CriarInimigos();
+		alvos = ContaInimigosVivos();
+	}
+	if (alvos.length === 0) return false;
+
+	eventoEmboscadaAlvos = alvos;
+	eventoEmboscadaQtd = alvos.length;
+	for (const id of alvos) {
+		// guarda o original: se a emboscada terminar sem vitória, o +50% é
+		// desfeito no EncerraEvento (sem curar o dano já causado)
+		eventoEmboscadaVidas[id] = N(window["vidaInimigo" + id]);
+		window["vidaInimigo" + id] = eventoEmboscadaVidas[id] * 1.5;
+	}
+	return true;
+}
+
+function ContaInimigosVivos() {
+	const vivos = [];
+	for (let id = 1; id <= 4; id++) {
+		const el = document.getElementById("inimigo" + id);
+		// conta por vida, não por visibility: os inimigos nascem com
+		// visibility hidden e só ficam visíveis 600ms depois (spawnEnemies)
+		if (!el) continue;
+		if (N(window["vidaInimigo" + id]) <= 0) continue;
+		vivos.push(id);
+	}
+	return vivos;
+}
+
+// Chamado no loop de kills (batalha.js) com o gold já creditado: acumula o
+// ouro da onda (o bônus dobra exatamente isso) e marca o alvo morto. Vencer
+// = limpar TODOS os alvos do snapshot antes do fim do evento.
+function EventoAbateEmboscada(inimigoDerrotado, goldRecebido) {
+	if (eventoAtivo !== "emboscada") return;
+	// mudou de andar no meio do kill (fuga ou quota) = emboscada perdida
+	if (andar !== eventoAndarBase) {
+		EncerraEvento();
+		return;
+	}
+
+	eventoEmboscadaGold += N(goldRecebido);
+	const idx = eventoEmboscadaAlvos.indexOf(inimigoDerrotado);
+	if (idx >= 0) eventoEmboscadaAlvos.splice(idx, 1);
+
+	if (eventoEmboscadaAlvos.length === 0) VenceuEmboscada();
+}
+
+// Pagamento: devolve em gold exatamente o que a onda pagou durante a
+// emboscada (→ "ouro em dobro") + rolo de baú (40%). Encerra ANTES de pagar
+// pra nenhum payout reentrar no estado do evento.
+function VenceuEmboscada() {
+	if (eventoAtivo !== "emboscada") return;
+	const bonus = Math.max(0, N(eventoEmboscadaGold));
+	const bau = Math.random() < 0.4;
+	EncerraEvento();
+
+	if (bonus > 0) {
+		const recebido = AddGold(bonus);
+		AddTotalGold(recebido, false);
+		document.getElementById("contGold").innerHTML = FormatGold(gold);
+		UI.showCurrencyReward("gold", recebido);
+	}
+	if (bau) {
+		quantidadeBausDisponiveis++;
+		UI.spawnChest(quantidadeBausDisponiveis);
+	}
+	UI.showMilestone("Emboscada vencida!", bau
+		? "Ouro em dobro e um baú pela recompensa!"
+		: "Ouro em dobro garantido!");
+	ChamaSom("audio4");
+	AutoSaveLocal();
 }

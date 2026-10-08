@@ -26,6 +26,10 @@
             <button type="button" data-forca-evento="comercio">Forçar Comércio</button>
             <button type="button" data-forca-evento="meteoro">Forçar Meteoro</button>
             <button type="button" data-forca-evento="nevoa">Forçar Névoa do CM</button>
+            <button type="button" data-forca-evento="veia">Forçar Veia</button>
+            <button type="button" data-forca-evento="inseto">Forçar Inseto</button>
+            <button type="button" data-forca-evento="fissura">Forçar Fissura</button>
+            <button type="button" data-forca-evento="emboscada">Forçar Emboscada</button>
             <button type="button" data-encerra-evento>Encerrar evento</button>
             <button type="button" data-limpa-cooldown-evento>Limpar cooldown</button>
         </div>

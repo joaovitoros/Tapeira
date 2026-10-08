@@ -172,9 +172,10 @@ function ChanceBauExtraFormigas() {
 // =========================
 // CONHECIMENTO MUG
 // =========================
-// Preço dos itens da loja: base 10 CM, escalonado ×1.5 por nível (10, 15, 23, 34...)
+// Preço dos itens da loja: base 10 CM, escalonado ×1.4 por nível
+// (10, 14, 20, 27, 38...). Era ×1.5 e o crescimento ficava grande rápido.
 function PrecoLojaCM(nivel) {
-	return Math.round(10 * Math.pow(1.5, Math.max(0, Number(nivel) || 0)));
+	return Math.round(10 * Math.pow(1.4, Math.max(0, Number(nivel) || 0)));
 }
 
 // +1% de gold por nível — aplicado em todo ganho de gold (AddGold)
@@ -205,8 +206,22 @@ function MultiplicadorGoldComp2() {
 
 // Loja de esmeralda "CM em dobro": ×2 no Conhecimento Mug ganho por nível
 // (1 nível por enquanto; item permanente da loja de esmeraldas)
+// +1 por marco de 50 níveis do jogador (marcosNivel50, permanente)
 function MultiplicadorCM() {
-	return Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
+	const item = Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
+	return item + Math.max(0, Math.floor(Number(marcosNivel50) || 0));
+}
+
+// +1 no MultiplicadorCM a cada 50 níveis do jogador. marcosNivel50 guarda
+// quantos marcos já foram reivindicados e NÃO zera no Resetar: resetar e
+// chegar de novo no mesmo marco não paga de novo — só o próximo múltiplo
+// de 50 (100, 150, ...) paga. Retorna quantos marcos foram reivindicados.
+function ConfereMarcosNivel50() {
+	const atual = Math.max(0, Math.floor(Number(marcosNivel50) || 0));
+	const alvo = Math.floor(Math.max(1, Math.floor(Number(nivelJogador) || 1)) / 50);
+	if (alvo <= atual) return 0;
+	marcosNivel50 = alvo;
+	return alvo - atual;
 }
 
 function LimitaDanoCritico() {
@@ -313,8 +328,11 @@ var precoComp3 = 4;
 var tempoComp3 = 1;
 var lvlComp3 = 0;
 
-var precoXP = 2;
+var precoXP = 1;
 var lvlXP = 0;
+// marcos de 50 níveis do jogador já reivindicados (+1 cada no MultiplicadorCM)
+// permanente: não zera no Resetar, então o mesmo marco não paga duas vezes
+var marcosNivel50 = 0;
 
 var precoEsmCM = 10;
 var lvlEsmCM = 0; //0/1: item de 1 nível da loja de esmeraldas — duplica o CM ganho no reset
@@ -607,9 +625,17 @@ function QuotaAndar() {
 	return Math.max(1, qtdInimigosAndar - bonusNivel - bonusConquista);
 }
 
+// Bônus do item de XP da loja de esmeraldas: cada nível soma o próprio
+// número no XP por abate (nível 1 = +1, nível 2 = +2 a mais → +3,
+// nível 3 = +6 … = 1+2+…+N)
+function BonusXPLoja(nivel = lvlXP) {
+	const n = Math.max(0, Math.floor(Number(nivel) || 0));
+	return n * (n + 1) / 2;
+}
+
 function XPPorInimigo(piso = andar) {
-	// bônus da loja de esmeraldas: +1 de XP por abate a cada nível do item
-	return Math.max(0, lvlXP | 0) + 1 + Math.floor((Math.max(1, piso) - 1) / 10);
+	// bônus acumulado da loja de esmeraldas + base + piso
+	return BonusXPLoja() + 1 + Math.floor((Math.max(1, piso) - 1) / 10);
 }
 
 function GanhaXP(abates, piso = andar, xpFixo) {
@@ -647,12 +673,16 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 	if (niveisGanhos > 0) {
 		nivelJogador = Math.min(Number.MAX_SAFE_INTEGER, nivelJogador + niveisGanhos);
 		pontosHabilidade = Math.min(Number.MAX_SAFE_INTEGER, pontosHabilidade + niveisGanhos);
+		const marcosGanhos = ConfereMarcosNivel50();
 		const conquistaAntes = Math.floor(Math.max(0, totalNiveis | 0) / 100);
 		totalNiveis = Math.min(Number.MAX_SAFE_INTEGER, (totalNiveis | 0) + niveisGanhos);
 		UI.showMilestone(
 			niveisGanhos === 1 ? "Nível aumentado!" : `${niveisGanhos} níveis aumentados!`,
 			`Você alcançou o nível ${nivelJogador} e recebeu ${niveisGanhos} ${niveisGanhos === 1 ? "ponto de habilidade" : "pontos de habilidade"}. Bônus: +${niveisGanhos * 10}% de dano e −${niveisGanhos} ${niveisGanhos === 1 ? "inimigo" : "inimigos"} para avançar.`
 		);
+		if (marcosGanhos > 0) {
+			UI.showInfo(`Marco de 50 níveis!\n+${marcosGanhos} no multiplicador de CM no reset (×${MultiplicadorCM()}).`);
+		}
 		if (Math.floor(totalNiveis / 100) > conquistaAntes) {
 			UI.showInfo("Conquista desbloqueada!\nA cada 100 níveis: -1 inimigo necessário para avançar!");
 		}
@@ -889,6 +919,8 @@ function GoldCompanheiros(){
 
 function TempoCompanheiros(){
 	if (jogoPausado) return;
+	// Fissura temporal: congela o cronômetro junto com o ganho de segundos
+	if (typeof eventoAtivo !== "undefined" && eventoAtivo === "fissura") return;
 	tempoAvancoInimigos=tempoAvancoInimigos+tempoEsperaCompanheiro;
 	document.getElementById("contTempo").innerHTML=tempoAvancoInimigos;
 	if(tempoEsperaCompanheiro>0){
@@ -902,6 +934,9 @@ function TempoCompanheiros(){
 function AvancoInimigos() {
 	if (jogoPausado || fugaEmAndamento) return;
 	if (AtualizaRelogioHabilidade()) return;
+	// Fissura temporal: congela só o cronômetro de fuga (a pausa da skill de
+	// escape acima continua sendo consumida e os demais ticks seguem)
+	if (typeof eventoAtivo !== "undefined" && eventoAtivo === "fissura") return;
 
     tempoAvancoInimigos--;
     document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;

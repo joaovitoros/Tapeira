@@ -133,6 +133,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		totalDerrotados += avancoAbates;
 		derrotadosRun += avancoAbates; //base da conversão em Conhecimento Mug no reset
 		EventoAbateCM(avancoAbates); //Névoa do CM: +CM imediato durante o evento
+		EventoAbateVeia(avancoAbates); //Veia de esmeralda: chance de esmeralda por abate
 		numInimigosTela--;
 		qtdCarregaHabilidade++;
 		VerificaHabilidade();
@@ -146,6 +147,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		const goldRecebido = AddGold(recompensaGold);
 		AddTotalGold(goldRecebido, false);
 		UI.showCurrencyReward("gold", goldRecebido);
+		EventoAbateEmboscada(inimigoDerrotado, recompensaGold); //Emboscada: alvo morto + ouro em dobro (bruto, sem bônus)
 
 		if (missaoAtual == 3) MissaoCaca();
 		if (missaoAtual == 1) MissaoColetaGold(andar * mulGold);

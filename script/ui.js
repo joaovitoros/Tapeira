@@ -356,7 +356,7 @@ const UI = {
         botaoMarcos.type = "button";
         botaoMarcos.className = "skill-upgrade-shortcut";
         botaoMarcos.textContent = "Marcos";
-        botaoMarcos.setAttribute("aria-label", "Abrir tela de marcos de gold");
+        botaoMarcos.setAttribute("aria-label", "Abrir tela de marcos");
         botaoMarcos.addEventListener("click", () => abreTela(MostraMarcos));
         atalhos.append(botaoConquistas, botaoMissoes, botaoMarcos);
 
@@ -796,7 +796,22 @@ const UI = {
             Number.MAX_SAFE_INTEGER - xpAtual,
             rewards.abates * XPPorInimigo(andar)
         )} XP`;
-        list.append(damageRow, goldRow, xpRow);
+        const linhas = [damageRow, goldRow];
+        if (rewards.bonusRetorno) {
+            const partesBonus = [];
+            if (rewards.bonusRetorno.gold > 0) {
+                partesBonus.push(`${FormatGold(rewards.bonusRetorno.gold)} gold`);
+            }
+            if (rewards.bonusRetorno.esmeraldas > 0) {
+                partesBonus.push(`${rewards.bonusRetorno.esmeraldas} ${rewards.bonusRetorno.esmeraldas === 1 ? "esmeralda" : "esmeraldas"}`);
+            }
+            const bonusRow = document.createElement("p");
+            bonusRow.className = "offline-rewards-bonus";
+            bonusRow.textContent = `Bônus de retorno (${Math.max(1, Math.round(rewards.bonusRetorno.horas))}h longe): +${partesBonus.join(" e ")}`;
+            linhas.push(bonusRow);
+        }
+        linhas.push(xpRow);
+        list.append(...linhas);
 
         const chestsTitle = document.createElement("p");
         chestsTitle.className = "offline-rewards-chests-title";
@@ -1057,7 +1072,7 @@ const UI = {
             ["DPS companheiros", (danoComp * multDanoTotal).toFixed(2)],
             ["GoldPS companions", goldCompanheiro.toFixed(2)],
             ["Tempo bônus", tempoEsperaCompanheiro + " seg"],
-            ["Bônus XP", "+" + Math.max(0, lvlXP | 0)],
+            ["Bônus XP", "+" + BonusXPLoja()],
             ["XP por inimigo", (XPPorInimigo() * BonusXPConhecimento()).toFixed(2)],
             ["Conhecimento gold", "+" + cmNivelGold + "%"],
             ["Conhecimento XP", "+" + cmNivelXp + "%"],
@@ -1899,13 +1914,31 @@ function MostraMissao() {
     );
 }
 
-// Marcos de gold desta run: +10% de gold a cada 10 andares (zeram no reset)
+// Todos os marcos do jogo num lugar só: ouro por andar (por run), portões
+// de reset, níveis do jogador (permanente) e desbloqueios por andar.
+// As classes modal-* são estilizadas em estilos.css.
 function MostraMarcos() {
+    const linha = (rotulo, valor, classe) => `
+        <div class="modal-linha">
+            <span class="modal-label">${rotulo}</span>
+            <span class="modal-value${classe ? " " + classe : ""}">${valor}</span>
+        </div>`;
+
+    const barra = (progresso) => {
+        const largura = Math.max(0, Math.min(100, Number(progresso) || 0));
+        return `
+        <div class="modal-barra">
+            <div class="modal-barra-fill" style="width:${largura}%"></div>
+        </div>
+        <div class="modal-porcentagem">${largura.toFixed(0)}%</div>`;
+    };
+
+    // --- Ouro desta run: +10% de gold a cada 10 andares (zeram no reset) ---
     const marcos = Math.max(0, Math.floor(marcoGoldRun / 10));
     const bonusComposto = (Math.pow(1.1, marcos) - 1) * 100;
     const proximoMarco = marcoGoldRun + 10;
-    const faltam = Math.max(0, proximoMarco - andar);
-    const progresso = Math.max(0, Math.min(100, ((andar - marcoGoldRun) / 10) * 100));
+    const faltamGold = Math.max(0, proximoMarco - andar);
+    const progressoGold = (andar - marcoGoldRun) * 10;
 
     const casas = bonusComposto < 100 ? 1 : 0;
     const bonusTexto = marcos === 0
@@ -1921,49 +1954,106 @@ function MostraMarcos() {
         else itens.push(m === proximoMarco ? m + " (próximo)" : String(m));
     }
 
+    // --- Portões de reset ---
+    const faltamPortao = Math.max(0, andarVolta - andar);
+    const portaoEsmeralda = andarVolta % 10 === 5;
+    const pagaDanoProximo = andarVolta >= Math.max(35, gateDanoPago + 5);
+    const recompensaPortao = [
+        portaoEsmeralda ? "esmeralda" : "",
+        pagaDanoProximo ? "5% dano" : ""
+    ].filter(Boolean).join(" + ") || "avanço";
+    const pendentesDano = GatesDanoPendentes(andar);
+    const danoPago = Math.max(0, Math.floor(Number(danoResetQtd) || 0));
+    const perkGanhosRun = PontosPerkGanhos();
+    const perkDisp = PontosPerkDisponiveis();
+
+    // --- Níveis do jogador (permanente) ---
+    const nivelAtual = Math.max(1, Math.floor(Number(nivelJogador) || 1));
+    const marcosCM = Math.max(0, Math.floor(Number(marcosNivel50) || 0));
+    const proximoNivelCM = (marcosCM + 1) * 50;
+    const faltamNivelCM = Math.max(0, proximoNivelCM - nivelAtual);
+    const progressoNivelCM = (nivelAtual - marcosCM * 50) * 2; // 50 níveis = 100%
+    const niveisAcum = Math.max(0, Math.floor(Number(totalNiveis) || 0));
+    const bonusNiveis = Math.floor(niveisAcum / 100);
+    const proximoNiveis = (bonusNiveis + 1) * 100;
+    const faltamNiveis = proximoNiveis - niveisAcum;
+
+    // --- Desbloqueios por andar (andar máximo = permanente) ---
+    const desbloqueios = SKILLS_UPGRADE
+        .filter(skill => skill.pisoDesbloqueio > 1)
+        .map(skill => {
+            const aberto = maxAndar >= skill.pisoDesbloqueio;
+            return aberto
+                ? linha(skill.nome, "✓ andar " + skill.pisoDesbloqueio, "modal-value--ok")
+                : linha(skill.nome, "andar " + skill.pisoDesbloqueio + " — faltam " + (skill.pisoDesbloqueio - maxAndar), "modal-value--pend");
+        }).join("");
+
     UI.showModal(
-        "Marcos de Gold",
+        "Marcos",
         `
             <div class="modal-section">
+                <div class="modal-titulo">Ouro desta run · a cada 10 andares</div>
 
-                <div class="modal-linha">
-                    <span class="modal-label">Andar atual:</span>
-                    <span class="modal-value">${andar}</span>
-                </div>
-
-                <div class="modal-linha">
-                    <span class="modal-label">Marcos atingidos:</span>
-                    <span class="modal-value">${marcos} (1 a cada 10 andares)</span>
-                </div>
-
-                <div class="modal-linha">
-                    <span class="modal-label">Bônus desta run:</span>
-                    <span class="modal-value">${bonusTexto}</span>
-                </div>
-
-                <div class="modal-linha">
-                    <span class="modal-label">Próximo marco:</span>
-                    <span class="modal-value">
-                        andar ${proximoMarco} — faltam ${faltam} ${faltam === 1 ? "andar" : "andares"}
-                    </span>
-                </div>
-
-                <div class="modal-barra">
-                    <div class="modal-barra-fill" style="width:${progresso}%"></div>
-                </div>
-
-                <div class="modal-porcentagem">${progresso.toFixed(0)}%</div>
-
-                <div class="modal-linha">
-                    <span class="modal-label">Marcos:</span>
-                    <span class="modal-value">${itens.join(" · ")}</span>
-                </div>
+                ${linha("Andar atual", andar)}
+                ${linha("Marcos atingidos", marcos + " (a cada 10 andares)")}
+                ${linha("Bônus desta run", bonusTexto)}
+                ${linha("Próximo marco", faltamGold > 0 ? `andar ${proximoMarco} — faltam ${faltamGold}` : `andar ${proximoMarco}`)}
+                ${barra(progressoGold)}
+                ${linha("Marcos", itens.join(" · "))}
 
                 <div class="modal-info">
                     Cada marco dá +10% de gold multiplicativo nesta run e mostra um
                     aviso na tela. O bônus zera ao resetar.
                 </div>
+            </div>
 
+            <div class="modal-section">
+                <div class="modal-titulo">Portões de reset</div>
+
+                ${linha("Reset livre", andar >= 20 ? "disponível agora" : `libera no andar 20 — faltam ${20 - andar}`)}
+                ${linha("Próximo portão", faltamPortao > 0 ? `andar ${andarVolta} — faltam ${faltamPortao}` : `andar ${andarVolta} — disponível`)}
+                ${linha("Recompensa do portão", recompensaPortao)}
+                ${linha("Dano pendente até aqui", pendentesDano > 0 ? `+${pendentesDano * 5}% se resetar agora` : "nenhum")}
+                ${linha("Dano permanente pago", danoPago > 0 ? `${danoPago} portões (+${danoPago * 5}%)` : "nenhum")}
+                ${linha("Perks desta run", `${perkDisp} ${perkDisp === 1 ? "disponível" : "disponíveis"} de ${perkGanhosRun}`)}
+
+                <div class="modal-info">
+                    Portões terminados em 5 (15, 25, 35, 45…) dão esmeralda; os
+                    intermediários (40, 50…) só dano. Cada portão a partir do 35
+                    paga +5% de dano permanente uma única vez. A partir do andar 20
+                    a troca de andar também gera Conhecimento Mug.
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <div class="modal-titulo">Níveis do jogador · não zera no reset</div>
+
+                ${linha("Nível atual", nivelAtual)}
+                ${linha("Próximo marco de 50", `nível ${proximoNivelCM} — faltam ${faltamNivelCM}`)}
+                ${barra(progressoNivelCM)}
+                ${linha("Marcos de 50 atingidos", marcosCM)}
+                ${linha("Multiplicador de CM no reset", "×" + MultiplicadorCM())}
+                ${linha("Níveis acumulados", niveisAcum)}
+                ${linha("Próximo marco de 100", `${proximoNiveis} — faltam ${faltamNiveis}`)}
+                ${barra(niveisAcum % 100)}
+                ${linha("Bônus de 100 níveis", bonusNiveis > 0 ? `−${bonusNiveis} inimigo${bonusNiveis === 1 ? "" : "s"} para avançar` : "nenhum")}
+
+                <div class="modal-info">
+                    A cada 50 níveis o multiplicador de CM no reset ganha +1 — o
+                    mesmo marco não paga de novo depois do reset. A cada 100 níveis
+                    acumulados entre resets, 1 inimigo a menos é exigido para avançar.
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <div class="modal-titulo">Desbloqueios por andar · valem para sempre</div>
+
+                ${desbloqueios}
+
+                <div class="modal-info">
+                    O desbloqueio usa o andar máximo já atingido (${maxAndar}) e não
+                    é perdido no reset.
+                </div>
             </div>
         `
     );

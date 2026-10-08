@@ -205,6 +205,7 @@ function Salvar() {
 
 		precoXP,
 		lvlXP,
+		marcosNivel50,
 
 		precoEsmCM,
 		lvlEsmCM,
@@ -304,6 +305,16 @@ function ValidarRecompensasOffline(recompensas, limiteTempo, limiteBaus) {
 		&& (!Number.isSafeInteger(recompensas.xp) || recompensas.xp < 0)) {
 		throw new TypeError("A experiência do progresso offline é inválida.");
 	}
+	if (recompensas.bonusRetorno !== undefined) {
+		const bonus = recompensas.bonusRetorno;
+		if (!bonus || typeof bonus !== "object" || Array.isArray(bonus)
+			|| !Number.isFinite(bonus.horas) || bonus.horas < 2 || bonus.horas > 24
+			|| !Number.isFinite(bonus.gold) || bonus.gold < 0
+			|| !Number.isSafeInteger(bonus.esmeraldas) || bonus.esmeraldas < 0 || bonus.esmeraldas > 6
+			|| (bonus.gold <= 0 && bonus.esmeraldas <= 0)) {
+			throw new TypeError("O bônus de retorno do progresso offline é inválido.");
+		}
+	}
 }
 
 // Pico de andar da run: fonte dos pontos de perk. Saves antigos, sem o campo,
@@ -352,6 +363,12 @@ function ValidarSave(save) {
 		&& (!Number.isSafeInteger(save.marcoGoldRun) || save.marcoGoldRun < 0
 			|| save.marcoGoldRun % 10 !== 0)) {
 		throw new TypeError("O marco de gold da run no save é inválido.");
+	}
+
+	if (save.marcosNivel50 !== undefined
+		&& (!Number.isSafeInteger(save.marcosNivel50) || save.marcosNivel50 < 0
+			|| save.marcosNivel50 > 10000)) {
+		throw new TypeError("O marco de 50 níveis do save é inválido.");
 	}
 
 	if (save.gateDanoPago !== undefined
@@ -669,6 +686,22 @@ function CalculaProgressoOffline(ultimaDataSalva) {
 		return;
 	}
 
+	// Bônus de retorno (princípio 35): presente para quem volta depois de ≥2h.
+	// Escala com a ausência REAL (o teto do progresso offline não conta):
+	// +25% no gold a cada 4h até +150% em 12h, e 1 esmeralda a cada 4h até
+	// 6 em 24h. Usa o mesmo relógio do progresso offline (atualizado a cada
+	// autosave) — nasce e morre com recompensasOfflinePendentes, sem campo
+	// novo no save.
+	const horasFora = Math.min(24, Math.max(0, (agora - dataAnterior) / 3600000));
+	let bonusRetorno;
+	if (horasFora >= 2) {
+		const bonusGold = goldOffline * Math.min(horasFora / 8, 1.5);
+		const bonusEsmeraldas = Math.floor(horasFora / 4);
+		if (bonusGold > 0 || bonusEsmeraldas > 0) {
+			bonusRetorno = { horas: horasFora, gold: bonusGold, esmeraldas: bonusEsmeraldas };
+		}
+	}
+
 	recompensasOfflinePendentes = {
 		tempoMs,
 		dano: danoOffline,
@@ -678,6 +711,7 @@ function CalculaProgressoOffline(ultimaDataSalva) {
 		vidasInimigos: simulacao.vidasInimigos,
 		baus,
 		formigas: SorteiaFormigas(simulacao.abates),
+		bonusRetorno,
 		xp: Math.min(
 			Number.MAX_SAFE_INTEGER - xpAtual,
 			simulacao.abates * XPPorInimigo(andar)
@@ -714,12 +748,17 @@ function RecebeProgressoOffline() {
 		recompensas.abates * XPPorInimigo(andar)
 	);
 	const xpRecebido = GanhaXP(recompensas.abates, andar, xpOffline);
-	if (recompensas.gold > 0) {
-		AddGold(recompensas.gold, false);
-		AddTotalGold(recompensas.gold, false);
-		UI.showCurrencyReward("gold", recompensas.gold);
+	// bônus de retorno (presente por tempo fora): entra no mesmo popup do
+	// gold base e das esmeraldas dos baús
+	const bonusRetorno = recompensas.bonusRetorno ?? null;
+	const goldRecebido = recompensas.gold + (bonusRetorno ? bonusRetorno.gold : 0);
+	if (goldRecebido > 0) {
+		AddGold(goldRecebido, false);
+		AddTotalGold(goldRecebido, false);
+		UI.showCurrencyReward("gold", goldRecebido);
 	}
-	const esmeraldasRecebidas = recompensas.baus.reduce((total, bau) => total + bau.esmeraldas, 0);
+	const esmeraldasRecebidas = recompensas.baus.reduce((total, bau) => total + bau.esmeraldas, 0)
+		+ (bonusRetorno ? bonusRetorno.esmeraldas : 0);
 	if (esmeraldasRecebidas > 0) {
 		esmeraldas += esmeraldasRecebidas;
 		UI.showCurrencyReward("emerald", esmeraldasRecebidas);
@@ -740,6 +779,17 @@ function RecebeProgressoOffline() {
 		UI.showMilestone("Formigas encontradas", `${totalFormigasRecebidas} adicionadas à coleção permanente`);
 	}
 	if (xpRecebido > 0) UI.showMilestone("Experiência recebida", `+${xpRecebido} XP durante sua ausência`);
+	if (bonusRetorno) {
+		const partesBonus = [];
+		if (bonusRetorno.gold > 0) partesBonus.push(`+${FormatGold(bonusRetorno.gold)} gold`);
+		if (bonusRetorno.esmeraldas > 0) {
+			partesBonus.push(`+${bonusRetorno.esmeraldas} ${bonusRetorno.esmeraldas === 1 ? "esmeralda" : "esmeraldas"}`);
+		}
+		UI.showMilestone(
+			"Bônus de retorno",
+			`${partesBonus.join(" e ")} por ${Math.max(1, Math.round(bonusRetorno.horas))}h longe`
+		);
+	}
 
 	recompensasOfflinePendentes = null;
 	UI.render();
@@ -923,8 +973,12 @@ function Carregar(saveData, calculaOffline = false) {
 	tempoComp3 = save.tempoComp3 ?? 1;
 	lvlComp3 = save.lvlComp3 ?? 0;
 
-	precoXP = save.precoXP ?? 2;
+	precoXP = save.precoXP ?? 1;
 	lvlXP = save.lvlXP ?? 0;
+	marcosNivel50 = save.marcosNivel50 ?? 0;
+	// saves antigos do recurso (nível já >= 50 antes do recurso existir):
+	// reivindica os marcos pendentes sem nunca repetir os já pagos
+	ConfereMarcosNivel50();
 
 	precoEsmCM = save.precoEsmCM ?? 10;
 	lvlEsmCM = save.lvlEsmCM ?? 0;
@@ -1827,6 +1881,7 @@ function CriarObjetoSave() {
 
 		precoXP,
 		lvlXP,
+		marcosNivel50,
 
 		precoEsmCM,
 		lvlEsmCM,

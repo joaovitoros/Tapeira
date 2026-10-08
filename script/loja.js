@@ -23,6 +23,12 @@ function GE(a, b){
 }
 
 function NormalizaPrecosLoja() {
+	// Item de XP da loja de esmeraldas: base 1 (metade da antiga base 2) com
+	// dobra por nível — recalculado do nível, então saves antigos (base 2)
+	// migram sozinhos para metade do preço na próxima abertura da loja
+	const lvlXPN = Number(lvlXP);
+	window.precoXP = Math.pow(2, Math.max(0, Math.floor(Number.isFinite(lvlXPN) ? lvlXPN : 0)));
+
 	const nomesPrecos = [
 		"precoDano", "precoBau", "precoGold", "precoBEspaco", "precoAvan",
 		"precoDCrit", "precoVidaInimigo", "precoCCrit", "precoQTDAvanco",
@@ -799,11 +805,15 @@ const PREVIEWS_LOJA = {
 			+ (N(tempoEsperaCompanheiro) + N(tempoComp3)) + "s";
 	},
 	CompraXP() {
-		return "Bônus de XP: +" + (N(lvlXP) | 0) + " → +" + ((N(lvlXP) | 0) + 1) + " por abate";
+		const n = Math.max(0, N(lvlXP) | 0);
+		return "Bônus de XP: +" + BonusXPLoja(n) + " → +" + BonusXPLoja(n + 1) + " por abate";
 	},
 	CompraEsmCM() {
-		if (N(lvlEsmCM) >= 1) return "CM ganho: no nível máximo (×2)";
-		return "CM ganho no reset: ×" + MultiplicadorCM() + " → ×" + (MultiplicadorCM() * 2);
+		if (N(lvlEsmCM) >= 1) return "CM ganho: no nível máximo (×2 do item)";
+		// o item dobra só a parte dele (2^nível); os marcos de 50 níveis ficam
+		const atual = MultiplicadorCM();
+		const prox = atual + Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
+		return "CM ganho no reset: ×" + atual + " → ×" + prox;
 	}
 };
 
@@ -851,3 +861,95 @@ document.addEventListener("DOMContentLoaded", () => {
 		btn.addEventListener("click", mostrar);
 	});
 });
+
+// ============================================================
+// HOLD PRA COMPRAR (loja de gold): segurar o "Evoluir" repete a compra
+// ============================================================
+// Late game: segurar o botão compra nível atrás de nível até o gold acabar
+// (ou até o nível máximo). A primeira falha encerra o hold com UM aviso do
+// próprio jogo — sem spam de toast. Clique normal e teclado seguem iguais:
+// um clique, uma compra (o clique sintético pós-pointerdown é engolido).
+
+var holdCompraTimer = null;
+var holdCompraBotao = null;
+var holdCompraInfoOriginal = null;
+var holdCompraCliquePendente = null;
+
+function HoldCompraPara() {
+	if (holdCompraTimer) {
+		clearInterval(holdCompraTimer);
+		holdCompraTimer = null;
+	}
+	if (holdCompraInfoOriginal) {
+		MostraInfo = holdCompraInfoOriginal;
+		holdCompraInfoOriginal = null;
+	}
+	holdCompraBotao = null;
+}
+
+function HoldCompraTenta() {
+	const btn = holdCompraBotao;
+	if (!btn || !btn.isConnected) {
+		HoldCompraPara();
+		return;
+	}
+	// lê o onclick inline (CompraDano(), CompraGold(), ...) e chama de volta
+	const chamada = (btn.getAttribute("onclick") || "").trim();
+	const m = /^([A-Za-z_$][\w$]*)\s*\(\s*\)$/.exec(chamada);
+	if (!m || typeof window[m[1]] !== "function") {
+		HoldCompraPara();
+		return;
+	}
+	// sem gold ou nível máximo: o jogo chama MostraInfo, que neste momento é
+	// o interceptor — ele restaura tudo e avisa uma única vez
+	window[m[1]]();
+	if (holdCompraBotao) MostraPreviewCompra(btn); // preview do Tier1 #5 em dia
+}
+
+function HoldCompraInicia(btn) {
+	HoldCompraPara();
+	holdCompraBotao = btn;
+
+	// intercepta o aviso da compra: 1ª falha = fim do hold, um aviso só
+	const avisoOriginal = MostraInfo;
+	holdCompraInfoOriginal = avisoOriginal;
+	MostraInfo = function (msg) {
+		HoldCompraPara();
+		avisoOriginal(msg);
+	};
+
+	HoldCompraTenta(); // resposta imediata no pointerdown
+	if (holdCompraBotao) holdCompraTimer = setInterval(HoldCompraTenta, 100);
+}
+
+// Delegado no document: não depende de quando o DOM da loja é montado
+document.addEventListener("pointerdown", (e) => {
+	if (e.pointerType === "mouse" && e.button !== 0) return;
+	const btn = e.target && e.target.closest ? e.target.closest("#Loja input.Loja[onclick]") : null;
+	if (!btn) return;
+	if (holdCompraBotao === btn && holdCompraTimer) return; // já segurando
+	HoldCompraInicia(btn);
+	btn.focus({ preventScroll: true });
+	e.preventDefault(); // segurar não vira clique/arraste do navegador
+});
+
+// o clique que o navegador ainda emitir depois do hold não compra de novo
+document.addEventListener("click", (e) => {
+	if (!holdCompraCliquePendente || e.target !== holdCompraCliquePendente) return;
+	holdCompraCliquePendente = null;
+	e.preventDefault();
+	e.stopPropagation();
+}, true);
+
+window.addEventListener("pointerup", () => {
+	const btn = holdCompraBotao;
+	if (btn) {
+		holdCompraCliquePendente = btn;
+		setTimeout(() => {
+			if (holdCompraCliquePendente === btn) holdCompraCliquePendente = null;
+		}, 400);
+	}
+	HoldCompraPara();
+});
+window.addEventListener("pointercancel", HoldCompraPara);
+window.addEventListener("blur", HoldCompraPara);
