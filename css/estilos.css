@@ -1353,11 +1353,11 @@ body {
 	grid-auto-flow: column;
 	align-items: center;
 	justify-content: center;
-	gap: 7px;
-	min-width: 92px;
-	height: 42px;
+	gap: 5px;
+	min-width: 0;
+	height: 32px;
 	flex: 0 0 auto;
-	padding: 0 12px;
+	padding: 0 10px;
 	border: 1px solid #ffe4a0;
 	border-radius: 10px;
 	background: linear-gradient(145deg, #ffd66f, #e79432 58%, #b85d25);
@@ -3739,9 +3739,9 @@ input:focus-visible {
 	}
 
 	.pause-button {
-		min-width: 90px;
-		height: 40px;
-		padding: 0 10px;
+		min-width: 0;
+		height: 30px;
+		padding: 0 8px;
 		font-size: 13px;
 	}
 
@@ -4756,10 +4756,10 @@ input:focus-visible {
 	}
 
 	.pause-button {
-		min-width: 82px;
-		height: 42px;
+		min-width: 0;
+		height: 32px;
 		gap: 5px;
-		padding: 0 8px;
+		padding: 0 10px;
 		font-size: 12px;
 	}
 
@@ -7284,5 +7284,93 @@ button.skill-ramo-no:focus-visible {
 		stroke-width: 2.6;
 		stroke-linecap: round;
 		stroke-linejoin: round;
+	}
+}
+
+/* ---------------- FUGA + PAUSE (celular, retrato) ----------------
+   Em tela pequena o "Pausar" fica EM CIMA da caixa de fuga em vez de lado a
+   lado: a linha horizontal passava de 200px, estourava a largura útil e
+   encostava no "Total Abatidos". Grid com duas linhas (pause em cima; relógio
+   + rótulo + tempo embaixo, ainda numa linha) mantém o botão no tamanho
+   natural — flex-wrap + flex-basis 100% esticava ele até a largura toda.
+   Restrito a retrato: no landscape a linha cabe e a altura é escassa.
+   Precisa ficar depois das outras regras de #container-Fugir. */
+@media (max-width: 700px) and (orientation: portrait) {
+	#container-Fugir {
+		/* Sobe para o canal livre entre o bloco de Andar e o Gold: empilhado a
+		   caixa tem ~73px e, em top: 64px, o timer caía em cima do log de
+		   "Infos" (top: 100px). Entre x 132 e 252 não há nada, e a caixa tem
+		   ~113px — cabe com folga. */
+		top: calc(12px + env(safe-area-inset-top));
+		/* o canal entre o bloco de Andar e o Gold fica ~4px à esquerda do
+		   centro da tela; sem isso a caixa encosta no Gold em ~344-390px */
+		left: calc(50% - 4px);
+		display: grid;
+		grid-template-columns: auto auto auto;
+		grid-template-areas:
+			"pause pause pause"
+			"clock label tempo";
+		justify-content: center;
+		align-items: center;
+		column-gap: 5px;
+		row-gap: 3px;
+	}
+
+	#btnPause {
+		grid-area: pause;
+		justify-self: center;
+		/* O botão padrão tem 40px de altura para ~17px de conteúdo (ícone +
+		   texto) e 10px de padding em cada lado — sobravam 23px vazios em cada
+		   eixo. Aqui ele acompanha o tamanho do conteúdo. */
+		height: 30px;
+		min-width: 0;
+		padding: 0 8px;
+		gap: 5px;
+	}
+
+	.fuga-clock {
+		grid-area: clock;
+	}
+
+	.fuga-label {
+		grid-area: label;
+	}
+
+	#contTempo {
+		grid-area: tempo;
+	}
+}
+
+/* Telas muito estreitas (~360px): o canal entre o bloco de Andar e o Gold tem
+   ~110px e a caixa empilhada dá 113px, encostando no Gold. Aperta o botão e o
+   padding da caixa para caber com folga. */
+@media (max-width: 380px) and (orientation: portrait) {
+	#container-Fugir {
+		padding: 4px;
+		column-gap: 4px;
+	}
+
+	.pause-button {
+		padding: 0 5px;
+		gap: 4px;
+	}
+}
+
+/* ~320px: o canal entre Andar e Gold aperta para menos de 100px. */
+@media (max-width: 340px) and (orientation: portrait) {
+	#container-Fugir {
+		padding: 3px;
+		column-gap: 3px;
+	}
+
+	.pause-button {
+		min-width: 0;
+		padding: 0 4px;
+		gap: 3px;
+		font-size: 11px;
+	}
+
+	.pause-button-icon {
+		font-size: 14px;
 	}
 }
