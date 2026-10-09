@@ -29,8 +29,15 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		dano = danoCritico;
 	}
 	// perk do Dano automático: +25% por nível no hit da habilidade (não afeta cliques nem companheiro)
-	if (validaDano && !aplicaNovasHabilidades && perkDano > 0) {
-		dano = dano * (1 + 0.25 * perkDano);
+	if (validaDano && !aplicaNovasHabilidades) {
+		if (perkDano > 0) dano = dano * (1 + 0.25 * perkDano);
+		// ramo Canhão da árvore: +50% por nó (nv 5 e nv 10) no mesmo hit
+		dano *= MultiplicadorRamoDanoAutomatico();
+	}
+	// ramo Oportunidade da árvore: golpes do jogador valem mais enquanto
+	// a fuga está pausada pela skill de escape
+	if (ataqueJogador && segundosPausaFuga > 0) {
+		dano *= MultiplicadorDanoDurantePausaFuga();
 	}
 	TocaSomSintetico(critico ? "critico" : "impacto");
 	dano *= MultiplicadorDanoFormigas();
@@ -61,12 +68,14 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 			candidatos.push({ id: candidate, element: candidateElement, distance: distance });
 		}
 
-		// perk da Corrente elétrica: 1 alvo base + 1 por nível (máx 3 = todos na tela)
+		// perk da Corrente elétrica: 1 alvo base + 1 por nível (máx 3 = todos na tela);
+		// ramo Rede da árvore: +1 alvo por nó (nv 5 e nv 10)
 		candidatos.sort((a, b) => a.distance - b.distance);
-		chainTargets = candidatos.slice(0, 1 + perkEletrica);
+		chainTargets = candidatos.slice(0, 1 + perkEletrica + RamoAlvosCorrente());
 
 		if (chainTargets.length === 0) {
-			dano *= 1 + (10 + NivelDaSkill("electric") * 2) / 100;
+			// ramo Sobrecarga amplia o bônus quando não há alvo pra encadear
+			dano *= 1 + ((10 + NivelDaSkill("electric") * 2) / 100) * MultiplicadorRamoCorrente();
 		}
 		ChamaSom("audio5");
 	}
@@ -82,7 +91,9 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	const killComSkillGold = usaSkillGold && perkGold > 0;
 
 	if (usaSkillGold) {
-		const bonusGold = ((andar * mulGold) + 1) * ((35 + NivelDaSkill("gold") * 5) / 100);
+		// ramo Veia da árvore: +50% por nó no bônus de gold por ataque
+		const bonusGold = ((andar * mulGold) + 1) * ((35 + NivelDaSkill("gold") * 5) / 100)
+			* MultiplicadorRamoBonusGold();
 		const goldRecebido = AddGold(bonusGold);
 		AddTotalGold(goldRecebido, false);
 		UI.showCurrencyReward("gold", goldRecebido);
@@ -98,7 +109,9 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	UI.showDamageNumber(inimigoElement, dano, critico);
 
 	if (chainTargets.length > 0) {
-		const chainDamage = danoBaseAtaque * ((25 + NivelDaSkill("electric") * 5) / 100);
+		// ramo Sobrecarga da árvore: +50% por nó no dano da cadeia
+		const chainDamage = danoBaseAtaque * ((25 + NivelDaSkill("electric") * 5) / 100)
+			* MultiplicadorRamoCorrente();
 		for (const alvo of chainTargets) {
 			const chainHealth = Math.max(0, window["vidaInimigo" + alvo.id] - chainDamage);
 			window["vidaInimigo" + alvo.id] = chainHealth;

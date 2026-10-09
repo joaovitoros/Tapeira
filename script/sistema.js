@@ -117,6 +117,10 @@ function Salvar() {
 		nivelSkillEletrica,
 		nivelSkillGold,
 		nivelSkillFuga,
+		ramoSkillDano,
+		ramoSkillEletrica,
+		ramoSkillGold,
+		ramoSkillFuga,
 		formigasVermelhas,
 		formigasAmarelas,
 		formigasMarrons,
@@ -483,7 +487,11 @@ function ValidarSave(save) {
 		["nivelSkillDano", 0, NIVEL_MAXIMO_SKILLS],
 		["nivelSkillEletrica", 0, NIVEL_MAXIMO_SKILLS],
 		["nivelSkillGold", 0, NIVEL_MAXIMO_SKILLS],
-		["nivelSkillFuga", 0, NIVEL_MAXIMO_SKILLS]
+		["nivelSkillFuga", 0, NIVEL_MAXIMO_SKILLS],
+		["ramoSkillDano", 0, 2],
+		["ramoSkillEletrica", 0, 2],
+		["ramoSkillGold", 0, 2],
+		["ramoSkillFuga", 0, 2]
 	];
 	for (const [key, minimo, maximo] of xpKeys) {
 		if (save[key] !== undefined
@@ -902,6 +910,13 @@ function Carregar(saveData, calculaOffline = false) {
 	nivelSkillEletrica = save.nivelSkillEletrica ?? 0;
 	nivelSkillGold = save.nivelSkillGold ?? 0;
 	nivelSkillFuga = save.nivelSkillFuga ?? 0;
+	// árvore de ramos: save antigo nasce sem caminho (0); o saneamento
+	// derruba caminho escolhido com a skill abaixo do nível mínimo
+	ramoSkillDano = save.ramoSkillDano ?? 0;
+	ramoSkillEletrica = save.ramoSkillEletrica ?? 0;
+	ramoSkillGold = save.ramoSkillGold ?? 0;
+	ramoSkillFuga = save.ramoSkillFuga ?? 0;
+	ConfereRamosSave();
 	formigasVermelhas = save.formigasVermelhas ?? 0;
 	formigasAmarelas = save.formigasAmarelas ?? 0;
 	formigasMarrons = save.formigasMarrons ?? 0;
@@ -1660,6 +1675,11 @@ function Resetar() {
 	nivelSkillEletrica = 0;
 	nivelSkillGold = 0;
 	nivelSkillFuga = 0;
+	// ramos da árvore são por run: zeram junto com os níveis das skills
+	ramoSkillDano = 0;
+	ramoSkillEletrica = 0;
+	ramoSkillGold = 0;
+	ramoSkillFuga = 0;
 	tempoHabilidadeDano = 30;
 	verificaHabilidadeDano = false;
 	qtdCarregaHabilidade = 0;
@@ -1845,6 +1865,10 @@ function CriarObjetoSave() {
 		nivelSkillEletrica,
 		nivelSkillGold,
 		nivelSkillFuga,
+		ramoSkillDano,
+		ramoSkillEletrica,
+		ramoSkillGold,
+		ramoSkillFuga,
 		formigasVermelhas,
 		formigasAmarelas,
 		formigasMarrons,

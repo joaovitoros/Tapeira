@@ -88,10 +88,10 @@ var nivelSkillGold = 0;
 var nivelSkillFuga = 0;
 const NIVEL_MAXIMO_SKILLS = 10;
 const SKILLS_UPGRADE = [
-	{ id: "damage", nome: "Dano automático", pisoDesbloqueio: 1, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillDano" },
-	{ id: "electric", nome: "Corrente elétrica", pisoDesbloqueio: 15, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillEletrica" },
-	{ id: "gold", nome: "Bônus de Gold", pisoDesbloqueio: 25, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillGold" },
-	{ id: "escape", nome: "Pausa da fuga", pisoDesbloqueio: 35, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillFuga" }
+	{ id: "damage", nome: "Dano automático", pisoDesbloqueio: 1, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillDano", ramo: "ramoSkillDano" },
+	{ id: "electric", nome: "Corrente elétrica", pisoDesbloqueio: 15, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillEletrica", ramo: "ramoSkillEletrica" },
+	{ id: "gold", nome: "Bônus de Gold", pisoDesbloqueio: 25, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillGold", ramo: "ramoSkillGold" },
+	{ id: "escape", nome: "Pausa da fuga", pisoDesbloqueio: 35, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillFuga", ramo: "ramoSkillFuga" }
 ];
 // Perks: 1 ponto por portão alcançado no pico de andar desta run (>= 35).
 // O nível de perk é por run (zeramos no reset) e independe do nível da skill.
@@ -657,7 +657,7 @@ function UsaHabilidadeDano(){
 	document.getElementById("habilidade1")?.remove();
 	ChamaSom('audio5');
 	verificaHabilidadeDano = true;
-	tempoHabilidadeDano = 30 + NivelDaSkill("damage") * 5;
+	tempoHabilidadeDano = DuracaoHabilidadeDano();
 	qtdCarregaHabilidade = 0;
 	UI.updateSkillProgress();
 }
@@ -755,7 +755,10 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 
 	UI.showXPGain(xpGanho);
 	UI.updateSkillProgress();
-	if (document.getElementById("skillUpgradeModal")) UI.showSkillUpgradePanel();
+	// com o painel de skills aberto, só re-renderiza quando o level sobe
+	// (muda pontos e botões); matar inimigo sem subir não pode resetar a
+	// tela — e mesmo no re-render a rolagem é preservada (ver ui.js)
+	if (niveisGanhos > 0 && document.getElementById("skillUpgradeModal")) UI.showSkillUpgradePanel();
 	return xpGanho;
 }
 
@@ -764,13 +767,17 @@ function NivelDaSkill(id) {
 	return skill ? Math.max(0, Math.floor(Number(window[skill.nivel]) || 0)) : 0;
 }
 
+// efeito atual da skill no nível informado, já com o bônus do ramo da
+// árvore escolhido (nível + ramo vêm do estado real da run)
 function DescricaoEfeitoSkill(id, nivel = NivelDaSkill(id)) {
-	if (id === "damage") return `Duração: ${30 + nivel * 5} s (+5 s por nível).`;
+	if (id === "damage") return `Duração: ${Math.round((30 + nivel * 5) * FatorRamo("damage", 2, 1.5))} s (+5 s por nível).`;
 	if (id === "electric") {
-		return `Dano encadeado: ${25 + nivel * 5}% · bônus sem alvo próximo: ${10 + nivel * 2}%.`;
+		const fator = FatorRamo("electric", 1, 1.5);
+		const alvos = 1 + perkEletrica + RamoAlvosCorrente();
+		return `Dano encadeado: ${Math.round((25 + nivel * 5) * fator)}% em ${alvos} ${alvos === 1 ? "alvo" : "alvos"} · bônus sem alvo próximo: ${Math.round((10 + nivel * 2) * fator)}%.`;
 	}
-	if (id === "gold") return `Gold extra por ataque: ${35 + nivel * 5}% (+5% por nível).`;
-	return `Pausa da fuga: ${10 + nivel * 2} s (+2 s por nível).`;
+	if (id === "gold") return `Gold extra por ataque: ${Math.round((35 + nivel * 5) * FatorRamo("gold", 1, 1.5))}% · carga: ${DuracaoSkillGold()} ataques.`;
+	return `Pausa da fuga: ${Math.round((10 + nivel * 2) * FatorRamo("escape", 2, 1.5))} s (+2 s por nível).`;
 }
 
 function EvoluiSkill(id) {
@@ -843,8 +850,8 @@ function AtualizaHabilidadesCombate() {
 			: skill.id === "gold" ? ataquesBonusGold
 				: segundosPausaFuga;
 		const activeDuration = skill.id === "electric" ? 20
-			: skill.id === "gold" ? 25
-				: 10 + NivelDaSkill("escape") * 2;
+			: skill.id === "gold" ? DuracaoSkillGold()
+				: DuracaoPausaFuga();
 		const meterPercent = active > 0
 			? active / activeDuration * 100
 			: kills / skill.killsRequired * 100;
@@ -902,13 +909,13 @@ function AtivaHabilidadeCombate(id) {
 	} else if (id === "gold" && abatesBonusGoldAtaque >= skill.killsRequired && ataquesBonusGold === 0) {
 		habilidadeAtivada = true;
 		abatesBonusGoldAtaque = 0;
-		ataquesBonusGold = 25;
+		ataquesBonusGold = DuracaoSkillGold();
 		ChamaSom("audio6");
-		UI.showInfo("Bônus de Gold ativo por 25 ataques!");
+		UI.showInfo(`Bônus de Gold ativo por ${ataquesBonusGold} ataques!`);
 	} else if (id === "escape" && abatesPausaFuga >= skill.killsRequired && segundosPausaFuga === 0 && !fugaEmAndamento) {
 		habilidadeAtivada = true;
 		abatesPausaFuga = 0;
-		segundosPausaFuga = 10 + NivelDaSkill("escape") * 2;
+		segundosPausaFuga = DuracaoPausaFuga();
 		ChamaSom("audio7");
 		UI.showInfo(`Relógio de fuga pausado por ${segundosPausaFuga} segundos!`);
 	}
@@ -945,7 +952,7 @@ function HabilidadeDano(){
 		document.getElementById("BaraQTDHab1").style.color="#f00";
 		if(tempoHabilidadeDano==0){
 			verificaHabilidadeDano=false;
-			tempoHabilidadeDano = 30 + NivelDaSkill("damage") * 5;
+			tempoHabilidadeDano = DuracaoHabilidadeDano();
 			document.getElementById("QTDTempoHab1").innerHTML=qtdCarregaHabilidade;
 		}
 	} 	

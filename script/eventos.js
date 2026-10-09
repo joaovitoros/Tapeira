@@ -31,7 +31,7 @@ var eventoPausaDesde = 0; // início da pausa atual (congela a contagem do event
 var EVENTO_COOLDOWN_MS = 3 * 60 * 1000;
 var EVENTO_CHANCE = 0.15; // por subida de andar
 var EVENTO_ATRASO_MS = 1600; // transição de andar dura 1450ms
-var EVENTO_VEIA_CHANCE = 0.1; // chance de esmeralda por abate na Veia
+var EVENTO_VEIA_CHANCE = 0.05; // chance de esmeralda por abate na Veia (metade — balanceamento)
 var EVENTO_DURACAO_MS = { comercio: 45000, meteoro: 30000, nevoa: 45000, veia: 60000, inseto: 5500, fissura: 30000, emboscada: 45000 };
 var EVENTO_INFO = {
 	comercio: { icone: "🪙", titulo: "Comerciante itinerante", dica: "Ofertas especiais enquanto durar o evento!" },
@@ -46,11 +46,11 @@ var EVENTO_INFO = {
 // Ofertas do comerciante: preço = k × gold do andar atual (escala sozinho).
 var EVENTO_OFERTAS_POOL = [
 	{
-		id: "esmeralda", nome: "Esmeralda polida", desc: "+1 Esmeralda", k: 30,
+		id: "esmeralda", nome: "Esmeralda polida", desc: "+2 Esmeraldas", k: 30,
 		comprar() {
-			esmeraldas++;
+			esmeraldas += 2;
 			document.getElementById("contEmeraldas").innerHTML = esmeraldas;
-			UI.showCurrencyReward("emerald", 1);
+			UI.showCurrencyReward("emerald", 2);
 		}
 	},
 	{
@@ -393,8 +393,8 @@ function CriaFragmentos() {
 	const cont = GaranteContainerFragmentos();
 	const base = CentroDosInimigos();
 	CriaFragmento(cont, "gold", base);
-	// chance de esmeralda junto com o gold
-	if (Math.random() < 0.25) CriaFragmento(cont, "esmeralda", base);
+	// chance de esmeralda junto com o gold (12,5% — metade do original)
+	if (Math.random() < 0.125) CriaFragmento(cont, "esmeralda", base);
 }
 
 function CentroDosInimigos() {

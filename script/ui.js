@@ -303,6 +303,10 @@ const UI = {
     },
 
     showSkillUpgradePanel() {
+        // re-renderizações (level-up com o painel aberto) não podem jogar a
+        // rolagem de volta pro topo: guarda e restaura o scroll do painel
+        const painelAnterior = document.querySelector("#skillUpgradeModal .ant-collection-panel");
+        const rolagemAnterior = painelAnterior ? painelAnterior.scrollTop : 0;
         document.getElementById("skillUpgradeModal")?.remove();
 
         const overlay = document.createElement("div");
@@ -447,6 +451,113 @@ const UI = {
                 });
                 card.append(perkInfo, perkButton);
             }
+
+            // árvore de ramos: fork no nível 5 (dois caminhos mutuamente
+            // exclusivos, um por run) e o nó 2 completa sozinho no nível 10
+            const arvore = RAMOS_SKILL.find(item => item.skillId === skill.id);
+            if (arvore) {
+                const escolhido = RamoEscolhido(skill.id);
+                const ramosBox = document.createElement("div");
+                ramosBox.className = "skill-ramos";
+                ramosBox.setAttribute("role", "group");
+                ramosBox.setAttribute("aria-label", `Árvore de ramos de ${skill.nome}`);
+                const ramosTitulo = document.createElement("strong");
+                ramosTitulo.className = "skill-ramos-titulo";
+                ramosTitulo.textContent = "Árvore de ramos";
+                const ramosHint = document.createElement("span");
+                ramosHint.className = "skill-ramos-hint";
+                ramosHint.textContent = escolhido !== 0
+                    ? `Caminho selado: ${arvore.ramos[escolhido - 1].nome} · zerado no reset`
+                    : skillLevel >= RAMO_NIVEL_ESCOLHA && unlocked
+                        ? "Escolha um caminho — mutuamente exclusivo nesta run"
+                        : unlocked
+                            ? `Ramos abrem no nível ${RAMO_NIVEL_ESCOLHA} · zeram no reset`
+                            : `Ramos abrem no nível ${RAMO_NIVEL_ESCOLHA} da skill`;
+                ramosBox.append(ramosTitulo, ramosHint);
+
+                for (const ramo of arvore.ramos) {
+                    const linha = document.createElement("div");
+                    linha.className = "skill-ramo";
+
+                    const nome1 = document.createElement("span");
+                    nome1.className = "skill-ramo-nome";
+                    nome1.textContent = `${ramo.nome} · Nv ${RAMO_NIVEL_ESCOLHA}`;
+                    const efeito1 = document.createElement("span");
+                    efeito1.className = "skill-ramo-efeito";
+                    efeito1.textContent = ramo.efeito5;
+                    const estado1 = document.createElement("span");
+                    estado1.className = "skill-ramo-estado";
+
+                    const no1 = document.createElement("button");
+                    no1.type = "button";
+                    no1.className = "skill-ramo-no";
+                    let podeEscolher = false;
+                    if (escolhido === ramo.id) {
+                        no1.classList.add("skill-ramo-no--ativo");
+                        estado1.textContent = "✓ escolhido";
+                    } else if (escolhido !== 0) {
+                        no1.classList.add("skill-ramo-no--selado");
+                        estado1.textContent = "Selado";
+                    } else if (!unlocked) {
+                        no1.classList.add("skill-ramo-no--travado");
+                        estado1.textContent = `Andar ${skill.pisoDesbloqueio}`;
+                    } else if (skillLevel < RAMO_NIVEL_ESCOLHA) {
+                        no1.classList.add("skill-ramo-no--travado");
+                        estado1.textContent = `Nível ${RAMO_NIVEL_ESCOLHA}`;
+                    } else {
+                        no1.classList.add("skill-ramo-no--escolhivel");
+                        estado1.textContent = "Escolher";
+                        podeEscolher = true;
+                    }
+                    no1.append(nome1, efeito1, estado1);
+                    no1.disabled = !podeEscolher;
+                    no1.setAttribute("aria-label",
+                        `${podeEscolher ? "Escolher" : "Caminho"} ${ramo.nome} da árvore de ${skill.nome} — ${estado1.textContent}`);
+                    if (podeEscolher) {
+                        no1.addEventListener("click", () => {
+                            if (EscolheRamoSkill(skill.id, ramo.id)) this.showSkillUpgradePanel();
+                        });
+                    }
+
+                    const seta = document.createElement("span");
+                    seta.className = "skill-ramo-seta";
+                    seta.textContent = "→";
+                    seta.setAttribute("aria-hidden", "true");
+
+                    const nome2 = document.createElement("span");
+                    nome2.className = "skill-ramo-nome";
+                    nome2.textContent = `${ramo.nome} · Nv ${RAMO_NIVEL_CONCLUSAO}`;
+                    const efeito2 = document.createElement("span");
+                    efeito2.className = "skill-ramo-efeito";
+                    efeito2.textContent = ramo.efeito10;
+                    const estado2 = document.createElement("span");
+                    estado2.className = "skill-ramo-estado";
+                    const no2 = document.createElement("span");
+                    no2.className = "skill-ramo-no";
+                    if (escolhido === ramo.id) {
+                        if (skillLevel >= RAMO_NIVEL_CONCLUSAO) {
+                            no2.classList.add("skill-ramo-no--ativo");
+                            estado2.textContent = "✓ ativo";
+                        } else {
+                            no2.classList.add("skill-ramo-no--pendente");
+                            estado2.textContent = `Falta nível ${RAMO_NIVEL_CONCLUSAO}`;
+                        }
+                    } else if (escolhido !== 0) {
+                        no2.classList.add("skill-ramo-no--selado");
+                        estado2.textContent = "Selado";
+                    } else {
+                        no2.classList.add("skill-ramo-no--travado");
+                        estado2.textContent = unlocked && skillLevel >= RAMO_NIVEL_ESCOLHA
+                            ? "Após escolher"
+                            : `Nível ${RAMO_NIVEL_ESCOLHA}`;
+                    }
+                    no2.append(nome2, efeito2, estado2);
+
+                    linha.append(no1, seta, no2);
+                    ramosBox.appendChild(linha);
+                }
+                card.append(ramosBox);
+            }
             skillList.appendChild(card);
         }
 
@@ -468,7 +579,10 @@ const UI = {
         document.body.appendChild(overlay);
         this.updateSkillProgress();
         this.syncScreenButtons();
-        close.focus();
+        // foco sem rolagem: focar o topo do conteúdo zera o scroll do painel
+        close.focus({ preventScroll: true });
+        // restaura a rolagem no painel novo (kill/level-up não sobe a tela)
+        panel.scrollTop = rolagemAnterior;
     },
 
     toggleSkillUpgradePanel() {
