@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" fill="none">
+  <defs>
+    <linearGradient id="blade" x1="31" y1="8" x2="65" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff"/>
+      <stop offset=".3" stop-color="#c9fbff"/>
+      <stop offset=".7" stop-color="#49d9ff"/>
+      <stop offset="1" stop-color="#1674d1"/>
+    </linearGradient>
+    <linearGradient id="grip" x1="37" y1="61" x2="58" y2="85" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#75dfff"/>
+      <stop offset="1" stop-color="#16458b"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-30%" width="180%" height="170%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <path d="M48 4 69 46 48 68 27 46 48 4Z" fill="#36dfff" fill-opacity=".36" filter="url(#glow)"/>
+  <path d="M48 8 62 45 48 62 34 45 48 8Z" fill="url(#blade)" stroke="#123e72" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m48 13 0 42-10-11 10-31Z" fill="#fff" fill-opacity=".92"/>
+  <path d="m48 13 10 32-10 10V13Z" fill="#1597e8" fill-opacity=".85"/>
+  <path d="m31 43 17 8 17-8 5 8-22 9-22-9 5-8Z" fill="#f4cc62" stroke="#34415b" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m39 57 18 0 5 6-14 7-14-7 5-6Z" fill="#fff0a0" stroke="#34415b" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m41 66 14 0 5 17-12 9-12-9 5-17Z" fill="url(#grip)" stroke="#123e72" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m39 72 18 8m-18-1 15 7" stroke="#d9faff" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="48" cy="61" r="4" fill="#d7fbff" stroke="#1579be" stroke-width="2"/>
+  <path d="m18 23 3 8 8 3-8 3-3 8-3-8-8-3 8-3 3-8Zm58-7 2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Zm-2 42 2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5Z" fill="#c5faff" stroke="#28bfff" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="m67 22-6 11h6l-4 9 12-14h-7l5-6Z" fill="#fff" stroke="#2ad9ff" stroke-width="1.5" stroke-linejoin="round"/>
+</svg>
