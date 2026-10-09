@@ -1332,6 +1332,7 @@ function Conquistas(){
 		progressoConquistaGold = progressoConquistaGold*5;
 		
 		precoDano = precoDano*0.995;
+		precoBau = precoBau*0.995;
 		precoBEspaco = precoBEspaco*0.995;
 		precoGold = precoGold*0.995;
 		precoAvan = precoAvan*0.995;

@@ -1877,6 +1877,7 @@ function Resetar() {
 	lvlBau = 1;
 
 	precoDano = precoDano * (1 - descontoLoja);
+	precoBau = precoBau * (1 - descontoLoja);
 	precoBEspaco = precoBEspaco * (1 - descontoLoja);
 	precoGold = precoGold * (1 - descontoLoja);
 	precoAvan = precoAvan * (1 - descontoLoja);
