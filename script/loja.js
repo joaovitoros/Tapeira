@@ -52,7 +52,9 @@ function NormalizaPrecosLoja() {
 //   fixo); itens de passo dinâmico (crítico e avanço) não declaram passo e
 //   continuam a própria curva, só o teto sobe;
 // - `niveis` — teto em níveis quando o gate do item é por nível;
-// - `niveisInfinito` — teto de níveis que cresce pra sempre (Qtd Avanço).
+// - `niveisInfinito` — teto de níveis que cresce pra sempre (Qtd Avanço);
+// - `taxas` — taxa do passo dinâmico por patente (Dano e Dano Crítico:
+//   1,025 na ★I e +0,005 por ★, lida com TaxaPassoLoja).
 // Os gates por efeito têm tolerância de 1e-9: 0,01 + 9×0,01 fecha em
 // 0,09999999999999999 em float e sem ela o teto nunca "bate" exato.
 var ITENS_PATENTE = {
@@ -101,6 +103,20 @@ var ITENS_PATENTE = {
 		nome: "Velocidade do Companheiro", patenteVar: "patenteVelComp", precoVar: "precoVelComp",
 		tetos: [1.6, 1.8, 2.0], passos: [0.2, 0.2, 0.2],
 		noTeto: () => N(velAtaqueComp) >= TetoLoja("velcomp") - 1e-9
+	},
+	dano: {
+		nome: "Dano", patenteVar: "patenteDano", precoVar: "precoDano",
+		// gate por nível (★I fecha no 50, mesma coluna da Vida do Inimigo);
+		// a ★ também acelera a taxa do passo dinâmico: 1,025 → +0,005 por ★
+		niveis: [50, 100, 170, 270, 370, 470],
+		taxas: [1.025, 1.03, 1.035, 1.04, 1.045, 1.05],
+		noTeto: () => N(lvlDano) >= NiveisLoja("dano")
+	},
+	dcrit: {
+		nome: "Dano Crítico", patenteVar: "patenteDCrit", precoVar: "precoDCrit",
+		niveis: [50, 100, 170, 270, 370, 470],
+		taxas: [1.025, 1.03, 1.035, 1.04, 1.045, 1.05],
+		noTeto: () => N(lvlDCrit) >= NiveisLoja("dcrit")
 	}
 };
 
@@ -144,6 +160,14 @@ function PassoLoja(id) {
 	return cfg.passos[Math.min(PatenteAtual(id), cfg.passos.length - 1)];
 }
 
+// Taxa de crescimento do passo dinâmico na patente atual (Dano e Dano
+// Crítico: ×1,025 na ★I e +0,005 por ★)
+function TaxaPassoLoja(id) {
+	const cfg = ItemPatente(id);
+	if (!cfg.taxas) return 1.025;
+	return cfg.taxas[Math.min(PatenteAtual(id), cfg.taxas.length - 1)];
+}
+
 // Ingresso da próxima patente: 30× o preço que o próximo nível teria
 function PrecoPatenteLoja(id) {
 	return N(window[ItemPatente(id).precoVar]) * 30;
@@ -159,19 +183,30 @@ function Romano(n) {
 	return tabela[n] || String(n);
 }
 
-// Ganho da próxima patente (preview): "75% → 95%" ou "+6 níveis destravados";
-// vazio quando o item já está na patente máxima.
+// Formata uma taxa de crescimento (1.025 → "×1,025")
+function FormataTaxa(taxa) {
+	return "×" + String(taxa).replace(".", ",");
+}
+
+// Ganho da próxima patente (preview): "75% → 95%", "+6 níveis destravados" ou
+// o mesmo + a nova taxa do passo (Dano/Dano Crítico); vazio na patente máxima.
 function GanhoProximaPatenteTexto(id) {
 	const cfg = ItemPatente(id);
 	if (!TemProximaPatente(id)) return "";
 	const atual = PatenteAtual(id);
+	let texto;
 	if (cfg.tetos) {
-		return FormataTetoPct(cfg.tetos[atual]) + " → " + FormataTetoPct(cfg.tetos[atual + 1]);
+		texto = FormataTetoPct(cfg.tetos[atual]) + " → " + FormataTetoPct(cfg.tetos[atual + 1]);
+	} else if (cfg.niveisInfinito) {
+		texto = "+" + (cfg.niveisInfinito(atual + 1) - cfg.niveisInfinito(atual)) + " níveis destravados";
+	} else {
+		texto = "+" + (cfg.niveis[atual + 1] - cfg.niveis[atual]) + " níveis destravados";
 	}
-	if (cfg.niveisInfinito) {
-		return "+" + (cfg.niveisInfinito(atual + 1) - cfg.niveisInfinito(atual)) + " níveis destravados";
+	// Dano e Dano Crítico: a ★ também acelera a curva do passo dinâmico
+	if (cfg.taxas) {
+		texto += " · passo " + FormataTaxa(cfg.taxas[atual]) + " → " + FormataTaxa(cfg.taxas[atual + 1]);
 	}
-	return "+" + (cfg.niveis[atual + 1] - cfg.niveis[atual]) + " níveis destravados";
+	return texto;
 }
 
 // Compra o ingresso da próxima patente de um item no teto. Sempre retorna
@@ -252,8 +287,10 @@ function AtualizaLojaGold() {
 function AtualizaMaximosLoja() {
 	// o id de preço nem sempre é o nome da variável (alias do preview)
 	const itens = [
+		{ id: "dano", preco: "precoDano" },
 		{ id: "bau", preco: "precoBau" },
 		{ id: "avan", preco: "precoAvan" },
+		{ id: "dcrit", preco: "precoDCrit" },
 		{ id: "subvida", preco: "precoVidaInimigo" },
 		{ id: "ccrit", preco: "precoCCrit" },
 		{ id: "espaco", preco: "precoBEspaco" },
@@ -454,36 +491,43 @@ function PagaLoja(preco) {
 function CompraDano(){
 	NormalizaPrecosLoja();
 
-	if(GE(gold, precoDano)){
+	if(!ITENS_PATENTE.dano.noTeto()){
+		if(GE(gold, precoDano)){
 
-		PagaLoja(precoDano);
+			PagaLoja(precoDano);
 
-		danoJogador = N(danoJogador) + N(mulDano);
-		// Começo mais amigável: os 5 primeiros níveis sobem 40% em vez de 50%
-		precoDano = N(precoDano) * (lvlDano < 5 ? 1.4 : 1.5);
-		mulDano = N(mulDano) * 1.025;
-		danoCritJogador = N(danoCritJogador) + ((N(danoJogador)/2)*(2+N(sobeDCrit)));
-		lvlDano++;
-
-		if(lvlDano==10){
-			danoJogador = N(danoJogador) * 1.2;
+			danoJogador = N(danoJogador) + N(mulDano);
+			// Começo mais amigável: os 5 primeiros níveis sobem 40% em vez de 50%
+			precoDano = N(precoDano) * (lvlDano < 5 ? 1.4 : 1.5);
+			// Passo dinâmico: ×1,025 na ★I e +0,005 por patente (ITENS_PATENTE.dano.taxas)
+			mulDano = N(mulDano) * TaxaPassoLoja("dano");
 			danoCritJogador = N(danoCritJogador) + ((N(danoJogador)/2)*(2+N(sobeDCrit)));
+			lvlDano++;
+
+			if(lvlDano==10){
+				danoJogador = N(danoJogador) * 1.2;
+				danoCritJogador = N(danoCritJogador) + ((N(danoJogador)/2)*(2+N(sobeDCrit)));
+			}
+			LimitaDanoCritico();
+
+			if(lvlComp1>0){
+				danoComp = N(danoJogador) * N(danoComp1);
+			}
+
+			ChamaSom('audio6');
+
+			document.getElementById("contGold").innerHTML = FormatGold(gold);
+			document.getElementById("precoDano").innerHTML = FormatGold(precoDano);
+			document.getElementById("lvlDano").innerHTML = lvlDano;
+			// no nível do teto a célula vira o ingresso ★ na hora
+			AtualizaMaximosLoja();
+
+			MostraStatus();
+		}else{
+			MostraInfo("Voce não tem gold o suficiente para essa compra!");
 		}
-		LimitaDanoCritico();
-
-		if(lvlComp1>0){
-			danoComp = N(danoJogador) * N(danoComp1);
-		}
-
-		ChamaSom('audio6');
-
-		document.getElementById("contGold").innerHTML = FormatGold(gold);
-		document.getElementById("precoDano").innerHTML = FormatGold(precoDano);
-		document.getElementById("lvlDano").innerHTML = lvlDano;
-
-		MostraStatus();
 	}else{
-		MostraInfo("Voce não tem gold o suficiente para essa compra!");
+		CompraPatenteLoja("dano");
 	}
 }
 
@@ -584,26 +628,33 @@ function CompraAvanco(){
 
 function CompraDCrit(){
 	NormalizaPrecosLoja();
-	if(GE(gold, N(precoDCrit))){
+	if(!ITENS_PATENTE.dcrit.noTeto()){
+		if(GE(gold, N(precoDCrit))){
 
-		PagaLoja(precoDCrit);
+			PagaLoja(precoDCrit);
 
-		SobeTetoCritico();
-		sobeDCrit = N(sobeDCrit) * 1.025;
-		danoCritJogador = N(danoCritJogador) + ((N(danoJogador)/2) * (2 + N(sobeDCrit)));
-		LimitaDanoCritico();
-		precoDCrit = N(precoDCrit) * 1.5;
-		lvlDCrit++;
+			SobeTetoCritico();
+			// Passo dinâmico: ×1,025 na ★I e +0,005 por patente (ITENS_PATENTE.dcrit.taxas)
+			sobeDCrit = N(sobeDCrit) * TaxaPassoLoja("dcrit");
+			danoCritJogador = N(danoCritJogador) + ((N(danoJogador)/2) * (2 + N(sobeDCrit)));
+			LimitaDanoCritico();
+			precoDCrit = N(precoDCrit) * 1.5;
+			lvlDCrit++;
 
-		ChamaSom('audio6');
+			ChamaSom('audio6');
 
-		document.getElementById("contGold").innerHTML = FormatGold(gold);
-		document.getElementById("precoDCrit").innerHTML = FormatGold(precoDCrit);
-		document.getElementById("lvlDCrit").innerHTML = lvlDCrit;
+			document.getElementById("contGold").innerHTML = FormatGold(gold);
+			document.getElementById("precoDCrit").innerHTML = FormatGold(precoDCrit);
+			document.getElementById("lvlDCrit").innerHTML = lvlDCrit;
+			// no nível do teto a célula vira o ingresso ★ na hora
+			AtualizaMaximosLoja();
 
-		MostraStatus();
+			MostraStatus();
+		}else{
+			MostraInfo("Voce não tem gold o suficiente para essa compra!");
+		}
 	}else{
-		MostraInfo("Voce não tem gold o suficiente para essa compra!");
+		CompraPatenteLoja("dcrit");
 	}
 }
 
@@ -977,6 +1028,7 @@ function FormataPct(x, casas) {
 
 const PREVIEWS_LOJA = {
 	CompraDano() {
+		if (ITENS_PATENTE.dano.noTeto()) return "Dano — ★ " + (GanhoProximaPatenteTexto("dano") || "patente máxima");
 		const prox = N(danoJogador) + N(mulDano);
 		const extra = (N(lvlDano) === 9) ? " · nível 10 dá +20%!" : "";
 		return "Dano: " + N(danoJogador).toFixed(2) + " → " + prox.toFixed(2)
@@ -1003,8 +1055,9 @@ const PREVIEWS_LOJA = {
 			+ " (máx " + FormataTetoPct(TetoLoja("avan")) + ")";
 	},
 	CompraDCrit() {
+		if (ITENS_PATENTE.dcrit.noTeto()) return "Dano crítico — ★ " + (GanhoProximaPatenteTexto("dcrit") || "patente máxima");
 		const proxMult = N(multiplicadorMaximoDanoCritico) + 0.1;
-		const proxSobe = N(sobeDCrit) * 1.025;
+		const proxSobe = N(sobeDCrit) * TaxaPassoLoja("dcrit");
 		let proxCrit = N(danoCritJogador) + (N(danoJogador) / 2) * (2 + proxSobe);
 		proxCrit = Math.min(proxCrit, N(danoJogador) * proxMult);
 		return "Dano crítico: " + N(danoCritJogador).toFixed(2) + " → " + proxCrit.toFixed(2)

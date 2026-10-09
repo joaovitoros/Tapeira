@@ -22,6 +22,7 @@ var ramoSkillDano = 0;
 var ramoSkillEletrica = 0;
 var ramoSkillGold = 0;
 var ramoSkillFuga = 0;
+var ramoSkillFrenesi = 0;
 
 const RAMOS_SKILL = [
 	{
@@ -46,6 +47,12 @@ const RAMOS_SKILL = [
 		skillId: "escape", ramos: [
 			{ id: 1, nome: "Oportunidade", efeito5: "+15% de dano do jogador durante a pausa", efeito10: "+15% de novo (×1,32 no total)" },
 			{ id: 2, nome: "Cortina", efeito5: "Pausa da fuga 50% mais longa", efeito10: "+50% de novo (×2,25 no total)" }
+		]
+	},
+	{
+		skillId: "frenzy", ramos: [
+			{ id: 1, nome: "Calor", efeito5: "+50% no dano da janela", efeito10: "+50% de novo (×2,25 no total)" },
+			{ id: 2, nome: "Ímpeto", efeito5: "Janela 50% mais longa", efeito10: "+50% de novo (×2,25 no total)" }
 		]
 	}
 ];
@@ -148,4 +155,10 @@ function DuracaoPausaFuga() {
 // Oportunidade (caminho 1): golpes do jogador enquanto a fuga está pausada
 function MultiplicadorDanoDurantePausaFuga() {
 	return FatorRamo("escape", 1, 1.15);
+}
+
+// Ímpeto (caminho 2): duração da janela do Toque Frenético em toques
+// (30..50 base por nível × 1,5 por nó do ramo 2; medida em toques, não em s)
+function DuracaoJanelaFrenesi() {
+	return Math.round((30 + NivelDaSkill("frenzy") * 2) * FatorRamo("frenzy", 2, 1.5));
 }

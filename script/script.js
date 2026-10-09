@@ -18,6 +18,7 @@ var perkDano = 0; //níveis de perk do Dano automático (+25% de dano cada, máx
 var perkEletrica = 0; //níveis de perk da Corrente elétrica (+1 inimigo atingido cada, máx 3)
 var perkGold = 0; //níveis de perk do Bônus de Gold (+25% no drop do kill com skill ativa cada, máx 4)
 var perkFuga = 0; //níveis de perk da Pausa da fuga (10% de restaurar o tempo de fuga cada, máx 50%)
+var perkFrenesi = 0; //níveis de perk do Toque Frenético (+25% no dano do toque durante a janela cada, máx 4)
 var conhecimentoMug = 0; //moeda permanente da Loja do Conhecimento (1 abate = 1 CM no reset a partir do andar 20)
 var derrotadosRun = 0; //abates desde o último reset (base da conversão em Conhecimento Mug)
 var cmNivelDano = 0; //níveis da Loja do Conhecimento: +2% de dano permanente cada
@@ -85,6 +86,8 @@ var abatesBonusGoldAtaque = 0;
 var ataquesBonusGold = 0;
 var abatesPausaFuga = 0;
 var segundosPausaFuga = 0;
+var abatesFrenesi = 0; //toques que carregam o Toque Frenético (só cliques do jogador; não são abates)
+var ataquesFrenesi = 0; //toques restantes da janela ativa do Toque Frenético
 var nivelJogador = 1;
 var xpAtual = 0;
 var pontosHabilidade = 0;
@@ -92,12 +95,14 @@ var nivelSkillDano = 0;
 var nivelSkillEletrica = 0;
 var nivelSkillGold = 0;
 var nivelSkillFuga = 0;
+var nivelSkillFrenesi = 0;
 const NIVEL_MAXIMO_SKILLS = 10;
 const SKILLS_UPGRADE = [
 	{ id: "damage", nome: "Dano automático", pisoDesbloqueio: 1, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillDano", ramo: "ramoSkillDano" },
 	{ id: "electric", nome: "Corrente elétrica", pisoDesbloqueio: 15, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillEletrica", ramo: "ramoSkillEletrica" },
 	{ id: "gold", nome: "Bônus de Gold", pisoDesbloqueio: 25, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillGold", ramo: "ramoSkillGold" },
-	{ id: "escape", nome: "Pausa da fuga", pisoDesbloqueio: 35, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillFuga", ramo: "ramoSkillFuga" }
+	{ id: "escape", nome: "Pausa da fuga", pisoDesbloqueio: 35, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillFuga", ramo: "ramoSkillFuga" },
+	{ id: "frenzy", nome: "Toque Frenético", pisoDesbloqueio: 45, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillFrenesi", ramo: "ramoSkillFrenesi" }
 ];
 // Perks: 1 ponto por portão alcançado no pico de andar desta run (>= 35).
 // O nível de perk é por run (zeramos no reset) e independe do nível da skill.
@@ -105,7 +110,8 @@ const PERKS = [
 	{ skillId: "damage", varName: "perkDano", nome: "Dano automático", efeito: "+25% de dano por nível; no nível máximo a skill ativa sozinha quando carregada", maximo: 4 },
 	{ skillId: "electric", varName: "perkEletrica", nome: "Corrente elétrica", efeito: "+1 inimigo atingido por nível", maximo: 3 },
 	{ skillId: "gold", varName: "perkGold", nome: "Bônus de Gold", efeito: "+25% no drop do kill feito com a skill ativa por nível; do nível 1 em diante o companheiro também usa a skill ativa", maximo: 4 },
-	{ skillId: "escape", varName: "perkFuga", nome: "Pausa da fuga", efeito: "10% de restaurar o tempo de fuga por nível (máx 50%)", maximo: 5 }
+	{ skillId: "escape", varName: "perkFuga", nome: "Pausa da fuga", efeito: "10% de restaurar o tempo de fuga por nível (máx 50%)", maximo: 5 },
+	{ skillId: "frenzy", varName: "perkFrenesi", nome: "Toque Frenético", efeito: "+25% no dano do toque durante a janela por nível", maximo: 4 }
 ];
 var fugaEmAndamento = false;
 var maxTempoProgressoOffline = 5 * 60 * 60 * 1000;
@@ -348,6 +354,10 @@ var patenteSubVida = 0;
 var patenteAvan = 0;
 var patenteEsmBau = 0;
 var patenteVelComp = 0;
+// Dano e Dano Crítico: gate por nível (★I fecha no 50) e a ★ acelera a taxa
+// do passo dinâmico (1,025 → +0,005 por patente)
+var patenteDano = 0;
+var patenteDCrit = 0;
 
 var descontoLoja = 0;
 var mulGoldInicial = mulGold;
@@ -605,6 +615,7 @@ function CarregaHabilidadesDesbloqueadas(notificar = true) {
 		if (skill.id === "electric") abatesCorrenteEletrica = skill.killsRequired;
 		if (skill.id === "gold") abatesBonusGoldAtaque = skill.killsRequired;
 		if (skill.id === "escape") abatesPausaFuga = skill.killsRequired;
+		if (skill.id === "frenzy") abatesFrenesi = skill.killsRequired;
 	});
 	AtualizaHabilidadesCombate();
 	if (!notificar) return;
@@ -706,7 +717,10 @@ function UsaHabilidadeDano(){
 const habilidadesCombate = [
 	{ id: "electric", unlockFloor: 15, killsRequired: 20 },
 	{ id: "gold", unlockFloor: 25, killsRequired: 30 },
-	{ id: "escape", unlockFloor: 35, killsRequired: 15 }
+	{ id: "escape", unlockFloor: 35, killsRequired: 15 },
+	// frenzy: "killsRequired" na verdade é a carga em TOQUES (Bater() com
+	// ataqueJogador) — 40 cliques manuais carregam a janela do Toque Frenético
+	{ id: "frenzy", unlockFloor: 45, killsRequired: 40 }
 ];
 
 function PisoMaximoAlcancado() {
@@ -820,7 +834,15 @@ function DescricaoEfeitoSkill(id, nivel = NivelDaSkill(id)) {
 		return `Dano encadeado: ${Math.round((25 + nivel * 5) * fator)}% em ${alvos} ${alvos === 1 ? "alvo" : "alvos"} · bônus sem alvo próximo: ${Math.round((10 + nivel * 2) * fator)}%.`;
 	}
 	if (id === "gold") return `Gold extra por ataque: ${Math.round((35 + nivel * 5) * FatorRamo("gold", 1, 1.5))}% · carga: ${DuracaoSkillGold()} ataques.`;
+	if (id === "frenzy") return `Multiplicador do toque: ×${(2 + nivel * 0.15).toFixed(2).replace(".", ",")} · janela: ${DuracaoJanelaFrenesi()} toques.`;
 	return `Pausa da fuga: ${Math.round((10 + nivel * 2) * FatorRamo("escape", 2, 1.5))} s (+2 s por nível).`;
+}
+
+// Toque Frenético: multiplicador do toque durante a janela, lido no tempo do
+// golpe. Base 2 + 0,15 por nível (×2,15 no nv1 … ×3,50 no nv10), ×1,5 por nó
+// do ramo 1 (Calor) e +25% por nível do perk (máx 4) — tudo multiplicativo.
+function MultiplicadorToqueFrenesi() {
+	return (2 + NivelDaSkill("frenzy") * 0.15) * FatorRamo("frenzy", 1, 1.5) * (1 + 0.25 * perkFrenesi);
 }
 
 function EvoluiSkill(id) {
@@ -882,19 +904,23 @@ function AtualizaHabilidadesCombate() {
 		button.disabled = !unlocked || (skill.id === "electric" && ataquesCorrenteEletrica > 0)
 			|| (skill.id === "gold" && ataquesBonusGold > 0)
 			|| (skill.id === "escape" && segundosPausaFuga > 0)
-			|| (skill.id === "escape" && fugaEmAndamento);
+			|| (skill.id === "escape" && fugaEmAndamento)
+			|| (skill.id === "frenzy" && ataquesFrenesi > 0);
 
 		if (!unlocked) return;
 
 		const kills = skill.id === "electric" ? abatesCorrenteEletrica
 			: skill.id === "gold" ? abatesBonusGoldAtaque
-				: abatesPausaFuga;
+				: skill.id === "frenzy" ? abatesFrenesi
+					: abatesPausaFuga;
 		const active = skill.id === "electric" ? ataquesCorrenteEletrica
 			: skill.id === "gold" ? ataquesBonusGold
-				: segundosPausaFuga;
+				: skill.id === "frenzy" ? ataquesFrenesi
+					: segundosPausaFuga;
 		const activeDuration = skill.id === "electric" ? 20
 			: skill.id === "gold" ? DuracaoSkillGold()
-				: DuracaoPausaFuga();
+				: skill.id === "frenzy" ? DuracaoJanelaFrenesi()
+					: DuracaoPausaFuga();
 		const meterPercent = active > 0
 			? active / activeDuration * 100
 			: kills / skill.killsRequired * 100;
@@ -903,8 +929,10 @@ function AtualizaHabilidadesCombate() {
 		meter.style.height = `${meterValue}%`;
 		meterTrack.setAttribute("aria-valuenow", meterValue);
 		meterTrack.setAttribute("aria-valuetext", active > 0
-			? skill.id === "escape" ? `Ativa por ${active} segundos` : `Ativa por ${active} ataques`
-			: `${kills} de ${skill.killsRequired} abates`);
+			? skill.id === "escape" ? `Ativa por ${active} segundos`
+				: skill.id === "frenzy" ? `Ativa por ${active} toques` : `Ativa por ${active} ataques`
+			: skill.id === "frenzy" ? `${kills} de ${skill.killsRequired} toques`
+				: `${kills} de ${skill.killsRequired} abates`);
 
 		// ícone só aparece quando a skill está carregada (pronta ou ativa);
 		// enquanto carrega, o botão mostra apenas a barra de progresso
@@ -913,12 +941,14 @@ function AtualizaHabilidadesCombate() {
 		if (active > 0) {
 			progress.textContent = skill.id === "escape"
 				? `Ativa: ${active}s`
-				: `Ativa: ${active} ataques`;
+				: skill.id === "frenzy" ? `Ativa: ${active} toques`
+					: `Ativa: ${active} ataques`;
 			button.classList.add("is-active");
 		} else {
 			progress.textContent = kills >= skill.killsRequired
 				? "Pronta!"
-				: `${kills}/${skill.killsRequired} abates`;
+				: skill.id === "frenzy" ? `${kills}/${skill.killsRequired} toques`
+					: `${kills}/${skill.killsRequired} abates`;
 			button.classList.remove("is-active");
 		}
 	});
@@ -935,6 +965,20 @@ function RegistrarAbateHabilidades() {
 			abatesPausaFuga++;
 		}
 	});
+	AtualizaHabilidadesCombate();
+}
+
+// Toque Frenético: só o toque manual do jogador carrega e consome a janela.
+// Fora da janela o toque enche a carga (killsRequired = 40 toques); dentro
+// dela o toque consome 1 da janela ativa (o multiplicador já foi lido antes).
+function RegistraToqueFrenesi() {
+	const skill = habilidadesCombate.find(item => item.id === "frenzy");
+	if (!skill || maxAndar < skill.unlockFloor) return;
+	if (ataquesFrenesi > 0) {
+		ataquesFrenesi--;
+	} else if (abatesFrenesi < skill.killsRequired) {
+		abatesFrenesi++;
+	}
 	AtualizaHabilidadesCombate();
 }
 
@@ -961,6 +1005,12 @@ function AtivaHabilidadeCombate(id) {
 		segundosPausaFuga = DuracaoPausaFuga();
 		ChamaSom("audio7");
 		UI.showInfo(`Relógio de fuga pausado por ${segundosPausaFuga} segundos!`);
+	} else if (id === "frenzy" && abatesFrenesi >= skill.killsRequired && ataquesFrenesi === 0) {
+		habilidadeAtivada = true;
+		abatesFrenesi = 0;
+		ataquesFrenesi = DuracaoJanelaFrenesi();
+		ChamaSom("audio5");
+		UI.showInfo(`Toque Frenético ativo por ${ataquesFrenesi} toques!`);
 	}
 
 	//desafio "sem habilidades": só ativar de verdade falha (tentativa sem carga não conta)

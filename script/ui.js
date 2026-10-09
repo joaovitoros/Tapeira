@@ -2186,7 +2186,7 @@ function MostraMarcos() {
         ...ESPECIALIZACOES
             .filter(esp => esp.andar > 0)
             .map(esp => ({ nome: esp.nome, piso: esp.andar }))
-    ].map(desbloqueio => {
+    ].sort((a, b) => a.piso - b.piso).map(desbloqueio => {
         const aberto = maxAndar >= desbloqueio.piso;
         return aberto
             ? linha(desbloqueio.nome, "✓ andar " + desbloqueio.piso, "modal-value--ok")

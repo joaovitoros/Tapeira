@@ -98,6 +98,7 @@ function Salvar() {
 		perkEletrica,
 		perkGold,
 		perkFuga,
+		perkFrenesi,
 		conhecimentoMug,
 		derrotadosRun,
 		cmNivelDano,
@@ -117,10 +118,12 @@ function Salvar() {
 		nivelSkillEletrica,
 		nivelSkillGold,
 		nivelSkillFuga,
+		nivelSkillFrenesi,
 		ramoSkillDano,
 		ramoSkillEletrica,
 		ramoSkillGold,
 		ramoSkillFuga,
+		ramoSkillFrenesi,
 		formigasVermelhas,
 		formigasAmarelas,
 		formigasMarrons,
@@ -181,6 +184,7 @@ function Salvar() {
 		precoDano,
 		mulDano,
 		lvlDano,
+		patenteDano,
 
 		precoBEspaco,
 		lvlBEspaco,
@@ -196,6 +200,7 @@ function Salvar() {
 		precoDCrit,
 		sobeDCrit,
 		lvlDCrit,
+		patenteDCrit,
 
 		precoCCrit,
 		sobeCCrit,
@@ -433,7 +438,8 @@ function ValidarSave(save) {
 		["perkDano", 0, 4],
 		["perkEletrica", 0, 3],
 		["perkGold", 0, 4],
-		["perkFuga", 0, 5]
+		["perkFuga", 0, 5],
+		["perkFrenesi", 0, 4]
 	];
 	let perkGastos = 0;
 	for (const [key, minimo, maximo] of perkKeys) {
@@ -468,7 +474,9 @@ function ValidarSave(save) {
 		["patenteSubVida", 5],
 		["patenteAvan", 4],
 		["patenteEsmBau", 4],
-		["patenteVelComp", 2]
+		["patenteVelComp", 2],
+		["patenteDano", 5],
+		["patenteDCrit", 5]
 	];
 	for (const [key, maximo] of patenteKeys) {
 		const valor = save[key];
@@ -582,10 +590,12 @@ function ValidarSave(save) {
 		["nivelSkillEletrica", 0, NIVEL_MAXIMO_SKILLS],
 		["nivelSkillGold", 0, NIVEL_MAXIMO_SKILLS],
 		["nivelSkillFuga", 0, NIVEL_MAXIMO_SKILLS],
+		["nivelSkillFrenesi", 0, NIVEL_MAXIMO_SKILLS],
 		["ramoSkillDano", 0, 2],
 		["ramoSkillEletrica", 0, 2],
 		["ramoSkillGold", 0, 2],
-		["ramoSkillFuga", 0, 2]
+		["ramoSkillFuga", 0, 2],
+		["ramoSkillFrenesi", 0, 2]
 	];
 	for (const [key, minimo, maximo] of xpKeys) {
 		if (save[key] !== undefined
@@ -987,6 +997,7 @@ function Carregar(saveData, calculaOffline = false) {
 	perkEletrica = save.perkEletrica ?? 0;
 	perkGold = save.perkGold ?? 0;
 	perkFuga = save.perkFuga ?? 0;
+	perkFrenesi = save.perkFrenesi ?? 0;
 	// pico de andar da run (base dos pontos de perk; saves antigos valem pelo portão pago)
 	andarMaxRun = PicoRunDoSave(save);
 	// Conhecimento Mug: moeda e níveis permanentes (não zeram no reset)
@@ -1009,12 +1020,14 @@ function Carregar(saveData, calculaOffline = false) {
 	nivelSkillEletrica = save.nivelSkillEletrica ?? 0;
 	nivelSkillGold = save.nivelSkillGold ?? 0;
 	nivelSkillFuga = save.nivelSkillFuga ?? 0;
+	nivelSkillFrenesi = save.nivelSkillFrenesi ?? 0;
 	// árvore de ramos: save antigo nasce sem caminho (0); o saneamento
 	// derruba caminho escolhido com a skill abaixo do nível mínimo
 	ramoSkillDano = save.ramoSkillDano ?? 0;
 	ramoSkillEletrica = save.ramoSkillEletrica ?? 0;
 	ramoSkillGold = save.ramoSkillGold ?? 0;
 	ramoSkillFuga = save.ramoSkillFuga ?? 0;
+	ramoSkillFrenesi = save.ramoSkillFrenesi ?? 0;
 	ConfereRamosSave();
 	formigasVermelhas = save.formigasVermelhas ?? 0;
 	formigasAmarelas = save.formigasAmarelas ?? 0;
@@ -1172,6 +1185,8 @@ function Carregar(saveData, calculaOffline = false) {
 	patenteAvan = save.patenteAvan ?? 0;
 	patenteEsmBau = save.patenteEsmBau ?? 0;
 	patenteVelComp = save.patenteVelComp ?? 0;
+	patenteDano = save.patenteDano ?? 0;
+	patenteDCrit = save.patenteDCrit ?? 0;
 	// tick do companheiro reacomoda com a velocidade carregada (o bloco de
 	// intervalos do PreCarregamento limpa e recria logo em seguida)
 	SincronizaIntervaloDanoComp();
@@ -1780,6 +1795,7 @@ function Resetar() {
 	perkEletrica = 0;
 	perkGold = 0;
 	perkFuga = 0;
+	perkFrenesi = 0;
 	// especialização é por run: escolha e trocas zeram no reset
 	// (o desbloqueio permanente é a própria andarVolta)
 	especializacao = 0;
@@ -1810,11 +1826,13 @@ function Resetar() {
 	nivelSkillEletrica = 0;
 	nivelSkillGold = 0;
 	nivelSkillFuga = 0;
+	nivelSkillFrenesi = 0;
 	// ramos da árvore são por run: zeram junto com os níveis das skills
 	ramoSkillDano = 0;
 	ramoSkillEletrica = 0;
 	ramoSkillGold = 0;
 	ramoSkillFuga = 0;
+	ramoSkillFrenesi = 0;
 	tempoHabilidadeDano = 30;
 	verificaHabilidadeDano = false;
 	qtdCarregaHabilidade = 0;
@@ -1827,6 +1845,8 @@ function Resetar() {
 	ataquesBonusGold = 0;
 	abatesPausaFuga = 0;
 	segundosPausaFuga = 0;
+	abatesFrenesi = 0;
+	ataquesFrenesi = 0;
 	andarBoss = 10; //andar atual onde aparecerão inimigos mais fortes
 	missao = Array(" ", "Coleta de Gold", "Golpes", "Caça aos Mugs", "Tempo") //vetor usado para listagem das missões
 	missaoAtual = 0; //nenhuma missao ativa ate o proximo sorteio
@@ -1905,6 +1925,8 @@ function Resetar() {
 	patenteAvan = 0;
 	patenteEsmBau = 0;
 	patenteVelComp = 0;
+	patenteDano = 0;
+	patenteDCrit = 0;
 	SincronizaIntervaloDanoComp();
 
 	AtualizaLojaGold();
@@ -2002,6 +2024,7 @@ function CriarObjetoSave() {
 		perkEletrica,
 		perkGold,
 		perkFuga,
+		perkFrenesi,
 		conhecimentoMug,
 		derrotadosRun,
 		cmNivelDano,
@@ -2021,10 +2044,12 @@ function CriarObjetoSave() {
 		nivelSkillEletrica,
 		nivelSkillGold,
 		nivelSkillFuga,
+		nivelSkillFrenesi,
 		ramoSkillDano,
 		ramoSkillEletrica,
 		ramoSkillGold,
 		ramoSkillFuga,
+		ramoSkillFrenesi,
 		formigasVermelhas,
 		formigasAmarelas,
 		formigasMarrons,
@@ -2085,6 +2110,7 @@ function CriarObjetoSave() {
 		precoDano,
 		mulDano,
 		lvlDano,
+		patenteDano,
 
 		precoBEspaco,
 		lvlBEspaco,
@@ -2100,6 +2126,7 @@ function CriarObjetoSave() {
 		precoDCrit,
 		sobeDCrit,
 		lvlDCrit,
+		patenteDCrit,
 
 		precoCCrit,
 		sobeCCrit,

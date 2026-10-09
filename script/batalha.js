@@ -42,6 +42,12 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	if (ataqueJogador && segundosPausaFuga > 0) {
 		dano *= MultiplicadorDanoDurantePausaFuga();
 	}
+	// Toque Frenético: o toque do jogador vale ×N durante a janela (multiplicador
+	// lido ANTES do toque ser consumido); o mesmo toque carrega/consome a janela
+	if (ataqueJogador) {
+		if (ataquesFrenesi > 0) dano *= MultiplicadorToqueFrenesi();
+		RegistraToqueFrenesi();
+	}
 	TocaSomSintetico(critico ? "critico" : "impacto");
 	dano *= MultiplicadorDanoFormigas();
 	dano *= MultiplicadorDanoNivel();

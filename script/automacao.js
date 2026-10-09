@@ -76,12 +76,12 @@ function SyncTogglesAutomacao() {
 // próxima patente, e só ficam de fora na patente máxima. Quem efetiva a
 // compra continua sendo a Compra*.
 const ITENS_AUTO_COMPRA = [
-	{ fn: CompraDano, preco: "precoDano" },
+	{ fn: CompraDano, preco: "precoDano", teto: "dano" },
 	{ fn: CompraBau, preco: "precoBau", teto: "bau" },
 	{ fn: CompraBEspaco, preco: "precoBEspaco", teto: "espaco" },
 	{ fn: CompraGold, preco: "precoGold" },
 	{ fn: CompraAvanco, preco: "precoAvan", teto: "avan" },
-	{ fn: CompraDCrit, preco: "precoDCrit" },
+	{ fn: CompraDCrit, preco: "precoDCrit", teto: "dcrit" },
 	{ fn: CompraSubVida, preco: "precoVidaInimigo", teto: "subvida" },
 	{ fn: CompraCCrit, preco: "precoCCrit", teto: "ccrit" },
 	{ fn: CompraQTDAvanco, preco: "precoQTDAvanco", teto: "qtdavan" },
