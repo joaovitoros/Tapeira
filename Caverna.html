@@ -39,20 +39,31 @@
 
 		<div id="container-AndarManter">
 			<div id="container-Andar">
-				<label>Andar: </label>
+				<label>
+					<span class="andar-label-desktop">Andar: </span>
+					<span class="andar-label-mobile" aria-hidden="true">Andar</span>
+				</label>
 				<div class="contAndar" id="contAndar"></div>
 			</div>
 
 			<div id="container-ManterAndar">
 				<label id="lblManter" for="manterAndar">
 					<span class="manter-label-desktop">Manter no andar:</span>
-					<span class="manter-label-mobile" aria-hidden="true">Manter:</span>
+					<span class="manter-label-mobile" aria-hidden="true">Manter</span>
 				</label>
 				<input type="checkbox" id="manterAndar" aria-label="Manter no andar" onclick="AlternaManterAndar()">
 			</div>
 
-			<div>
-				<input type="button" value="Voltar andar" id="btnAndar" class="btn-Padrao" onclick="PedeReset()">
+			<div id="container-VoltarAndar">
+				<button type="button" id="btnAndar" class="btn-Padrao" onclick="PedeReset()">
+					<span class="voltar-label-desktop">Voltar andar</span>
+					<span class="voltar-label-mobile" aria-hidden="true">Voltar</span>
+					<span class="voltar-seta" aria-hidden="true">
+						<svg viewBox="0 0 24 24" focusable="false">
+							<path d="M15 5 8 12l7 7" />
+						</svg>
+					</span>
+				</button>
 			</div>
 		</div>
 

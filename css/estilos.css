@@ -7177,3 +7177,103 @@ button.skill-ramo-no:focus-visible {
 		left: 22%;
 	}
 }
+
+/* --------------- ANDAR / MANTER / VOLTAR (celular) ---------------
+   No Android o HUD do andar estava com textos minúsculos (rótulo 9px e botão
+   7px) e o bloco comia ~60% da largura. Agora: limitado a 1/3 da tela
+   horizontal, três colunas lado a lado e cada uma empilhada — rótulo EM CIMA
+   e o valor EMBAIXO (Andar → número, Manter → checkbox, Voltar → seta para
+   trás). As colunas têm a largura do próprio conteúdo (space-between), senão
+   os rótulos de 6 letras se esbarram. Tem de ficar DEPOIS de todas as outras
+   regras do assunto: os font-size 9px/7px das media queries antigas têm a
+   mesma especificidade e só perdem para o que vier depois. */
+
+#container-AndarManter .andar-label-mobile,
+#container-AndarManter .voltar-label-mobile,
+#container-AndarManter .voltar-seta {
+	display: none;
+}
+
+@media (max-width: 700px) {
+	#container-AndarManter {
+		width: calc(33.333vw - 6px); /* até 1/3 da tela horizontal */
+		min-height: 0;
+		justify-content: space-between; /* colunas com a largura do conteúdo */
+		padding: 3px 2px;
+		gap: 2px;
+		font-size: clamp(10px, 2.8vw, 13px);
+	}
+
+	#container-Andar,
+	#container-ManterAndar,
+	#container-VoltarAndar {
+		flex: 0 1 auto;
+		flex-direction: column;
+		gap: 1px;
+		margin: 0;
+		padding: 1px 0;
+		min-width: 0;
+		text-align: center;
+	}
+
+	#container-AndarManter .andar-label-desktop,
+	#container-AndarManter .voltar-label-desktop {
+		display: none;
+	}
+
+	#container-AndarManter .andar-label-mobile,
+	#container-AndarManter .manter-label-mobile,
+	#container-AndarManter .voltar-label-mobile {
+		display: flex;
+		font-size: inherit;
+		line-height: 1.1;
+		letter-spacing: -0.01em;
+		white-space: nowrap;
+	}
+
+	#container-Andar,
+	#container-ManterAndar #lblManter {
+		font-size: inherit;
+	}
+
+	/* o número do andar vira o destaque do bloco */
+	#contAndar {
+		font-size: 1.9em;
+		font-weight: 800;
+		line-height: 1;
+	}
+
+	#manterAndar {
+		width: 18px;
+		height: 18px;
+	}
+
+	/* "Voltar" com a seta para trás embaixo do texto */
+	#btnAndar {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 1px;
+		width: 100%;
+		min-height: 0;
+		padding: 2px 2px;
+		font-size: inherit;
+		line-height: 1.05;
+	}
+
+	#container-AndarManter .voltar-seta {
+		display: flex;
+		font-size: 15px;
+	}
+
+	#container-AndarManter .voltar-seta svg {
+		width: 1em;
+		height: 1em;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2.6;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+}
