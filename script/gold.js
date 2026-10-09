@@ -191,6 +191,8 @@ function AddGold(valor, aplicaBonusFormigas = true) {
         if (aplicaBonusFormigas) {
             valorFinal = valorFinal * MultiplicadorGoldFormigas();
         }
+        // especialização: buff/nerf de gold no tempo do ganho (gasto não passa por aqui)
+        valorFinal = valorFinal * MultiplicadorGoldEspecializacao();
     }
     gold.add(valorFinal);
 

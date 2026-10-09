@@ -229,7 +229,9 @@ function Salvar() {
 		bauDouradoPendente,
 		ultimaAtualizacaoBauDourado,
 		autoColeta,
-		autoCompra
+		autoCompra,
+		especializacao,
+		especializacaoTrocas
 	};
 
 	save.saveFormat = "tapeira-save";
@@ -513,6 +515,18 @@ function ValidarSave(save) {
 			|| save.autoCompra > 1)) {
 		throw new TypeError("O estado da auto-compra no save é inválido.");
 	}
+	if (save.especializacao !== undefined
+		&& (!Number.isInteger(save.especializacao)
+			|| save.especializacao < 0
+			|| save.especializacao > 3)) {
+		throw new TypeError("A especialização no save é inválida.");
+	}
+	if (save.especializacaoTrocas !== undefined
+		&& (!Number.isInteger(save.especializacaoTrocas)
+			|| save.especializacaoTrocas < 0
+			|| save.especializacaoTrocas > TROCA_ESPECIALIZACAO_MAX)) {
+		throw new TypeError("A contagem de trocas de especialização no save é inválida.");
+	}
 	if (save.ultimaAtualizacaoBauDourado !== undefined
 		&& (!Number.isFinite(save.ultimaAtualizacaoBauDourado)
 			|| save.ultimaAtualizacaoBauDourado < 0)) {
@@ -662,12 +676,17 @@ function CalculaProgressoOffline(ultimaDataSalva) {
 	const chanceCritica = Math.max(0, Math.min(1, Number(chanceCrit)));
 	const danoCriticoCompanheiro = Math.max(0, Number(danoCritJogador) * Number(danoComp1));
 	const danoBaseCompanheiro = Math.max(0, Number(danoComp));
+	// especialização: mesmo tratamento do Bater — normal e crítico levam
+	// multiplicadores diferentes no Olho de Águia (o gold offline é pego
+	// no AddGold da entrega)
+	const multEspNormal = MultiplicadorDanoEspecializacao(false);
+	const multEspCritico = MultiplicadorDanoEspecializacao(true);
 	const danoMedioCompanheirosPorSegundo = danoBaseCompanheiro > 0
-		? (danoBaseCompanheiro * (1 - chanceCritica))
-			+ (danoCriticoCompanheiro * chanceCritica)
+		? (danoBaseCompanheiro * (1 - chanceCritica) * multEspNormal)
+			+ (danoCriticoCompanheiro * chanceCritica * multEspCritico)
 		: 0;
-	const danoMedioJogadorPorAtaque = (Math.max(0, Number(danoJogador)) * (1 - chanceCritica))
-		+ (Math.max(0, Number(danoCritJogador)) * chanceCritica);
+	const danoMedioJogadorPorAtaque = (Math.max(0, Number(danoJogador)) * (1 - chanceCritica) * multEspNormal)
+		+ (Math.max(0, Number(danoCritJogador)) * chanceCritica * multEspCritico);
 	const intervaloAtaqueJogadorMs = Math.max(1, Number(MaxValidaBater)) * 30;
 	const ataquesJogadorPorSegundo = 1000 / intervaloAtaqueJogadorMs;
 	const danoMedioPorSegundo = danoMedioCompanheirosPorSegundo
@@ -982,6 +1001,9 @@ function Carregar(saveData, calculaOffline = false) {
 	precoComp2 = save.precoComp2 ?? 3;
 	goldComp2 = save.goldComp2 ?? 0.5;
 	lvlComp2 = save.lvlComp2 ?? 0;
+	// goldCompanheiro gravado é decorrência da fórmula: recompõe no load
+	// (saves antigos já nascem com o gold do companheiro em dobro)
+	goldCompanheiro = GoldCompanheiroPorSegundo();
 
 	precoComp3 = save.precoComp3 ?? 4;
 	tempoComp3 = save.tempoComp3 ?? 1;
@@ -1057,6 +1079,9 @@ function Carregar(saveData, calculaOffline = false) {
 	// próprio maxAndar — salvo quem já passou dos pisos 40/50 ganha na hora)
 	autoColeta = save.autoColeta ?? 1;
 	autoCompra = save.autoCompra ?? 1;
+	// especialização: save antigo nasce sem build (o desbloqueio é a andarVolta)
+	especializacao = save.especializacao ?? 0;
+	especializacaoTrocas = save.especializacaoTrocas ?? 0;
 	ultimaDataSaveOffline = calculaOffline
 		? (save.offlineLastSavedAt ?? Date.now())
 		: Date.now();
@@ -1571,6 +1596,9 @@ function PreCarregamento() {
 	intervalos.push(setInterval(AutoSaveLocal, 30000));
 	intervalos.push(setInterval(TickBauDourado, 1000));
 	intervalos.push(setInterval(TickAutomacao, 1000));
+	// seção de especialização da loja: estado refletido a cada 1s (leitura
+	// barata de DOM, como os toggles — load, reset e zerada se refletem sozinhos)
+	intervalos.push(setInterval(SyncSecaoEspecializacao, 1000));
 
 	intervalos.push(setInterval(DanoCompanheiros, 1000));
 	intervalos.push(setInterval(GoldCompanheiros, 1000));
@@ -1602,6 +1630,10 @@ function Resetar() {
 	perkEletrica = 0;
 	perkGold = 0;
 	perkFuga = 0;
+	// especialização é por run: escolha e trocas zeram no reset
+	// (o desbloqueio permanente é a própria andarVolta)
+	especializacao = 0;
+	especializacaoTrocas = 0;
 	limiteInimigos = 1; //usada para controlar quantos inimigos podem ser criados na tela ao mesmo tempo
 	gold = new GoldNumber(0); //quantidade de dinheiro do jogador
 	totalGold = new GoldNumber(0); //quantidade total de dinheiro do jogador
@@ -1748,6 +1780,7 @@ function Resetar() {
 
 function Batalha() {
 
+	IniciaFundos?.(); // pré-carrega as artes de fundo (idempotente)
 	AtualizarTela?.();
 	CarregarStatus?.();
 	CriarCompanheiros?.();
@@ -1926,7 +1959,9 @@ function CriarObjetoSave() {
 		bauDouradoPendente,
 		ultimaAtualizacaoBauDourado,
 		autoColeta,
-		autoCompra
+		autoCompra,
+		especializacao,
+		especializacaoTrocas
 	};
 }
 

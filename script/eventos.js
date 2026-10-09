@@ -123,7 +123,12 @@ function IniciaEvento(nome) {
 	eventoAndarBase = 0;
 	eventoOfertas = [];
 
-	if (nome === "comercio") SorteiaOfertasComercio();
+	if (nome === "comercio") {
+		SorteiaOfertasComercio();
+		// o comerciante em pessoa, visível só enquanto o evento dele roda
+		const com = document.getElementById("comerciante");
+		if (com) com.style.visibility = "visible";
+	}
 	if (nome === "meteoro") eventoProximoMeteoroMs = Date.now() + 1500;
 	if (nome === "inseto") CriaInseto();
 	if (nome === "emboscada" && !PreparaEmboscada()) {
@@ -177,6 +182,9 @@ function EncerraEvento(resetarCooldown) {
 	if (painel) painel.remove();
 	const fragmentos = document.getElementById("eventoFragmentos");
 	if (fragmentos) fragmentos.innerHTML = "";
+	// cobre todos os fins do evento (tempo, ✕, ESC, reset e load)
+	const com = document.getElementById("comerciante");
+	if (com) com.style.visibility = "hidden";
 }
 
 // ---------------------------------------------------------

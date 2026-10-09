@@ -1056,20 +1056,23 @@ const UI = {
     },
 
     showStatus() {
-        // dano real aplicado no inimigo = base × multiplicador de formigas × bônus de nível
+        // dano real aplicado no inimigo = base × formigas × nível × especialização
         const multDanoTotal = MultiplicadorDanoFormigas() * MultiplicadorDanoNivel();
+        const multEspNormal = MultiplicadorDanoEspecializacao(false);
+        const multEspCritico = MultiplicadorDanoEspecializacao(true);
 
         const stats = [
-            ["Dano", (danoJogador * multDanoTotal).toFixed(2)],
+            ["Dano", (danoJogador * multDanoTotal * multEspNormal).toFixed(2)],
             ["Multiplicador Gold", mulGold.toFixed(2)],
-            ["Gold por inimigo", FormatGold(andar * mulGold * MultiplicadorGoldConhecimento() * MultiplicadorGoldFormigas())],
+            ["Gold por inimigo", FormatGold(andar * mulGold * MultiplicadorGoldConhecimento() * MultiplicadorGoldFormigas() * MultiplicadorGoldEspecializacao())],
             ["Gold total", FormatGold(totalGold)],
             ["Bonus avanço", BonusGoldAvanco().toFixed(2)],
             ["Chance avanço", (avanco * 100).toFixed(2) + "%"],
             ["Qtd avanço", qtdAvanco],
-            ["Dano crítico", (danoCritJogador * multDanoTotal).toFixed(2)],
+            ["Dano crítico", (danoCritJogador * multDanoTotal * multEspCritico).toFixed(2)],
             ["Chance crítica", (chanceCrit * 100).toFixed(2) + "%"],
-            ["DPS companheiros", (danoComp * multDanoTotal).toFixed(2)],
+            ["Especialização", especializacao > 0 ? ESPECIALIZACOES[especializacao].nome : "—"],
+            ["DPS companheiros", (danoComp * multDanoTotal * multEspNormal).toFixed(2)],
             ["GoldPS companions", goldCompanheiro.toFixed(2)],
             ["Tempo bônus", tempoEsperaCompanheiro + " seg"],
             ["Bônus XP", "+" + BonusXPLoja()],

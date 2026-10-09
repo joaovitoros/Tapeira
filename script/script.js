@@ -204,6 +204,12 @@ function MultiplicadorGoldComp2() {
 	return 1 + cmNivelGoldComp2 * 0.01;
 }
 
+// Gold do Companheiro 2 (GoldPS) por segundo — fonte única da fórmula:
+// nível × mulGold × bônus do CM, rendendo o dobro (×2 pedido no balanceamento)
+function GoldCompanheiroPorSegundo(nivel = lvlComp2) {
+	return N(nivel) * N(mulGold) * MultiplicadorGoldComp2() * 2;
+}
+
 // Loja de esmeralda "CM em dobro": ×2 no Conhecimento Mug ganho por nível
 // (1 nível por enquanto; item permanente da loja de esmeraldas)
 // +1 por marco de 50 níveis do jogador (marcosNivel50, permanente)
@@ -385,8 +391,52 @@ function CarregarStatus(){
 	}
 }
 
+// ---------- Fundo da caverna ----------
+// Duas camadas fixas (#fundoA/#fundoB) se cruzam (crossfade ~1,2s; corte seco
+// em reduced-motion) a cada andar vencido. Novo fundo = jogar o PNG em imagens/
+// e listar o nome aqui. Cosmético: não vai pro save.
+var FUNDOS_CAVERNA = ['background cristal.png', 'background.png'];
+var fundoIdxAtual = 0;
+var fundoA = null, fundoB = null, fundoAtiva = null;
+
+function IniciaFundos() {
+	if (fundoAtiva) return; // idempotente (Batalha roda a cada load/onda)
+	fundoA = document.getElementById('fundoA');
+	fundoB = document.getElementById('fundoB');
+	if (!fundoA || !fundoB) return;
+	fundoAtiva = fundoA;
+	// aquece as duas artes: a primeira troca não pode "piscar"
+	FUNDOS_CAVERNA.forEach(function (nome) {
+		var img = new Image();
+		img.src = 'imagens/' + nome;
+	});
+}
+
+function ProximoFundo() {
+	if (!fundoAtiva) IniciaFundos();
+	if (!fundoAtiva) return;
+	fundoIdxAtual = (fundoIdxAtual + 1) % FUNDOS_CAVERNA.length;
+	var oculta = fundoAtiva === fundoA ? fundoB : fundoA;
+	// andares muito rápidos: conclui na hora qualquer crossfade em voo
+	fundoAtiva.style.transition = 'none';
+	fundoAtiva.style.opacity = '1';
+	oculta.style.transition = 'none';
+	oculta.style.opacity = '0';
+	void oculta.offsetHeight; // aplica os estados finais sem transição
+	// a camada oculta recebe a próxima arte; as duas se cruzam (~1,2s)
+	// URL absoluta: URL relativa dentro de var() resolveria contra estilos.css (css/imagens/… = 404)
+	oculta.style.setProperty('--fundo-img', "url('" + new URL('imagens/' + FUNDOS_CAVERNA[fundoIdxAtual], document.baseURI).href + "')");
+	fundoAtiva.style.transition = '';
+	oculta.style.transition = '';
+	void oculta.offsetHeight; // reativa a transição antes de mexer no opacity
+	oculta.style.opacity = '1';
+	fundoAtiva.style.opacity = '0';
+	fundoAtiva = oculta;
+}
+
 function CriarCompanheiros(){
-	if(lvlComp1>0){
+	// guarda por id: chamada a cada compra e no load — sem ela as imagens empilhavam
+	if(lvlComp1>0 && !document.getElementById("companheiro1")){
 		companheiro = document.createElement("img");
 		att1 = document.createAttribute("src");
 		att2 = document.createAttribute("class");
@@ -399,7 +449,7 @@ function CriarCompanheiros(){
 		companheiro.setAttributeNode(att3);
 		document.body.appendChild(companheiro);
 	}
-	if(lvlComp2>0){
+	if(lvlComp2>0 && !document.getElementById("companheiro2")){
 		companheiro = document.createElement("img");
 		att1 = document.createAttribute("src");
 		att2 = document.createAttribute("class");
@@ -412,7 +462,7 @@ function CriarCompanheiros(){
 		companheiro.setAttributeNode(att3);
 		document.body.appendChild(companheiro);
 	}
-	if(lvlComp3>0){
+	if(lvlComp3>0 && !document.getElementById("companheiro3")){
 		companheiro = document.createElement("img");
 		att1 = document.createAttribute("src");
 		att2 = document.createAttribute("class");
@@ -420,6 +470,20 @@ function CriarCompanheiros(){
 		att1.value = "imagens/companheiro3.png";
 		att2.value = "companheiro3";
 		att3.value = "companheiro3";
+		companheiro.setAttributeNode(att1);
+		companheiro.setAttributeNode(att2);
+		companheiro.setAttributeNode(att3);
+		document.body.appendChild(companheiro);
+	}
+	// item 5 da loja de esmeraldas: o mago só entra na tela com o bônus comprado
+	if(lvlXP>0 && !document.getElementById("companheiroXP")){
+		companheiro = document.createElement("img");
+		att1 = document.createAttribute("src");
+		att2 = document.createAttribute("class");
+		att3 = document.createAttribute("id");
+		att1.value = "imagens/companheiroXP.png";
+		att2.value = "companheiroXP";
+		att3.value = "companheiroXP";
 		companheiro.setAttributeNode(att1);
 		companheiro.setAttributeNode(att2);
 		companheiro.setAttributeNode(att3);
@@ -1082,7 +1146,7 @@ function VoltaAndar(){
 		mulGold = mulGold*1.25;
 
 		if(lvlComp2>0){
-			goldCompanheiro = lvlComp2*mulGold*MultiplicadorGoldComp2();
+			goldCompanheiro = GoldCompanheiroPorSegundo();
 		}
 		
 		Resetar(); // zera derrotadosRun (a conversão em CM já foi feita acima)

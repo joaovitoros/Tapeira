@@ -17,9 +17,13 @@
 	<script src="script/FileSaver.js"></script>
 	<script src="script/eventos.js"></script>
 	<script src="script/automacao.js"></script>
+	<script src="script/especializacoes.js"></script>
 </head>
 
 <body class="Batalha" onload="PreCarregamento()">
+	<!-- Camadas de fundo da caverna: se cruzam a cada andar vencido (script.js) -->
+	<div id="fundoA" class="fundo-camada" aria-hidden="true"></div>
+	<div id="fundoB" class="fundo-camada" aria-hidden="true"></div>
 
 	<div id="game-root">
 
@@ -125,6 +129,7 @@
 		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo2" id="inimigo2" onclick="Bater(2, true)">
 		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo3" id="inimigo3" onclick="Bater(3, true)">
 		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo4" id="inimigo4" onclick="Bater(4, true)">
+		<img style="visibility:hidden" src="imagens/comerciante.png" class="comerciante" id="comerciante" alt="">
 
 		<div id="container-Habilidades">
 			<div id="BaraQTDHab1Borda">
@@ -170,37 +175,36 @@
 			</div>
 		</div>
 
-		<section id="golden-chest-tracker" aria-labelledby="golden-chest-title">
-			<div class="golden-chest-tracker__heading">
-				<img src="imagens/bau-dourado.svg" alt="" class="golden-chest-tracker__icon">
-				<div>
-					<div id="golden-chest-title">Baú dourado</div>
-					<div id="golden-chest-time">20 min no jogo · 40 min fora</div>
-				</div>
-			</div>
-			<div id="golden-chest-progress" class="golden-chest-tracker__progress" role="progressbar"
-				aria-label="Progresso para encontrar um baú dourado" aria-valuemin="0" aria-valuemax="100"
-				aria-valuenow="0" aria-valuetext="0% concluído">
-				<div id="golden-chest-progress-fill"></div>
-			</div>
-			<div class="golden-chest-tracker__footer">
-				<span id="golden-chest-progress-text">0:00 / 20:00</span>
-				<button type="button" id="golden-chest-claim" onclick="ColetaBauDourado()" disabled>
-					Abrir
-				</button>
-			</div>
-			<div class="golden-chest-tracker__auto">
-				<label class="auto-toggle" id="autoColetaWrap">
-					<input type="checkbox" id="autoColetaToggle"
-						onchange="AlternaAutoColeta(this.checked)"
-						aria-label="Auto-coleta de baús" />
-					<span>Auto-coleta</span>
-				</label>
-			</div>
-		</section>
-
 		<div id="container-opcoes">
 			<div id="container-Botoes">
+				<section id="golden-chest-tracker" aria-labelledby="golden-chest-title">
+					<div class="golden-chest-tracker__heading">
+						<img src="imagens/bau-dourado.svg" alt="" class="golden-chest-tracker__icon">
+						<div>
+							<div id="golden-chest-title">Baú dourado</div>
+							<div id="golden-chest-time">20 min no jogo · 40 min fora</div>
+						</div>
+					</div>
+					<div id="golden-chest-progress" class="golden-chest-tracker__progress" role="progressbar"
+						aria-label="Progresso para encontrar um baú dourado" aria-valuemin="0" aria-valuemax="100"
+						aria-valuenow="0" aria-valuetext="0% concluído">
+						<div id="golden-chest-progress-fill"></div>
+					</div>
+					<div class="golden-chest-tracker__footer">
+						<span id="golden-chest-progress-text">0:00 / 20:00</span>
+						<button type="button" id="golden-chest-claim" onclick="ColetaBauDourado()" disabled>
+							Abrir
+						</button>
+					</div>
+					<div class="golden-chest-tracker__auto">
+						<label class="auto-toggle" id="autoColetaWrap">
+							<input type="checkbox" id="autoColetaToggle"
+								onchange="AlternaAutoColeta(this.checked)"
+								aria-label="Auto-coleta de baús" />
+							<span>Auto-coleta</span>
+						</label>
+					</div>
+				</section>
 				<button type="button" id="btnStatus" class="btn-Padrao screen-nav-button screen-nav-button--status"
 					aria-controls="DivStatus" aria-expanded="false" onclick="SobeStatus()">
 					<span class="screen-nav-icon screen-nav-icon--status" aria-hidden="true"></span>
@@ -446,6 +450,30 @@
 
 				</table>
 
+				<div id="secaoEspecializacao" class="especializacao">
+					<div class="especializacao__cabecalho">
+						<span class="especializacao__titulo">Especialização</span>
+						<span class="especializacao__status" id="espStatus">Nenhuma</span>
+					</div>
+					<div class="especializacao__cartoes">
+						<button type="button" class="esp-cartao" data-esp="1" onclick="EscolheEspecializacao(1)">
+							<span class="esp-cartao__nome">Força Bruta</span>
+							<span class="esp-cartao__efeito">+40% dano · −25% gold</span>
+						</button>
+						<button type="button" class="esp-cartao" data-esp="2" onclick="EscolheEspecializacao(2)">
+							<span class="esp-cartao__nome">Toque de Midas</span>
+							<span class="esp-cartao__efeito">+40% gold · −25% dano</span>
+						</button>
+						<button type="button" class="esp-cartao" data-esp="3" onclick="EscolheEspecializacao(3)">
+							<span class="esp-cartao__nome">Olho de Águia</span>
+							<span class="esp-cartao__efeito">Crítico ×1,8 · −10% dano · −15% gold</span>
+						</button>
+					</div>
+					<div class="especializacao__rodape">
+						<span class="especializacao__nota" id="espNota">Desbloqueia após o primeiro reset</span>
+						<span class="especializacao__preco" id="espPreco" hidden></span>
+					</div>
+				</div>
 
 			</div>
 			<div id="LojaEsm" style="visibility:hidden">

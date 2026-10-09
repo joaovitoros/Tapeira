@@ -35,6 +35,8 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	TocaSomSintetico(critico ? "critico" : "impacto");
 	dano *= MultiplicadorDanoFormigas();
 	dano *= MultiplicadorDanoNivel();
+	// especialização: buff/nerf aplicado no tempo do hit (não muta danoJogador)
+	dano *= MultiplicadorDanoEspecializacao(critico);
 
 	if (validaDano) UI.playAttackAnimation(inimigoElement);
 
@@ -200,10 +202,13 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 				marcoGoldRun = andar;
 				mulGold = N(mulGold) * 1.1;
 				if (lvlComp2 > 0) {
-					goldCompanheiro = N(lvlComp2) * N(mulGold) * MultiplicadorGoldComp2();
+					goldCompanheiro = GoldCompanheiroPorSegundo();
 				}
 				UI.showMilestone("Marco do andar " + andar, "+10% de gold nesta run");
 			}
+
+			// fundo da caverna gira a cada andar vencido (crossfade ~1,2s)
+			ProximoFundo?.();
 
 			RemoverInimigos();
 			RemoveBau();

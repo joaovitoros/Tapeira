@@ -257,7 +257,7 @@ function CompraCM(tipo) {
 	} else if (tipo === "goldcomp2") {
 		cmNivelGoldComp2++;
 		// recompõe do zero (lvlComp2 × mulGold × bônus) — nunca conta em dobro
-		if (N(lvlComp2) > 0) goldCompanheiro = N(lvlComp2) * N(mulGold) * MultiplicadorGoldComp2();
+		if (N(lvlComp2) > 0) goldCompanheiro = GoldCompanheiroPorSegundo();
 	}
 
 	ChamaSom('audio6');
@@ -355,7 +355,7 @@ function CompraGold(){
 		lvlGold++;
 
 		if(lvlComp2 > 0){
-			goldCompanheiro = N(lvlComp2) * N(mulGold) * MultiplicadorGoldComp2();
+			goldCompanheiro = GoldCompanheiroPorSegundo();
 		}
 
 		ChamaSom('audio6');
@@ -650,7 +650,7 @@ function CompraComp2(){
 	if(N(esmeraldas) >= N(precoComp2)){
 		esmeraldas = N(esmeraldas) - N(precoComp2);
 		lvlComp2++;
-		goldCompanheiro = N(lvlComp2) * N(mulGold) * MultiplicadorGoldComp2();
+		goldCompanheiro = GoldCompanheiroPorSegundo();
 		precoComp2 = N(precoComp2) * 2;
 
 		ChamaSom('audio6');
@@ -701,6 +701,7 @@ function CompraXP(){
 		document.getElementById("lvlXP").innerHTML=lvlXP;
 
 		MostraStatus();
+		CriarCompanheiros();
 	}else{
 		MostraInfo("Voce não tem esmeraldas o suficiente para essa compra!");
 	}
@@ -797,7 +798,7 @@ const PREVIEWS_LOJA = {
 		return "Bônus de gold do avanço: " + N(mulGoldAvanco).toFixed(2) + " → " + prox.toFixed(2);
 	},
 	CompraComp2() {
-		const prox = (N(lvlComp2) + 1) * N(mulGold) * MultiplicadorGoldComp2();
+		const prox = GoldCompanheiroPorSegundo(N(lvlComp2) + 1);
 		return "Gold do companheiro: " + FormatGold(N(goldCompanheiro)) + " → " + FormatGold(prox) + "/seg";
 	},
 	CompraComp3() {

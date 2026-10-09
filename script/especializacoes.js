@@ -1,0 +1,121 @@
+// =========================
+// ESPECIALIZAÇÕES (Tier 3 #1 — princípios 26/27/38)
+// =========================
+// Três builds mutuamente exclusivas na loja de gold, desbloqueadas após o
+// 1º reset (andarVolta > 15 — o mesmo marcador do tutorial do companheiro;
+// sai de 15 só quando o primeiro portão de reset é passado). Escolhe UMA
+// com gold e trocar dentro da run custa 5× o preço anterior (volta ao
+// preço-base a cada reset). Sem "nenhuma": a build é o compromisso da run.
+//
+// Os bônus/penalidades são aplicados em TEMPO DE SORTEIO por funções puras
+// (MultiplicadorDanoEspecializacao no Bater e no status/offline, e
+// MultiplicadorGoldEspecializacao no AddGold) — nada muta danoJogador,
+// danoCritJogador ou mulGold, então trocar de build nunca corrompe status,
+// mesmo comprando itens da loja entre uma troca e outra.
+
+const PRECO_ESPECIALIZACAO_BASE = 500;
+const FATOR_PRECO_TROCA = 5;
+// trava de saneamento do save: 5^200 ainda é finito em double
+const TROCA_ESPECIALIZACAO_MAX = 200;
+
+// 0 = nenhuma (padrão/save antigo), 1..3 = build ativa — por run, zerada
+// no Resetar()
+var especializacao = 0;
+var especializacaoTrocas = 0;
+
+const ESPECIALIZACOES = [
+	{ id: 0, nome: "Nenhuma" },
+	{ id: 1, nome: "Força Bruta", efeito: "+40% dano · −25% gold" },
+	{ id: 2, nome: "Toque de Midas", efeito: "+40% gold · −25% dano" },
+	{ id: 3, nome: "Olho de Águia", efeito: "Crítico ×1,8 · −10% dano · −15% gold" }
+];
+
+function EspecializacaoDesbloqueada() {
+	return andarVolta > 15;
+}
+
+// Dano do hit (Bater, status e progressão offline). ehCritico separa o
+// golpe normal do crítico: o Olho de Águia nerfa os dois e só o crítico
+// leva o ×1,8 (por isso a build exige investir em chance/dano crítico).
+function MultiplicadorDanoEspecializacao(ehCritico) {
+	if (especializacao === 1) return 1.4;
+	if (especializacao === 2) return 0.75;
+	if (especializacao === 3) return ehCritico ? 0.9 * 1.8 : 0.9;
+	return 1;
+}
+
+// Ganhos de gold: AddGold cobre kills, bônus, eventos, baús, missões,
+// companheiros e o progresso offline — gasto (PagaLoja) não passa por ele.
+function MultiplicadorGoldEspecializacao() {
+	if (especializacao === 1) return 0.75;
+	if (especializacao === 2) return 1.4;
+	if (especializacao === 3) return 0.85;
+	return 1;
+}
+
+// Próxima escolha/troca: 500 · 5^trocas; especializacaoTrocas zera no reset
+function PrecoEspecializacao() {
+	return PRECO_ESPECIALIZACAO_BASE * Math.pow(FATOR_PRECO_TROCA, especializacaoTrocas);
+}
+
+function EscolheEspecializacao(id) {
+	if (!EspecializacaoDesbloqueada()) {
+		MostraInfo("A especialização desbloqueia após o primeiro reset!");
+		return;
+	}
+	if (!Number.isInteger(id) || id < 1 || id > 3 || id === especializacao) return;
+
+	const preco = PrecoEspecializacao();
+	if (!GE(gold, preco)) {
+		MostraInfo("Voce não tem gold o suficiente para essa compra!");
+		return;
+	}
+
+	// mesmo caminho das compras da loja de gold: no desafio "sem gold" o
+	// gasto falha a missão (é decisão manual, como comprar um item qualquer)
+	PagaLoja(preco);
+	especializacao = id;
+	especializacaoTrocas++;
+
+	ChamaSom('audio6');
+	SyncSecaoEspecializacao();
+	AutoSaveLocal();
+	MostraInfo(ESPECIALIZACOES[id].nome + " ativada — " + ESPECIALIZACOES[id].efeito + ".");
+}
+
+// Estado da seção na loja: trava antes do 1º reset, marca o cartão ativo e
+// mostra o preço da próxima escolha/troca. Roda no intervalo do
+// PreCarregamento (só leitura de DOM, como os toggles da automação) — load,
+// reset e zerada se refletem sozinhos na tela.
+function SyncSecaoEspecializacao() {
+	const secao = document.getElementById("secaoEspecializacao");
+	if (!secao) return;
+
+	const desbloqueada = EspecializacaoDesbloqueada();
+	secao.classList.toggle("especializacao--travada", !desbloqueada);
+
+	for (const cartao of secao.querySelectorAll(".esp-cartao")) {
+		const id = Number(cartao.dataset.esp);
+		cartao.classList.toggle("esp-cartao--ativo", id === especializacao);
+		cartao.disabled = !desbloqueada;
+	}
+
+	const status = document.getElementById("espStatus");
+	if (status) status.textContent = ESPECIALIZACOES[especializacao].nome;
+
+	const nota = document.getElementById("espNota");
+	if (nota) {
+		nota.textContent = desbloqueada
+			? "Uma por run — trocar custa 5× mais e zera no reset"
+			: "Desbloqueia após o primeiro reset";
+	}
+
+	const preco = document.getElementById("espPreco");
+	if (preco) {
+		preco.hidden = !desbloqueada;
+		if (desbloqueada) {
+			preco.textContent = (especializacao === 0 ? "Escolher: " : "Troca: ")
+				+ FormatGold(PrecoEspecializacao()) + " gold";
+		}
+	}
+}
