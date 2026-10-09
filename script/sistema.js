@@ -169,6 +169,15 @@ function Salvar() {
 		totalNiveis,
 		bonusCritConquista,
 
+		conquistasComp,
+		missoesCompletas,
+		melhorGoldRun: {
+			m: melhorGoldRun.m,
+			e: melhorGoldRun.e
+		},
+		runInicioMs,
+		comprasRun,
+
 		precoDano,
 		mulDano,
 		lvlDano,
@@ -492,6 +501,35 @@ function ValidarSave(save) {
 		throw new TypeError("A velocidade de ataque do companheiro no save é inválida.");
 	}
 
+	// Conquistas comportamentais: flags 0/1 em lista de 5, contadores inteiros
+	// e cronômetro de run dentro dos limites de um save legítimo (campos ausentes = save antigo)
+	if (save.conquistasComp !== undefined
+		&& (!Array.isArray(save.conquistasComp)
+			|| save.conquistasComp.length !== CONQUISTAS_COMP.length
+			|| save.conquistasComp.some(v => v !== 0 && v !== 1))) {
+		throw new TypeError("As conquistas comportamentais do save são inválidas.");
+	}
+	if (save.missoesCompletas !== undefined
+		&& (!Number.isSafeInteger(save.missoesCompletas) || save.missoesCompletas < 0 || save.missoesCompletas > 1000000)) {
+		throw new TypeError("O contador de missões do save é inválido.");
+	}
+	if (save.comprasRun !== undefined
+		&& (!Number.isSafeInteger(save.comprasRun) || save.comprasRun < 0 || save.comprasRun > 1000000)) {
+		throw new TypeError("O contador de compras da run no save é inválido.");
+	}
+	if (save.runInicioMs !== undefined
+		&& (!Number.isFinite(save.runInicioMs) || save.runInicioMs <= 0
+			|| save.runInicioMs > Date.now() + 300000)) {
+		throw new TypeError("O cronômetro da run no save é inválido.");
+	}
+	if (save.melhorGoldRun !== undefined) {
+		const mg = save.melhorGoldRun;
+		if (!mg || typeof mg !== "object" || Array.isArray(mg)
+			|| !Number.isFinite(mg.m) || !Number.isFinite(mg.e)) {
+			throw new TypeError("O melhor gold de run do save é inválido.");
+		}
+	}
+
 	// Conhecimento Mug: inteiros não negativos; níveis respeitam o teto de cada item
 	const cmKeys = [
 		["conhecimentoMug", 0, 1000000000],
@@ -613,7 +651,9 @@ function ValidarSave(save) {
 	}
 
 	for (const [key, value] of Object.entries(save)) {
-		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards"].includes(key)) continue;
+		// campos não-numéricos já validados especificamente acima (shape conferido)
+		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards",
+			"conquistasComp", "melhorGoldRun"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");
 		}
@@ -986,11 +1026,11 @@ function Carregar(saveData, calculaOffline = false) {
 	danoCritJogador = save.danoCritJogador ?? 2;
 	multiplicadorMaximoDanoCritico = save.multiplicadorMaximoDanoCritico ?? 4;
 	// saves antigos compraram crítico do CM antes do teto virar item do CM:
-	// garante o piso (4 + +0,1 por nível); o valor salvo vale se for maior
+	// garante o piso (4 + +0,2 por nível); o valor salvo vale se for maior
 	// (inclui os +0,1 da loja de gold comprados nesta run)
 	multiplicadorMaximoDanoCritico = Math.max(
 		multiplicadorMaximoDanoCritico,
-		Math.round((4 + 0.1 * cmNivelCrit) * 10) / 10);
+		Math.round((4 + 0.2 * cmNivelCrit) * 10) / 10);
 	LimitaDanoCritico();
 	chanceCrit = save.chanceCrit ?? 0.01;
 
@@ -1115,6 +1155,14 @@ function Carregar(saveData, calculaOffline = false) {
 	precoVelComp = save.precoVelComp ?? 125;
 	lvlVelComp = save.lvlVelComp ?? 1;
 	velAtaqueComp = save.velAtaqueComp ?? 1;
+	// Conquistas comportamentais: permanentes (ausentes = nenhuma desbloqueada).
+	// Saves antigos já passando do andar 25 nascem como "comprou": sem histórico
+	// de compras no save não dá pra provar o contrário — sem unlock de graça.
+	conquistasComp = Array.isArray(save.conquistasComp) ? save.conquistasComp.slice() : [0, 0, 0, 0, 0];
+	missoesCompletas = save.missoesCompletas ?? 0;
+	melhorGoldRun = GoldNumber.fromMantissaExponent(save.melhorGoldRun?.m ?? 0, save.melhorGoldRun?.e ?? 0);
+	runInicioMs = save.runInicioMs ?? Date.now();
+	comprasRun = save.comprasRun ?? (andar >= 25 ? 1 : 0);
 	// patentes ausentes = 0 (★I): saves de antes da feature nascem na base
 	patenteBau = save.patenteBau ?? 0;
 	patenteBEspaco = save.patenteBEspaco ?? 0;
@@ -1720,6 +1768,8 @@ function Resetar() {
 	numInimigosTela = 1; //usada para validar quantos inimigos e
 	andar = 1;	//usada para contagem do andar atual do jogo (Necessario para calculos progressivos)
 	marcoGoldRun = 0;
+	runInicioMs = Date.now(); //nova run: cronômetro da conquista Velocista
+	comprasRun = 0; //compras de gold desta run zeram (conquista Poupado)
 	qtdInimigosAndar = 1; //quantidade necessaria de inimigos que devem ser derrotados para avançar para o proximo andar
 	inimigosDerrotados = 0; //quantidade de inimigos derrotados naquele andar
 	derrotadosRun = 0; //abates da run zerados (a conversão em CM acontece antes, no VoltaAndar)
@@ -1741,9 +1791,9 @@ function Resetar() {
 	qtdSave = 0; //Quantidade de vezes que o jogo foi salvo
 	danoJogador = 1; //dano atual do jogador
 	danoCritJogador = 2; //dano critico atual do jogador
-	// teto ×4 + +0,1 por nível do Conhecimento (permanente; o +0,1 da loja de
+	// teto ×4 + +0,2 por nível do Conhecimento (permanente; o +0,1 da loja de
 	// gold é por run e é reconstruído nas compras da run)
-	multiplicadorMaximoDanoCritico = Math.round((4 + 0.1 * cmNivelCrit) * 10) / 10;
+	multiplicadorMaximoDanoCritico = Math.round((4 + 0.2 * cmNivelCrit) * 10) / 10;
 	chanceCrit = 0.01; //chance em porcentagem de se causar um dano critico
 	//as vidas dos inimigos sao recalculadas por CarregarStatus logo apos o reset
 	//mulGoldAvanco NAO e mais zerado aqui: e um item permanente da loja de esmeraldas
@@ -1875,9 +1925,9 @@ function Resetar() {
 		LimitaDanoCritico();
 	}
 
-	// Loja do Conhecimento: +1% de dano permanente por nível
+	// Loja do Conhecimento: +2% de dano permanente por nível
 	if (cmNivelDano > 0 && isFinite(cmNivelDano)) {
-		danoJogador = danoJogador * Math.pow(1.01, cmNivelDano);
+		danoJogador = danoJogador * Math.pow(1.02, cmNivelDano);
 		LimitaDanoCritico();
 	}
 
@@ -1889,9 +1939,9 @@ function Resetar() {
 		LimitaDanoCritico();
 	}
 
-	// Loja do Conhecimento: +1% de dano crítico por nível (dentro do teto ×4)
+	// Loja do Conhecimento: +2% de dano crítico por nível (dentro do teto ×4)
 	if (cmNivelCrit > 0 && isFinite(cmNivelCrit)) {
-		danoCritJogador = danoCritJogador * Math.pow(1.01, cmNivelCrit);
+		danoCritJogador = danoCritJogador * Math.pow(1.02, cmNivelCrit);
 		LimitaDanoCritico();
 	}
 
@@ -2021,6 +2071,15 @@ function CriarObjetoSave() {
 		validaConquista,
 		totalNiveis,
 		bonusCritConquista,
+
+		conquistasComp,
+		missoesCompletas,
+		melhorGoldRun: {
+			m: melhorGoldRun.m,
+			e: melhorGoldRun.e
+		},
+		runInicioMs,
+		comprasRun,
 
 		precoDano,
 		mulDano,

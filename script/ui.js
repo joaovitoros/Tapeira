@@ -1177,15 +1177,15 @@ const UI = {
 
         const stats = [
             // Cadeia de Ataques: o valor "no cap" é o golpe cheio com o stack
-            // de +500% fechado (base ×0,5 ×6 = ×3)
+            // de +400% fechado (base ×0,5 ×5 = ×2,5)
             ["Dano", (danoJogador * multDanoTotal * multEspNormal).toFixed(2)
                 + (especializacao === 5
-                    ? " → " + (danoJogador * multDanoTotal * 3).toFixed(2) + " no cap"
+                    ? " → " + (danoJogador * multDanoTotal * 2.5).toFixed(2) + " no cap"
                     : "")],
             ["Multiplicador Gold", mulGold.toFixed(2)],
             ["Gold por inimigo", FormatGold(andar * mulGold * MultiplicadorGoldConhecimento() * MultiplicadorGoldFormigas() * MultiplicadorGoldEspecializacao())],
             ["Gold total", FormatGold(totalGold)],
-            ["Bonus avanço", BonusGoldAvanco().toFixed(2)],
+            ["Bonus avanço", FormatGold(BonusGoldAvanco())],
             ["Chance avanço", (avanco * 100).toFixed(2) + "%"],
             ["Qtd avanço", qtdAvanco],
             ["Dano crítico", (danoCritJogador * multDanoTotal * multEspCritico).toFixed(2)],
@@ -1193,12 +1193,13 @@ const UI = {
             ["Especialização", especializacao > 0 ? ESPECIALIZACOES[especializacao].nome : "—"],
             // DPS de verdade: a Velocidade do Companheiro multiplica os hits/s
             ["DPS companheiros", (danoComp * multDanoTotal * multEspNormal * N(velAtaqueComp)).toFixed(2)],
-            ["GoldPS companions", goldCompanheiro.toFixed(2)],
+            ["GoldPS companions", FormatGold(goldCompanheiro)],
             ["Tempo bônus", tempoEsperaCompanheiro + " seg"],
             ["Bônus XP", "+" + BonusXPLoja()],
             ["XP por inimigo", (XPPorInimigo() * BonusXPConhecimento()).toFixed(2)],
-            ["Conhecimento gold", "+" + cmNivelGold + "%"],
-            ["Conhecimento XP", "+" + cmNivelXp + "%"],
+            // total do bônus do CM: +2% por nível (dobro do +1% original)
+            ["Conhecimento gold", "+" + (cmNivelGold * 2) + "%"],
+            ["Conhecimento XP", "+" + (cmNivelXp * 2) + "%"],
             ["Vida Mug", (subVidaInimigo * 100).toFixed(2) + "%"],
             ["Chance baú", (chanceBau * 100).toFixed(2) + "%"],
             ["Chance esmeralda", (chanceEsmeraldaBau * 100).toFixed(2) + "%"]
@@ -1949,6 +1950,36 @@ function MostraConquista() {
 		</div>
 	`;
 
+    conquista += `
+		<div style="margin-top:1.2em;">
+
+			<div style="color:#d9a7ff;font-weight:bold;">
+				Conquistas Comportamentais
+			</div>
+	`;
+
+    for (let i = 0; i < CONQUISTAS_COMP.length; i++) {
+        const c = CONQUISTAS_COMP[i];
+        const feita = TemConquistaComp(i);
+        conquista += `
+			<div style="margin-top:0.6em;${feita ? "" : "opacity:0.75;"}">
+				<div>
+					${feita ? "✔" : "○"} <b>${c.nome}</b> — ${c.recompensa}
+				</div>
+				<div style="font-size:0.9em;">
+					${c.desc}
+				</div>
+				<div style="font-size:0.9em;color:${feita ? "#8fe6a8" : "#cfcfcf"};">
+					${feita ? "Desbloqueada!" : "Progresso: " + ProgressoConquistaComp(i)}
+				</div>
+			</div>
+		`;
+    }
+
+    conquista += `
+		</div>
+	`;
+
     UI.showModal("Conquistas", conquista);
 }
 
@@ -2116,12 +2147,16 @@ function MostraMarcos() {
     const faltamNiveis = proximoNiveis - niveisAcum;
 
     // --- Desbloqueios por andar (andar máximo = permanente) ---
+    // especializações 3/4/5 entram pelo `andar` da própria tabela
     const desbloqueios = [
         ...SKILLS_UPGRADE
             .filter(skill => skill.pisoDesbloqueio > 1)
             .map(skill => ({ nome: skill.nome, piso: skill.pisoDesbloqueio })),
         { nome: "Auto-coleta de baús", piso: ANDAR_AUTO_COLETA },
-        { nome: "Auto-compra da loja", piso: ANDAR_AUTO_COMPRA }
+        { nome: "Auto-compra da loja", piso: ANDAR_AUTO_COMPRA },
+        ...ESPECIALIZACOES
+            .filter(esp => esp.andar > 0)
+            .map(esp => ({ nome: esp.nome, piso: esp.andar }))
     ].map(desbloqueio => {
         const aberto = maxAndar >= desbloqueio.piso;
         return aberto
@@ -2195,7 +2230,8 @@ function MostraMarcos() {
                     O desbloqueio usa o andar máximo já atingido (${maxAndar}) e não
                     é perdido no reset. Andar 40 libera a auto-coleta dos baús e
                     andar 50 a auto-compra da loja (toggles no rastreador do baú
-                    dourado e no cabeçalho da loja).
+                    dourado e no cabeçalho da loja). As especializações de build
+                    abrem pelo mesmo critério: ${ESPECIALIZACOES.filter(esp => esp.andar > 0).map(esp => esp.nome + " (andar " + esp.andar + ")").join(", ")}.
                 </div>
             </div>
         `

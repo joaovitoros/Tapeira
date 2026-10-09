@@ -384,7 +384,7 @@ function CompraCM(tipo) {
 	if (nivel === undefined) return;
 
 	// tetos: formiga 48 níveis (chance de drop máx 25%), duas formigas 100 níveis.
-	// crítico não trava mais no teto ×4: cada nível dele também dá +0,1 no teto
+	// crítico não trava mais no teto ×4: cada nível dele também dá +0,2 no teto
 	if (tipo === "formiga" && nivel >= 48) {
 		MostraInfo("Item no nível máximo!");
 		return;
@@ -403,8 +403,8 @@ function CompraCM(tipo) {
 	conhecimentoMug = conhecimentoMug - preco;
 	if (tipo === "dano") {
 		cmNivelDano++;
-		// efeito imediato; no reset o Resetar remonta tudo com ×1.01 por nível
-		danoJogador = danoJogador * 1.01;
+		// efeito imediato; no reset o Resetar remonta tudo com ×1.02 por nível
+		danoJogador = danoJogador * 1.02;
 		LimitaDanoCritico();
 		if (danoComp1 > 0) danoComp = danoJogador * danoComp1;
 	} else if (tipo === "gold") {
@@ -413,13 +413,13 @@ function CompraCM(tipo) {
 		cmNivelXp++;
 	} else if (tipo === "fuga") {
 		cmNivelFuga++;
-		tempoAvancoInimigos = tempoAvancoInimigos + 1;
+		tempoAvancoInimigos = tempoAvancoInimigos + 2;
 	} else if (tipo === "crit") {
 		cmNivelCrit++;
-		// o teto sobe ANTES do ×1.01: sem isso o LimitaDanoCritico engoliria
-		// o +1% comprado quando o crítico está encostado no teto
-		SobeTetoCritico();
-		danoCritJogador = danoCritJogador * 1.01;
+		// o teto sobe ANTES do ×1.02: sem isso o LimitaDanoCritico engoliria
+		// o +2% comprado quando o crítico está encostado no teto
+		SobeTetoCritico(0.2);
+		danoCritJogador = danoCritJogador * 1.02;
 		LimitaDanoCritico();
 	} else if (tipo === "formiga") {
 		cmNivelFormiga++;
@@ -429,7 +429,7 @@ function CompraCM(tipo) {
 		cmNivelComp++;
 		// o bônus fica embutido em danoComp1 (permanente: vem no save e não
 		// zera no Resetar), então todo recálculo de danoComp já o inclui
-		danoComp1 = danoComp1 * 1.01;
+		danoComp1 = danoComp1 * 1.02;
 		if (lvlComp1 > 0) danoComp = danoJogador * danoComp1;
 	} else if (tipo === "goldcomp2") {
 		cmNivelGoldComp2++;
@@ -448,6 +448,7 @@ function CompraCM(tipo) {
 function PagaLoja(preco) {
 	if (missaoAtual === 5 && missaoDesafioSub === 1) FalhaDesafio("Gold gasto na loja");
 	gold.add(-N(preco));
+	comprasRun++; //conquista Poupado: qualquer compra desta run quebra o "sem comprar"
 }
 
 function CompraDano(){

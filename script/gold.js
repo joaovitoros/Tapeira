@@ -186,8 +186,9 @@ function AddGold(valor, aplicaBonusFormigas = true) {
 
     let valorFinal = valor;
     if (Number(valor) > 0) {
-        // bônus permanente da Loja do Conhecimento: +1% de gold por nível
-        valorFinal = Number(valor) * MultiplicadorGoldConhecimento();
+        // bônus permanentes no ganho: +1% por nível da Loja do Conhecimento e
+        // +5% da conquista Poupado (gasto não passa por aqui)
+        valorFinal = Number(valor) * MultiplicadorGoldConhecimento() * MultiplicadorGoldConquistaComp();
         if (aplicaBonusFormigas) {
             valorFinal = valorFinal * MultiplicadorGoldFormigas();
         }
