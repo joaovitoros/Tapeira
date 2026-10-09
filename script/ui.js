@@ -1176,7 +1176,12 @@ const UI = {
         const multEspCritico = MultiplicadorDanoEspecializacao(true);
 
         const stats = [
-            ["Dano", (danoJogador * multDanoTotal * multEspNormal).toFixed(2)],
+            // Cadeia de Ataques: o valor "no cap" é o golpe cheio com o stack
+            // de +500% fechado (base ×0,5 ×6 = ×3)
+            ["Dano", (danoJogador * multDanoTotal * multEspNormal).toFixed(2)
+                + (especializacao === 5
+                    ? " → " + (danoJogador * multDanoTotal * 3).toFixed(2) + " no cap"
+                    : "")],
             ["Multiplicador Gold", mulGold.toFixed(2)],
             ["Gold por inimigo", FormatGold(andar * mulGold * MultiplicadorGoldConhecimento() * MultiplicadorGoldFormigas() * MultiplicadorGoldEspecializacao())],
             ["Gold total", FormatGold(totalGold)],
@@ -1186,7 +1191,8 @@ const UI = {
             ["Dano crítico", (danoCritJogador * multDanoTotal * multEspCritico).toFixed(2)],
             ["Chance crítica", (chanceCrit * 100).toFixed(2) + "%"],
             ["Especialização", especializacao > 0 ? ESPECIALIZACOES[especializacao].nome : "—"],
-            ["DPS companheiros", (danoComp * multDanoTotal * multEspNormal).toFixed(2)],
+            // DPS de verdade: a Velocidade do Companheiro multiplica os hits/s
+            ["DPS companheiros", (danoComp * multDanoTotal * multEspNormal * N(velAtaqueComp)).toFixed(2)],
             ["GoldPS companions", goldCompanheiro.toFixed(2)],
             ["Tempo bônus", tempoEsperaCompanheiro + " seg"],
             ["Bônus XP", "+" + BonusXPLoja()],
@@ -1427,9 +1433,12 @@ const UI = {
     chestOpeningTimeout: null,
 
     showChestOpening(chestKind, rewardKind, title, detail, accentColor = "#ffd34f") {
-        const previous = document.getElementById("chestOpening");
-        if (previous) previous.remove();
-        clearTimeout(this.chestOpeningTimeout);
+        this.removeChestOpening();
+        // Chuva de meteoros: nenhuma tela de abertura de baú — o overlay
+        // escurece a arena por 3,5s e esconde os fragmentos no chão. A
+        // recompensa já foi creditada pelo chamador e cada ramo tem o próprio
+        // aviso (showInfo/milestone/showCurrencyReward), então só a tela some.
+        if (eventoAtivo === "meteoro") return;
 
         const opening = document.createElement("div");
         opening.id = "chestOpening";
@@ -1497,6 +1506,12 @@ const UI = {
         }, 3500);
     },
 
+    removeChestOpening() {
+        document.getElementById("chestOpening")?.remove();
+        clearTimeout(this.chestOpeningTimeout);
+        this.chestOpeningTimeout = null;
+    },
+
     updateGoldenChestProgress() {
         const tracker = document.getElementById("golden-chest-tracker");
         const progress = document.getElementById("golden-chest-progress");
@@ -1526,6 +1541,11 @@ const UI = {
 
     spawnChest(quantity = 1) {
         this.removeChest();
+        // Chuva de meteoros: o ícone do baú espera fora da arena (o saldo
+        // continua em quantidadeBausDisponiveis) — no meio da chuva ele cairia
+        // em cima dos fragmentos e o clique nos coletaria sem querer.
+        // EncerraEvento() repõe a ícone quando o evento acaba.
+        if (eventoAtivo === "meteoro") return;
         const bau = document.createElement("img");
 
         bau.src = "imagens/bau-aventura.svg";

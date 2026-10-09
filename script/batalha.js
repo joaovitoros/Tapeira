@@ -19,6 +19,9 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	const ataqueCorrenteEletrica = ataquesCorrenteEletrica > 0;
 	const vidaAnterior = window["vidaInimigo" + inimigo];
 	if (vidaAnterior <= 0) return;
+	// especialização Cadeia de Ataques: este golpe conta pro stack do alvo
+	// (20 acertos fecham o cap; os contadores zeram em cada onda nova)
+	if (especializacao === 5) ataquesCadeia[inimigo] = N(ataquesCadeia[inimigo]) + 1;
 
 	if (missaoAtual == 2) {
 		MissaoGolpes();
@@ -44,6 +47,8 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	dano *= MultiplicadorDanoNivel();
 	// especialização: buff/nerf aplicado no tempo do hit (não muta danoJogador)
 	dano *= MultiplicadorDanoEspecializacao(critico);
+	// Cadeia de Ataques: dano extra por ataque acumulado no MESMO alvo
+	dano *= MultiplicadorCadeiaAtaques(inimigo);
 
 	if (validaDano) UI.playAttackAnimation(inimigoElement);
 

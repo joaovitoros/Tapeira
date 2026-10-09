@@ -33,7 +33,7 @@ function NormalizaPrecosLoja() {
 		"precoDano", "precoBau", "precoGold", "precoBEspaco", "precoAvan",
 		"precoDCrit", "precoVidaInimigo", "precoCCrit", "precoQTDAvanco",
 		"precoComp1", "precoAvGold", "precoComp2", "precoComp3", "precoXP",
-		"precoEsmCM", "precoEsmBau"
+		"precoEsmCM", "precoEsmBau", "precoVelComp"
 	];
 
 	nomesPrecos.forEach(nome => {
@@ -96,6 +96,11 @@ var ITENS_PATENTE = {
 		tetos: [0.10, 0.15, 0.175, 0.19, 0.20],
 		passos: [0.01, 0.005, 0.0025, 0.0015, 0.001],
 		noTeto: () => N(chanceEsmeraldaBau) >= TetoLoja("esmbau") - 1e-9
+	},
+	velcomp: {
+		nome: "Velocidade do Companheiro", patenteVar: "patenteVelComp", precoVar: "precoVelComp",
+		tetos: [1.6, 1.8, 2.0], passos: [0.2, 0.2, 0.2],
+		noTeto: () => N(velAtaqueComp) >= TetoLoja("velcomp") - 1e-9
 	}
 };
 
@@ -234,6 +239,9 @@ function AtualizaLojaGold() {
 	document.getElementById("precoEsmBau").innerHTML = FormatGold(precoEsmBau);
 	document.getElementById("lvlEsmBau").innerHTML = lvlEsmBau;
 
+	document.getElementById("precoVelComp").innerHTML = FormatGold(precoVelComp);
+	document.getElementById("lvlVelComp").innerHTML = lvlVelComp;
+
 	AtualizaMaximosLoja();
 }
 
@@ -250,7 +258,8 @@ function AtualizaMaximosLoja() {
 		{ id: "ccrit", preco: "precoCCrit" },
 		{ id: "espaco", preco: "precoBEspaco" },
 		{ id: "qtdavan", preco: "precoQTDAvan" },
-		{ id: "esmbau", preco: "precoEsmBau" }
+		{ id: "esmbau", preco: "precoEsmBau" },
+		{ id: "velcomp", preco: "precoVelComp" }
 	];
 
 	for (const item of itens) {
@@ -757,6 +766,38 @@ function CompraEsmBau(){
 	}
 }
 
+// Item novo: velocidade de ataque do companheiro (+20% por nível, cap por
+// patente) — cada compra reacomoda o intervalo do tick do DanoCompanheiros
+function CompraVelComp(){
+	NormalizaPrecosLoja();
+	if(!ITENS_PATENTE.velcomp.noTeto()){
+		if(GE(gold, N(precoVelComp))){
+
+			PagaLoja(precoVelComp);
+
+			// arredonda no passo de 0,2 antes do clamp: sem isso a soma
+			// acumulada fecha em 1,9999999999999998 no teto (ruído de float)
+			velAtaqueComp = Math.min(Math.round((N(velAtaqueComp) + PassoLoja("velcomp")) * 10) / 10, TetoLoja("velcomp"));
+			precoVelComp = N(precoVelComp) * 1.5;
+			lvlVelComp++;
+			SincronizaIntervaloDanoComp();
+
+			ChamaSom('audio6');
+
+			document.getElementById("contGold").innerHTML = FormatGold(gold);
+			document.getElementById("precoVelComp").innerHTML = FormatGold(precoVelComp);
+			document.getElementById("lvlVelComp").innerHTML = lvlVelComp;
+			AtualizaMaximosLoja();
+
+			MostraStatus();
+		}else{
+			MostraInfo("Voce não tem gold o suficiente para essa compra!");
+		}
+	}else{
+		CompraPatenteLoja("velcomp");
+	}
+}
+
 function LojaEsmeralda(){
 	NormalizaPrecosLoja();
 	if(document.getElementById("LojaEsm").style.visibility=="hidden"){
@@ -1019,6 +1060,14 @@ const PREVIEWS_LOJA = {
 		const atual = MultiplicadorCM();
 		const prox = atual + Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
 		return "CM ganho no reset: ×" + atual + " → ×" + prox;
+	},
+	CompraVelComp() {
+		if (ITENS_PATENTE.velcomp.noTeto()) {
+			return "Velocidade do companheiro — ★ " + (GanhoProximaPatenteTexto("velcomp") || "patente máxima");
+		}
+		const prox = Math.min(TetoLoja("velcomp"), N(velAtaqueComp) + PassoLoja("velcomp"));
+		return "Ataques do companheiro: " + N(velAtaqueComp).toFixed(1) + "/s → "
+			+ prox.toFixed(1) + "/s (máx " + TetoLoja("velcomp").toFixed(1) + "/s)";
 	}
 };
 

@@ -188,9 +188,13 @@ function BonusXPConhecimento() {
 	return 1 + cmNivelXp * 0.01;
 }
 
-// Tempo máximo do cronômetro de fuga: base 120 + bônus da loja
+// Tempo máximo do cronômetro de fuga: base 120 + bônus da loja. O Canhão de
+// Vidro corta o teto pela metade (arredonda pra baixo, nunca acima de 50%);
+// como o cronômetro só reabastece na troca de andar/onda, a troca de build
+// vale a partir do próximo abastecimento
 function TempoFugaMax() {
-	return 120 + cmNivelFuga;
+	const base = 120 + cmNivelFuga;
+	return especializacao === 4 ? Math.floor(base * 0.5) : base;
 }
 
 // Chance de drop de formiga aleatória por abate: 1% base + 0,5% por nível da
@@ -317,6 +321,13 @@ var lvlBau = 1;
 var precoEsmBau = 500;
 var lvlEsmBau = 0;
 
+// Item novo da loja de gold: velocidade de ataque do companheiro — +20% por
+// nível a partir de 1 hit/s, com teto por patente (1,6 → 1,8 → 2,0 hits/s).
+// O tick do DanoCompanheiros escala junto (SincronizaIntervaloDanoComp)
+var precoVelComp = 125;
+var lvlVelComp = 1;
+var velAtaqueComp = 1;
+
 // Patentes da loja de gold (0 = ★I, a base de hoje): ao bater no nível máximo
 // o ingresso destrava o próximo segmento de níveis com o teto do efeito
 // subindo. São por run — zeram no reset junto com os itens que destravam.
@@ -327,6 +338,7 @@ var patenteCCrit = 0;
 var patenteSubVida = 0;
 var patenteAvan = 0;
 var patenteEsmBau = 0;
+var patenteVelComp = 0;
 
 var descontoLoja = 0;
 var mulGoldInicial = mulGold;
@@ -385,6 +397,10 @@ function CarregarStatus(){
 	vidaInimigo2 = vidaAndar;
 	vidaInimigo3 = vidaAndar;
 	vidaInimigo4 = vidaAndar;
+
+	// Cadeia de Ataques: o stack é por inimigo e por onda — onda/andar novo
+	// zera os contadores (mesmo spawn que dá vida nova aos4 inimigos)
+	ataquesCadeia = [0, 0, 0, 0, 0];
 	
 	if(andar>=10){
 		Missao();
@@ -980,6 +996,20 @@ function DanoCompanheiros(){
 	if(danoComp>0){
 		DanoAutomatico(false,false);
 	}
+}
+
+// Velocidade do companheiro: o tick de ataque roda a cada 1000ms ÷ o
+// multiplicador (1,0 = 1 hit/s; 2,0 = 2 hits/s no teto ★III). O handle é
+// gerenciado — recriado na compra, no load e no reset — e o PreCarregamento
+// limpa ele junto com os outros intervalos antes de recriar.
+var intervaloDanoComp = null;
+function IntervaloAtaqueComp() {
+	const vel = N(velAtaqueComp);
+	return 1000 / (vel > 0 ? vel : 1);
+}
+function SincronizaIntervaloDanoComp() {
+	if (intervaloDanoComp !== null) clearInterval(intervaloDanoComp);
+	intervaloDanoComp = setInterval(DanoCompanheiros, IntervaloAtaqueComp());
 }
 
 function GoldCompanheiros(){

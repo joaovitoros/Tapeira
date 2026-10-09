@@ -243,6 +243,10 @@ function Salvar() {
 		ultimaAtualizacaoBauDourado,
 		autoColeta,
 		autoCompra,
+		precoVelComp,
+		lvlVelComp,
+		velAtaqueComp,
+		patenteVelComp,
 		especializacao,
 		especializacaoTrocas
 	};
@@ -454,7 +458,8 @@ function ValidarSave(save) {
 		["patenteCCrit", 4],
 		["patenteSubVida", 5],
 		["patenteAvan", 4],
-		["patenteEsmBau", 4]
+		["patenteEsmBau", 4],
+		["patenteVelComp", 2]
 	];
 	for (const [key, maximo] of patenteKeys) {
 		const valor = save[key];
@@ -471,6 +476,20 @@ function ValidarSave(save) {
 	if (save.precoEsmBau !== undefined
 		&& (!Number.isFinite(save.precoEsmBau) || save.precoEsmBau < 1)) {
 		throw new TypeError("O preço do item de esmeralda do baú é inválido.");
+	}
+	// Velocidade do Companheiro: nível e preço dentro dos tetos das patentes;
+	// o efeito é 1,0 (base) até 2,0 (★III) com folga de float nos passos 0,2
+	if (save.lvlVelComp !== undefined
+		&& (!Number.isSafeInteger(save.lvlVelComp) || save.lvlVelComp < 1 || save.lvlVelComp > 30)) {
+		throw new TypeError("O nível da Velocidade do Companheiro no save é inválido.");
+	}
+	if (save.precoVelComp !== undefined
+		&& (!Number.isFinite(save.precoVelComp) || save.precoVelComp < 1)) {
+		throw new TypeError("O preço da Velocidade do Companheiro no save é inválido.");
+	}
+	if (save.velAtaqueComp !== undefined
+		&& (!Number.isFinite(save.velAtaqueComp) || save.velAtaqueComp < 1 || save.velAtaqueComp > 2.05)) {
+		throw new TypeError("A velocidade de ataque do companheiro no save é inválida.");
 	}
 
 	// Conhecimento Mug: inteiros não negativos; níveis respeitam o teto de cada item
@@ -563,7 +582,7 @@ function ValidarSave(save) {
 	if (save.especializacao !== undefined
 		&& (!Number.isInteger(save.especializacao)
 			|| save.especializacao < 0
-			|| save.especializacao > 3)) {
+			|| save.especializacao > 5)) {
 		throw new TypeError("A especialização no save é inválida.");
 	}
 	if (save.especializacaoTrocas !== undefined
@@ -727,8 +746,11 @@ function CalculaProgressoOffline(ultimaDataSalva) {
 	const multEspNormal = MultiplicadorDanoEspecializacao(false);
 	const multEspCritico = MultiplicadorDanoEspecializacao(true);
 	const danoMedioCompanheirosPorSegundo = danoBaseCompanheiro > 0
-		? (danoBaseCompanheiro * (1 - chanceCritica) * multEspNormal)
-			+ (danoCriticoCompanheiro * chanceCritica * multEspCritico)
+		? ((danoBaseCompanheiro * (1 - chanceCritica) * multEspNormal)
+			+ (danoCriticoCompanheiro * chanceCritica * multEspCritico))
+			// Velocidade do Companheiro: os hits por segundo multiplicam
+			// o dano médio do companheiro (1,0 = o valor de sempre)
+			* N(velAtaqueComp)
 		: 0;
 	const danoMedioJogadorPorAtaque = (Math.max(0, Number(danoJogador)) * (1 - chanceCritica) * multEspNormal)
 		+ (Math.max(0, Number(danoCritJogador)) * chanceCritica * multEspCritico);
@@ -1089,6 +1111,10 @@ function Carregar(saveData, calculaOffline = false) {
 
 	precoEsmBau = save.precoEsmBau ?? 500;
 	lvlEsmBau = save.lvlEsmBau ?? 0;
+	// Velocidade do Companheiro: saves antigos nascem na base (1 hit/s)
+	precoVelComp = save.precoVelComp ?? 125;
+	lvlVelComp = save.lvlVelComp ?? 1;
+	velAtaqueComp = save.velAtaqueComp ?? 1;
 	// patentes ausentes = 0 (★I): saves de antes da feature nascem na base
 	patenteBau = save.patenteBau ?? 0;
 	patenteBEspaco = save.patenteBEspaco ?? 0;
@@ -1097,6 +1123,10 @@ function Carregar(saveData, calculaOffline = false) {
 	patenteSubVida = save.patenteSubVida ?? 0;
 	patenteAvan = save.patenteAvan ?? 0;
 	patenteEsmBau = save.patenteEsmBau ?? 0;
+	patenteVelComp = save.patenteVelComp ?? 0;
+	// tick do companheiro reacomoda com a velocidade carregada (o bloco de
+	// intervalos do PreCarregamento limpa e recria logo em seguida)
+	SincronizaIntervaloDanoComp();
 
 	RemoverInimigos();
 	AbreLoja();
@@ -1663,7 +1693,14 @@ function PreCarregamento() {
 	// barata de DOM, como os toggles — load, reset e zerada se refletem sozinhos)
 	intervalos.push(setInterval(SyncSecaoEspecializacao, 1000));
 
-	intervalos.push(setInterval(DanoCompanheiros, 1000));
+	// tick do companheiro com intervalo dinâmico (Velocidade do Companheiro):
+	// o handle gerenciado é limpo aqui (o intervalos[] não o contém) e recriado
+	// com o intervalo certo da velocidade atual
+	if (intervaloDanoComp !== null) {
+		clearInterval(intervaloDanoComp);
+		intervaloDanoComp = null;
+	}
+	SincronizaIntervaloDanoComp();
 	intervalos.push(setInterval(GoldCompanheiros, 1000));
 	intervalos.push(setInterval(TempoCompanheiros, 10000));
 	intervalos.push(setInterval(HabilidadeDano, 1000));
@@ -1802,6 +1839,12 @@ function Resetar() {
 	precoEsmBau = 500;
 	lvlEsmBau = 0;
 	chanceEsmeraldaBau = 0.01;
+	// Velocidade do Companheiro volta ao padrão (1 hit/s) e o tick reacomoda
+	precoVelComp = 125;
+	lvlVelComp = 1;
+	velAtaqueComp = 1;
+	// Cadeia de Ataques: o stack é por onda e não sobrevive ao reset
+	ataquesCadeia = [0, 0, 0, 0, 0];
 	// patentes são por run: zeram junto com os itens que destravam
 	patenteBau = 0;
 	patenteBEspaco = 0;
@@ -1810,6 +1853,8 @@ function Resetar() {
 	patenteSubVida = 0;
 	patenteAvan = 0;
 	patenteEsmBau = 0;
+	patenteVelComp = 0;
+	SincronizaIntervaloDanoComp();
 
 	AtualizaLojaGold();
 	UI.updateSkillProgress();
@@ -2053,6 +2098,10 @@ function CriarObjetoSave() {
 		ultimaAtualizacaoBauDourado,
 		autoColeta,
 		autoCompra,
+		precoVelComp,
+		lvlVelComp,
+		velAtaqueComp,
+		patenteVelComp,
 		especializacao,
 		especializacaoTrocas
 	};

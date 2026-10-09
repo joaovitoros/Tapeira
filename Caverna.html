@@ -461,6 +461,18 @@
 								onclick="CompraQTDAvanco()"></td>
 					</tr>
 
+					<tr>
+						<td>Velocidade Companheiro</td>
+						<td align="center">
+							<div id="precoVelComp"></div>
+						</td>
+						<td align="center">
+							<div id="lvlVelComp"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraVelComp()"></td>
+					</tr>
+
 				</table>
 
 				<div id="secaoEspecializacao" class="especializacao">
@@ -480,6 +492,14 @@
 						<button type="button" class="esp-cartao" data-esp="3" onclick="EscolheEspecializacao(3)">
 							<span class="esp-cartao__nome">Olho de Águia</span>
 							<span class="esp-cartao__efeito">Crítico ×1,8 · −10% dano · −15% gold</span>
+						</button>
+						<button type="button" class="esp-cartao" data-esp="4" onclick="EscolheEspecializacao(4)">
+							<span class="esp-cartao__nome">Canhão de Vidro</span>
+							<span class="esp-cartao__efeito">+100% dano · −50% tempo de fuga</span>
+						</button>
+						<button type="button" class="esp-cartao" data-esp="5" onclick="EscolheEspecializacao(5)">
+							<span class="esp-cartao__nome">Cadeia de Ataques</span>
+							<span class="esp-cartao__efeito">−50% dano · +25% por ataque no mesmo alvo (até +500%)</span>
 						</button>
 					</div>
 					<div class="especializacao__rodape">
