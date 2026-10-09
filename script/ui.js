@@ -287,12 +287,19 @@ const UI = {
         if (fill) fill.style.width = `${percent}%`;
         const xpLabel = document.getElementById("skill-player-xp-label");
         if (xpLabel) xpLabel.textContent = `${xpAtual} / ${nextLevelXP} XP para o próximo nível`;
+        const niveis = Math.max(0, nivelJogador - 1);
+        const conquistas = Math.floor(Math.max(0, totalNiveis | 0) / 100);
+        const reducao = niveis + conquistas;
         const bonus = document.getElementById("skill-player-bonus");
         if (bonus) {
-            const niveis = Math.max(0, nivelJogador - 1);
-            const conquistas = Math.floor(Math.max(0, totalNiveis | 0) / 100);
-            const reducao = niveis + conquistas;
             bonus.textContent = `Bônus atual: +${niveis * 10}% de dano · −${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} para avançar`;
+        }
+        // resumo da seção "Progresso e bônus" quando ela está recolhida
+        const resumoProgresso = document.getElementById("skill-player-progresso-resumo");
+        if (resumoProgresso) {
+            const pontosPerk = PontosPerkDisponiveis();
+            const texto = `+${niveis * 10}% dano · ${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} a menos · ${pontosPerk} ${pontosPerk === 1 ? "ponto" : "pontos"} de perk`;
+            if (resumoProgresso.textContent !== texto) resumoProgresso.textContent = texto;
         }
         if (button) button.setAttribute("aria-label", `Skills, nível ${nivelJogador}, ${pontosHabilidade} pontos disponíveis`);
         if (badge) {
@@ -302,20 +309,77 @@ const UI = {
 
     },
 
+    // ---- UI do painel de skills: seções recolhíveis ----
+    // O painel é reconstruído a cada compra, perk, ramo, level-up e
+    // reabertura, então o estado de recolhimento vive fora do DOM.
+    skillPanelSecoes: { progresso: true },
+
+    skillPanelAberta(chave, padrao) {
+        if (!(chave in this.skillPanelSecoes)) this.skillPanelSecoes[chave] = !!padrao;
+        return this.skillPanelSecoes[chave];
+    },
+
+    alternaSecaoSkill(chave, abrir) {
+        this.skillPanelSecoes[chave] = abrir;
+        this.showSkillUpgradePanel();
+    },
+
+    // seção com cabeçalho-botão (aria-expanded/aria-controls) e resumo do
+    // conteúdo recolhido — usado em Progresso, Perks e Árvore de ramos
+    criaSecaoRecuavelSkill({ chave, titulo, resumo, aberta, destaque, resumoId }) {
+        const id = `skill-secao-${chave.replace(/[^a-zA-Z0-9]+/g, "-")}`;
+        const secao = document.createElement("section");
+        secao.className = "skill-secao";
+        if (destaque) secao.classList.add("skill-secao--destaque");
+
+        const cabecalho = document.createElement("button");
+        cabecalho.type = "button";
+        cabecalho.className = "skill-secao-cabecalho";
+        cabecalho.setAttribute("aria-expanded", String(aberta));
+        cabecalho.setAttribute("aria-controls", `${id}-corpo`);
+        cabecalho.setAttribute("data-focus-key", `secao:${chave}`);
+        const rotulo = document.createElement("span");
+        rotulo.className = "skill-secao-titulo";
+        rotulo.textContent = titulo;
+        const detalhe = document.createElement("span");
+        detalhe.className = "skill-secao-resumo";
+        detalhe.textContent = resumo;
+        if (resumoId) detalhe.id = resumoId;
+        const seta = document.createElement("span");
+        seta.className = "skill-secao-seta";
+        seta.setAttribute("aria-hidden", "true");
+        seta.textContent = "▾";
+        cabecalho.append(rotulo, detalhe, seta);
+
+        const corpo = document.createElement("div");
+        corpo.className = "skill-secao-corpo";
+        corpo.id = `${id}-corpo`;
+        corpo.hidden = !aberta;
+        cabecalho.addEventListener("click", () => this.alternaSecaoSkill(chave, corpo.hidden));
+        secao.append(cabecalho, corpo);
+        return { secao, corpo };
+    },
+
     showSkillUpgradePanel() {
-        // re-renderizações (level-up com o painel aberto) não podem jogar a
-        // rolagem de volta pro topo: guarda e restaura o scroll do painel
-        const painelAnterior = document.querySelector("#skillUpgradeModal .ant-collection-panel");
-        const rolagemAnterior = painelAnterior ? painelAnterior.scrollTop : 0;
+        // re-renderizações (level-up, compra, perk, ramo, recolher seção) não
+        // podem jogar a rolagem pro topo nem tirar o foco do controle ativo:
+        // guarda os dois e restaura no painel recém-construído
+        const rolagemAnterior =
+            document.querySelector("#skillUpgradeModal .skill-upgrade-scroll")?.scrollTop || 0;
+        const focoAnterior = document.activeElement instanceof HTMLElement
+            ? document.activeElement.dataset.focusKey
+            : null;
         document.getElementById("skillUpgradeModal")?.remove();
 
         const overlay = document.createElement("div");
         overlay.id = "skillUpgradeModal";
-        overlay.className = "ant-collection-overlay";
+        overlay.className = "ant-collection-overlay skill-upgrade-overlay";
         overlay.setAttribute("role", "dialog");
         overlay.setAttribute("aria-modal", "true");
         overlay.setAttribute("aria-labelledby", "skill-upgrade-title");
 
+        // cabeçalho fixo: título e fechar continuam acessíveis mesmo com o
+        // conteúdo rolando (o painel inteiro não rola, só .skill-upgrade-scroll)
         const panel = document.createElement("section");
         panel.className = "ant-collection-panel skill-upgrade-panel";
         const header = document.createElement("header");
@@ -327,6 +391,7 @@ const UI = {
         close.type = "button";
         close.className = "ant-collection-close";
         close.setAttribute("aria-label", "Fechar habilidades");
+        close.setAttribute("data-focus-key", "fechar");
         close.textContent = "×";
         const fechar = () => {
             overlay.remove();
@@ -349,21 +414,25 @@ const UI = {
         botaoConquistas.className = "skill-upgrade-shortcut";
         botaoConquistas.textContent = "Conquistas";
         botaoConquistas.setAttribute("aria-label", "Abrir tela de conquistas");
+        botaoConquistas.setAttribute("data-focus-key", "atalho:conquistas");
         botaoConquistas.addEventListener("click", () => abreTela(MostraConquista));
         const botaoMissoes = document.createElement("button");
         botaoMissoes.type = "button";
         botaoMissoes.className = "skill-upgrade-shortcut";
         botaoMissoes.textContent = "Missões";
         botaoMissoes.setAttribute("aria-label", "Abrir tela de missões");
+        botaoMissoes.setAttribute("data-focus-key", "atalho:missoes");
         botaoMissoes.addEventListener("click", () => abreTela(MostraMissao));
         const botaoMarcos = document.createElement("button");
         botaoMarcos.type = "button";
         botaoMarcos.className = "skill-upgrade-shortcut";
         botaoMarcos.textContent = "Marcos";
         botaoMarcos.setAttribute("aria-label", "Abrir tela de marcos");
+        botaoMarcos.setAttribute("data-focus-key", "atalho:marcos");
         botaoMarcos.addEventListener("click", () => abreTela(MostraMarcos));
         atalhos.append(botaoConquistas, botaoMissoes, botaoMarcos);
 
+        // resumo do jogador: nível + pontos em linha compacta (fixo)
         const level = document.createElement("div");
         level.className = "skill-player-summary";
         const levelName = document.createElement("strong");
@@ -388,82 +457,209 @@ const UI = {
         const xpLabel = document.createElement("span");
         xpLabel.id = "skill-player-xp-label";
         xpLabel.className = "skill-player-xp-label";
+        const blocoXp = document.createElement("div");
+        blocoXp.className = "skill-player-xp-bloco";
+        blocoXp.append(xpTrack, xpLabel);
+
+        // único contêiner de rolagem do painel (cabeçalho/atalhos/resumo ficam fora)
+        const rolagem = document.createElement("div");
+        rolagem.className = "skill-upgrade-scroll";
+
+        // informações secundárias (bônus e regra de perks) em seção recolhível
+        const secaoProgresso = this.criaSecaoRecuavelSkill({
+            chave: "progresso:detalhes",
+            titulo: "Progresso e bônus",
+            resumo: "",
+            resumoId: "skill-player-progresso-resumo",
+            aberta: this.skillPanelAberta("progresso:detalhes", true)
+        });
+        const perkLine = document.createElement("div");
+        perkLine.id = "skill-player-perk";
+        perkLine.className = "skill-player-bonus";
+        const perkDisp = PontosPerkDisponiveis();
+        const perkGanhos = PontosPerkGanhos();
+        perkLine.textContent = `Pontos de perk: ${perkDisp} ${perkDisp === 1 ? "disponível" : "disponíveis"} de ${perkGanhos} · +1 por portão desta run (andar 35+) · zeram no reset`;
+        secaoProgresso.corpo.append(bonus, perkLine);
 
         const skillList = document.createElement("div");
         skillList.className = "skill-upgrade-list";
         for (const skill of SKILLS_UPGRADE) {
             const skillLevel = NivelDaSkill(skill.id);
             const unlocked = PisoMaximoAlcancado() >= skill.pisoDesbloqueio;
+            const noMaximo = skillLevel >= skill.maximo;
+            const semPontos = pontosHabilidade <= 0;
+            const podeMelhorar = unlocked && !noMaximo && !semPontos;
+
             const card = document.createElement("article");
             card.className = "skill-upgrade-card";
-            const details = document.createElement("div");
-            details.className = "skill-upgrade-details";
+            if (podeMelhorar) card.classList.add("skill-upgrade-card--pronto");
+
+            // bloco principal: nome + nível, efeito e estado da melhoria
+            const main = document.createElement("div");
+            main.className = "skill-upgrade-main";
+            const head = document.createElement("div");
+            head.className = "skill-upgrade-head";
             const name = document.createElement("h3");
-            name.textContent = `${skill.nome} · Nv. ${skillLevel}/${skill.maximo}`;
+            name.className = "skill-upgrade-nome";
+            name.textContent = skill.nome;
+            const nivel = document.createElement("span");
+            nivel.className = "skill-upgrade-nivel";
+            nivel.textContent = `Nv ${skillLevel}/${skill.maximo}`;
+            nivel.setAttribute("aria-label", `nível ${skillLevel} de ${skill.maximo}`);
+            head.append(name, nivel);
+
             const description = document.createElement("p");
+            description.className = "skill-upgrade-desc";
             description.textContent = DescricaoEfeitoSkill(skill.id, skillLevel);
+
+            // custo + disponibilidade em texto (não só no atributo disabled)
+            const meta = document.createElement("div");
+            meta.className = "skill-upgrade-meta";
             const requirement = document.createElement("span");
             requirement.className = "skill-upgrade-requirement";
-            requirement.textContent = unlocked
-                ? skillLevel >= skill.maximo
-                    ? "Nível máximo"
-                    : "1 ponto por nível"
-                : `Desbloqueia no andar ${skill.pisoDesbloqueio}`;
-            details.append(name, description, requirement);
+            requirement.textContent = noMaximo ? "Sem melhoria pendente" : "1 ponto por nível";
+            const estadoSkill = !unlocked
+                ? { texto: `✕ Desbloqueia no andar ${skill.pisoDesbloqueio}`, classe: "skill-upgrade-estado--bloqueado" }
+                : noMaximo
+                    ? { texto: "✓ Nível máximo", classe: "skill-upgrade-estado--ok" }
+                    : semPontos
+                        ? { texto: "✕ Sem pontos de habilidade", classe: "skill-upgrade-estado--bloqueado" }
+                        : { texto: "● Pronta para melhorar", classe: "skill-upgrade-estado--ok" };
+            const estado = document.createElement("span");
+            estado.className = `skill-upgrade-estado ${estadoSkill.classe}`;
+            estado.textContent = estadoSkill.texto;
+            meta.append(requirement, estado);
+            main.append(head, description, meta);
 
             const upgrade = document.createElement("button");
             upgrade.type = "button";
             upgrade.className = "skill-upgrade-button";
-            upgrade.textContent = "Melhorar";
-            upgrade.disabled = !unlocked || pontosHabilidade === 0 || skillLevel >= skill.maximo;
-            upgrade.setAttribute("aria-label", `Melhorar ${skill.nome}`);
+            upgrade.textContent = noMaximo ? "Máximo" : "Melhorar";
+            upgrade.disabled = !podeMelhorar;
+            upgrade.setAttribute("data-focus-key", `melhorar:${skill.id}`);
+            const motivo = !unlocked
+                ? `desbloqueia no andar ${skill.pisoDesbloqueio}`
+                : noMaximo
+                    ? "nível máximo atingido"
+                    : semPontos
+                        ? "nenhum ponto de habilidade disponível"
+                        : "";
+            upgrade.setAttribute("aria-label", motivo
+                ? `Melhorar ${skill.nome} — indisponível: ${motivo}`
+                : `Melhorar ${skill.nome} por 1 ponto de habilidade`);
+            if (motivo) upgrade.title = `Indisponível: ${motivo}`;
             upgrade.addEventListener("click", () => {
                 if (EvoluiSkill(skill.id)) this.showSkillUpgradePanel();
             });
-            card.append(details, upgrade);
+            const acoes = document.createElement("div");
+            acoes.className = "skill-upgrade-actions";
+            acoes.append(upgrade);
+            card.append(main, acoes);
 
             const perk = PERKS.find(item => item.skillId === skill.id);
             if (perk) {
                 const perkNivel = Number(window[perk.varName]) || 0;
-                const perkInfo = document.createElement("div");
-                perkInfo.className = "skill-upgrade-details";
+                const perkNoMaximo = perkNivel >= perk.maximo;
+                const semPontoPerk = PontosPerkDisponiveis() <= 0;
+                const perkPronto = unlocked && !perkNoMaximo && !semPontoPerk;
+                const secaoPerk = this.criaSecaoRecuavelSkill({
+                    chave: `perk:${skill.id}`,
+                    titulo: "Perks",
+                    resumo: `Nv ${perkNivel}/${perk.maximo} · ${!unlocked
+                        ? `andar ${skill.pisoDesbloqueio}`
+                        : perkNoMaximo
+                            ? "no máximo"
+                            : semPontoPerk
+                                ? "sem pontos de perk"
+                                : "pronto para aplicar"}`,
+                    aberta: this.skillPanelAberta(`perk:${skill.id}`, perkPronto),
+                    destaque: perkPronto
+                });
+
                 const perkNome = document.createElement("p");
+                perkNome.className = "skill-upgrade-perk-nome";
                 const perkNomeForte = document.createElement("strong");
                 perkNomeForte.textContent = `Perk ${perkNivel}/${perk.maximo} · ${perk.efeito}`;
                 perkNome.appendChild(perkNomeForte);
+
+                const perkInfo = document.createElement("div");
+                perkInfo.className = "skill-upgrade-perk-info";
                 const perkCusto = document.createElement("span");
                 perkCusto.className = "skill-upgrade-requirement";
-                perkCusto.textContent = unlocked
-                    ? perkNivel >= perk.maximo
-                        ? "Perk no máximo"
-                        : "1 ponto de perk por nível"
-                    : `Desbloqueia no andar ${skill.pisoDesbloqueio}`;
-                perkInfo.append(perkNome, perkCusto);
+                perkCusto.textContent = perkNoMaximo ? "Sem níveis pendentes" : "1 ponto de perk por nível";
+                const estadoPerk = !unlocked
+                    ? { texto: `✕ Desbloqueia no andar ${skill.pisoDesbloqueio}`, classe: "skill-upgrade-estado--bloqueado" }
+                    : perkNoMaximo
+                        ? { texto: "✓ Perk no máximo", classe: "skill-upgrade-estado--ok" }
+                        : semPontoPerk
+                            ? { texto: "✕ Sem pontos de perk", classe: "skill-upgrade-estado--bloqueado" }
+                            : { texto: "● Pronto para aplicar", classe: "skill-upgrade-estado--ok" };
+                const perkEstado = document.createElement("span");
+                perkEstado.className = `skill-upgrade-estado ${estadoPerk.classe}`;
+                perkEstado.textContent = estadoPerk.texto;
+                perkInfo.append(perkCusto, perkEstado);
 
                 const perkButton = document.createElement("button");
                 perkButton.type = "button";
                 perkButton.className = "skill-upgrade-button";
                 perkButton.textContent = "Perk";
-                perkButton.disabled = !unlocked || PontosPerkDisponiveis() <= 0 || perkNivel >= perk.maximo;
-                perkButton.setAttribute("aria-label", `Aplicar perk em ${perk.nome} — ${perkNivel}/${perk.maximo}`);
+                perkButton.disabled = !perkPronto;
+                perkButton.setAttribute("data-focus-key", `perk:${skill.id}`);
+                const perkMotivo = !unlocked
+                    ? `desbloqueia no andar ${skill.pisoDesbloqueio}`
+                    : perkNoMaximo
+                        ? "perk no nível máximo"
+                        : semPontoPerk
+                            ? "nenhum ponto de perk disponível"
+                            : "";
+                perkButton.setAttribute("aria-label", perkMotivo
+                    ? `Aplicar perk em ${perk.nome} — indisponível: ${perkMotivo}`
+                    : `Aplicar perk em ${perk.nome} — ${perkNivel}/${perk.maximo} por 1 ponto de perk`);
+                if (perkMotivo) perkButton.title = `Indisponível: ${perkMotivo}`;
                 perkButton.addEventListener("click", () => {
                     if (CompraPerk(perk.skillId)) this.showSkillUpgradePanel();
                 });
-                card.append(perkInfo, perkButton);
+
+                const perkLinha = document.createElement("div");
+                perkLinha.className = "skill-upgrade-perk-linha";
+                perkLinha.append(perkInfo, perkButton);
+                secaoPerk.corpo.append(perkNome, perkLinha);
+                card.append(secaoPerk.secao);
             }
 
             // árvore de ramos: fork no nível 5 (dois caminhos mutuamente
-            // exclusivos, um por run) e o nó 2 completa sozinho no nível 10
+            // exclusivos, um por run) e o nó 2 completa sozinho no nível 10.
+            // Viva numa seção recolhível com resumo dos caminhos; cada caminho
+            // é lido na vertical (nó 5 → nó 10), sem dois cartões lado a lado.
             const arvore = RAMOS_SKILL.find(item => item.skillId === skill.id);
             if (arvore) {
                 const escolhido = RamoEscolhido(skill.id);
+                const caminhoAberto = escolhido === 0 && unlocked && skillLevel >= RAMO_NIVEL_ESCOLHA;
+                const estadoCaminho = ramo => {
+                    if (escolhido === ramo.id) {
+                        return skillLevel >= RAMO_NIVEL_CONCLUSAO
+                            ? { texto: "✓ concluído", classe: "skill-ramo-estado--ok" }
+                            : { texto: "✓ escolhido", classe: "skill-ramo-estado--ok" };
+                    }
+                    if (escolhido !== 0) return { texto: "✕ selado", classe: "skill-ramo-estado--selado" };
+                    if (!unlocked) return { texto: `✕ andar ${skill.pisoDesbloqueio}`, classe: "" };
+                    if (skillLevel < RAMO_NIVEL_ESCOLHA) return { texto: `✕ nível ${RAMO_NIVEL_ESCOLHA}`, classe: "" };
+                    return { texto: "● disponível", classe: "skill-ramo-estado--livre" };
+                };
+
+                const secaoRamos = this.criaSecaoRecuavelSkill({
+                    chave: `ramo:${skill.id}`,
+                    titulo: "Árvore de ramificações",
+                    resumo: arvore.ramos
+                        .map(ramo => `${ramo.nome}: ${estadoCaminho(ramo).texto}`)
+                        .join(" · "),
+                    aberta: this.skillPanelAberta(`ramo:${skill.id}`, caminhoAberto)
+                });
+
                 const ramosBox = document.createElement("div");
                 ramosBox.className = "skill-ramos";
                 ramosBox.setAttribute("role", "group");
-                ramosBox.setAttribute("aria-label", `Árvore de ramos de ${skill.nome}`);
-                const ramosTitulo = document.createElement("strong");
-                ramosTitulo.className = "skill-ramos-titulo";
-                ramosTitulo.textContent = "Árvore de ramos";
+                ramosBox.setAttribute("aria-label", `Caminhos de ${skill.nome}`);
                 const ramosHint = document.createElement("span");
                 ramosHint.className = "skill-ramos-hint";
                 ramosHint.textContent = escolhido !== 0
@@ -473,11 +669,25 @@ const UI = {
                         : unlocked
                             ? `Ramos abrem no nível ${RAMO_NIVEL_ESCOLHA} · zeram no reset`
                             : `Ramos abrem no nível ${RAMO_NIVEL_ESCOLHA} da skill`;
-                ramosBox.append(ramosTitulo, ramosHint);
+                ramosBox.append(ramosHint);
 
                 for (const ramo of arvore.ramos) {
                     const linha = document.createElement("div");
                     linha.className = "skill-ramo";
+                    if (escolhido !== 0 && escolhido !== ramo.id) {
+                        linha.classList.add("skill-ramo--selado");
+                    }
+
+                    const cabecalhoCaminho = document.createElement("div");
+                    cabecalhoCaminho.className = "skill-ramo-cabecalho";
+                    const nomeCaminho = document.createElement("span");
+                    nomeCaminho.className = "skill-ramo-caminho";
+                    nomeCaminho.textContent = `Caminho ${ramo.nome}`;
+                    const estadoCaminhoAtual = estadoCaminho(ramo);
+                    const badgeCaminho = document.createElement("span");
+                    badgeCaminho.className = `skill-ramo-estado ${estadoCaminhoAtual.classe}`;
+                    badgeCaminho.textContent = estadoCaminhoAtual.texto;
+                    cabecalhoCaminho.append(nomeCaminho, badgeCaminho);
 
                     const nome1 = document.createElement("span");
                     nome1.className = "skill-ramo-nome";
@@ -488,40 +698,49 @@ const UI = {
                     const estado1 = document.createElement("span");
                     estado1.className = "skill-ramo-estado";
 
-                    const no1 = document.createElement("button");
-                    no1.type = "button";
-                    no1.className = "skill-ramo-no";
-                    let podeEscolher = false;
+                    // só é <button> quando há escolha a fazer; nó travado é
+                    // informativo (mantém o motivo legível para leitores de tela)
+                    let no1;
+                    let estado1Texto;
+                    let estado1Classe;
+                    const podeEscolher = escolhido === 0
+                        && unlocked
+                        && skillLevel >= RAMO_NIVEL_ESCOLHA;
                     if (escolhido === ramo.id) {
-                        no1.classList.add("skill-ramo-no--ativo");
-                        estado1.textContent = "✓ escolhido";
+                        estado1Texto = "✓ escolhido";
+                        estado1Classe = "skill-ramo-no--ativo";
                     } else if (escolhido !== 0) {
-                        no1.classList.add("skill-ramo-no--selado");
-                        estado1.textContent = "Selado";
+                        estado1Texto = "✕ selado";
+                        estado1Classe = "skill-ramo-no--selado";
                     } else if (!unlocked) {
-                        no1.classList.add("skill-ramo-no--travado");
-                        estado1.textContent = `Andar ${skill.pisoDesbloqueio}`;
+                        estado1Texto = `✕ andar ${skill.pisoDesbloqueio}`;
+                        estado1Classe = "skill-ramo-no--travado";
                     } else if (skillLevel < RAMO_NIVEL_ESCOLHA) {
-                        no1.classList.add("skill-ramo-no--travado");
-                        estado1.textContent = `Nível ${RAMO_NIVEL_ESCOLHA}`;
+                        estado1Texto = `✕ nível ${RAMO_NIVEL_ESCOLHA}`;
+                        estado1Classe = "skill-ramo-no--travado";
                     } else {
-                        no1.classList.add("skill-ramo-no--escolhivel");
-                        estado1.textContent = "Escolher";
-                        podeEscolher = true;
+                        estado1Texto = "● Escolher";
+                        estado1Classe = "skill-ramo-no--escolhivel";
                     }
-                    no1.append(nome1, efeito1, estado1);
-                    no1.disabled = !podeEscolher;
-                    no1.setAttribute("aria-label",
-                        `${podeEscolher ? "Escolher" : "Caminho"} ${ramo.nome} da árvore de ${skill.nome} — ${estado1.textContent}`);
+                    estado1.textContent = estado1Texto;
                     if (podeEscolher) {
+                        no1 = document.createElement("button");
+                        no1.type = "button";
+                        no1.setAttribute("data-focus-key", `ramo:${skill.id}:${ramo.id}`);
                         no1.addEventListener("click", () => {
                             if (EscolheRamoSkill(skill.id, ramo.id)) this.showSkillUpgradePanel();
                         });
+                    } else {
+                        no1 = document.createElement("span");
                     }
+                    no1.className = `skill-ramo-no ${estado1Classe}`;
+                    no1.append(nome1, efeito1, estado1);
+                    no1.setAttribute("aria-label",
+                        `${podeEscolher ? "Escolher" : "Caminho"} ${ramo.nome} da árvore de ${skill.nome} — ${estado1Texto}`);
 
                     const seta = document.createElement("span");
                     seta.className = "skill-ramo-seta";
-                    seta.textContent = "→";
+                    seta.textContent = "↓";
                     seta.setAttribute("aria-hidden", "true");
 
                     const nome2 = document.createElement("span");
@@ -540,49 +759,69 @@ const UI = {
                             estado2.textContent = "✓ ativo";
                         } else {
                             no2.classList.add("skill-ramo-no--pendente");
-                            estado2.textContent = `Falta nível ${RAMO_NIVEL_CONCLUSAO}`;
+                            estado2.textContent = `○ falta nível ${RAMO_NIVEL_CONCLUSAO}`;
                         }
                     } else if (escolhido !== 0) {
                         no2.classList.add("skill-ramo-no--selado");
-                        estado2.textContent = "Selado";
+                        estado2.textContent = "✕ selado";
                     } else {
                         no2.classList.add("skill-ramo-no--travado");
                         estado2.textContent = unlocked && skillLevel >= RAMO_NIVEL_ESCOLHA
-                            ? "Após escolher"
-                            : `Nível ${RAMO_NIVEL_ESCOLHA}`;
+                            ? "○ após escolher"
+                            : `✕ nível ${RAMO_NIVEL_ESCOLHA}`;
                     }
+                    no2.setAttribute("aria-label", `Conclusão ${ramo.nome} — ${estado2.textContent}`);
                     no2.append(nome2, efeito2, estado2);
 
-                    linha.append(no1, seta, no2);
+                    linha.append(cabecalhoCaminho, no1, seta, no2);
                     ramosBox.appendChild(linha);
                 }
-                card.append(ramosBox);
+                secaoRamos.corpo.append(ramosBox);
+                card.append(secaoRamos.secao);
             }
             skillList.appendChild(card);
         }
 
-        const perkLine = document.createElement("div");
-        perkLine.id = "skill-player-perk";
-        perkLine.className = "skill-player-bonus";
-        const perkDisp = PontosPerkDisponiveis();
-        const perkGanhos = PontosPerkGanhos();
-        perkLine.textContent = `Pontos de perk: ${perkDisp} ${perkDisp === 1 ? "disponível" : "disponíveis"} de ${perkGanhos} · +1 por portão desta run (andar 35+) · zeram no reset`;
+        rolagem.append(secaoProgresso.secao, skillList);
 
-        panel.append(header, atalhos, level, bonus, perkLine, xpLabel, xpTrack, skillList);
+        panel.append(header, atalhos, level, blocoXp, rolagem);
         overlay.appendChild(panel);
         overlay.addEventListener("click", event => {
             if (event.target === overlay) fechar();
         });
         overlay.addEventListener("keydown", event => {
-            if (event.key === "Escape") fechar();
+            if (event.key === "Escape") {
+                fechar();
+                return;
+            }
+            if (event.key !== "Tab") return;
+            // foco coerente: Tab circula só entre os controles do modal
+            const focaveis = Array.from(overlay.querySelectorAll(
+                'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+            )).filter(el => el.offsetParent !== null);
+            if (focaveis.length === 0) return;
+            const primeiro = focaveis[0];
+            const ultimo = focaveis[focaveis.length - 1];
+            const atual = document.activeElement;
+            if (event.shiftKey && (atual === primeiro || !overlay.contains(atual))) {
+                event.preventDefault();
+                ultimo.focus();
+            } else if (!event.shiftKey && (atual === ultimo || !overlay.contains(atual))) {
+                event.preventDefault();
+                primeiro.focus();
+            }
         });
         document.body.appendChild(overlay);
         this.updateSkillProgress();
         this.syncScreenButtons();
-        // foco sem rolagem: focar o topo do conteúdo zera o scroll do painel
-        close.focus({ preventScroll: true });
-        // restaura a rolagem no painel novo (kill/level-up não sobe a tela)
-        panel.scrollTop = rolagemAnterior;
+        // devolve o foco ao controle que originou o re-render (ou ao fechar)
+        const alvoFoco = focoAnterior
+            ? Array.from(overlay.querySelectorAll("[data-focus-key]"))
+                .find(el => el.dataset.focusKey === focoAnterior)
+            : null;
+        (alvoFoco || close).focus({ preventScroll: true });
+        // restaura a rolagem na única área rolável (kill/level-up não sobe a tela)
+        rolagem.scrollTop = rolagemAnterior;
     },
 
     toggleSkillUpgradePanel() {
