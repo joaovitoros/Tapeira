@@ -177,35 +177,44 @@
 		</div>
 
 		<div id="container-opcoes">
-			<div id="container-Botoes">
-				<section id="golden-chest-tracker" aria-labelledby="golden-chest-title">
-					<div class="golden-chest-tracker__heading">
-						<img src="imagens/bau-dourado.svg" alt="" class="golden-chest-tracker__icon">
-						<div>
-							<div id="golden-chest-title">Baú dourado</div>
-							<div id="golden-chest-time">20 min no jogo · 40 min fora</div>
-						</div>
-					</div>
-					<div id="golden-chest-progress" class="golden-chest-tracker__progress" role="progressbar"
-						aria-label="Progresso para encontrar um baú dourado" aria-valuemin="0" aria-valuemax="100"
-						aria-valuenow="0" aria-valuetext="0% concluído">
-						<div id="golden-chest-progress-fill"></div>
-					</div>
-					<div class="golden-chest-tracker__footer">
-						<span id="golden-chest-progress-text">0:00 / 20:00</span>
-						<button type="button" id="golden-chest-claim" onclick="ColetaBauDourado()" disabled>
-							Abrir
-						</button>
-					</div>
+			<section id="golden-chest-tracker" aria-label="Baú dourado">
+				<button type="button" id="golden-chest-claim" class="golden-chest-tracker__main"
+					onclick="ColetaBauDourado()" disabled>
+					<img src="imagens/bau-dourado.svg" alt="" class="golden-chest-tracker__icon">
+					<span id="golden-chest-progress-text">20:00</span>
+				</button>
+
+				<div class="golden-chest-tracker__bottom">
+					<button type="button" id="golden-chest-info" class="golden-chest-tracker__info"
+						aria-expanded="false" aria-controls="golden-chest-desc"
+						aria-label="Sobre o baú dourado" title="Sobre o baú dourado"
+						onclick="UI.toggleGoldenChestInfo()">
+						<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+							<circle cx="12" cy="12" r="9.4" />
+							<path d="M12 11.2v5.2" />
+							<circle cx="12" cy="7.8" r="1.15" class="golden-chest-tracker__info-dot" />
+						</svg>
+					</button>
+
 					<div class="golden-chest-tracker__auto">
 						<label class="auto-toggle" id="autoColetaWrap">
+							<span class="golden-chest-tracker__auto-label">auto</span>
 							<input type="checkbox" id="autoColetaToggle"
 								onchange="AlternaAutoColeta(this.checked)"
 								aria-label="Auto-coleta de baús" />
-							<span>Auto-coleta</span>
 						</label>
 					</div>
-				</section>
+				</div>
+
+				<div id="golden-chest-desc" class="golden-chest-tracker__desc" role="note" hidden>
+					<strong>Baú Dourado</strong>
+					<p>Receba um item aleatório entre Gold, Formiga ou Skills recarregadas.</p>
+					<p><b>No jogo:</b> a cada 20 min.</p>
+					<p><b>Fora do jogo:</b> a cada 40 min.</p>
+				</div>
+			</section>
+
+			<div id="container-Botoes">
 				<button type="button" id="btnStatus" class="btn-Padrao screen-nav-button screen-nav-button--status"
 					aria-controls="DivStatus" aria-expanded="false" onclick="SobeStatus()">
 					<span class="screen-nav-icon screen-nav-icon--status" aria-hidden="true"></span>

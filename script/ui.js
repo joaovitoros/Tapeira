@@ -1515,29 +1515,58 @@ const UI = {
 
     updateGoldenChestProgress() {
         const tracker = document.getElementById("golden-chest-tracker");
-        const progress = document.getElementById("golden-chest-progress");
-        const fill = document.getElementById("golden-chest-progress-fill");
         const progressText = document.getElementById("golden-chest-progress-text");
         const claim = document.getElementById("golden-chest-claim");
-        if (!tracker || !progress || !fill || !progressText || !claim) return;
+        if (!tracker || !progressText || !claim) return;
 
-        const percent = Math.max(0, Math.min(
-            100,
-            progressoBauDourado * 100 / TEMPO_BAU_DOURADO_JOGO
-        ));
-        const minutes = Math.floor(progressoBauDourado / 60000);
-        const seconds = Math.floor(progressoBauDourado / 1000) % 60;
-        const current = `${minutes}:${String(seconds).padStart(2, "0")}`;
         const ready = bauDouradoPendente === 1;
-        fill.style.width = `${percent}%`;
-        progress.setAttribute("aria-valuenow", String(Math.round(percent)));
-        progress.setAttribute("aria-valuetext", ready
-            ? "Baú dourado pronto para abrir"
-            : `${Math.floor(percent)}% concluído`);
-        progressText.textContent = ready ? "Recompensa disponível!" : `${current} / 20:00`;
+        // O card mostra só o TEMPO QUE FALTA (antes era o decorrido "/ 20:00")
+        const restante = ready ? 0 : Math.max(0, TEMPO_BAU_DOURADO_JOGO - progressoBauDourado);
+        const minutes = Math.floor(restante / 60000);
+        const seconds = Math.floor(restante / 1000) % 60;
+        const tempo = `${minutes}:${String(seconds).padStart(2, "0")}`;
+
+        progressText.textContent = tempo;
         claim.disabled = !ready;
-        claim.setAttribute("aria-label", ready ? "Abrir baú dourado" : "Baú dourado ainda carregando");
+        claim.setAttribute("aria-label", ready
+            ? "Abrir baú dourado"
+            : `Baú dourado carregando, falta ${tempo}`);
+        claim.title = ready
+            ? "Abrir baú dourado"
+            : `Falta ${tempo} para o baú dourado`;
         tracker.classList.toggle("is-ready", ready);
+    },
+
+    // Descrição do rastreador: o ícone de info (em cima do baú) abre/fecha
+    // este balão. Fecha sozinho no clique fora; o ESC já passa por aqui pelo
+    // FechaJanelasAbertas (keymap.js).
+    toggleGoldenChestInfo() {
+        const desc = document.getElementById("golden-chest-desc");
+        const info = document.getElementById("golden-chest-info");
+        if (!desc || !info) return;
+
+        const abrir = desc.hidden;
+        desc.hidden = !abrir;
+        info.setAttribute("aria-expanded", String(abrir));
+
+        if (abrir) {
+            this._goldenChestInfoHandler = (evento) => {
+                const tracker = document.getElementById("golden-chest-tracker");
+                if (tracker && !tracker.contains(evento.target)) {
+                    this.toggleGoldenChestInfo();
+                }
+            };
+            // setTimeout: senão o próprio clique que abriu já fecha (o listener
+            // nasce depois, mas o evento de abertura ainda está na fila).
+            setTimeout(() => {
+                if (this._goldenChestInfoHandler) {
+                    document.addEventListener("pointerdown", this._goldenChestInfoHandler);
+                }
+            }, 0);
+        } else if (this._goldenChestInfoHandler) {
+            document.removeEventListener("pointerdown", this._goldenChestInfoHandler);
+            this._goldenChestInfoHandler = null;
+        }
     },
 
     spawnChest(quantity = 1) {
