@@ -233,9 +233,33 @@ function GoldCompanheiroPorSegundo(nivel = lvlComp2) {
 // Loja de esmeralda "CM em dobro": ×2 no Conhecimento Mug ganho por nível
 // (1 nível por enquanto; item permanente da loja de esmeraldas)
 // +1 por marco de 50 níveis do jogador (marcosNivel50, permanente)
+// ×1,05 por reset curto (resetsCurtosCM, permanente — o total pode virar
+// decimal; FormataMultCM formata os textos que mostram "×N")
 function MultiplicadorCM() {
 	const item = Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
-	return item + Math.max(0, Math.floor(Number(marcosNivel50) || 0));
+	return (item + Math.max(0, Math.floor(Number(marcosNivel50) || 0)))
+		* BonusCMResetCurto();
+}
+
+// Reset curto: reset feito ≥10 andares abaixo do recorde (maxAndar) dá +5%
+// permanente no multiplicador de CM — acumulativo (1,05^N), contado no
+// VoltaAndar e não zerado no Resetar. O teto 10000 mantém 1,05^N finito.
+function BonusCMResetCurto() {
+	return Math.pow(1.05, Math.max(0, Math.floor(Number(resetsCurtosCM) || 0)));
+}
+
+// Multiplicador de CM em texto legível ("1", "1,05", "1,1025") — vírgula e
+// no máximo 4 casas; os cálculos continuam usando o valor cheio
+function FormataMultCM(valor = MultiplicadorCM()) {
+	return String(Number(valor.toFixed(4))).replace(".", ",");
+}
+
+// Sobra de pontos vira CM (andar 65+): cada ponto de habilidade ainda na
+// mão dá +1% no Conhecimento Mug do reset — lido no VoltaAndar ANTES do
+// Resetar zerar pontosHabilidade. Sem campo no save: depende só de
+// maxAndar e dos pontos que sobrarem na hora do reset.
+function BonusCMPontosSobra() {
+	return maxAndar >= ANDAR_SOBRA_CM ? 1 + 0.01 * Math.max(0, pontosHabilidade) : 1;
 }
 
 // +1 no MultiplicadorCM a cada 50 níveis do jogador. marcosNivel50 guarda
@@ -386,6 +410,9 @@ var lvlXP = 0;
 // marcos de 50 níveis do jogador já reivindicados (+1 cada no MultiplicadorCM)
 // permanente: não zera no Resetar, então o mesmo marco não paga duas vezes
 var marcosNivel50 = 0;
+// resets feitos ≥10 andares abaixo do recorde (maxAndar): +5% permanente no
+// MultiplicadorCM cada — acumulativo (1,05^N), não zera no Resetar
+var resetsCurtosCM = 0;
 
 var precoEsmCM = 10;
 var lvlEsmCM = 0; //0/1: item de 1 nível da loja de esmeraldas — duplica o CM ganho no reset
@@ -802,11 +829,14 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 			`Você alcançou o nível ${nivelJogador} e recebeu ${niveisGanhos} ${niveisGanhos === 1 ? "ponto de habilidade" : "pontos de habilidade"}. Bônus: +${niveisGanhos * 10}% de dano e −${niveisGanhos} ${niveisGanhos === 1 ? "inimigo" : "inimigos"} para avançar.`
 		);
 		if (marcosGanhos > 0) {
-			UI.showInfo(`Marco de 50 níveis!\n+${marcosGanhos} no multiplicador de CM no reset (×${MultiplicadorCM()}).`);
+			UI.showInfo(`Marco de 50 níveis!\n+${marcosGanhos} no multiplicador de CM no reset (×${FormataMultCM()}).`);
 		}
 		if (Math.floor(totalNiveis / 100) > conquistaAntes) {
 			UI.showInfo("Conquista desbloqueada!\nA cada 100 níveis: -1 inimigo necessário para avançar!");
 		}
+		// Auto-gasto (andar 55+): o ponto que acabou de entrar já sai gasto
+		// numa skill aleatória — sem o toggle nada muda (função é no-op)
+		AutoGastaPontos();
 		UI.updateObjective();
 	}
 
@@ -1249,9 +1279,16 @@ function VoltaAndar(){
 		// (o item da loja de esmeraldas "CM em dobro" duplica o ganho)
 		let cmRecebido = 0;
 		if (andarAnterior >= 20) {
-			cmRecebido = Math.round(derrotadosRun * MultiplicadorCM());
+			// sobra de pontos (andar 65+): ×(1 + 1% por ponto na mão) — feito
+			// AQUI, antes do Resetar zerar pontosHabilidade
+			cmRecebido = Math.round(derrotadosRun * MultiplicadorCM() * BonusCMPontosSobra());
 			conhecimentoMug = conhecimentoMug + cmRecebido;
 		}
+		// Reset curto: ≥10 andares abaixo do recorde (maxAndar) dá +5% no
+		// multiplicador de CM — permanente e acumulativo, mas só a partir do
+		// PRÓXIMO reset (a conversão acima já usou o valor anterior)
+		const resetCurto = maxAndar - andarAnterior >= 10;
+		if (resetCurto) resetsCurtosCM = Math.min(10000, resetsCurtosCM + 1);
 		
 		andar=1;
 		qtdInimigosAndar=1;
@@ -1271,6 +1308,7 @@ function VoltaAndar(){
 		Batalha();
 		if (esmeraldasRecebidas > 0) UI.showCurrencyReward("emerald", esmeraldasRecebidas);
 		if (cmRecebido > 0) UI.showInfo("Você ganhou " + cmRecebido + " Conhecimento Mug!");
+		if (resetCurto) UI.showMilestone("Reset curto!", "+5% permanente no multiplicador de CM (agora ×" + FormataMultCM() + ")");
 		UI.MostraCelebracaoReset(esmeraldasRecebidas, andarAnterior, andarVolta, danoRecebido, cmRecebido);
 		UI.updateResetAviso();
 		if (TutorialComp1Pendente()) MostraTutorialComp1();
@@ -1301,7 +1339,9 @@ function PedeReset() {
 	const total = N(esmeraldas) + premio;
 	const pendentes = GatesDanoPendentes(andar);
 	const danoPendente = pendentes * 5;
-	const cmRecebido = andar >= 20 ? Math.round(derrotadosRun * MultiplicadorCM()) : 0;
+	const cmRecebido = andar >= 20 ? Math.round(derrotadosRun * MultiplicadorCM() * BonusCMPontosSobra()) : 0;
+	// sobra de pontos (andar 65+): o × extra aparece na linha do preview
+	const bonusPontosCM = BonusCMPontosSobra();
 	// próximo portão; o reset fica livre a partir do andar 20 em qualquer run
 	const proximoPortao = pendentes > 0
 		? Math.max(35, gateDanoPago + 5) + danoPendente
@@ -1316,7 +1356,7 @@ function PedeReset() {
 		<div class="modal-tutorial-info">
 			<span>Recompensa: <b>${premio > 0 ? "+" + premio + " esmeralda" + (premio === 1 ? "" : "s") : ehPortao ? "sem esmeraldas (portão intermediário)" : "sem esmeraldas (reset livre)"}</b></span>
 			${danoPendente > 0 ? `<span>Bônus: <b>+${danoPendente}% de dano permanente</b></span>` : ""}
-			${cmRecebido > 0 ? `<span>Conhecimento Mug: <b>+${cmRecebido} CM</b> (${derrotadosRun} abates × ${MultiplicadorCM()})</span>` : ""}
+			${cmRecebido > 0 ? `<span>Conhecimento Mug: <b>+${cmRecebido} CM</b> (${derrotadosRun} abates × ${FormataMultCM()}${bonusPontosCM > 1 ? " × " + bonusPontosCM.toFixed(2).replace(".", ",") + " pela sobra de pontos" : ""})</span>` : ""}
 			<span>Total de esmeraldas: <b>${total}</b></span>
 		</div>
 

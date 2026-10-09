@@ -6249,6 +6249,21 @@ button.skill-ramo-no:focus-visible {
 	cursor: not-allowed;
 }
 
+/* Auto-gasto de pontos (andar 55) — toggle dentro do painel de skills:
+   linha própria com o texto à esquerda e o checkbox à direita */
+.skill-auto-gasto {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 8px;
+	margin: 6px 0;
+	padding: 6px 10px;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.09);
+	border-radius: 6px;
+	white-space: normal;
+}
+
 .auto-toggle:focus-within {
 	outline: 2px solid rgba(255, 224, 138, 0.7);
 	outline-offset: 2px;

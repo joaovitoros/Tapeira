@@ -1110,10 +1110,11 @@ const PREVIEWS_LOJA = {
 	},
 	CompraEsmCM() {
 		if (N(lvlEsmCM) >= 1) return "CM ganho: no nível máximo (×2 do item)";
-		// o item dobra só a parte dele (2^nível); os marcos de 50 níveis ficam
+		// o item dobra só a parte dele (2^nível); os marcos de 50 níveis e o
+		// bônus de resets curtos multiplicam por fora e não dobram
 		const atual = MultiplicadorCM();
-		const prox = atual + Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
-		return "CM ganho no reset: ×" + atual + " → ×" + prox;
+		const prox = atual + Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0))) * BonusCMResetCurto();
+		return "CM ganho no reset: ×" + FormataMultCM(atual) + " → ×" + FormataMultCM(prox);
 	},
 	CompraVelComp() {
 		if (ITENS_PATENTE.velcomp.noTeto()) {

@@ -224,6 +224,7 @@ function Salvar() {
 		precoXP,
 		lvlXP,
 		marcosNivel50,
+		resetsCurtosCM,
 
 		precoEsmCM,
 		lvlEsmCM,
@@ -257,6 +258,7 @@ function Salvar() {
 		ultimaAtualizacaoBauDourado,
 		autoColeta,
 		autoCompra,
+		autoGasto,
 		precoVelComp,
 		lvlVelComp,
 		velAtaqueComp,
@@ -404,6 +406,12 @@ function ValidarSave(save) {
 		&& (!Number.isSafeInteger(save.marcosNivel50) || save.marcosNivel50 < 0
 			|| save.marcosNivel50 > 10000)) {
 		throw new TypeError("O marco de 50 níveis do save é inválido.");
+	}
+
+	if (save.resetsCurtosCM !== undefined
+		&& (!Number.isSafeInteger(save.resetsCurtosCM) || save.resetsCurtosCM < 0
+			|| save.resetsCurtosCM > 10000)) {
+		throw new TypeError("O contador de resets curtos do save é inválido.");
 	}
 
 	if (save.gateDanoPago !== undefined
@@ -626,6 +634,12 @@ function ValidarSave(save) {
 			|| save.autoCompra < 0
 			|| save.autoCompra > 1)) {
 		throw new TypeError("O estado da auto-compra no save é inválido.");
+	}
+	if (save.autoGasto !== undefined
+		&& (!Number.isInteger(save.autoGasto)
+			|| save.autoGasto < 0
+			|| save.autoGasto > 1)) {
+		throw new TypeError("O estado do auto-gasto no save é inválido.");
 	}
 	if (save.especializacao !== undefined
 		&& (!Number.isInteger(save.especializacao)
@@ -1139,6 +1153,7 @@ function Carregar(saveData, calculaOffline = false) {
 	precoXP = save.precoXP ?? 1;
 	lvlXP = save.lvlXP ?? 0;
 	marcosNivel50 = save.marcosNivel50 ?? 0;
+	resetsCurtosCM = save.resetsCurtosCM ?? 0;
 	// saves antigos do recurso (nível já >= 50 antes do recurso existir):
 	// reivindica os marcos pendentes sem nunca repetir os já pagos
 	ConfereMarcosNivel50();
@@ -1235,6 +1250,7 @@ function Carregar(saveData, calculaOffline = false) {
 	// próprio maxAndar — salvo quem já passou dos pisos 40/50 ganha na hora)
 	autoColeta = save.autoColeta ?? 1;
 	autoCompra = save.autoCompra ?? 1;
+	autoGasto = save.autoGasto ?? 0; // nasce desligado (opt-in)
 	// especialização: save antigo nasce sem build (o desbloqueio é a andarVolta)
 	especializacao = save.especializacao ?? 0;
 	especializacaoTrocas = save.especializacaoTrocas ?? 0;
@@ -2150,6 +2166,7 @@ function CriarObjetoSave() {
 		precoXP,
 		lvlXP,
 		marcosNivel50,
+		resetsCurtosCM,
 
 		precoEsmCM,
 		lvlEsmCM,
@@ -2185,6 +2202,7 @@ function CriarObjetoSave() {
 		ultimaAtualizacaoBauDourado,
 		autoColeta,
 		autoCompra,
+		autoGasto,
 		precoVelComp,
 		lvlVelComp,
 		velAtaqueComp,

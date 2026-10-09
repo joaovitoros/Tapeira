@@ -568,7 +568,25 @@ const UI = {
         const perkGanhos = PontosPerkGanhos();
         perkLine.textContent = `Pontos de perk: ${perkDisp} ${perkDisp === 1 ? "disponível" : "disponíveis"} de ${perkGanhos} · +1 por portão desta run (andar 35+) · zeram no reset`;
 
-        panel.append(header, atalhos, level, bonus, perkLine, xpLabel, xpTrack, skillList);
+        // Auto-gasto de pontos (andar 55): toggle dentro do painel — gasta na
+        // hora cada ponto ganho numa skill aleatória (só níveis; perks e
+        // ramos da árvore ficam manuais). Ids batem com a SyncTogglesAutomacao.
+        const autoGastoWrap = document.createElement("label");
+        autoGastoWrap.className = "auto-toggle skill-auto-gasto";
+        autoGastoWrap.id = "autoGastoWrap";
+        const autoGastoTexto = document.createElement("span");
+        autoGastoTexto.textContent = "auto-gasto de pontos · nível aleatório";
+        const autoGastoInput = document.createElement("input");
+        autoGastoInput.type = "checkbox";
+        autoGastoInput.id = "autoGastoToggle";
+        autoGastoInput.setAttribute("aria-label", "Auto-gasto de pontos de habilidade");
+        autoGastoInput.addEventListener("change", () => {
+            AlternaAutoGasto(autoGastoInput.checked);
+            this.showSkillUpgradePanel();
+        });
+        autoGastoWrap.append(autoGastoTexto, autoGastoInput);
+
+        panel.append(header, atalhos, level, bonus, perkLine, autoGastoWrap, xpLabel, xpTrack, skillList);
         overlay.appendChild(panel);
         overlay.addEventListener("click", event => {
             if (event.target === overlay) fechar();
@@ -577,6 +595,9 @@ const UI = {
             if (event.key === "Escape") fechar();
         });
         document.body.appendChild(overlay);
+        // estado travado/marcado do auto-gasto (e re-sync dos outros dois,
+        // que só existem fora do painel) — mesmos ids da SyncTogglesAutomacao
+        SyncTogglesAutomacao();
         this.updateSkillProgress();
         this.syncScreenButtons();
         // foco sem rolagem: focar o topo do conteúdo zera o scroll do painel
@@ -662,7 +683,7 @@ const UI = {
         const texto = pronto
             ? (andar >= andarVolta
                 ? "Reset disponível no botão Voltar andar!" + sufixoDano
-                : "Reset livre disponível! +" + Math.round(derrotadosRun * MultiplicadorCM()) + " CM")
+                : "Reset livre disponível! +" + Math.round(derrotadosRun * MultiplicadorCM() * BonusCMPontosSobra()) + " CM")
             : "Próximo reset: andar " + alvo + " (faltam " + faltam + ")" + sufixoDano;
 
         if (aviso.textContent !== texto) aviso.textContent = texto;
@@ -2183,6 +2204,8 @@ function MostraMarcos() {
             .map(skill => ({ nome: skill.nome, piso: skill.pisoDesbloqueio })),
         { nome: "Auto-coleta de baús", piso: ANDAR_AUTO_COLETA },
         { nome: "Auto-compra da loja", piso: ANDAR_AUTO_COMPRA },
+        { nome: "Auto-gasto de pontos", piso: ANDAR_AUTO_GASTO },
+        { nome: "Sobra de pontos vira CM", piso: ANDAR_SOBRA_CM },
         ...ESPECIALIZACOES
             .filter(esp => esp.andar > 0)
             .map(esp => ({ nome: esp.nome, piso: esp.andar }))
@@ -2237,7 +2260,8 @@ function MostraMarcos() {
                 ${linha("Próximo marco de 50", `nível ${proximoNivelCM} — faltam ${faltamNivelCM}`)}
                 ${barra(progressoNivelCM)}
                 ${linha("Marcos de 50 atingidos", marcosCM)}
-                ${linha("Multiplicador de CM no reset", "×" + MultiplicadorCM())}
+                ${linha("Multiplicador de CM no reset", "×" + FormataMultCM())}
+                ${linha("Resets curtos (+5% cada)", resetsCurtosCM > 0 ? resetsCurtosCM + " → ×" + FormataMultCM() : "nenhum")}
                 ${linha("Níveis acumulados", niveisAcum)}
                 ${linha("Próximo marco de 100", `${proximoNiveis} — faltam ${faltamNiveis}`)}
                 ${barra(niveisAcum % 100)}
@@ -2247,6 +2271,9 @@ function MostraMarcos() {
                     A cada 50 níveis o multiplicador de CM no reset ganha +1 — o
                     mesmo marco não paga de novo depois do reset. A cada 100 níveis
                     acumulados entre resets, 1 inimigo a menos é exigido para avançar.
+                    Resetar pelo menos 10 andares abaixo do recorde dá +5%
+                    permanente nesse multiplicador, e a cada reset curto novo o
+                    bônus acumula (multiplicativo).
                 </div>
             </div>
 
@@ -2259,7 +2286,10 @@ function MostraMarcos() {
                     O desbloqueio usa o andar máximo já atingido (${maxAndar}) e não
                     é perdido no reset. Andar 40 libera a auto-coleta dos baús e
                     andar 50 a auto-compra da loja (toggles no rastreador do baú
-                    dourado e no cabeçalho da loja). As especializações de build
+                    dourado e no cabeçalho da loja); andar 55 o auto-gasto de
+                    pontos (toggle no painel de skills) e andar 65 a sobra de
+                    pontos na mão virar +1% de Conhecimento Mug no reset. As
+                    especializações de build
                     abrem pelo mesmo critério: ${ESPECIALIZACOES.filter(esp => esp.andar > 0).map(esp => esp.nome + " (andar " + esp.andar + ")").join(", ")}.
                 </div>
             </div>
