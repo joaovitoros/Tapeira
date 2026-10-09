@@ -2010,17 +2010,17 @@ function MostraConquista() {
 
     for (let i = 0; i < CONQUISTAS_COMP.length; i++) {
         const c = CONQUISTAS_COMP[i];
-        const feita = TemConquistaComp(i);
+        const nivel = NivelConquistaComp(i);
         conquista += `
-			<div style="margin-top:0.6em;${feita ? "" : "opacity:0.75;"}">
+			<div style="margin-top:0.6em;${nivel > 0 ? "" : "opacity:0.75;"}">
 				<div>
-					${feita ? "✔" : "○"} <b>${c.nome}</b> — ${c.recompensa}
+					${nivel > 0 ? "✔" : "○"} <b>${c.nome}</b> — ${c.recompensa} (nível ${nivel}/${c.max})
 				</div>
 				<div style="font-size:0.9em;">
 					${c.desc}
 				</div>
-				<div style="font-size:0.9em;color:${feita ? "#8fe6a8" : "#cfcfcf"};">
-					${feita ? "Desbloqueada!" : "Progresso: " + ProgressoConquistaComp(i)}
+				<div style="font-size:0.9em;color:${nivel >= c.max ? "#ffd34f" : nivel > 0 ? "#8fe6a8" : "#cfcfcf"};">
+					${nivel >= c.max ? "Nível máximo!" : "Progresso: " + ProgressoConquistaComp(i)}
 				</div>
 			</div>
 		`;
