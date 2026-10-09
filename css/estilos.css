@@ -6322,6 +6322,27 @@ button.skill-ramo-no:focus-visible {
 	color: #72e7c1;
 }
 
+.esp-cartao:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.esp-cartao__lock {
+	align-self: flex-start;
+	margin-top: 2px;
+	padding: 1px 6px;
+	border: 1px solid rgba(255, 196, 92, 0.55);
+	border-radius: 5px;
+	background: rgba(255, 196, 92, 0.12);
+	color: #ffc45c;
+	font-size: 10px;
+	font-weight: 700;
+}
+
+.esp-cartao__lock[hidden] {
+	display: none;
+}
+
 .especializacao__rodape {
 	display: flex;
 	justify-content: space-between;

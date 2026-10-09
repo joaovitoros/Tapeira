@@ -20,15 +20,15 @@ var perkGold = 0; //níveis de perk do Bônus de Gold (+25% no drop do kill com 
 var perkFuga = 0; //níveis de perk da Pausa da fuga (10% de restaurar o tempo de fuga cada, máx 50%)
 var conhecimentoMug = 0; //moeda permanente da Loja do Conhecimento (1 abate = 1 CM no reset a partir do andar 20)
 var derrotadosRun = 0; //abates desde o último reset (base da conversão em Conhecimento Mug)
-var cmNivelDano = 0; //níveis da Loja do Conhecimento: +1% de dano permanente cada
-var cmNivelGold = 0; //níveis da Loja do Conhecimento: +1% de gold cada
-var cmNivelXp = 0; //níveis da Loja do Conhecimento: +1% de XP cada
-var cmNivelFuga = 0; //níveis da Loja do Conhecimento: +1 no tempo máximo de fuga cada
-var cmNivelCrit = 0; //níveis da Loja do Conhecimento: +1% de dano crítico cada
+var cmNivelDano = 0; //níveis da Loja do Conhecimento: +2% de dano permanente cada
+var cmNivelGold = 0; //níveis da Loja do Conhecimento: +2% de gold cada
+var cmNivelXp = 0; //níveis da Loja do Conhecimento: +2% de XP cada
+var cmNivelFuga = 0; //níveis da Loja do Conhecimento: +2 no tempo máximo de fuga cada
+var cmNivelCrit = 0; //níveis da Loja do Conhecimento: +2% de dano crítico cada
 var cmNivelFormiga = 0; //níveis da Loja do Conhecimento: +0,5% na chance de drop de formiga por abate (48 níveis = chance máx 25%)
 var cmNivelDuasFormigas = 0; //níveis da Loja do Conhecimento: +1% de o drop de formiga sair com 2 (máx 100)
-var cmNivelComp = 0; //níveis da Loja do Conhecimento: +1% de dano de companheiro cada (baked em danoComp1)
-var cmNivelGoldComp2 = 0; //níveis da Loja do Conhecimento: +1% de gold do companheiro 2 cada
+var cmNivelComp = 0; //níveis da Loja do Conhecimento: +2% de dano de companheiro cada (baked em danoComp1)
+var cmNivelGoldComp2 = 0; //níveis da Loja do Conhecimento: +2% de gold do companheiro 2 cada
 var totalDerrotados = 0; //total de inimigos derrotados durante todo o jogo
 var totalGold = new GoldNumber(0); //total de gold coletado durante todo o jogo
 var danoJogador = 1; //dano atual do jogador
@@ -53,6 +53,12 @@ var progressoConquistaGold = 500; //multiplicador e quantidade necessaria para p
 var validaConquista = 1; //variavel de valdiação para determinar onde será atribuido o bonus de conclusão da conquista (1- dano, 2- gold, 3- dano critico)
 var totalNiveis = 0; //total de níveis ganhos acumulado entre resets (conquista de nível: a cada 100 → -1 inimigo para avançar)
 var bonusCritConquista = 0; //pontos de dano crítico ganhos por conquistas (permanente)
+// Conquistas comportamentais (Tier 4 #1): flags permanentes 0..4 por conquista
+var conquistasComp = [0, 0, 0, 0, 0]; //1 = desbloqueada (não zera no Resetar)
+var missoesCompletas = 0; //total de missões concluídas (permanente)
+var melhorGoldRun = new GoldNumber(0); //melhor totalGold de uma run (progresso do Milionário)
+var runInicioMs = Date.now(); //cronômetro da run atual (conquista Velocista)
+var comprasRun = 0; //compras da loja de gold nesta run (conquista Poupado)
 var missao = Array(" ","Coleta de Gold", "Golpes", "Caça aos Mugs", "Tempo") //vetor usado para listagem das missões
 var missaoAtual; //variavel que determina a missão atual (1- coleta de gol, 2- tempo, 3- caça aos mugs)
 var missaoColeta = 500, missaoColetaAtual = 0.0; //Gold necessario para completar a missão "Coleta de gold"
@@ -178,19 +184,25 @@ function PrecoLojaCM(nivel) {
 	return Math.round(10 * Math.pow(1.4, Math.max(0, Number(nivel) || 0)));
 }
 
-// +1% de gold por nível — aplicado em todo ganho de gold (AddGold)
+// +2% de gold por nível — aplicado em todo ganho de gold (AddGold)
 function MultiplicadorGoldConhecimento() {
-	return 1 + cmNivelGold * 0.01;
+	return 1 + cmNivelGold * 0.02;
 }
 
-// +1% de XP por nível — aplicado em toda XP ganha (GanhaXP)
+// +2% de XP por nível — aplicado em toda XP ganha (GanhaXP)
 function BonusXPConhecimento() {
-	return 1 + cmNivelXp * 0.01;
+	return 1 + cmNivelXp * 0.02;
 }
 
-// Tempo máximo do cronômetro de fuga: base 120 + bônus da loja
+// Tempo máximo do cronômetro de fuga: base 120 + 2 s por nível da loja. O
+// Canhão de Vidro corta o teto pela metade (arredonda pra baixo, nunca acima
+// de 50%); como o cronômetro só reabastece na troca de andar/onda, a troca
+// de build vale a partir do próximo abastecimento
 function TempoFugaMax() {
-	return 120 + cmNivelFuga;
+	const base = 120 + cmNivelFuga * 2;
+	const tempo = especializacao === 4 ? Math.floor(base * 0.5) : base;
+	// +5 s da conquista Destemido entra por fora (sempre +5, mesmo no ÷2 do Canhão)
+	return tempo + BonusFugaConquistaComp();
 }
 
 // Chance de drop de formiga aleatória por abate: 1% base + 0,5% por nível da
@@ -199,9 +211,9 @@ function ChanceDropFormiga() {
 	return Math.min(0.25, 0.01 + Math.min(cmNivelFormiga, 48) * 0.005);
 }
 
-// +1% de gold do companheiro 2 por nível — aplicado em todo recálculo de goldCompanheiro
+// +2% de gold do companheiro 2 por nível — aplicado em todo recálculo de goldCompanheiro
 function MultiplicadorGoldComp2() {
-	return 1 + cmNivelGoldComp2 * 0.01;
+	return 1 + cmNivelGoldComp2 * 0.02;
 }
 
 // Gold do Companheiro 2 (GoldPS) por segundo — fonte única da fórmula:
@@ -239,10 +251,11 @@ function LimitaDanoCritico() {
 	danoCritJogador = Math.min(Math.max(danoNormal, danoCritico), danoNormal * multiplicadorMaximoDanoCritico);
 }
 
-// Sobe o teto do crítico em +0,1 (loja de gold e Loja do Conhecimento).
+// Sobe o teto do crítico — passo parametrizado: a loja de gold sobe +0,1 por
+// compra (default) e a Loja do Conhecimento sobe +0,2 por nível.
 // Arredonda pra 1 casa: somar 0,1 repetidamente acumula erro de flutuante.
-function SobeTetoCritico() {
-	multiplicadorMaximoDanoCritico = Math.round((multiplicadorMaximoDanoCritico + 0.1) * 10) / 10;
+function SobeTetoCritico(passo = 0.1) {
+	multiplicadorMaximoDanoCritico = Math.round((multiplicadorMaximoDanoCritico + passo) * 10) / 10;
 }
 
 function LimiteTempoOffline(quantidadePretas = QuantidadeFormigas("pretas")) {
@@ -317,6 +330,13 @@ var lvlBau = 1;
 var precoEsmBau = 500;
 var lvlEsmBau = 0;
 
+// Item novo da loja de gold: velocidade de ataque do companheiro — +20% por
+// nível a partir de 1 hit/s, com teto por patente (1,6 → 1,8 → 2,0 hits/s).
+// O tick do DanoCompanheiros escala junto (SincronizaIntervaloDanoComp)
+var precoVelComp = 125;
+var lvlVelComp = 1;
+var velAtaqueComp = 1;
+
 // Patentes da loja de gold (0 = ★I, a base de hoje): ao bater no nível máximo
 // o ingresso destrava o próximo segmento de níveis com o teto do efeito
 // subindo. São por run — zeram no reset junto com os itens que destravam.
@@ -327,6 +347,7 @@ var patenteCCrit = 0;
 var patenteSubVida = 0;
 var patenteAvan = 0;
 var patenteEsmBau = 0;
+var patenteVelComp = 0;
 
 var descontoLoja = 0;
 var mulGoldInicial = mulGold;
@@ -385,6 +406,10 @@ function CarregarStatus(){
 	vidaInimigo2 = vidaAndar;
 	vidaInimigo3 = vidaAndar;
 	vidaInimigo4 = vidaAndar;
+
+	// Cadeia de Ataques: o stack é por inimigo e por onda — onda/andar novo
+	// zera os contadores (mesmo spawn que dá vida nova aos4 inimigos)
+	ataquesCadeia = [0, 0, 0, 0, 0];
 	
 	if(andar>=10){
 		Missao();
@@ -694,8 +719,10 @@ function XPNecessarioProximoNivel(nivel = nivelJogador) {
 
 // Bônus por nível do jogador: a cada nível ganho, +10% de dano e
 // −1 inimigo exigido para avançar de andar (quota mínima de 1).
+// ×1,05 da conquista Velocista entra no mesmo ponto único (status, DPS e
+// golpes saem sempre coerentes).
 function MultiplicadorDanoNivel() {
-	return 1 + Math.max(0, nivelJogador - 1) * 0.1;
+	return (1 + Math.max(0, nivelJogador - 1) * 0.1) * MultiplicadorDanoConquistaComp();
 }
 
 function QuotaAndar() {
@@ -730,9 +757,9 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 		: abates >= Math.ceil(limiteXP / xpPorAbate)
 			? limiteXP
 			: abates * xpPorAbate;
-	// +1% de XP por nível da Loja do Conhecimento (arredonda pra baixo e
-	// respeita o teto de XP restante — nunca estoura o limite seguro)
-	const xpBase = Math.min(limiteXP, Math.floor(xpCalculado * BonusXPConhecimento()));
+	// +2% de XP por nível da Loja do Conhecimento e +10% da conquista
+	// Milionário (arredonda pra baixo e respeita o teto de XP restante)
+	const xpBase = Math.min(limiteXP, Math.floor(xpCalculado * BonusXPConhecimento() * MultiplicadorXPConquistaComp()));
 	if (!Number.isSafeInteger(xpBase) || xpBase < 0) {
 		throw new TypeError("A quantidade de experiência precisa ser um inteiro não negativo.");
 	}
@@ -982,6 +1009,20 @@ function DanoCompanheiros(){
 	}
 }
 
+// Velocidade do companheiro: o tick de ataque roda a cada 1000ms ÷ o
+// multiplicador (1,0 = 1 hit/s; 2,0 = 2 hits/s no teto ★III). O handle é
+// gerenciado — recriado na compra, no load e no reset — e o PreCarregamento
+// limpa ele junto com os outros intervalos antes de recriar.
+var intervaloDanoComp = null;
+function IntervaloAtaqueComp() {
+	const vel = N(velAtaqueComp);
+	return 1000 / (vel > 0 ? vel : 1);
+}
+function SincronizaIntervaloDanoComp() {
+	if (intervaloDanoComp !== null) clearInterval(intervaloDanoComp);
+	intervaloDanoComp = setInterval(DanoCompanheiros, IntervaloAtaqueComp());
+}
+
 function GoldCompanheiros(){
 	if (jogoPausado) return;
 	const goldRecebido = goldCompanheiro * MultiplicadorGoldFormigas();
@@ -1172,6 +1213,9 @@ function VoltaAndar(){
 			goldCompanheiro = GoldCompanheiroPorSegundo();
 		}
 		
+		// conquista Velocista: reset feito com a run abaixo de 10 minutos
+		// (o Resetar logo abaixo reinicia o cronômetro da nova run)
+		if (Date.now() - runInicioMs < 10 * 60 * 1000) DesbloqueiaConquistaComp(0);
 		Resetar(); // zera derrotadosRun (a conversão em CM já foi feita acima)
 		RemoverInimigos();
 		Batalha();
@@ -1302,6 +1346,72 @@ function Conquistas(){
 	}
 }
 
+// ===== Conquistas comportamentais (Tier 4 #1) =====
+// Recompensam estilo de jogo (não totais): desbloqueio único e permanente —
+// os flags vivem no save e não zeram no Resetar (só no ZerarTodosSaves);
+// runInicioMs/comprasRun são os trackers desta run (zeram no Resetar).
+const CONQUISTAS_COMP = [
+	{ id: "velocista", nome: "Velocista", desc: "Complete um reset com a run abaixo de 10 minutos", recompensa: "+5% de dano permanente" },
+	{ id: "poupado", nome: "Poupado", desc: "Chegue ao andar 25 sem comprar nada na loja de gold", recompensa: "+5% de gold permanente" },
+	{ id: "missionario", nome: "Missionário", desc: "Conclua 20 missões", recompensa: "+25% no gold de toda missão" },
+	{ id: "destemido", nome: "Destemido", desc: "Vença um desafio da missão 5", recompensa: "+5 s no tempo de fuga" },
+	{ id: "milionario", nome: "Milionário", desc: "Acumule 1M de gold numa única run", recompensa: "+10% de XP permanente" },
+];
+
+function TemConquistaComp(indice) {
+	return conquistasComp[indice] === 1;
+}
+
+// Recompensas — cada uma aplicada num único ponto de fórmula:
+function MultiplicadorDanoConquistaComp() { return TemConquistaComp(0) ? 1.05 : 1; } //Velocista → MultiplicadorDanoNivel
+function MultiplicadorGoldConquistaComp() { return TemConquistaComp(1) ? 1.05 : 1; } //Poupado → AddGold
+function MultiplicadorMissaoConquistaComp() { return TemConquistaComp(2) ? 1.25 : 1; } //Missionário → MissaoRecompensaGold
+function BonusFugaConquistaComp() { return TemConquistaComp(3) ? 5 : 0; } //Destemido → TempoFugaMax
+function MultiplicadorXPConquistaComp() { return TemConquistaComp(4) ? 1.10 : 1; } //Milionário → GanhaXP
+
+// Toast de desbloqueio (idempotente: já desbloqueada = sem efeito)
+function DesbloqueiaConquistaComp(indice) {
+	if (TemConquistaComp(indice)) return false;
+	conquistasComp[indice] = 1;
+	const c = CONQUISTAS_COMP[indice];
+	UI.showInfo("Conquista desbloqueada!\n" + c.nome + ": " + c.recompensa);
+	UI.showMilestone("Conquista: " + c.nome, c.recompensa);
+	return true;
+}
+
+// Registra a conclusão de uma missão e devolve a recompensa com o bônus do
+// Missionário — o desbloqueio aos 20 acontece ANTES do cálculo, então a
+// própria missão 20 já paga os +25%
+function MissaoRecompensaGold(valor) {
+	missoesCompletas++;
+	if (missoesCompletas >= 20) DesbloqueiaConquistaComp(2);
+	return valor * MultiplicadorMissaoConquistaComp();
+}
+
+// Checagens periódicas (roda junto com Conquistas(), a cada golpe e subida de andar)
+function ConquistasComportamentais() {
+	// Poupado: andar 25 sem nenhuma compra de gold na run
+	if (andar >= 25 && comprasRun === 0) DesbloqueiaConquistaComp(1);
+	// Milionário: 1M de gold nesta run (a melhor run alimenta o progresso da tela)
+	if (GE(totalGold, 1e6)) DesbloqueiaConquistaComp(4);
+	if (GE(totalGold, melhorGoldRun)) melhorGoldRun = new GoldNumber(totalGold);
+}
+
+// Texto de progresso da tela de Conquistas para as conquistas ainda travadas
+function ProgressoConquistaComp(indice) {
+	if (indice === 0) {
+		const minutos = Math.max(0, (Date.now() - runInicioMs) / 60000);
+		return "run atual em " + minutos.toFixed(1) + " min de 10 min" + (minutos >= 10 ? " (nesta run já passou do tempo)" : "");
+	}
+	if (indice === 1) {
+		return "nesta run: andar " + andar + " de 25 · " + comprasRun + " compra(s) de gold" + (comprasRun > 0 ? " (quebra o objetivo nesta run)" : "");
+	}
+	if (indice === 2) return missoesCompletas + " de 20 missões concluídas";
+	if (indice === 3) return "vença 1 desafio da missão 5";
+	if (indice === 4) return "melhor run: " + FormatGold(melhorGoldRun) + " de 1M";
+	return "";
+}
+
 //funçoes de controles das missoes
 function AlternaManterAndar(){
 	const chk = document.getElementById("manterAndar");
@@ -1341,7 +1451,7 @@ function MissaoColetaGold(AuxMissao){
 	//Verificação de conclusão da missão Coleta de gold
 	missaoColetaAtual = missaoColetaAtual+AuxMissao;
 	if(missaoColetaAtual>=missaoColeta){
-		const goldRecebido = AddGold(missaoColeta / 2);
+		const goldRecebido = AddGold(MissaoRecompensaGold(missaoColeta / 2));
 		AddTotalGold(goldRecebido, false);
 		UI.showInfo("Missao Concluida!\nVoce recebeu um bonus de "+FormatGold(goldRecebido)+" de gold");
 		UI.showMilestone("Missão concluída", "Bônus de Gold recebido");
@@ -1358,7 +1468,7 @@ function MissaoGolpes(){
 	//Verificação de conclusão da missão Golpes
 	missaoGolpeAtual++;
 	if(missaoGolpeAtual>=missaoGolpe){
-		const goldRecebido = AddGold(missaoGolpe);
+		const goldRecebido = AddGold(MissaoRecompensaGold(missaoGolpe));
 		AddTotalGold(goldRecebido, false);
 		UI.showInfo("Missao Concluida!\nVoce recebeu um bonus de "+FormatGold(goldRecebido)+" de gold");
 		UI.showMilestone("Missão concluída", "Meta de golpes alcançada. Bônus de Gold recebido");
@@ -1375,7 +1485,7 @@ function MissaoCaca(){
 	//Verificação de conclusão da missão Golpes
 	missaoCacaMugsAtual++;
 	if(missaoCacaMugsAtual>=missaoCacaMugs){
-		const goldRecebido = AddGold(missaoCacaMugs);
+		const goldRecebido = AddGold(MissaoRecompensaGold(missaoCacaMugs));
 		AddTotalGold(goldRecebido, false);
 		UI.showInfo("Missao Concluida!\nVoce recebeu um bonus de "+FormatGold(goldRecebido)+" de gold");
 		UI.showMilestone("Missão concluída", "Meta de Mugs derrotados. Bônus de Gold recebido");
@@ -1395,7 +1505,7 @@ function MissaoTempo(){
 		missaoTempoAtual++;
 	}
 	if(missaoTempoAtual>=missaoTempo){
-		const goldRecebido = AddGold(missaoTempo / 4);
+		const goldRecebido = AddGold(MissaoRecompensaGold(missaoTempo / 4));
 		AddTotalGold(goldRecebido, false);
 		UI.showInfo("Missao Concluida!\nVoce recebeu um bonus de "+FormatGold(goldRecebido)+" de gold");
 		UI.showMilestone("Missão concluída", "Meta de tempo alcançada. Bônus de Gold recebido");
@@ -1429,7 +1539,9 @@ function MissaoDesafio() {
 	missaoDesafioAtual++;
 	if (missaoDesafioAtual >= missaoDesafioAlvo) {
 		//recompensa escala com o andar: mesma base do bônus de avanço ×5 (≈ 5 baús)
-		const goldRecebido = AddGold(BonusGoldAvanco() * 5);
+		const goldRecebido = AddGold(MissaoRecompensaGold(BonusGoldAvanco() * 5));
+		// conquista Destemido: vencer qualquer desafio já vale
+		DesbloqueiaConquistaComp(3);
 		AddTotalGold(goldRecebido, false);
 		UI.showInfo("Desafio concluído!\nVoce recebeu um bonus de " + FormatGold(goldRecebido) + " de gold");
 		UI.showMilestone("Desafio concluído", "Restrição cumprida. Bônus de Gold recebido");

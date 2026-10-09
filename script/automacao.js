@@ -85,7 +85,8 @@ const ITENS_AUTO_COMPRA = [
 	{ fn: CompraSubVida, preco: "precoVidaInimigo", teto: "subvida" },
 	{ fn: CompraCCrit, preco: "precoCCrit", teto: "ccrit" },
 	{ fn: CompraQTDAvanco, preco: "precoQTDAvanco", teto: "qtdavan" },
-	{ fn: CompraEsmBau, preco: "precoEsmBau", teto: "esmbau" }
+	{ fn: CompraEsmBau, preco: "precoEsmBau", teto: "esmbau" },
+	{ fn: CompraVelComp, preco: "precoVelComp", teto: "velcomp" }
 ];
 
 // Uma compra por tick, sempre no item mais barato que couber no gold (o

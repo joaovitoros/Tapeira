@@ -481,6 +481,18 @@
 								onclick="CompraQTDAvanco()"></td>
 					</tr>
 
+					<tr>
+						<td>Velocidade Companheiro</td>
+						<td align="center">
+							<div id="precoVelComp"></div>
+						</td>
+						<td align="center">
+							<div id="lvlVelComp"></div>
+						</td>
+						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
+								onclick="CompraVelComp()"></td>
+					</tr>
+
 				</table>
 
 				<div id="secaoEspecializacao" class="especializacao">
@@ -500,6 +512,17 @@
 						<button type="button" class="esp-cartao" data-esp="3" onclick="EscolheEspecializacao(3)">
 							<span class="esp-cartao__nome">Olho de Águia</span>
 							<span class="esp-cartao__efeito">Crítico ×1,8 · −10% dano · −15% gold</span>
+							<span class="esp-cartao__lock" hidden>Desbloqueia no andar 60</span>
+						</button>
+						<button type="button" class="esp-cartao" data-esp="4" onclick="EscolheEspecializacao(4)">
+							<span class="esp-cartao__nome">Canhão de Vidro</span>
+							<span class="esp-cartao__efeito">+80% dano · −50% tempo de fuga</span>
+							<span class="esp-cartao__lock" hidden>Desbloqueia no andar 70</span>
+						</button>
+						<button type="button" class="esp-cartao" data-esp="5" onclick="EscolheEspecializacao(5)">
+							<span class="esp-cartao__nome">Cadeia de Ataques</span>
+							<span class="esp-cartao__efeito">−50% dano · +25% por ataque no mesmo alvo (até +400%)</span>
+							<span class="esp-cartao__lock" hidden>Desbloqueia no andar 80</span>
 						</button>
 					</div>
 					<div class="especializacao__rodape">
@@ -616,7 +639,7 @@
 						</tr>
 					</thead>
 					<tr>
-						<td>+1% de dano</td>
+						<td>+2% de dano</td>
 						<td align="center">
 							<div id="precoCMDano"></div>
 						</td>
@@ -627,7 +650,7 @@
 								onclick="CompraCM('dano')"></td>
 					</tr>
 					<tr>
-						<td>+1% de gold</td>
+						<td>+2% de gold</td>
 						<td align="center">
 							<div id="precoCMGold"></div>
 						</td>
@@ -638,7 +661,7 @@
 								onclick="CompraCM('gold')"></td>
 					</tr>
 					<tr>
-						<td>+1% de XP</td>
+						<td>+2% de XP</td>
 						<td align="center">
 							<div id="precoCMXp"></div>
 						</td>
@@ -649,7 +672,7 @@
 								onclick="CompraCM('xp')"></td>
 					</tr>
 					<tr>
-						<td>+1 no tempo de fuga</td>
+						<td>+2 no tempo de fuga</td>
 						<td align="center">
 							<div id="precoCMFuga"></div>
 						</td>
@@ -660,7 +683,7 @@
 								onclick="CompraCM('fuga')"></td>
 					</tr>
 					<tr>
-						<td>+1% de dano crítico e +0,1 no teto</td>
+						<td>+2% de dano crítico e +0,2 no teto</td>
 						<td align="center">
 							<div id="precoCMCrit"></div>
 						</td>
@@ -693,7 +716,7 @@
 								onclick="CompraCM('duasformigas')"></td>
 					</tr>
 					<tr>
-						<td>+1% de dano de companheiro</td>
+						<td>+2% de dano de companheiro</td>
 						<td align="center">
 							<div id="precoCMComp"></div>
 						</td>
@@ -704,7 +727,7 @@
 								onclick="CompraCM('comp')"></td>
 					</tr>
 					<tr>
-						<td>+1% de gold do companheiro 2</td>
+						<td>+2% de gold do companheiro 2</td>
 						<td align="center">
 							<div id="precoCMGoldComp2"></div>
 						</td>

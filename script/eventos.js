@@ -129,7 +129,14 @@ function IniciaEvento(nome) {
 		const com = document.getElementById("comerciante");
 		if (com) com.style.visibility = "visible";
 	}
-	if (nome === "meteoro") eventoProximoMeteoroMs = Date.now() + 1500;
+	if (nome === "meteoro") {
+		eventoProximoMeteoroMs = Date.now() + 1500;
+		// tira da arena o que atrapalha clicar nos fragmentos: o ícone do baú
+		// (o saldo fica guardado e ele volta no fim do evento) e um cartão de
+		// abertura que ainda estiver na tela
+		UI.removeChest();
+		UI.removeChestOpening();
+	}
 	if (nome === "inseto") CriaInseto();
 	if (nome === "emboscada" && !PreparaEmboscada()) {
 		// sem onda viva na tela não há o que defender — aborta sem anunciar
@@ -152,6 +159,9 @@ function EncerraEvento(resetarCooldown) {
 		clearTimeout(eventoPendente);
 		eventoPendente = null;
 	}
+	// captura antes de zerar: os baús que ficaram de fora da arena durante a
+	// chuva de meteoros são repostos no fim da função
+	const eraMeteoro = eventoAtivo === "meteoro";
 	// Emboscada: desfaz o +50% de vida se ainda for a mesma onda do snapshot
 	// (em fuga/avanço a onda já mudou e os inimigos nem existem mais). Nunca
 	// cura além do original: Math.min preserva o dano que o jogador deu.
@@ -185,6 +195,12 @@ function EncerraEvento(resetarCooldown) {
 	// cobre todos os fins do evento (tempo, ✕, ESC, reset e load)
 	const com = document.getElementById("comerciante");
 	if (com) com.style.visibility = "hidden";
+
+	// fim da chuva de meteoros: o baú que caiu (ou já estava na arena) durante
+	// o evento volta pra tela agora que não tem mais fragmentos pra confundir
+	if (eraMeteoro && quantidadeBausDisponiveis > 0) {
+		UI.spawnChest(quantidadeBausDisponiveis);
+	}
 }
 
 // ---------------------------------------------------------

@@ -169,6 +169,15 @@ function Salvar() {
 		totalNiveis,
 		bonusCritConquista,
 
+		conquistasComp,
+		missoesCompletas,
+		melhorGoldRun: {
+			m: melhorGoldRun.m,
+			e: melhorGoldRun.e
+		},
+		runInicioMs,
+		comprasRun,
+
 		precoDano,
 		mulDano,
 		lvlDano,
@@ -243,6 +252,10 @@ function Salvar() {
 		ultimaAtualizacaoBauDourado,
 		autoColeta,
 		autoCompra,
+		precoVelComp,
+		lvlVelComp,
+		velAtaqueComp,
+		patenteVelComp,
 		especializacao,
 		especializacaoTrocas
 	};
@@ -454,7 +467,8 @@ function ValidarSave(save) {
 		["patenteCCrit", 4],
 		["patenteSubVida", 5],
 		["patenteAvan", 4],
-		["patenteEsmBau", 4]
+		["patenteEsmBau", 4],
+		["patenteVelComp", 2]
 	];
 	for (const [key, maximo] of patenteKeys) {
 		const valor = save[key];
@@ -471,6 +485,49 @@ function ValidarSave(save) {
 	if (save.precoEsmBau !== undefined
 		&& (!Number.isFinite(save.precoEsmBau) || save.precoEsmBau < 1)) {
 		throw new TypeError("O preço do item de esmeralda do baú é inválido.");
+	}
+	// Velocidade do Companheiro: nível e preço dentro dos tetos das patentes;
+	// o efeito é 1,0 (base) até 2,0 (★III) com folga de float nos passos 0,2
+	if (save.lvlVelComp !== undefined
+		&& (!Number.isSafeInteger(save.lvlVelComp) || save.lvlVelComp < 1 || save.lvlVelComp > 30)) {
+		throw new TypeError("O nível da Velocidade do Companheiro no save é inválido.");
+	}
+	if (save.precoVelComp !== undefined
+		&& (!Number.isFinite(save.precoVelComp) || save.precoVelComp < 1)) {
+		throw new TypeError("O preço da Velocidade do Companheiro no save é inválido.");
+	}
+	if (save.velAtaqueComp !== undefined
+		&& (!Number.isFinite(save.velAtaqueComp) || save.velAtaqueComp < 1 || save.velAtaqueComp > 2.05)) {
+		throw new TypeError("A velocidade de ataque do companheiro no save é inválida.");
+	}
+
+	// Conquistas comportamentais: flags 0/1 em lista de 5, contadores inteiros
+	// e cronômetro de run dentro dos limites de um save legítimo (campos ausentes = save antigo)
+	if (save.conquistasComp !== undefined
+		&& (!Array.isArray(save.conquistasComp)
+			|| save.conquistasComp.length !== CONQUISTAS_COMP.length
+			|| save.conquistasComp.some(v => v !== 0 && v !== 1))) {
+		throw new TypeError("As conquistas comportamentais do save são inválidas.");
+	}
+	if (save.missoesCompletas !== undefined
+		&& (!Number.isSafeInteger(save.missoesCompletas) || save.missoesCompletas < 0 || save.missoesCompletas > 1000000)) {
+		throw new TypeError("O contador de missões do save é inválido.");
+	}
+	if (save.comprasRun !== undefined
+		&& (!Number.isSafeInteger(save.comprasRun) || save.comprasRun < 0 || save.comprasRun > 1000000)) {
+		throw new TypeError("O contador de compras da run no save é inválido.");
+	}
+	if (save.runInicioMs !== undefined
+		&& (!Number.isFinite(save.runInicioMs) || save.runInicioMs <= 0
+			|| save.runInicioMs > Date.now() + 300000)) {
+		throw new TypeError("O cronômetro da run no save é inválido.");
+	}
+	if (save.melhorGoldRun !== undefined) {
+		const mg = save.melhorGoldRun;
+		if (!mg || typeof mg !== "object" || Array.isArray(mg)
+			|| !Number.isFinite(mg.m) || !Number.isFinite(mg.e)) {
+			throw new TypeError("O melhor gold de run do save é inválido.");
+		}
 	}
 
 	// Conhecimento Mug: inteiros não negativos; níveis respeitam o teto de cada item
@@ -563,7 +620,7 @@ function ValidarSave(save) {
 	if (save.especializacao !== undefined
 		&& (!Number.isInteger(save.especializacao)
 			|| save.especializacao < 0
-			|| save.especializacao > 3)) {
+			|| save.especializacao > 5)) {
 		throw new TypeError("A especialização no save é inválida.");
 	}
 	if (save.especializacaoTrocas !== undefined
@@ -594,7 +651,9 @@ function ValidarSave(save) {
 	}
 
 	for (const [key, value] of Object.entries(save)) {
-		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards"].includes(key)) continue;
+		// campos não-numéricos já validados especificamente acima (shape conferido)
+		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards",
+			"conquistasComp", "melhorGoldRun"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");
 		}
@@ -727,8 +786,11 @@ function CalculaProgressoOffline(ultimaDataSalva) {
 	const multEspNormal = MultiplicadorDanoEspecializacao(false);
 	const multEspCritico = MultiplicadorDanoEspecializacao(true);
 	const danoMedioCompanheirosPorSegundo = danoBaseCompanheiro > 0
-		? (danoBaseCompanheiro * (1 - chanceCritica) * multEspNormal)
-			+ (danoCriticoCompanheiro * chanceCritica * multEspCritico)
+		? ((danoBaseCompanheiro * (1 - chanceCritica) * multEspNormal)
+			+ (danoCriticoCompanheiro * chanceCritica * multEspCritico))
+			// Velocidade do Companheiro: os hits por segundo multiplicam
+			// o dano médio do companheiro (1,0 = o valor de sempre)
+			* N(velAtaqueComp)
 		: 0;
 	const danoMedioJogadorPorAtaque = (Math.max(0, Number(danoJogador)) * (1 - chanceCritica) * multEspNormal)
 		+ (Math.max(0, Number(danoCritJogador)) * chanceCritica * multEspCritico);
@@ -964,11 +1026,11 @@ function Carregar(saveData, calculaOffline = false) {
 	danoCritJogador = save.danoCritJogador ?? 2;
 	multiplicadorMaximoDanoCritico = save.multiplicadorMaximoDanoCritico ?? 4;
 	// saves antigos compraram crítico do CM antes do teto virar item do CM:
-	// garante o piso (4 + +0,1 por nível); o valor salvo vale se for maior
+	// garante o piso (4 + +0,2 por nível); o valor salvo vale se for maior
 	// (inclui os +0,1 da loja de gold comprados nesta run)
 	multiplicadorMaximoDanoCritico = Math.max(
 		multiplicadorMaximoDanoCritico,
-		Math.round((4 + 0.1 * cmNivelCrit) * 10) / 10);
+		Math.round((4 + 0.2 * cmNivelCrit) * 10) / 10);
 	LimitaDanoCritico();
 	chanceCrit = save.chanceCrit ?? 0.01;
 
@@ -1089,6 +1151,18 @@ function Carregar(saveData, calculaOffline = false) {
 
 	precoEsmBau = save.precoEsmBau ?? 500;
 	lvlEsmBau = save.lvlEsmBau ?? 0;
+	// Velocidade do Companheiro: saves antigos nascem na base (1 hit/s)
+	precoVelComp = save.precoVelComp ?? 125;
+	lvlVelComp = save.lvlVelComp ?? 1;
+	velAtaqueComp = save.velAtaqueComp ?? 1;
+	// Conquistas comportamentais: permanentes (ausentes = nenhuma desbloqueada).
+	// Saves antigos já passando do andar 25 nascem como "comprou": sem histórico
+	// de compras no save não dá pra provar o contrário — sem unlock de graça.
+	conquistasComp = Array.isArray(save.conquistasComp) ? save.conquistasComp.slice() : [0, 0, 0, 0, 0];
+	missoesCompletas = save.missoesCompletas ?? 0;
+	melhorGoldRun = GoldNumber.fromMantissaExponent(save.melhorGoldRun?.m ?? 0, save.melhorGoldRun?.e ?? 0);
+	runInicioMs = save.runInicioMs ?? Date.now();
+	comprasRun = save.comprasRun ?? (andar >= 25 ? 1 : 0);
 	// patentes ausentes = 0 (★I): saves de antes da feature nascem na base
 	patenteBau = save.patenteBau ?? 0;
 	patenteBEspaco = save.patenteBEspaco ?? 0;
@@ -1097,6 +1171,10 @@ function Carregar(saveData, calculaOffline = false) {
 	patenteSubVida = save.patenteSubVida ?? 0;
 	patenteAvan = save.patenteAvan ?? 0;
 	patenteEsmBau = save.patenteEsmBau ?? 0;
+	patenteVelComp = save.patenteVelComp ?? 0;
+	// tick do companheiro reacomoda com a velocidade carregada (o bloco de
+	// intervalos do PreCarregamento limpa e recria logo em seguida)
+	SincronizaIntervaloDanoComp();
 
 	RemoverInimigos();
 	AbreLoja();
@@ -1663,7 +1741,14 @@ function PreCarregamento() {
 	// barata de DOM, como os toggles — load, reset e zerada se refletem sozinhos)
 	intervalos.push(setInterval(SyncSecaoEspecializacao, 1000));
 
-	intervalos.push(setInterval(DanoCompanheiros, 1000));
+	// tick do companheiro com intervalo dinâmico (Velocidade do Companheiro):
+	// o handle gerenciado é limpo aqui (o intervalos[] não o contém) e recriado
+	// com o intervalo certo da velocidade atual
+	if (intervaloDanoComp !== null) {
+		clearInterval(intervaloDanoComp);
+		intervaloDanoComp = null;
+	}
+	SincronizaIntervaloDanoComp();
 	intervalos.push(setInterval(GoldCompanheiros, 1000));
 	intervalos.push(setInterval(TempoCompanheiros, 10000));
 	intervalos.push(setInterval(HabilidadeDano, 1000));
@@ -1683,6 +1768,8 @@ function Resetar() {
 	numInimigosTela = 1; //usada para validar quantos inimigos e
 	andar = 1;	//usada para contagem do andar atual do jogo (Necessario para calculos progressivos)
 	marcoGoldRun = 0;
+	runInicioMs = Date.now(); //nova run: cronômetro da conquista Velocista
+	comprasRun = 0; //compras de gold desta run zeram (conquista Poupado)
 	qtdInimigosAndar = 1; //quantidade necessaria de inimigos que devem ser derrotados para avançar para o proximo andar
 	inimigosDerrotados = 0; //quantidade de inimigos derrotados naquele andar
 	derrotadosRun = 0; //abates da run zerados (a conversão em CM acontece antes, no VoltaAndar)
@@ -1704,9 +1791,9 @@ function Resetar() {
 	qtdSave = 0; //Quantidade de vezes que o jogo foi salvo
 	danoJogador = 1; //dano atual do jogador
 	danoCritJogador = 2; //dano critico atual do jogador
-	// teto ×4 + +0,1 por nível do Conhecimento (permanente; o +0,1 da loja de
+	// teto ×4 + +0,2 por nível do Conhecimento (permanente; o +0,1 da loja de
 	// gold é por run e é reconstruído nas compras da run)
-	multiplicadorMaximoDanoCritico = Math.round((4 + 0.1 * cmNivelCrit) * 10) / 10;
+	multiplicadorMaximoDanoCritico = Math.round((4 + 0.2 * cmNivelCrit) * 10) / 10;
 	chanceCrit = 0.01; //chance em porcentagem de se causar um dano critico
 	//as vidas dos inimigos sao recalculadas por CarregarStatus logo apos o reset
 	//mulGoldAvanco NAO e mais zerado aqui: e um item permanente da loja de esmeraldas
@@ -1802,6 +1889,12 @@ function Resetar() {
 	precoEsmBau = 500;
 	lvlEsmBau = 0;
 	chanceEsmeraldaBau = 0.01;
+	// Velocidade do Companheiro volta ao padrão (1 hit/s) e o tick reacomoda
+	precoVelComp = 125;
+	lvlVelComp = 1;
+	velAtaqueComp = 1;
+	// Cadeia de Ataques: o stack é por onda e não sobrevive ao reset
+	ataquesCadeia = [0, 0, 0, 0, 0];
 	// patentes são por run: zeram junto com os itens que destravam
 	patenteBau = 0;
 	patenteBEspaco = 0;
@@ -1810,6 +1903,8 @@ function Resetar() {
 	patenteSubVida = 0;
 	patenteAvan = 0;
 	patenteEsmBau = 0;
+	patenteVelComp = 0;
+	SincronizaIntervaloDanoComp();
 
 	AtualizaLojaGold();
 	UI.updateSkillProgress();
@@ -1830,9 +1925,9 @@ function Resetar() {
 		LimitaDanoCritico();
 	}
 
-	// Loja do Conhecimento: +1% de dano permanente por nível
+	// Loja do Conhecimento: +2% de dano permanente por nível
 	if (cmNivelDano > 0 && isFinite(cmNivelDano)) {
-		danoJogador = danoJogador * Math.pow(1.01, cmNivelDano);
+		danoJogador = danoJogador * Math.pow(1.02, cmNivelDano);
 		LimitaDanoCritico();
 	}
 
@@ -1844,9 +1939,9 @@ function Resetar() {
 		LimitaDanoCritico();
 	}
 
-	// Loja do Conhecimento: +1% de dano crítico por nível (dentro do teto ×4)
+	// Loja do Conhecimento: +2% de dano crítico por nível (dentro do teto ×4)
 	if (cmNivelCrit > 0 && isFinite(cmNivelCrit)) {
-		danoCritJogador = danoCritJogador * Math.pow(1.01, cmNivelCrit);
+		danoCritJogador = danoCritJogador * Math.pow(1.02, cmNivelCrit);
 		LimitaDanoCritico();
 	}
 
@@ -1977,6 +2072,15 @@ function CriarObjetoSave() {
 		totalNiveis,
 		bonusCritConquista,
 
+		conquistasComp,
+		missoesCompletas,
+		melhorGoldRun: {
+			m: melhorGoldRun.m,
+			e: melhorGoldRun.e
+		},
+		runInicioMs,
+		comprasRun,
+
 		precoDano,
 		mulDano,
 		lvlDano,
@@ -2053,6 +2157,10 @@ function CriarObjetoSave() {
 		ultimaAtualizacaoBauDourado,
 		autoColeta,
 		autoCompra,
+		precoVelComp,
+		lvlVelComp,
+		velAtaqueComp,
+		patenteVelComp,
 		especializacao,
 		especializacaoTrocas
 	};
