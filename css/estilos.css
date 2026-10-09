@@ -6018,18 +6018,17 @@ button.skill-ramo-no:focus-visible {
 }
 
 #golden-chest-tracker {
-	/* Card QUADRADO ancorado em #container-opcoes: absolute + left:0 e
-	   bottom:calc(100% + 6px) o coloca NA ESQUERDA, ACIMA do botão Status em
-	   QUALQUER layout — coluna no PC, fileira horizontal no Android/mobile e na
-	   faixa 1000–1500 — porque âncora na caixa da nav, não dentro dela. Fora do
-	   fluxo não estica a fileira de botões (que cobriria as skills) e sai do
-	   alcance de #container-Botoes button/input, que no Android esticavam o
-	   ícone de info (flex: 1 1 0) até virar uma pílula. O quadrado vem do
-	   aspect-ratio; justify-content:center + gap cuidam do conteúdo (linha do
-	   baú em cima, info/auto embaixo). */
-	position: absolute;
-	left: 0;
-	bottom: calc(100% + 6px);
+	/* Quadrado fixo na coluna ESQUERDA, logo abaixo do 1/4 superior da tela
+	   (top: 25vh + folga): não fica mais colado no rodapé — subiu do jeito
+	   pedido — e continua alinhado com a coluna da nav (left igual ao de
+	   #container-opcoes em cada layout). Fora do fluxo: não estica a fileira de
+	   botões e sai do alcance de #container-Botoes button/input, que no Android
+	   esticavam o ícone de info (flex: 1 1 0) até virar uma pílula.
+	   aspect-ratio dá o quadrado perfeito; justify-content:center + gap cuidam
+	   do conteúdo (linha do baú em cima, info/auto embaixo). */
+	position: fixed;
+	left: 1rem;
+	top: calc(25.33vh + 8px);
 	z-index: 16;
 	box-sizing: border-box;
 	display: flex;
@@ -6048,9 +6047,10 @@ button.skill-ramo-no:focus-visible {
 }
 
 /* Nota: as media queries que fixavam o card (direita no mobile, topo no
-   landscape e bottom:156px na faixa 1000–1500) saíram — a âncora acima resolve
-   todos os layouts de uma vez e mantém o card sempre à esquerda, acima do
-   Status, como pedido no PC e no Android. */
+   landscape e bottom:156px na faixa 1000–1500) saíram — o par de regras base
+   (fixed + top:25vh) resolve todos os layouts: card sempre à esquerda, alinhado
+   à coluna da nav e um pouco abaixo do 1/4 superior da tela, como pedido no PC
+   e no Android. */
 
 /* Fileira de baixo: o ícone de info (que abre a descrição) fica na ESQUERDA
    e o bloco "auto" + checkbox continua na direita, alinhados pela base. */
@@ -6117,9 +6117,9 @@ button.skill-ramo-no:focus-visible {
 }
 
 /* Descrição aberta pelo ícone de info: sai do fluxo para não empurrar os
-   botões. O card agora é sempre à esquerda e acima da nav, então o balão abre
-   para CIMA e alinhado à esquerda (left:0) em todos os layouts — nenhuma
-   media query precisa mais de virá-lo. */
+   botões. O card é fixo à esquerda (bem acima do rodapé), então o balão abre
+   para CIMA e alinhado à esquerda (left:0) em todos os layouts, sem estourar
+   a tela — nenhuma media query precisa de virá-lo. */
 .golden-chest-tracker__desc {
 	position: absolute;
 	left: 0;
@@ -6432,21 +6432,30 @@ button.skill-ramo-no:focus-visible {
 	}
 }
 
-/* O card deixou de ser fixo à direita no mobile: agora é absolute acima de
-   #container-opcoes (regra base), ou seja, NA ESQUERDA, ACIMA do Status também
-   no Android — sem entrar na fileira horizontal da nav. */
-
-/* Celular em retrato: a linha de skills (barra / espada / painel de combate)
-   ocupa bottom:62–134 e cresce da direita para a esquerda — em 375px o painel
-   começa perto de x84, dentro da área acima da nav. O card continua NA
-   ESQUERDA e ACIMA do Status, mas sobe para encostar acima dessa linha
-   (62 + altura 72 + folga 6 = 140): senão a barra de combate cobria o "auto",
-   ou o card cobriria a 1ª skill (a nav vale z-index 30, acima do painel 15). */
-@media (max-width: 700px) and (orientation: portrait) {
+/* Alinhamento horizontal do card fixo: em cada layout ele acompanha o left de
+   #container-opcoes (a coluna da nav) — e precisa vir DEPOIS da regra base,
+   que tem a mesma especificidade. A base já vale para o layout grande (1rem). */
+@media (max-width: 700px) {
 	#golden-chest-tracker {
-		position: fixed;
 		left: 8px;
-		bottom: calc(140px + env(safe-area-inset-bottom));
+	}
+}
+
+@media (max-width: 900px) and (max-height: 520px) and (orientation: landscape) {
+	#golden-chest-tracker {
+		left: 8px;
+	}
+}
+
+@media (min-width: 701px) and (max-width: 900px) and (orientation: portrait) {
+	#golden-chest-tracker {
+		left: 12px;
+	}
+}
+
+@media (min-width: 1000px) and (max-width: 1500px) and (min-height: 780px) and (max-height: 950px) and (orientation: landscape) {
+	#golden-chest-tracker {
+		left: 12px;
 	}
 }
 
