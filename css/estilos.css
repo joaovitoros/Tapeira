@@ -6018,16 +6018,27 @@ button.skill-ramo-no:focus-visible {
 }
 
 #golden-chest-tracker {
-	/* Card compacto na coluna esquerda: é o primeiro filho de #container-Botoes
-	   (flex-column), então fica acima dos botões com gap automático e acompanha
-	   a altura da coluna em qualquer resolução — sem número mágico de âncora.
-	   Nunca cai em cima da loja (faixa central-direita), do rodapé de skills
-	   nem do ouro no HUD. Em telas baixas vale a media query max-height lá abaixo. */
-	position: static;
+	/* Card QUADRADO ancorado em #container-opcoes: absolute + left:0 e
+	   bottom:calc(100% + 6px) o coloca NA ESQUERDA, ACIMA do botão Status em
+	   QUALQUER layout — coluna no PC, fileira horizontal no Android/mobile e na
+	   faixa 1000–1500 — porque âncora na caixa da nav, não dentro dela. Fora do
+	   fluxo não estica a fileira de botões (que cobriria as skills) e sai do
+	   alcance de #container-Botoes button/input, que no Android esticavam o
+	   ícone de info (flex: 1 1 0) até virar uma pílula. O quadrado vem do
+	   aspect-ratio; justify-content:center + gap cuidam do conteúdo (linha do
+	   baú em cima, info/auto embaixo). */
+	position: absolute;
+	left: 0;
+	bottom: calc(100% + 6px);
 	z-index: 16;
 	box-sizing: border-box;
-	width: min(150px, calc(100vw - 24px));
-	padding: 8px 9px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 8px;
+	width: min(96px, calc(100vw - 24px));
+	aspect-ratio: 1;
+	padding: 6px;
 	border: 1px solid rgba(255, 204, 77, 0.62);
 	border-radius: 12px;
 	background: linear-gradient(145deg, rgba(49, 39, 19, 0.97), rgba(19, 20, 24, 0.97));
@@ -6036,76 +6047,163 @@ button.skill-ramo-no:focus-visible {
 	font: 12px/1.3 "Segoe UI", sans-serif;
 }
 
-/* Histórico: existia aqui uma media query (1000–1500 × 780–950 landscape)
-   mandando o baú pro topo-direito "abaixo do HUD" — também caía em cima da
-   loja quando aberta. Com a posição-base na coluna esquerda, ela saiu.
-   Atenção ao padrão: "bottom: auto" precisa vir depois de um "bottom"
-   qualquer na cascata, senão o valor antigo estica o painel até o rodapé. */
+/* Nota: as media queries que fixavam o card (direita no mobile, topo no
+   landscape e bottom:156px na faixa 1000–1500) saíram — a âncora acima resolve
+   todos os layouts de uma vez e mantém o card sempre à esquerda, acima do
+   Status, como pedido no PC e no Android. */
 
-.golden-chest-tracker__heading {
+/* Fileira de baixo: o ícone de info (que abre a descrição) fica na ESQUERDA
+   e o bloco "auto" + checkbox continua na direita, alinhados pela base. */
+.golden-chest-tracker__bottom {
 	display: flex;
-	align-items: center;
+	align-items: flex-end;
+	justify-content: space-between;
 	gap: 6px;
-	margin-bottom: 5px;
+	/* o gap de 8px do card (flex-column) já separa esta fileira da do baú */
+	margin-top: 0;
+	flex: none;
+}
+
+/* Selo redondo do info: mantém o par de regras com 2 IDs e o "flex: none" de
+   defesa — se o card um dia voltar para dentro de #container-Botoes, a regra
+   "flex: 1 1 0" das media queries (mobile) volta a esticá-lo em pílula. */
+#golden-chest-tracker #golden-chest-info {
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 20px;
+	height: 20px;
+	min-width: 0;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	border: 1px solid rgba(255, 224, 138, 0.55);
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.5);
+	color: #ffe08a;
+	font-size: 0;
+	cursor: pointer;
+}
+
+#golden-chest-tracker #golden-chest-info svg {
+	width: 13px;
+	height: 13px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.2;
+	stroke-linecap: round;
+}
+
+#golden-chest-tracker #golden-chest-info .golden-chest-tracker__info-dot {
+	fill: currentColor;
+	stroke: none;
+}
+
+#golden-chest-tracker #golden-chest-info:hover {
+	border-color: #ffe08a;
+	background: rgba(255, 224, 138, 0.18);
+}
+
+#golden-chest-tracker #golden-chest-info[aria-expanded="true"] {
+	background: #ffe08a;
+	color: #2b1c05;
+}
+
+#golden-chest-tracker #golden-chest-info:focus-visible {
+	outline: 2px solid #fff0a3;
+	outline-offset: 2px;
+}
+
+/* Descrição aberta pelo ícone de info: sai do fluxo para não empurrar os
+   botões. O card agora é sempre à esquerda e acima da nav, então o balão abre
+   para CIMA e alinhado à esquerda (left:0) em todos os layouts — nenhuma
+   media query precisa mais de virá-lo. */
+.golden-chest-tracker__desc {
+	position: absolute;
+	left: 0;
+	bottom: calc(100% + 6px);
+	z-index: 5;
+	box-sizing: border-box;
+	width: min(230px, calc(100vw - 24px));
+	padding: 7px 9px;
+	border: 1px solid rgba(255, 204, 77, 0.55);
+	border-radius: 9px;
+	background: rgba(15, 14, 12, 0.98);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
+	color: #e9dcc0;
+	font-size: 11px;
+	line-height: 1.35;
+	text-align: left;
+	white-space: normal;
+}
+
+.golden-chest-tracker__desc[hidden] {
+	display: none;
+}
+
+.golden-chest-tracker__desc strong {
+	display: block;
+	margin-bottom: 4px;
+	color: #ffe08a;
+	font-size: 11px;
+}
+
+.golden-chest-tracker__desc b {
+	color: #ffe08a;
+}
+
+.golden-chest-tracker__desc p {
+	margin: 0 0 4px;
+}
+
+.golden-chest-tracker__desc p:last-child {
+	margin-bottom: 0;
 }
 
 .golden-chest-tracker__icon {
-	width: 26px;
-	height: 23px;
+	width: 36px;
+	height: 31px;
 	flex: none;
 	filter: drop-shadow(0 0 6px rgba(255, 196, 52, 0.62));
 }
 
-#golden-chest-title {
-	color: #ffe08a;
-	font-size: 12px;
-	font-weight: 800;
-}
-
-#golden-chest-time {
-	margin-top: 1px;
-	color: #d8cba9;
-	font-size: 10px;
-}
-
-.golden-chest-tracker__progress {
-	height: 7px;
-	overflow: hidden;
-	border: 1px solid rgba(255, 215, 117, 0.4);
-	border-radius: 999px;
-	background: rgba(0, 0, 0, 0.55);
-}
-
-#golden-chest-progress-fill {
-	width: 0;
-	height: 100%;
-	border-radius: inherit;
-	background: linear-gradient(90deg, #b97418, #ffd34f 65%, #fff0a3);
-	box-shadow: 0 0 10px rgba(255, 199, 65, 0.65);
-	transition: width 350ms linear;
-}
-
-.golden-chest-tracker__footer {
+/* Card resumido a "ícone do baú + tempo que falta": o próprio botão é a
+   linha (clicar abre quando estiver pronto) — sem título, sem barra de
+   progresso e sem botão "Abrir" separado. */
+#golden-chest-claim {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 5px;
-	min-height: 22px;
-	margin-top: 4px;
+	box-sizing: border-box;
+	min-width: 0;
+	min-height: 0;
+	padding: 2px 3px;
+	border: 1px solid transparent;
+	border-radius: 7px;
+	background: none;
+	color: #fff4d5;
+	font-family: inherit;
+	text-align: left;
+	cursor: pointer;
 }
 
 #golden-chest-progress-text {
 	color: #f4e5c2;
-	font-size: 10px;
+	font-size: 14px;
 	font-variant-numeric: tabular-nums;
-	font-weight: 700;
+	font-weight: 800;
 }
 
 /* Toggles de automação (Tier 3 #2): auto-coleta na linha do rastreador do
    baú dourado e auto-compra no cabeçalho da loja. Ficam acinzentados
    (auto-toggle--locked) enquanto o andar máximo não chega nos pisos 40/50. */
 .golden-chest-tracker__auto {
-	margin-top: 5px;
+	display: flex;
+	justify-content: flex-end;
+	margin-top: 0;
 }
 
 .auto-toggle {
@@ -6251,23 +6349,16 @@ button.skill-ramo-no:focus-visible {
 	cursor: not-allowed;
 }
 
-#golden-chest-claim {
-	min-width: 58px;
-	min-height: 30px;
-	padding: 3px 10px;
-	border: 1px solid #ffe08a;
-	border-radius: 7px;
-	background: linear-gradient(145deg, #a66513, #6f3b0b);
-	color: #fff4d5;
-	font: 700 12px/1 "Segoe UI", sans-serif;
-	cursor: pointer;
-}
-
+/* Recarga: a linha (ícone + tempo) pisca enquanto o baú carrega. O
+   "display: none" do botão desabilitado saiu — a linha agora É o card. */
 #golden-chest-claim:disabled {
-	display: none;
+	cursor: default;
 }
 
 #golden-chest-claim:not(:disabled) {
+	cursor: pointer;
+	border-color: rgba(255, 224, 138, 0.6);
+	background: rgba(255, 200, 70, 0.1);
 	animation: golden-chest-ready 1.5s ease-in-out infinite alternate;
 }
 
@@ -6276,25 +6367,42 @@ button.skill-ramo-no:focus-visible {
 	outline-offset: 2px;
 }
 
-/* Card compacto da coluna esquerda: botão e toggle em escala reduzida */
+/* Linha do baú: reivindica width/height/font-size/min-height e o alinhamento
+   interno que #container-Botoes button (1 ID + tipo, também dentro das media
+   queries) impunha sobre #golden-chest-claim (1 ID só) — e "flex: none" para a
+   linha não esticar na vertical quando o card virou flex-column. */
 #golden-chest-tracker #golden-chest-claim {
-	min-width: 44px;
-	min-height: 0;
-	width: auto;
-	height: 24px;
-	padding: 3px 8px;
-	font-size: 11px;
-}
-
-#golden-chest-tracker .auto-toggle {
-	font-size: 10px;
-}
-
-/* O checkbox do tracker cai na regra #container-Botoes input (18vw × 4vw /
-   font 25px) desde que o card entrou na coluna — devolve o tamanho normal. */
-#golden-chest-tracker .auto-toggle input {
-	width: auto;
+	width: 100%;
+	flex: none;
 	height: auto;
+	min-height: 0;
+	margin-top: 0;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 3px;
+	padding-right: 3px;
+	font-size: 12px;
+	justify-content: space-between;
+}
+
+/* Legenda "auto" empilhada EM CIMA do checkbox, alinhada à direita do card */
+#golden-chest-tracker .auto-toggle {
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 2px;
+	font-size: 10px;
+	line-height: 1;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #d8cba9;
+}
+
+/* Defensa: se o card voltar para dentro de #container-Botoes, o checkbox cai
+   na regra #container-Botoes input (18vw × 4vw / font 25px) — devolve o
+   tamanho normal. */
+#golden-chest-tracker .auto-toggle input {
+	width: 15px;
+	height: 15px;
 	max-width: none;
 	font-size: inherit;
 }
@@ -6324,81 +6432,29 @@ button.skill-ramo-no:focus-visible {
 	}
 }
 
-@media (max-width: 700px) {
+/* O card deixou de ser fixo à direita no mobile: agora é absolute acima de
+   #container-opcoes (regra base), ou seja, NA ESQUERDA, ACIMA do Status também
+   no Android — sem entrar na fileira horizontal da nav. */
+
+/* Celular em retrato: a linha de skills (barra / espada / painel de combate)
+   ocupa bottom:62–134 e cresce da direita para a esquerda — em 375px o painel
+   começa perto de x84, dentro da área acima da nav. O card continua NA
+   ESQUERDA e ACIMA do Status, mas sobe para encostar acima dessa linha
+   (62 + altura 72 + folga 6 = 140): senão a barra de combate cobria o "auto",
+   ou o card cobriria a 1ª skill (a nav vale z-index 30, acima do painel 15). */
+@media (max-width: 700px) and (orientation: portrait) {
 	#golden-chest-tracker {
 		position: fixed;
-		left: auto;
-		right: 8px;
-		/* Acima da linha de skills (bottom:62 + altura 72 + folga 6 = 140).
-		   Antes ficava em 62, no mesmo nível da barra/espada/painel, e com
-		   z-index 16 cobria os três (os cliques iam para o baú). */
+		left: 8px;
 		bottom: calc(140px + env(safe-area-inset-bottom));
-		width: min(220px, calc(100vw - 16px));
-		padding: 8px 10px;
-	}
-
-	.golden-chest-tracker__icon {
-		width: 36px;
-		height: 31px;
 	}
 }
 
-@media (min-width: 701px) and (max-width: 900px) and (orientation: portrait) {
-	#golden-chest-tracker {
-		position: fixed;
-		left: auto;
-		right: 10px;
-		/* Acima das skills (bottom:68 + altura 78 + folga 6 = 152). */
-		bottom: calc(152px + env(safe-area-inset-bottom));
-		width: min(250px, calc(100vw - 20px));
-	}
-}
-
-@media (max-width: 900px) and (max-height: 520px) and (orientation: landscape) {
-	#golden-chest-tracker {
-		position: fixed;
-		top: 54px;
-		left: auto;
-		right: 8px;
-		bottom: auto;
-		width: min(170px, calc(100vw - 16px));
-		padding: 6px 8px;
-	}
-
-	.golden-chest-tracker__icon {
-		width: 30px;
-		height: 26px;
-	}
-}
-
-/* Band 1000–1500 × 780–950 landscape (notebooks/tablets): a nav vira fileira
-   horizontal (flex-direction: row) com a barra de carga, a espada e o painel de
-   skills logo acima (bottom: 70px). Dentro de #container-Botoes o card esticaria
-   a fileira para 122px de altura e a nav passaria a cobrir as skills (z-index).
-   Sai do fluxo e ancora na coluna esquerda: ACIMA da linha de skills
-   (bottom:70 + altura 78 = 148, + 8 de folga = 156) e à esquerda da barra de
-   carga (left: 12rem = 192px; card termina em ~162px). */
-@media (min-width: 1000px) and (max-width: 1500px) and (min-height: 780px) and (max-height: 950px) and (orientation: landscape) {
-	#golden-chest-tracker {
-		position: fixed;
-		left: 12px;
-		bottom: 156px;
-	}
-}
-
-/* Janela baixa (desktop curto): esconde a linha de tempo e aperta os
-   folgões pro card caber no vão entre Infos e botões (H ≳ 595px). */
+/* Janela baixa (desktop curto): aperta os folgões do card para ele caber no
+   vão entre Infos e botões (H ≲ 595px). */
 @media (max-height: 640px) {
 	#golden-chest-tracker {
 		padding: 6px 8px;
-	}
-
-	#golden-chest-time {
-		display: none;
-	}
-
-	.golden-chest-tracker__heading {
-		margin-bottom: 4px;
 	}
 }
 

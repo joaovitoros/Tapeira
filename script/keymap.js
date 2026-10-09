@@ -198,6 +198,13 @@ function FechaJanelasAbertas() {
         fechou = true;
     }
 
+    // Balão de descrição do rastreador do baú dourado (ícone de info)
+    const descBauDourado = document.getElementById("golden-chest-desc");
+    if (descBauDourado && !descBauDourado.hidden) {
+        UI.toggleGoldenChestInfo();
+        fechou = true;
+    }
+
     // Evento aleatório aberto (comercio, meteoro, névoa): ESC encerra ele
     if (typeof eventoAtivo !== "undefined" && (eventoAtivo || eventoPendente)) {
         EncerraEvento();
