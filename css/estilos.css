@@ -701,6 +701,13 @@ tr, td, th{
 	white-space: nowrap;
 }
 
+/* Item no teto com patente pendente: preço do ingresso ★ (botão continua visível) */
+.loja-patente {
+	color: #ffb84d;
+	font-weight: 800;
+	white-space: nowrap;
+}
+
 /* Coluna de preço: valor em destaque na cor da moeda da loja (valor vs informação) */
 #TabLoja td:nth-child(2) {
 	color: #ffd84a;

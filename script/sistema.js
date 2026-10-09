@@ -229,6 +229,15 @@ function Salvar() {
 		chanceEsmeraldaBau,
 		precoBau,
 		lvlBau,
+		precoEsmBau,
+		lvlEsmBau,
+		patenteBau,
+		patenteBEspaco,
+		patenteQTDAvan,
+		patenteCCrit,
+		patenteSubVida,
+		patenteAvan,
+		patenteEsmBau,
 		progressoBauDourado,
 		bauDouradoPendente,
 		ultimaAtualizacaoBauDourado,
@@ -434,6 +443,34 @@ function ValidarSave(save) {
 	if (save.lvlEsmCM !== undefined
 		&& (!Number.isSafeInteger(save.lvlEsmCM) || save.lvlEsmCM < 0 || save.lvlEsmCM > 1)) {
 		throw new TypeError("O nível do item de CM da loja de esmeraldas é inválido.");
+	}
+
+	// Patentes da loja de gold: inteiros dentro do teto de cada item (Qtd
+	// Avanço é infinito por patente, com teto só de saneamento)
+	const patenteKeys = [
+		["patenteBau", 1],
+		["patenteBEspaco", 1],
+		["patenteQTDAvan", 10000],
+		["patenteCCrit", 4],
+		["patenteSubVida", 5],
+		["patenteAvan", 4],
+		["patenteEsmBau", 4]
+	];
+	for (const [key, maximo] of patenteKeys) {
+		const valor = save[key];
+		if (valor === undefined) continue;
+		if (!Number.isSafeInteger(valor) || valor < 0 || valor > maximo) {
+			throw new TypeError("As patentes da loja do save são inválidas.");
+		}
+	}
+	// item de esmeralda no baú: nível inteiro dentro dos segmentos das patentes
+	if (save.lvlEsmBau !== undefined
+		&& (!Number.isSafeInteger(save.lvlEsmBau) || save.lvlEsmBau < 0 || save.lvlEsmBau > 60)) {
+		throw new TypeError("O nível do item de esmeralda do baú é inválido.");
+	}
+	if (save.precoEsmBau !== undefined
+		&& (!Number.isFinite(save.precoEsmBau) || save.precoEsmBau < 1)) {
+		throw new TypeError("O preço do item de esmeralda do baú é inválido.");
 	}
 
 	// Conhecimento Mug: inteiros não negativos; níveis respeitam o teto de cada item
@@ -1049,6 +1086,17 @@ function Carregar(saveData, calculaOffline = false) {
 	chanceEsmeraldaBau = save.chanceEsmeraldaBau ?? 0.01;
 	precoBau = save.precoBau ?? 25;
 	lvlBau = save.lvlBau ?? 1;
+
+	precoEsmBau = save.precoEsmBau ?? 500;
+	lvlEsmBau = save.lvlEsmBau ?? 0;
+	// patentes ausentes = 0 (★I): saves de antes da feature nascem na base
+	patenteBau = save.patenteBau ?? 0;
+	patenteBEspaco = save.patenteBEspaco ?? 0;
+	patenteQTDAvan = save.patenteQTDAvan ?? 0;
+	patenteCCrit = save.patenteCCrit ?? 0;
+	patenteSubVida = save.patenteSubVida ?? 0;
+	patenteAvan = save.patenteAvan ?? 0;
+	patenteEsmBau = save.patenteEsmBau ?? 0;
 
 	RemoverInimigos();
 	AbreLoja();
@@ -1751,6 +1799,18 @@ function Resetar() {
 
 	chanceBau = 0.1;
 
+	precoEsmBau = 500;
+	lvlEsmBau = 0;
+	chanceEsmeraldaBau = 0.01;
+	// patentes são por run: zeram junto com os itens que destravam
+	patenteBau = 0;
+	patenteBEspaco = 0;
+	patenteQTDAvan = 0;
+	patenteCCrit = 0;
+	patenteSubVida = 0;
+	patenteAvan = 0;
+	patenteEsmBau = 0;
+
 	AtualizaLojaGold();
 	UI.updateSkillProgress();
 	if (document.getElementById("skillUpgradeModal")) UI.showSkillUpgradePanel();
@@ -1977,6 +2037,15 @@ function CriarObjetoSave() {
 		chanceEsmeraldaBau,
 		precoBau,
 		lvlBau,
+		precoEsmBau,
+		lvlEsmBau,
+		patenteBau,
+		patenteBEspaco,
+		patenteQTDAvan,
+		patenteCCrit,
+		patenteSubVida,
+		patenteAvan,
+		patenteEsmBau,
 		offlineLastSavedAt: ultimaDataSaveOffline,
 		offlinePendingRewards: recompensasOfflinePendentes,
 		progressoBauDourado,

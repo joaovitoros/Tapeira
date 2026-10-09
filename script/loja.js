@@ -33,13 +33,168 @@ function NormalizaPrecosLoja() {
 		"precoDano", "precoBau", "precoGold", "precoBEspaco", "precoAvan",
 		"precoDCrit", "precoVidaInimigo", "precoCCrit", "precoQTDAvanco",
 		"precoComp1", "precoAvGold", "precoComp2", "precoComp3", "precoXP",
-		"precoEsmCM"
+		"precoEsmCM", "precoEsmBau"
 	];
 
 	nomesPrecos.forEach(nome => {
 		const valor = N(window[nome]);
 		window[nome] = Number.isFinite(valor) ? Math.max(1, valor) : 1;
 	});
+}
+
+// ============================================================
+// PATENTES DA LOJA DE GOLD (patente 0 = ★I, o teto de hoje)
+// ============================================================
+// Ao bater no nível máximo o item oferece a próxima patente (★): o ingresso
+// custa 30× o preço do próximo nível e destrava mais níveis, com o teto do
+// efeito subindo. Saves antigos nascem na patente 0. Os tetos são por item:
+// - `tetos`/`passos` — teto do efeito e passo por patente (itens de passo
+//   fixo); itens de passo dinâmico (crítico e avanço) não declaram passo e
+//   continuam a própria curva, só o teto sobe;
+// - `niveis` — teto em níveis quando o gate do item é por nível;
+// - `niveisInfinito` — teto de níveis que cresce pra sempre (Qtd Avanço).
+// Os gates por efeito têm tolerância de 1e-9: 0,01 + 9×0,01 fecha em
+// 0,09999999999999999 em float e sem ela o teto nunca "bate" exato.
+var ITENS_PATENTE = {
+	bau: {
+		nome: "Chance Bau", patenteVar: "patenteBau", precoVar: "precoBau",
+		tetos: [0.75, 0.95], passos: [0.05, 0.04],
+		noTeto: () => N(chanceBau) >= TetoLoja("bau") - 1e-9
+	},
+	espaco: {
+		nome: "Espaço", patenteVar: "patenteBEspaco", precoVar: "precoBEspaco",
+		// hoje fecha no nível 15; ★II abre 6 níveis a mais (até 10s)
+		niveis: [15, 21],
+		noTeto: () => N(lvlBEspaco) >= NiveisLoja("espaco")
+	},
+	qtdavan: {
+		nome: "Qtd Avanço", patenteVar: "patenteQTDAvan", precoVar: "precoQTDAvanco",
+		// infinito: cada patente dá +5 níveis (hoje fecha no 21)
+		niveisInfinito: p => 21 + 5 * p,
+		noTeto: () => N(lvlQTDAvanco) >= NiveisLoja("qtdavan")
+	},
+	ccrit: {
+		nome: "Chance Crítica", patenteVar: "patenteCCrit", precoVar: "precoCCrit",
+		tetos: [0.70, 0.80, 0.85, 0.90, 0.95],
+		noTeto: () => N(chanceCrit) >= TetoLoja("ccrit") - 1e-9
+	},
+	subvida: {
+		nome: "Vida do Inimigo", patenteVar: "patenteSubVida", precoVar: "precoVidaInimigo",
+		tetos: [0.50, 0.60, 0.67, 0.72, 0.76, 0.80],
+		passos: [0.01, 0.002, 0.001, 0.0005, 0.0004, 0.0004],
+		// gate por nível (o de hoje é 50); o resto da coluna é soma de segmentos
+		niveis: [50, 100, 170, 270, 370, 470],
+		noTeto: () => N(lvlSubVida) >= NiveisLoja("subvida")
+	},
+	avan: {
+		nome: "Avanço Rápido", patenteVar: "patenteAvan", precoVar: "precoAvan",
+		tetos: [0.50, 0.55, 0.60, 0.65, 0.70],
+		noTeto: () => N(avanco) >= TetoLoja("avan") - 1e-9
+	},
+	esmbau: {
+		nome: "Esmeralda no Baú", patenteVar: "patenteEsmBau", precoVar: "precoEsmBau",
+		tetos: [0.10, 0.15, 0.175, 0.19, 0.20],
+		passos: [0.01, 0.005, 0.0025, 0.0015, 0.001],
+		noTeto: () => N(chanceEsmeraldaBau) >= TetoLoja("esmbau") - 1e-9
+	}
+};
+
+function ItemPatente(id) {
+	return ITENS_PATENTE[id];
+}
+
+function PatenteAtual(id) {
+	return Math.max(0, Math.floor(N(window[ItemPatente(id).patenteVar])));
+}
+
+// Índice da última patente dentro do qual o item pode crescer
+function PatenteMaxima(id) {
+	const cfg = ItemPatente(id);
+	if (cfg.niveisInfinito) return Number.POSITIVE_INFINITY;
+	return (cfg.tetos || cfg.niveis).length - 1;
+}
+
+function TemProximaPatente(id) {
+	return PatenteAtual(id) < PatenteMaxima(id);
+}
+
+// Teto do efeito para a patente atual (itens gate por efeito)
+function TetoLoja(id) {
+	const cfg = ItemPatente(id);
+	if (!cfg.tetos) return Number.POSITIVE_INFINITY;
+	return cfg.tetos[Math.min(PatenteAtual(id), cfg.tetos.length - 1)];
+}
+
+// Teto em níveis (itens gate por nível)
+function NiveisLoja(id) {
+	const cfg = ItemPatente(id);
+	if (cfg.niveisInfinito) return cfg.niveisInfinito(PatenteAtual(id));
+	return cfg.niveis[Math.min(PatenteAtual(id), cfg.niveis.length - 1)];
+}
+
+// Passo do efeito na patente atual (só itens de passo fixo)
+function PassoLoja(id) {
+	const cfg = ItemPatente(id);
+	if (!cfg.passos) return 0;
+	return cfg.passos[Math.min(PatenteAtual(id), cfg.passos.length - 1)];
+}
+
+// Ingresso da próxima patente: 30× o preço que o próximo nível teria
+function PrecoPatenteLoja(id) {
+	return N(window[ItemPatente(id).precoVar]) * 30;
+}
+
+// Formata um teto de efeito (todos são frações de chance/redutores em %)
+function FormataTetoPct(valor) {
+	return Math.round(valor * 100) + "%";
+}
+
+function Romano(n) {
+	const tabela = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+	return tabela[n] || String(n);
+}
+
+// Ganho da próxima patente (preview): "75% → 95%" ou "+6 níveis destravados";
+// vazio quando o item já está na patente máxima.
+function GanhoProximaPatenteTexto(id) {
+	const cfg = ItemPatente(id);
+	if (!TemProximaPatente(id)) return "";
+	const atual = PatenteAtual(id);
+	if (cfg.tetos) {
+		return FormataTetoPct(cfg.tetos[atual]) + " → " + FormataTetoPct(cfg.tetos[atual + 1]);
+	}
+	if (cfg.niveisInfinito) {
+		return "+" + (cfg.niveisInfinito(atual + 1) - cfg.niveisInfinito(atual)) + " níveis destravados";
+	}
+	return "+" + (cfg.niveis[atual + 1] - cfg.niveis[atual]) + " níveis destravados";
+}
+
+// Compra o ingresso da próxima patente de um item no teto. Sempre retorna
+// tratado: patente comprada, "sem gold" ou "patente máxima".
+function CompraPatenteLoja(id) {
+	const cfg = ItemPatente(id);
+	if (!TemProximaPatente(id)) {
+		MostraInfo("Item no level maximo!");
+		return true;
+	}
+	const preco = PrecoPatenteLoja(id);
+	if (!GE(gold, preco)) {
+		MostraInfo("Voce não tem gold o suficiente para essa compra!");
+		return true;
+	}
+
+	// captura o ganho ANTES do incremento: é o que acabou de ser destravado
+	const ganho = GanhoProximaPatenteTexto(id);
+
+	PagaLoja(preco);
+	window[cfg.patenteVar] = PatenteAtual(id) + 1;
+
+	ChamaSom('audio6');
+	document.getElementById("contGold").innerHTML = FormatGold(gold);
+	AtualizaLojaGold();
+	MostraStatus();
+	UI.showMilestone("★ Patente " + Romano(PatenteAtual(id) + 1) + " — " + cfg.nome, ganho);
+	return true;
 }
 
 // =========================
@@ -76,31 +231,44 @@ function AtualizaLojaGold() {
 	document.getElementById("precoQTDAvan").innerHTML = FormatGold(precoQTDAvanco);
 	document.getElementById("lvlQTDAvan").innerHTML = lvlQTDAvanco;
 
+	document.getElementById("precoEsmBau").innerHTML = FormatGold(precoEsmBau);
+	document.getElementById("lvlEsmBau").innerHTML = lvlEsmBau;
+
 	AtualizaMaximosLoja();
 }
 
-// Itens com nível máximo: no lugar do preço exibe "Lvl Max" e esconde o
-// botão de compra. Espelha os mesmos gates das funções Compra* — quem pode
-// comprar continua sendo decidido por elas.
+// Itens com teto: no lugar do preço exibe "Lvl Max" e esconde o botão —
+// exceto com patente pendente, quando mostra o preço do ingresso ★ e o botão
+// continua à vista. Espelha os mesmos gates das Compra* — quem pode comprar
+// continua sendo decidido por elas.
 function AtualizaMaximosLoja() {
+	// o id de preço nem sempre é o nome da variável (alias do preview)
 	const itens = [
-		{ preco: "precoBau", max: N(chanceBau) >= 0.75, valor: FormatGold(precoBau) },
-		{ preco: "precoAvan", max: N(avanco) >= 0.5, valor: FormatGold(precoAvan) },
-		{ preco: "precoVidaInimigo", max: N(lvlSubVida) >= 50, valor: FormatGold(precoVidaInimigo) },
-		{ preco: "precoCCrit", max: N(chanceCrit) >= 0.7, valor: FormatGold(precoCCrit) },
-		{ preco: "precoBEspaco", max: N(lvlBEspaco) >= 15, valor: FormatGold(precoBEspaco) },
-		{ preco: "precoQTDAvan", max: N(lvlQTDAvanco) > 20, valor: FormatGold(precoQTDAvanco) }
+		{ id: "bau", preco: "precoBau" },
+		{ id: "avan", preco: "precoAvan" },
+		{ id: "subvida", preco: "precoVidaInimigo" },
+		{ id: "ccrit", preco: "precoCCrit" },
+		{ id: "espaco", preco: "precoBEspaco" },
+		{ id: "qtdavan", preco: "precoQTDAvan" },
+		{ id: "esmbau", preco: "precoEsmBau" }
 	];
 
 	for (const item of itens) {
 		const elPreco = document.getElementById(item.preco);
 		if (!elPreco) continue;
+		const cfg = ITENS_PATENTE[item.id];
 		// Os botões compartilham o id "btnLoja" (duplicado), então o
 		// localizamos pela linha da tabela em que o preço está.
 		const linha = elPreco.closest("tr");
 		const btn = linha ? linha.querySelector("input[type='button']") : null;
-		elPreco.innerHTML = item.max ? '<span class="loja-lvl-max">Lvl Max</span>' : item.valor;
-		if (btn) btn.style.display = item.max ? "none" : "";
+		const noTeto = cfg.noTeto();
+		const proxima = noTeto && TemProximaPatente(item.id);
+		elPreco.innerHTML = !noTeto
+			? FormatGold(window[cfg.precoVar])
+			: proxima
+				? '<span class="loja-patente">★ ' + FormatGold(PrecoPatenteLoja(item.id)) + '</span>'
+				: '<span class="loja-lvl-max">Lvl Max</span>';
+		if (btn) btn.style.display = (noTeto && !proxima) ? "none" : "";
 	}
 }
 
@@ -311,12 +479,12 @@ function CompraDano(){
 
 function CompraBau(){
 	NormalizaPrecosLoja();
-	if(N(chanceBau) < 0.75){
+	if(!ITENS_PATENTE.bau.noTeto()){
 		if(GE(gold, N(precoBau))){
 
 			PagaLoja(precoBau);
 
-			chanceBau = N(chanceBau) + 0.05;
+			chanceBau = Math.min(N(chanceBau) + PassoLoja("bau"), TetoLoja("bau"));
 			precoBau = N(precoBau) * 2.2;
 			lvlBau++;
 
@@ -332,7 +500,7 @@ function CompraBau(){
 			MostraInfo("Voce não tem gold o suficiente para essa compra!");
 		}
 	}else{
-		MostraInfo("Item no level maximo!");
+		CompraPatenteLoja("bau");
 	}
 }
 
@@ -351,7 +519,12 @@ function CompraGold(){
 			precoGold = N(precoGold) * 3;
 		} 
 
-		sobeGold = Math.min(N(sobeGold) + 0.1, 0.3);
+		// Curva progressiva: as 2 primeiras compras seguem ×1,3 (o valor de
+		// sempre), depois sobe ×1,4 e trava em ×1,5. Antes o passo nascia já
+		// no cap de 0,3 e o crescimento nunca acontecia.
+		if (N(lvlGold) >= 2) {
+			sobeGold = Math.min(N(sobeGold) + 0.1, 0.5);
+		}
 		lvlGold++;
 
 		if(lvlComp2 > 0){
@@ -373,19 +546,15 @@ function CompraGold(){
 function CompraAvanco(){
 	NormalizaPrecosLoja();
 
-	if(N(avanco) < 0.5){
+	if(!ITENS_PATENTE.avan.noTeto()){
 		if(GE(gold, N(precoAvan))){
 
 			PagaLoja(precoAvan);
 
-			avanco = N(avanco) + N(sobeAvanco);
+			avanco = Math.min(N(avanco) + N(sobeAvanco), TetoLoja("avan"));
 			precoAvan = N(precoAvan) * 2;
 			sobeAvanco = N(sobeAvanco) * 1.005;
 			lvlAvan++;
-
-			if(avanco > 0.5){
-				avanco = 0.5;
-			}
 
 			ChamaSom('audio6');
 
@@ -399,7 +568,7 @@ function CompraAvanco(){
 			MostraInfo("Voce não tem gold o suficiente para essa compra!");
 		}
 	}else{
-		MostraInfo("Item no level maximo!");
+		CompraPatenteLoja("avan");
 	}
 }
 
@@ -430,7 +599,7 @@ function CompraDCrit(){
 
 function CompraSubVida(){
 	NormalizaPrecosLoja();
-	if(lvlSubVida < 50){
+	if(!ITENS_PATENTE.subvida.noTeto()){
 		if(GE(gold, N(precoVidaInimigo))){
 
 			PagaLoja(precoVidaInimigo);
@@ -439,7 +608,7 @@ function CompraSubVida(){
 			// multiplicava o desconto em dobro a cada compra e a vida "voltava" no respawn,
 			// quando CarregarStatus() recalcula a vida do andar do zero.
 			const subAnterior = N(subVidaInimigo);
-			subVidaInimigo = subAnterior + 0.01;
+			subVidaInimigo = Math.min(subAnterior + PassoLoja("subvida"), TetoLoja("subvida"));
 			const fatorDesconto = (1 - N(subVidaInimigo)) / (1 - subAnterior);
 
 			vidaAndar = N(vidaAndar) * fatorDesconto;
@@ -472,27 +641,23 @@ function CompraSubVida(){
 			MostraInfo("Voce não tem gold o suficiente para essa compra!");
 		}
 	}else{
-		MostraInfo("Item no level maximo!");
+		CompraPatenteLoja("subvida");
 	}
 }
 
 function CompraCCrit(){
 	NormalizaPrecosLoja();
-	if(N(chanceCrit) < 0.7){
+	if(!ITENS_PATENTE.ccrit.noTeto()){
 		if(GE(gold, N(precoCCrit))){
 
 			PagaLoja(precoCCrit);
 
-			// a partir de 30% cada compra vale metade do passo (o teto segue 70%)
+			// a partir de 30% cada compra vale metade do passo (o teto segue o da patente)
 			const passo = N(sobeCCrit) * (N(chanceCrit) >= 0.3 ? 0.5 : 1);
-			chanceCrit = N(chanceCrit) + passo;
+			chanceCrit = Math.min(N(chanceCrit) + passo, TetoLoja("ccrit"));
 			precoCCrit = N(precoCCrit) * 1.5;
 			sobeCCrit = N(sobeCCrit) * 1.1;
 			lvlCCrit++;
-
-			if(chanceCrit > 0.7){
-				chanceCrit = 0.7;
-			}
 
 			ChamaSom('audio6');
 
@@ -506,21 +671,23 @@ function CompraCCrit(){
 			MostraInfo("Voce não tem gold o suficiente para essa compra!");
 		}
 	}else{
-		MostraInfo("Item no level maximo!");
+		CompraPatenteLoja("ccrit");
 	}
 }
 
 function CompraBEspaco(){
 	NormalizaPrecosLoja();
+	if(ITENS_PATENTE.espaco.noTeto()){
+		CompraPatenteLoja("espaco");
+		return;
+	}
 	if(GE(gold, N(precoBEspaco))){
-		if(lvlBEspaco < 15){
 
-			PagaLoja(precoBEspaco);
+		PagaLoja(precoBEspaco);
 
-			MaxValidaBater--;
-			precoBEspaco = N(precoBEspaco) * 1.5;
-			lvlBEspaco++;
-		}
+		MaxValidaBater--;
+		precoBEspaco = N(precoBEspaco) * 1.5;
+		lvlBEspaco++;
 
 		ChamaSom('audio6');
 
@@ -537,7 +704,7 @@ function CompraBEspaco(){
 
 function CompraQTDAvanco(){
 	NormalizaPrecosLoja();
-	if(lvlQTDAvanco <= 20){
+	if(!ITENS_PATENTE.qtdavan.noTeto()){
 		if(GE(gold, N(precoQTDAvanco))){
 
 			PagaLoja(precoQTDAvanco);
@@ -558,7 +725,35 @@ function CompraQTDAvanco(){
 			MostraInfo("Voce não tem gold o suficiente para essa compra!");
 		}
 	}else{
-		MostraInfo("Item no level maximo!");
+		CompraPatenteLoja("qtdavan");
+	}
+}
+
+// Item novo: chance de esmeralda ao abrir cada baú (o teto sobe por patente)
+function CompraEsmBau(){
+	NormalizaPrecosLoja();
+	if(!ITENS_PATENTE.esmbau.noTeto()){
+		if(GE(gold, N(precoEsmBau))){
+
+			PagaLoja(precoEsmBau);
+
+			chanceEsmeraldaBau = Math.min(N(chanceEsmeraldaBau) + PassoLoja("esmbau"), TetoLoja("esmbau"));
+			precoEsmBau = N(precoEsmBau) * 2;
+			lvlEsmBau++;
+
+			ChamaSom('audio6');
+
+			document.getElementById("contGold").innerHTML = FormatGold(gold);
+			document.getElementById("precoEsmBau").innerHTML = FormatGold(precoEsmBau);
+			document.getElementById("lvlEsmBau").innerHTML = lvlEsmBau;
+			AtualizaMaximosLoja();
+
+			MostraStatus();
+		}else{
+			MostraInfo("Voce não tem gold o suficiente para essa compra!");
+		}
+	}else{
+		CompraPatenteLoja("esmbau");
 	}
 }
 
@@ -746,12 +941,13 @@ const PREVIEWS_LOJA = {
 			+ " (+" + N(mulDano).toFixed(2) + ")" + extra;
 	},
 	CompraBau() {
-		if (N(chanceBau) >= 0.75) return "Chance de baú: no máximo (75%)";
+		if (ITENS_PATENTE.bau.noTeto()) return "Chance de baú — ★ " + (GanhoProximaPatenteTexto("bau") || "patente máxima");
 		return "Chance de baú: " + FormataPct(chanceBau, 0) + " → "
-			+ FormataPct(Math.min(0.75, N(chanceBau) + 0.05), 0) + " (máx 75%)";
+			+ FormataPct(Math.min(TetoLoja("bau"), N(chanceBau) + PassoLoja("bau")), 0)
+			+ " (máx " + FormataTetoPct(TetoLoja("bau")) + ")";
 	},
 	CompraBEspaco() {
-		if (N(lvlBEspaco) >= 15) return "Recarga do espaço: no nível máximo";
+		if (ITENS_PATENTE.espaco.noTeto()) return "Recarga do espaço — ★ " + (GanhoProximaPatenteTexto("espaco") || "patente máxima");
 		return "Recarga do espaço: " + N(MaxValidaBater) + " → " + (N(MaxValidaBater) - 1) + " (quanto menor, mais rápido)";
 	},
 	CompraGold() {
@@ -759,9 +955,10 @@ const PREVIEWS_LOJA = {
 		return "Multiplicador gold: " + N(mulGold).toFixed(2) + " → " + prox.toFixed(2);
 	},
 	CompraAvanco() {
-		if (N(avanco) >= 0.5) return "Avanço rápido: no máximo (50%)";
-		const prox = Math.min(0.5, N(avanco) + N(sobeAvanco));
-		return "Chance de avanço: " + FormataPct(avanco) + " → " + FormataPct(prox) + " (máx 50%)";
+		if (ITENS_PATENTE.avan.noTeto()) return "Avanço rápido — ★ " + (GanhoProximaPatenteTexto("avan") || "patente máxima");
+		const prox = Math.min(TetoLoja("avan"), N(avanco) + N(sobeAvanco));
+		return "Chance de avanço: " + FormataPct(avanco) + " → " + FormataPct(prox)
+			+ " (máx " + FormataTetoPct(TetoLoja("avan")) + ")";
 	},
 	CompraDCrit() {
 		const proxMult = N(multiplicadorMaximoDanoCritico) + 0.1;
@@ -772,21 +969,28 @@ const PREVIEWS_LOJA = {
 			+ " (máx ×" + proxMult.toFixed(1) + ")";
 	},
 	CompraSubVida() {
-		if (N(lvlSubVida) >= 50) return "Vida dos inimigos: no nível máximo";
+		if (ITENS_PATENTE.subvida.noTeto()) return "Vida dos inimigos — ★ " + (GanhoProximaPatenteTexto("subvida") || "patente máxima");
 		return "Redução de vida: " + FormataPct(subVidaInimigo, 0) + " → "
-			+ FormataPct(Math.min(0.5, N(subVidaInimigo) + 0.01), 0) + " (máx 50%)";
+			+ FormataPct(Math.min(TetoLoja("subvida"), N(subVidaInimigo) + PassoLoja("subvida")), 0)
+			+ " (máx " + FormataTetoPct(TetoLoja("subvida")) + ")";
 	},
 	CompraCCrit() {
-		if (N(chanceCrit) >= 0.7) return "Chance crítica: no máximo (70%)";
+		if (ITENS_PATENTE.ccrit.noTeto()) return "Chance crítica — ★ " + (GanhoProximaPatenteTexto("ccrit") || "patente máxima");
 		const meio = N(chanceCrit) >= 0.3;
 		const passo = N(sobeCCrit) * (meio ? 0.5 : 1);
-		const prox = Math.min(0.7, N(chanceCrit) + passo);
+		const prox = Math.min(TetoLoja("ccrit"), N(chanceCrit) + passo);
 		return "Chance crítica: " + FormataPct(chanceCrit) + " → " + FormataPct(prox)
-			+ " (máx 70%" + (meio ? " · ganho pela metade" : " · a partir de 30% cai pela metade") + ")";
+			+ " (máx " + FormataTetoPct(TetoLoja("ccrit")) + (meio ? " · ganho pela metade" : " · a partir de 30% cai pela metade") + ")";
 	},
 	CompraQTDAvanco() {
-		if (N(lvlQTDAvanco) > 20) return "Quantidade de avanço: no nível máximo";
+		if (ITENS_PATENTE.qtdavan.noTeto()) return "Quantidade de avanço — ★ " + (GanhoProximaPatenteTexto("qtdavan") || "patente máxima");
 		return "Qtd de avanço: " + N(qtdAvanco) + " → " + (N(qtdAvanco) + 1) + " inimigos";
+	},
+	CompraEsmBau() {
+		if (ITENS_PATENTE.esmbau.noTeto()) return "Esmeralda no baú — ★ " + (GanhoProximaPatenteTexto("esmbau") || "patente máxima");
+		return "Chance de esmeralda: " + FormataPct(chanceEsmeraldaBau, 0) + " → "
+			+ FormataPct(Math.min(TetoLoja("esmbau"), N(chanceEsmeraldaBau) + PassoLoja("esmbau")), 0)
+			+ " (máx " + FormataTetoPct(TetoLoja("esmbau")) + ")";
 	},
 	CompraComp1() {
 		const prox = N(danoComp1) + 0.1;
@@ -827,6 +1031,14 @@ function NomeFuncaoCompra(btn) {
 // ids no HTML que não batem com o nome da variável de preço
 const ALIAS_PRECO = { precoQTDAvan: "precoQTDAvanco" };
 
+// Localiza o item de patente pela variável de preço da sua linha
+function ItemPorPrecoVar(varPreco) {
+	for (const [id, cfg] of Object.entries(ITENS_PATENTE)) {
+		if (cfg.precoVar === varPreco) return { id, cfg };
+	}
+	return null;
+}
+
 function MostraPreviewCompra(btn) {
 	const nome = NomeFuncaoCompra(btn);
 	const calc = PREVIEWS_LOJA[nome];
@@ -845,7 +1057,9 @@ function MostraPreviewCompra(btn) {
 	const celulaPreco = linha ? linha.querySelector("td:nth-child(2) > div") : null;
 	const idPreco = celulaPreco ? (ALIAS_PRECO[celulaPreco.id] || celulaPreco.id) : "";
 	if (/^preco/.test(idPreco) && window[idPreco] !== undefined) {
-		const preco = window[idPreco];
+		// no teto com patente pendente a célula mostra o ingresso, não o nível
+		const item = ItemPorPrecoVar(idPreco);
+		const preco = (item && item.cfg.noTeto()) ? PrecoPatenteLoja(item.id) : window[idPreco];
 		podePagar = (painel.id === "LojaEsm")
 			? N(esmeraldas) >= N(preco)
 			: GE(gold, preco);

@@ -205,9 +205,11 @@ function MultiplicadorGoldComp2() {
 }
 
 // Gold do Companheiro 2 (GoldPS) por segundo — fonte única da fórmula:
-// nível × mulGold × bônus do CM, rendendo o dobro (×2 pedido no balanceamento)
+// nível × (1 + nível/20) × mulGold × bônus do CM × 3 — escala por nível com
+// curva suave (cada nível vale ~5% mais que o anterior) e fator ×3
 function GoldCompanheiroPorSegundo(nivel = lvlComp2) {
-	return N(nivel) * N(mulGold) * MultiplicadorGoldComp2() * 2;
+	const n = N(nivel);
+	return n * (1 + n / 20) * N(mulGold) * MultiplicadorGoldComp2() * 3;
 }
 
 // Loja de esmeralda "CM em dobro": ×2 no Conhecimento Mug ganho por nível
@@ -311,6 +313,20 @@ var lvlSubVida = 0;
 var precoBau = 25;
 var lvlBau = 1;
 
+// Item novo da loja de gold: chance de esmeralda ao abrir cada baú
+var precoEsmBau = 500;
+var lvlEsmBau = 0;
+
+// Patentes da loja de gold (0 = ★I, a base de hoje): ao bater no nível máximo
+// o ingresso destrava o próximo segmento de níveis com o teto do efeito
+// subindo. São por run — zeram no reset junto com os itens que destravam.
+var patenteBau = 0;
+var patenteBEspaco = 0;
+var patenteQTDAvan = 0;
+var patenteCCrit = 0;
+var patenteSubVida = 0;
+var patenteAvan = 0;
+var patenteEsmBau = 0;
 
 var descontoLoja = 0;
 var mulGoldInicial = mulGold;

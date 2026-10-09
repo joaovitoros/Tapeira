@@ -71,18 +71,21 @@ function SyncTogglesAutomacao() {
 }
 
 // Itens da loja de gold que a auto-compra pode evoluir (esmeralda e Conhecimento
-// Mug ficam de fora: são escolhas estratégicas). As travas `max` espelham o
-// AtualizaMaximosLoja — quem efetiva a compra continua sendo a Compra*.
+// Mug ficam de fora: são escolhas estratégicas). Os itens com teto entram pela
+// tabela ITENS_PATENTE — no teto eles candidatam pelo preço do ingresso da
+// próxima patente, e só ficam de fora na patente máxima. Quem efetiva a
+// compra continua sendo a Compra*.
 const ITENS_AUTO_COMPRA = [
 	{ fn: CompraDano, preco: "precoDano" },
-	{ fn: CompraBau, preco: "precoBau", max: () => N(chanceBau) >= 0.75 },
-	{ fn: CompraBEspaco, preco: "precoBEspaco", max: () => N(lvlBEspaco) >= 15 },
+	{ fn: CompraBau, preco: "precoBau", teto: "bau" },
+	{ fn: CompraBEspaco, preco: "precoBEspaco", teto: "espaco" },
 	{ fn: CompraGold, preco: "precoGold" },
-	{ fn: CompraAvanco, preco: "precoAvan", max: () => N(avanco) >= 0.5 },
+	{ fn: CompraAvanco, preco: "precoAvan", teto: "avan" },
 	{ fn: CompraDCrit, preco: "precoDCrit" },
-	{ fn: CompraSubVida, preco: "precoVidaInimigo", max: () => N(lvlSubVida) >= 50 },
-	{ fn: CompraCCrit, preco: "precoCCrit", max: () => N(chanceCrit) >= 0.7 },
-	{ fn: CompraQTDAvanco, preco: "precoQTDAvanco", max: () => N(lvlQTDAvanco) > 20 }
+	{ fn: CompraSubVida, preco: "precoVidaInimigo", teto: "subvida" },
+	{ fn: CompraCCrit, preco: "precoCCrit", teto: "ccrit" },
+	{ fn: CompraQTDAvanco, preco: "precoQTDAvanco", teto: "qtdavan" },
+	{ fn: CompraEsmBau, preco: "precoEsmBau", teto: "esmbau" }
 ];
 
 // Uma compra por tick, sempre no item mais barato que couber no gold (o
@@ -96,11 +99,20 @@ function AutoCompraMaisBarato() {
 	NormalizaPrecosLoja();
 
 	let alvo = null;
+	let alvoPreco = 0;
 	for (const item of ITENS_AUTO_COMPRA) {
-		if (item.max && item.max()) continue;
-		const preco = N(window[item.preco]);
+		let preco;
+		if (item.teto && ITENS_PATENTE[item.teto].noTeto()) {
+			if (!TemProximaPatente(item.teto)) continue; // patente máxima
+			preco = PrecoPatenteLoja(item.teto); // ingresso da próxima ★
+		} else {
+			preco = N(window[item.preco]);
+		}
 		if (!(preco > 0) || !GE(gold, preco)) continue;
-		if (!alvo || preco < N(window[alvo.preco])) alvo = item;
+		if (!alvo || preco < alvoPreco) {
+			alvo = item;
+			alvoPreco = preco;
+		}
 	}
 	if (!alvo) return;
 
