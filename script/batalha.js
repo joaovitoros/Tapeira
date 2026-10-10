@@ -598,8 +598,23 @@ function LimpaEfeitosMorte() {
 	efeitosMorteAtivos.clear();
 }
 
+// Poeira da morte: nuvemzinha no chão onde o inimigo caiu (só visual; some
+// no animationend).
+function CriaPoeiraMorte(rect) {
+	const poeira = document.createElement("div");
+	poeira.className = "morte-poeira";
+	poeira.setAttribute("aria-hidden", "true");
+	poeira.style.left = `${rect.left + rect.width / 2}px`;
+	poeira.style.top = `${rect.top + rect.height * 0.86}px`;
+	poeira.style.width = `${rect.width * 0.9}px`;
+	poeira.style.height = `${rect.height * 0.3}px`;
+	document.body.appendChild(poeira);
+	poeira.addEventListener("animationend", () => poeira.remove(), { once: true });
+}
+
 function animarMorte(el) {
 	const rect = el.getBoundingClientRect();
+	CriaPoeiraMorte(rect);
 	const morte = document.createElement("img");
 	morte.className = "morteAnim";
 	morte.src = "imagens/morte/frame12.png";

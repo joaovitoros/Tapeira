@@ -195,6 +195,13 @@ const UI = {
         }, bossFloor ? 2800 : 1500);
 
         if (bossFloor) {
+            // "rugido" do guardião: tremor curto na cena (só visual; sai no animationend)
+            const raiz = document.documentElement;
+            raiz.classList.remove("guardian-rumble");
+            void raiz.offsetWidth;
+            raiz.classList.add("guardian-rumble");
+            raiz.addEventListener("animationend", () => raiz.classList.remove("guardian-rumble"), { once: true });
+
             let spotlight = document.getElementById("guardianIntroSpotlight");
             if (!spotlight) {
                 spotlight = document.createElement("div");

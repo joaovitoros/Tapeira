@@ -30,7 +30,10 @@ Object.assign(UI, {
         const stack = document.querySelectorAll(".reward-number").length;
         marker.className = `floating-game-text reward-number reward-number--${type}`;
         marker.setAttribute("aria-hidden", "true");
-        if (type === "gold") PulsaElemento(document.getElementById("contGold"), "contador--pulso");
+        if (type === "gold") {
+            PulsaElemento(document.getElementById("contGold"), "contador--pulso");
+            VoaMoeda(rect);
+        }
         if (type === "emerald") {
             const icon = document.createElement("img");
             icon.className = "reward-number__icon";
@@ -358,4 +361,25 @@ function PulsaElemento(el, classe) {
 	el.getAnimations().forEach(anim =>
 		anim.finished.then(() => el.classList.remove(classe)).catch(() => {})
 	);
+}
+
+// Moeda voando do ponto do ganho até o contador de gold (só visual; some no
+// animationend). A direção vai nas custom properties --dx/--dy.
+function VoaMoeda(origem) {
+	const alvo = document.getElementById("contGold");
+	if (!alvo || !origem) return;
+	const destino = alvo.getBoundingClientRect();
+	const x0 = origem.left + origem.width / 2;
+	const y0 = origem.top + origem.height * 0.2;
+	const moeda = document.createElement("img");
+	moeda.className = "moeda-voadora";
+	moeda.src = "imagens/gold.png";
+	moeda.alt = "";
+	moeda.setAttribute("aria-hidden", "true");
+	moeda.style.left = `${x0}px`;
+	moeda.style.top = `${y0}px`;
+	moeda.style.setProperty("--dx", `${destino.left + destino.width / 2 - x0}px`);
+	moeda.style.setProperty("--dy", `${destino.top + destino.height / 2 - y0}px`);
+	document.body.appendChild(moeda);
+	moeda.addEventListener("animationend", () => moeda.remove(), { once: true });
 }
