@@ -88,7 +88,7 @@ navegador, Windows (Electron) e Android (Capacitor).
 
 ## O que foi feito nesta reorganização
 
-1. Suíte de regressão com `npm test` (20 testes) cobrindo menu, saves,
+1. Suíte de regressão com `npm test` (27 testes) cobrindo menu, saves,
    importação de JSON, combate, missões, eventos, automação, companheiros,
    conquistas, progresso offline, builds e hit kill.
 2. Extração, nesta ordem: áudio; validação e persistência de saves;
@@ -98,23 +98,24 @@ navegador, Windows (Electron) e Android (Capacitor).
 4. `persistencia.js` dividido em três: exportação/importação de arquivo
    (`Salvar`, `CarregarArquivo`), montagem do estado (`persistencia-carregar.js`)
    e auto save local (`persistencia-autosave.js`).
+5. Cobertura dos seis eventos restantes em `tests/regression.test.cjs`:
+   chuva de meteoros, névoa, veia, inseto, fissura e emboscada (o comércio já
+   tinha teste).
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
 
 ## Próximos passos sugeridos (em ordem de valor)
 
-1. **Cobrir `eventos.js` (615):** faltam testes para chuva de meteoros,
-   névoa, veia, inseto, fissura e emboscada (só o comércio está coberto).
-2. **Reduzir handlers `onclick` no HTML:** migrar para `addEventListener`
+1. **Reduzir handlers `onclick` no HTML:** migrar para `addEventListener`
    registrado no JavaScript, um painel por vez.
-3. **Investigar o bug de save relatado:** importar JSON e "Salvar e voltar ao
+2. **Investigar o bug de save relatado:** importar JSON e "Salvar e voltar ao
    menu" foram testados e preservam o andar; o caso real ainda não foi
    reproduzido — se voltar a acontecer, é preciso o JSON do save problemático.
-4. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
+3. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
    duas páginas; uma lista única (gerador ou bundler com esbuild) evita
    esquecimento.
-5. **Unificar a montagem do save:** `Salvar` (exportação) e `CriarObjetoSave`
+4. **Unificar a montagem do save:** `Salvar` (exportação) e `CriarObjetoSave`
    (auto save) repetem quase todo o mesmo objeto — a exportação apenas omite
    os campos offline. `Salvar` ainda define um `getRawGold` local sem uso.
    Unificar evita que um campo novo entre só num dos caminhos.
@@ -122,7 +123,7 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (20 testes)
+npm test                 # suíte principal (27 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android
