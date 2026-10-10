@@ -383,3 +383,29 @@ function VoaMoeda(origem) {
 	document.body.appendChild(moeda);
 	moeda.addEventListener("animationend", () => moeda.remove(), { once: true });
 }
+
+// Brilho dos cristais: pontinhos que cintilam sobre a caverna (só visual).
+// Criado uma vez; posições/tempos fixos (sem Math.random no load).
+function CriaBrilhoCristais() {
+	if (!document.getElementById("game-root")) return;
+	if (document.getElementById("cristaisCintilam")) return;
+	const camada = document.createElement("div");
+	camada.id = "cristaisCintilam";
+	camada.setAttribute("aria-hidden", "true");
+	const pontos = [
+		[12, 30, 0], [22, 62, 1.2], [38, 24, 2.4], [52, 70, 0.6],
+		[64, 34, 1.8], [76, 58, 3.0], [86, 28, 0.9], [30, 82, 2.1],
+		[70, 84, 1.5], [92, 66, 2.7]
+	];
+	for (const [x, y, delay] of pontos) {
+		const ponto = document.createElement("span");
+		ponto.className = "cintilar";
+		ponto.style.left = x + "%";
+		ponto.style.top = y + "%";
+		ponto.style.animationDelay = delay + "s";
+		camada.appendChild(ponto);
+	}
+	document.body.appendChild(camada);
+}
+
+document.addEventListener("DOMContentLoaded", CriaBrilhoCristais);

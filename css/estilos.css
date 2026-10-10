@@ -2428,6 +2428,16 @@ caption {
 .damage-number--critical {
 	color: #ffe36b;
 	font-size: clamp(16px, 1.45vw, 25px);
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95), 0 0 10px rgba(255, 200, 60, 0.8);
+	animation: floating-game-text-crit 1000ms ease-out forwards;
+}
+
+/* crítico: "pop" maior + leve rotação (dá mais peso que o número normal) */
+@keyframes floating-game-text-crit {
+	0% { opacity: 0; transform: translate(-50%, 8px) scale(0.7) rotate(-4deg); }
+	12% { opacity: 1; transform: translate(-50%, -2px) scale(1.4) rotate(3deg); }
+	30% { transform: translate(-50%, -10px) scale(1.05) rotate(-1deg); }
+	100% { opacity: 0; transform: translate(-50%, -72px) scale(1) rotate(0); }
 }
 
 .hitkill-number {
@@ -2529,6 +2539,38 @@ html.guardian-rumble {
 	.morte-poeira,
 	html.guardian-rumble {
 		animation-duration: 1ms;
+	}
+}
+
+/* Brilho dos cristais: pontinhos que cintilam sobre a caverna
+   (script/ui-combate.js -> CriaBrilhoCristais). Só visual. */
+#cristaisCintilam {
+	position: fixed;
+	inset: 0;
+	z-index: 2;
+	pointer-events: none;
+	overflow: hidden;
+}
+
+.cintilar {
+	position: absolute;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	transform: translate(-50%, -50%) scale(0.2);
+	background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(170, 220, 255, 0) 70%);
+	animation: cintilar 4.5s ease-in-out infinite;
+}
+
+@keyframes cintilar {
+	0%, 70%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+	82% { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
+	92% { opacity: 0.4; transform: translate(-50%, -50%) scale(0.7); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cintilar {
+		animation: none;
 	}
 }
 

@@ -44,6 +44,23 @@ const path = require('path');
         UI.showFloorTransition(7);
         check("andar normal não treme", !document.documentElement.classList.contains("guardian-rumble"));
 
+        // brilho dos cristais (camada criada no load)
+        CriaBrilhoCristais();
+        const camada = document.getElementById("cristaisCintilam");
+        check("camada de brilho dos cristais criada com 10 pontos",
+            camada && camada.querySelectorAll(".cintilar").length === 10,
+            camada ? camada.querySelectorAll(".cintilar").length : "-");
+        check("brilho não captura clique",
+            camada && getComputedStyle(camada).pointerEvents === "none",
+            camada ? getComputedStyle(camada).pointerEvents : "-");
+
+        // número de dano crítico com "pop" próprio
+        UI.showDamageNumber(document.querySelector(".player"), 100, true);
+        const crit = document.querySelector(".damage-number--critical");
+        check("número crítico usa o pop próprio",
+            crit && getComputedStyle(crit).animationName.includes("floating-game-text-crit"),
+            crit ? getComputedStyle(crit).animationName : "-");
+
         return out;
     });
 
