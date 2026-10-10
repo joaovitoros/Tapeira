@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+	<meta charset="utf-8" />
+	<title>Teste — loja não cobre o HUD</title>
+	<style>
+		body { font: 13px/1.4 system-ui, sans-serif; background: #12151b; color: #e6edf3; margin: 0; padding: 10px; }
+		pre { white-space: pre-wrap; }
+	</style>
+</head>
+
+<body>
+	<h1>Loja × HUD</h1>
+	<p>Abre o jogo em cada viewport, abre a loja e confere que ela não cobre o botão de
+		pausar, o cronômetro nem a barra de botões. Resultados também em <code>window.__resultados</code>.</p>
+	<pre id="saida"></pre>
+	<script>
+		// Regressão: a loja já foi posicionada por translateY(-50%) no desktop e
+		// cobria o botão de pausar/cronômetro. Aqui medimos, por viewport, quem
+		// está no topo nos pontos do HUD e se a loja cabe na tela.
+		const TAMANHOS = [
+			{ nome: "320x568", w: 320, h: 568 },
+			{ nome: "360x640", w: 360, h: 640 },
+			{ nome: "390x844", w: 390, h: 844 },
+			{ nome: "412x915", w: 412, h: 915 },
+			{ nome: "740x360 (landscape)", w: 740, h: 360 },
+			{ nome: "1024x600", w: 1024, h: 600 },
+			{ nome: "1024x768", w: 1024, h: 768 },
+			{ nome: "1280x800", w: 1280, h: 800 },
+			{ nome: "1600x900", w: 1600, h: 900 }
+		];
+		const saida = document.getElementById("saida");
+		const resultados = [];
+		window.__pronto = false;
+		window.__resultados = resultados;
+		const registrar = t => { resultados.push(t); saida.textContent = resultados.join("\n"); };
+		const nome = el => !el ? "null" : (el.id ? "#" + el.id : (String(el.className).split(" ").filter(Boolean)[0] || el.tagName.toLowerCase()));
+
+		function medir(indice) {
+			if (indice >= TAMANHOS.length) { window.__pronto = true; registrar("FIM"); return; }
+			const tam = TAMANHOS[indice];
+			const frame = document.createElement("iframe");
+			frame.style.width = tam.w + "px";
+			frame.style.height = tam.h + "px";
+			document.body.appendChild(frame);
+			frame.src = "Caverna.html";
+			let concluido = false;
+			const esperado = setInterval(() => {
+				const win = frame.contentWindow;
+				let pronto = false;
+				try {
+					pronto = win.eval("typeof UI !== 'undefined' && typeof andar !== 'undefined' && !!document.getElementById('game-root')");
+				} catch (erro) { pronto = false; }
+				if (!pronto) return;
+				clearInterval(esperado);
+				concluido = true;
+				setTimeout(() => {
+					const doc = frame.contentDocument;
+					const win2 = frame.contentWindow;
+					doc.querySelector(".offline-rewards-overlay")?.remove();
+					// recompensas offline cobrem a tela: some com elas antes de medir
+					const lojaEl = doc.getElementById("Loja");
+					lojaEl.style.visibility = "visible";
+					setTimeout(() => {
+						doc.querySelector(".offline-rewards-overlay")?.remove();
+						const topo = sel => {
+							const el = doc.querySelector(sel);
+							if (!el) return null;
+							const r = el.getBoundingClientRect();
+							return nome(doc.elementFromPoint(Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)));
+						};
+						const centro = sel => { const el = doc.querySelector(sel); return el ? el.getBoundingClientRect() : null; };
+						const loja = centro("#container-Loja");
+						const problemas = [];
+						if (!loja) problemas.push("loja ausente");
+						else {
+							if (loja.bottom > tam.h + 1) problemas.push(`loja passa da base (${Math.round(loja.bottom)} > ${tam.h})`);
+							if (loja.top < -1) problemas.push("loja passa do topo");
+						}
+						const pausa = topo("#btnPause");
+						const tempo = topo("#contTempo");
+						if (pausa && !/pause|btnPause/.test(pausa)) problemas.push(`pausar coberto por ${pausa}`);
+						if (tempo && tempo !== "#contTempo") problemas.push(`cronômetro coberto por ${tempo}`);
+						// barra de botões: cada botão precisa responder ao toque
+						for (const sel of ["#btn-Loja", "#btnSkills", "#btnStatus", "#btn-Config", "#btn-Formigas"]) {
+							const t = topo(sel);
+							if (t && !/btn|span|screen-nav/.test(t)) problemas.push(`${sel} coberto por ${t}`);
+						}
+						// e a loja continua clicável (hit-test dentro dela)
+						if (loja) {
+							const x = Math.round(loja.left + 40), y = Math.round(loja.top + 40);
+							const alvo = doc.elementFromPoint(x, y);
+							if (!alvo || !doc.getElementById("Loja").contains(alvo)) problemas.push(`loja não recebe toque em ${x},${y} (${nome(alvo)})`);
+						}
+						registrar(`${problemas.length ? "FALHA" : "OK  "} ${tam.nome}: loja ${loja ? Math.round(loja.top) + ".." + Math.round(loja.bottom) : "?"}${problemas.length ? " — " + problemas.join("; ") : ""}`);
+						frame.remove();
+						setTimeout(() => medir(indice + 1), 120);
+					}, 250);
+				}, 400);
+			}, 120);
+			setTimeout(() => {
+				if (concluido) return;
+				clearInterval(esperado);
+				registrar(`FALHA ${tam.nome}: iframe não carregou`);
+				frame.remove();
+				setTimeout(() => medir(indice + 1), 120);
+			}, 25000);
+		}
+
+		medir(0);
+	</script>
+</body>
+
+</html>

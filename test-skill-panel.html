@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+	<meta charset="utf-8" />
+	<title>Harness de testes — painel "Nível e habilidades"</title>
+	<style>
+		body { font: 14px/1.4 system-ui, sans-serif; background: #12151b; color: #e6edf3; margin: 0; padding: 12px; }
+		iframe { border: 1px solid #444; display: block; background: #000; }
+		pre { white-space: pre-wrap; word-break: break-word; }
+	</style>
+</head>
+
+<body>
+	<h1 id="titulo">Teste do painel “Nível e habilidades”</h1>
+	<p>Abra com <code>?modo=layout</code> (padrão) ou <code>?modo=negocio</code>. Os resultados aparecem abaixo e ficam em <code>window.__resultados</code>.</p>
+	<pre id="saida"></pre>
+
+	<script>
+		// Harness: carrega Caverna.html em iframes do tamanho de cada alvo de
+		// viewport, abre o painel de skills e mede layout/reações. Mesma origem
+		// (sirva a pasta do projeto por HTTP) para o pai poder ler o DOM do iframe.
+		const MODO = new URLSearchParams(location.search).get("modo") || "layout";
+		const saida = document.getElementById("saida");
+		const resultados = [];
+		window.__pronto = false;
+		window.__resultados = resultados;
+
+		function registrar(texto) {
+			resultados.push(typeof texto === "string" ? texto : JSON.stringify(texto));
+			saida.textContent = resultados.join("\n");
+		}
+
+		// O proxy do browser às vezes devolve 502 em rajada; tenta de novo antes
+		// de registrar falha (o servidor estático local responde 200).
+		const TENTATIVAS_MAX = 4;
+
+		function carregarJogo(largura, altura, aoPronto, tentativa = 1) {
+			const frame = document.createElement("iframe");
+			frame.style.width = largura + "px";
+			frame.style.height = altura + "px";
+			frame.setAttribute("title", "jogo " + largura + "x" + altura);
+			document.body.appendChild(frame);
+			frame.src = "Caverna.html";
+			let concluido = false;
+			let ultimaFalha = "";
+			let recargas = 0;
+			const recursosComErro = () => {
+				try {
+					return frame.contentWindow.performance.getEntriesByType("resource")
+						.filter(e => (e.responseStatus || 0) >= 400)
+						.map(e => e.name.split("/").pop());
+				} catch (erro) { return []; }
+			};
+			const esperado = setInterval(() => {
+				const win = frame.contentWindow;
+				let pronto = false;
+				try {
+					// UI é `const`, não fica em window: precisa de eval no contexto do iframe
+					pronto = win.eval("typeof UI !== 'undefined' && typeof andar !== 'undefined' && !!document.getElementById('game-root')");
+				} catch (erro) { pronto = false; }
+				if (pronto) {
+					// script que falhou (502) pode deixar UI incompleto: refaz antes de medir
+					const quebrados = recursosComErro();
+					if (quebrados.length) {
+						if (quebrados.join() !== ultimaFalha && recargas < 3) {
+							ultimaFalha = quebrados.join();
+							recargas++;
+							registrar(`retry ${largura}x${altura} (recurso ${quebrados[0]} com erro)`);
+							frame.src = "Caverna.html"; // recarrega; cache local deve responder 200
+							return;
+						}
+					} else {
+						clearInterval(esperado);
+						clearTimeout(prazo);
+						concluido = true;
+						setTimeout(() => aoPronto(frame), 400);
+					}
+				}
+			}, 100);
+			// 502/s recurso quebrado derruba o jogo cedo: detecta e tenta de novo
+			const falha = setInterval(() => {
+				const doc = frame.contentDocument;
+				if (!doc || !doc.getElementById("game-root")) return;
+				const ui = [...doc.scripts].some(s => s.src.includes("/ui.js"));
+				if (!ui) return; // ainda carregando
+				try {
+					if (frame.contentWindow.eval("typeof UI !== 'undefined'")) return;
+				} catch (erro) { return; }
+				clearInterval(falha);
+				if (concluido) return;
+				tentarDeNovo();
+			}, 1500);
+			function tentarDeNovo() {
+				clearInterval(esperado);
+				clearInterval(falha);
+				clearTimeout(prazo);
+				frame.remove();
+				if (tentativa < TENTATIVAS_MAX) {
+					registrar(`retry ${largura}x${altura} (tentativa ${tentativa + 1}/${TENTATIVAS_MAX})`);
+					setTimeout(() => carregarJogo(largura, altura, aoPronto, tentativa + 1), 400);
+				} else {
+					registrar("ERRO: iframe " + largura + "x" + altura + " não carregou");
+					aoPronto(null);
+				}
+			}
+			const prazo = setTimeout(() => {
+				if (concluido) return;
+				tentarDeNovo();
+			}, 25000);
+		}
+
+		function prepararEstado(frame) {
+			const win = frame.contentWindow;
+			try { win.localStorage.clear(); } catch (erro) { /* sem storage */ }
+			win.andar = 36;
+			win.maxAndar = 36;
+			win.andarMaxRun = 36;
+			win.nivelJogador = 14;
+			win.xpAtual = 30;
+			win.pontosHabilidade = 6;
+			win.nivelSkillDano = 4;
+			win.nivelSkillEletrica = 5;
+			win.nivelSkillGold = 3;
+			win.nivelSkillFuga = 10;
+			win.nivelSkillFrenesi = 0;
+			win.perkDano = 2;
+			win.perkEletrica = 0;
+			win.perkGold = 0;
+			win.perkFuga = 5;
+			win.perkFrenesi = 1;
+			win.ramoSkillFuga = 2;
+			win.eval("UI.render()");
+		}
+
+		function medir(frame) {
+			const win = frame.contentWindow;
+			const doc = frame.contentDocument;
+			const largura = frame.clientWidth;
+			const altura = frame.clientHeight;
+			const painel = doc.querySelector("#skillUpgradeModal .skill-upgrade-panel");
+			const scroll = doc.querySelector("#skillUpgradeModal .skill-upgrade-scroll");
+			if (!painel || !scroll) return { erro: "painel não encontrado" };
+
+			const pr = painel.getBoundingClientRect();
+			const fora = [];
+			for (const el of painel.querySelectorAll("*")) {
+				const r = el.getBoundingClientRect();
+				if (r.width === 0 && r.height === 0) continue;
+				if (r.right > largura + 1 || r.left < -1) {
+					fora.push(`${el.tagName}.${el.className}`.slice(0, 60) + ` [${Math.round(r.left)}..${Math.round(r.right)}]`);
+				}
+			}
+
+			const toques = [];
+			for (const botao of doc.querySelectorAll("#skillUpgradeModal button")) {
+				const r = botao.getBoundingClientRect();
+				if (r.width === 0 || r.height === 0) continue;
+				toques.push({
+					rotulo: (botao.getAttribute("aria-label") || botao.textContent || "").trim().slice(0, 38),
+					l: Math.round(r.width),
+					a: Math.round(r.height)
+				});
+			}
+			const toquesPequenos = toques.filter(t => t.l < 48 || t.a < 48);
+
+			const scrollers = [];
+			for (const el of painel.querySelectorAll("*")) {
+				const cs = win.getComputedStyle(el);
+				if ((cs.overflowY === "auto" || cs.overflowY === "scroll") && el.scrollHeight > el.clientHeight + 2) {
+					scrollers.push(el.className);
+				}
+			}
+
+			const titulo = doc.getElementById("skill-upgrade-title").getBoundingClientRect();
+			const fechar = doc.querySelector("#skillUpgradeModal .ant-collection-close").getBoundingClientRect();
+			const semSobreposicaoTitulo = titulo.right <= fechar.left + 1 || fechar.right <= titulo.left + 1
+				|| titulo.bottom <= fechar.top + 1 || fechar.bottom <= titulo.top + 1;
+
+			const nos = [];
+			for (const no of doc.querySelectorAll("#skillUpgradeModal .skill-no")) {
+				const r = no.getBoundingClientRect();
+				nos.push(r.width <= largura + 1 && r.left >= -1 && r.right <= largura + 1);
+			}
+
+			const csScroll = win.getComputedStyle(scroll);
+			const csPainel = win.getComputedStyle(painel);
+
+			return {
+				viewport: largura + "x" + altura,
+				paginaSemScrollHorizontal: doc.documentElement.scrollWidth <= largura + 1,
+				docScrollWidth: doc.documentElement.scrollWidth,
+				painelDentroDaTela: pr.left >= -1 && pr.right <= largura + 1 && pr.top >= -1 && pr.bottom <= altura + 1,
+				painelRect: [Math.round(pr.left), Math.round(pr.top), Math.round(pr.right), Math.round(pr.bottom)],
+				painelAlto: Math.round(pr.height),
+				rolagemDoPainel: csPainel.overflowY,
+				unicoScroller: scrollers.length <= 1,
+				scrollers,
+				overscroll: csScroll.overscrollBehaviorY,
+				scrollTemConteudo: scroll.scrollHeight >= scroll.clientHeight,
+				scrollSemHorizontal: scroll.scrollWidth <= scroll.clientWidth + 1,
+				tituloSemFechar: semSobreposicaoTitulo,
+				cartoesDentroDoModal: nos.every(Boolean),
+				elementosFora: fora.slice(0, 5),
+				botoesAbaixoDe48: toquesPequenos.slice(0, 8),
+				totalBotoes: toques.length
+			};
+		}
+
+		function expandirTudo(doc) {
+			let tentativas = 0;
+			while (tentativas++ < 15) {
+				const botao = doc.querySelector("#skillUpgradeModal .skill-secao-cabecalho[aria-expanded='false']");
+				if (!botao) return;
+				botao.click();
+			}
+		}
+
+		// ------------------------------- layout -------------------------------
+		const TAMANHOS = [
+			{ nome: "320x568", w: 320, h: 568 },
+			{ nome: "360x640", w: 360, h: 640 },
+			{ nome: "375x667", w: 375, h: 667 },
+			{ nome: "390x844", w: 390, h: 844 },
+			{ nome: "412x915", w: 412, h: 915 },
+			{ nome: "480x800", w: 480, h: 800 },
+			{ nome: "600x900", w: 600, h: 900 },
+			{ nome: "1024x768", w: 1024, h: 768 },
+			{ nome: "320x400 (pouca altura)", w: 320, h: 400 },
+			{ nome: "740x360 (landscape curto)", w: 740, h: 360 }
+		];
+
+		function testarLayout(indice) {
+			if (indice >= TAMANHOS.length) {
+				window.__pronto = true;
+				registrar("FIM layout");
+				return;
+			}
+			const tam = TAMANHOS[indice];
+			carregarJogo(tam.w, tam.h, frame => {
+				try {
+					if (frame) {
+					prepararEstado(frame);
+					const doc = frame.contentDocument;
+					frame.contentWindow.eval("UI.toggleSkillUpgradePanel()");
+					registrar({ caso: tam.nome + " recolhido", ...medir(frame) });
+
+					expandirTudo(doc);
+					registrar({ caso: tam.nome + " expandido", ...medir(frame) });
+
+					const scroll = doc.querySelector("#skillUpgradeModal .skill-upgrade-scroll");
+					const painel = doc.querySelector("#skillUpgradeModal .skill-upgrade-panel");
+					scroll.scrollTop = scroll.scrollHeight;
+					const habilitados = [...doc.querySelectorAll("#skillUpgradeModal button:not([disabled])")];
+					const ultimo = habilitados[habilitados.length - 1];
+					registrar({
+						caso: tam.nome + " rolagem",
+						rolagemFunciona: scroll.scrollTop > 0,
+						painelNaoRolou: painel.scrollTop === 0,
+						ultimoBotaoVisivel: ultimo
+							? ultimo.getBoundingClientRect().bottom <= painel.getBoundingClientRect().bottom + 1
+							: null
+					});
+
+					// estado recolhido volta a aparecer ao reabrir (persistência de UI)
+					doc.querySelector("#skillUpgradeModal .ant-collection-close").click();
+					registrar({
+						caso: tam.nome + " fechar",
+						fechou: !doc.getElementById("skillUpgradeModal"),
+						focoNoBotaoSkills: doc.activeElement && doc.activeElement.id === "btnSkills"
+					});
+					frame.remove();
+					}
+				} catch (erro) {
+					registrar("ERRO caso " + tam.nome + ": " + erro.message);
+					try { frame.remove(); } catch (limpeza) { /* já removido */ }
+				}
+				setTimeout(() => testarLayout(indice + 1), 50);
+			});
+		}
+
+		// ------------------------------ negócio -------------------------------
+		function testarNegocio() {
+			try { localStorage.clear(); } catch (erro) { /* sem storage */ }
+			carregarJogo(390, 844, frame => {
+				if (!frame) { window.__pronto = true; return; }
+				const win = frame.contentWindow;
+				const check = (nome, condicao, detalhe) =>
+					registrar(`${condicao ? "OK  " : "FALHA"} ${nome}${detalhe !== undefined ? " — " + detalhe : ""}`);
+
+				try {
+				// 1) melhoria sem pontos
+				win.pontosHabilidade = 0;
+				const semPontos = win.EvoluiSkill("damage");
+				check("melhorar sem pontos falha", semPontos === false && win.nivelSkillDano === 0);
+
+				// 2) skill bloqueada por andar
+				win.andar = 1; win.maxAndar = 1;
+				win.pontosHabilidade = 3;
+				const bloqueada = win.EvoluiSkill("electric");
+				check("skill de andar 15 bloqueada no andar 1", bloqueada === false && win.nivelSkillEletrica === 0);
+
+				// 3) melhoria com pontos
+				win.andar = 36; win.maxAndar = 36;
+				win.pontosHabilidade = 3;
+				const melhorou = win.EvoluiSkill("damage");
+				check("melhorar com pontos consome 1 ponto",
+					melhorou === true && win.nivelSkillDano === 1 && win.pontosHabilidade === 2);
+
+				// 4) nível máximo
+				win.nivelSkillDano = win.eval("NIVEL_MAXIMO_SKILLS");
+				const noMaximo = win.EvoluiSkill("damage");
+				check("nível máximo recusa melhoria",
+					noMaximo === false && win.nivelSkillDano === win.eval("NIVEL_MAXIMO_SKILLS") && win.pontosHabilidade === 2);
+				win.nivelSkillDano = 0;
+
+				// 5) custo/descrição conforme a regra atual
+				check("XP do nível 1 = 50", win.XPNecessarioProximoNivel(1) === 50, win.XPNecessarioProximoNivel(1));
+				check("XP do nível 2 = 75", win.XPNecessarioProximoNivel(2) === 75, win.XPNecessarioProximoNivel(2));
+				check("descrição dano nível 0 = 30 s",
+					win.DescricaoEfeitoSkill("damage", 0) === "Duração: 30 s (+5 s por nível).", win.DescricaoEfeitoSkill("damage", 0));
+				check("descrição fuga nível 0 = 10 s",
+					win.DescricaoEfeitoSkill("escape", 0) === "Pausa da fuga: 10 s (+2 s por nível).", win.DescricaoEfeitoSkill("escape", 0));
+
+				// 6) XP dá nível e ponto
+				const antes = { nivel: win.nivelJogador, pontos: win.pontosHabilidade, xp: win.xpAtual };
+				win.GanhaXP(win.XPPorInimigo(1) * win.XPNecessarioProximoNivel(1) - win.xpAtual, 1);
+				check("GanhaXP sobe de nível e dá ponto",
+					win.nivelJogador === antes.nivel + 1 && win.pontosHabilidade === antes.pontos + 1,
+					`nível ${antes.nivel}→${win.nivelJogador}, pontos ${antes.pontos}→${win.pontosHabilidade}`);
+
+				// 7) perks
+				win.andarMaxRun = 35;
+				win.perkDano = 0; win.perkEletrica = 0; win.perkGold = 0; win.perkFuga = 0;
+				check("1 ponto de perk no andar 35", win.PontosPerkGanhos() === 1 && win.PontosPerkDisponiveis() === 1);
+				const perkAplicado = win.CompraPerk("damage");
+				check("perk aplicado consome o ponto",
+					perkAplicado === true && win.perkDano === 1 && win.PontosPerkDisponiveis() === 0);
+				const perkSemPonto = win.CompraPerk("gold");
+				check("perk sem ponto disponível falha", perkSemPonto === false && win.perkGold === 0);
+				win.perkDano = win.eval("PERKS.find(p => p.skillId === 'damage').maximo");
+				win.andarMaxRun = 60;
+				const perkNoMaximo = win.CompraPerk("damage");
+				check("perk no máximo recusa", perkNoMaximo === false && win.perkDano === 4);
+				win.perkDano = 0; win.andarMaxRun = 35;
+
+				// 8) árvore de ramos
+				win.nivelSkillDano = 5;
+				win.ramoSkillDano = 0;
+				const escolheu = win.EscolheRamoSkill("damage", 1);
+				check("escolha de ramo no nível 5", escolheu === true && win.ramoSkillDano === 1);
+				const outroRamo = win.EscolheRamoSkill("damage", 2);
+				check("segundo caminho fica selado", outroRamo === false && win.ramoSkillDano === 1);
+				check("efeito do ramo escolhido", win.MultiplicadorRamoDanoAutomatico() === 1.5);
+				win.nivelSkillDano = 10;
+				check("nó 2 ativo no nível 10", win.RamoNoAtivo("damage", 2) === true);
+				check("efeito acumulado ×2,25", win.FatorRamo("damage", 1, 1.5) === 2.25, win.FatorRamo("damage", 1, 1.5));
+				check("ramo não escolhido não vale", win.FatorRamo("damage", 2, 1.5) === 1);
+				win.nivelSkillDano = 4;
+				check("ramo some abaixo do nível 5", win.RamoEscolhido("damage") === 0);
+				win.nivelSkillDano = 10;
+
+				// 9) painel reflete o estado real
+				win.eval("UI.showSkillUpgradePanel()");
+				const doc = win.document;
+				const chipDano = doc.querySelector("#skillUpgradeModal .skill-no--raiz .skill-no-nivel").textContent;
+				check("painel mostra nível real da skill", chipDano === "Nv 10/10", chipDano);
+				const troncos = [...doc.querySelectorAll("#skillUpgradeModal .skill-tronco")].length;
+				const nosPerk = [...doc.querySelectorAll("#skillUpgradeModal .skill-no--perk")].length;
+				const caminhos = [...doc.querySelectorAll("#skillUpgradeModal .skill-caminho")].length;
+				const nosRamo = [...doc.querySelectorAll("#skillUpgradeModal .skill-caminho .skill-ramo-no")].length;
+				check("árvore tem 5 troncos, 5 perks e 10 caminhos com 2 nós",
+					troncos === 5 && nosPerk === 5 && caminhos === 10 && nosRamo === 20,
+					`troncos=${troncos} perks=${nosPerk} caminhos=${caminhos} nós=${nosRamo}`);
+				// o nó do ramo escolhido aparece ativo na árvore
+				const noEscolhido = doc.querySelectorAll("#skillUpgradeModal .skill-ramo-no--ativo").length;
+				check("nó do ramo escolhido fica ativo", noEscolhido >= 1, "ativos=" + noEscolhido);
+
+				// 9b) gastar no nó: clicar no nó raiz melhora a skill
+				win.nivelSkillDano = 0;
+				win.pontosHabilidade = 1;
+				win.eval("UI.showSkillUpgradePanel()");
+				const noDano = win.document.querySelector("#skillUpgradeModal .skill-tronco .skill-no--raiz");
+				check("nó raiz é clicável com ponto disponível", noDano && noDano.tagName === "BUTTON");
+				noDano.click();
+				check("clique no nó raiz consome o ponto",
+					win.nivelSkillDano === 1 && win.pontosHabilidade === 0,
+					`nivel=${win.nivelSkillDano} pontos=${win.pontosHabilidade}`);
+				// sem ponto o nó deixa de ser botão (estado em texto, não disabled)
+				const noDanoSemPonto = win.document.querySelector("#skillUpgradeModal .skill-tronco .skill-no--raiz");
+				check("sem ponto o nó raiz fica inativo com motivo em texto",
+					noDanoSemPonto.tagName !== "BUTTON"
+					&& /Sem pontos de habilidade/.test(noDanoSemPonto.textContent));
+
+				// 10) reset preserva a regra (zerar run)
+				win.andar = 40;
+				win.Resetar();
+				check("reset zera skills, perks e ramos",
+					win.nivelSkillDano === 0 && win.perkDano === 0 && win.ramoSkillDano === 0
+					&& win.pontosHabilidade === 0 && win.nivelJogador === 1 && win.andar === 1);
+
+				// 11) persistência: salvar e recarregar
+				win.nivelSkillDano = 3;
+				win.pontosHabilidade = 2;
+				win.andar = 12; win.maxAndar = 12;
+				const salvou = win.AutoSaveLocal();
+				let nivelSalvo = null;
+				try { nivelSalvo = JSON.parse(win.localStorage.getItem("autoSaveCaverna")).nivelSkillDano; } catch (erro) { nivelSalvo = "erro"; }
+				check("auto save grava o nível da skill", salvou === true && nivelSalvo === 3, "salvo=" + nivelSalvo);
+
+				const recarga = frame.cloneNode(false);
+				frame.replaceWith(recarga);
+				recarga.src = "Caverna.html";
+				const esperado = setInterval(() => {
+					const w2 = recarga.contentWindow;
+					if (w2 && w2.nivelSkillDano !== undefined && w2.document.getElementById("game-root")) {
+						clearInterval(esperado);
+						// dá tempo do PreCarregamento aplicar o save
+						setTimeout(() => {
+							check("reload restaura o nível da skill", w2.nivelSkillDano === 3, "recarregado=" + w2.nivelSkillDano);
+							check("reload restaura os pontos", w2.pontosHabilidade === 2, "pontos=" + w2.pontosHabilidade);
+							recarga.remove();
+							window.__pronto = true;
+							registrar("FIM negócio");
+						}, 1200);
+					}
+				}, 150);
+				} catch (erro) {
+					registrar("ERRO negócio: " + erro.message);
+					window.__pronto = true;
+				}
+			});
+		}
+
+		// O proxy do browser devolve 502 em rajada (~16 req simultâneas). Antes de
+		// carregar o jogo, busca todos os recursos um a um para encher o cache
+		// (o servidor manda max-age) — aí os iframes não voltam à rede.
+		async function aquecerCache() {
+			const vistos = new Set();
+			const fila = ["Caverna.html"];
+			let buscas = 0;
+			while (fila.length && buscas < 300) {
+				const url = fila.shift();
+				if (vistos.has(url)) continue;
+				vistos.add(url);
+				buscas++;
+				let texto = null;
+				try {
+					const resp = await fetch(url, { cache: "reload" });
+					if (!resp.ok) { registrar(`cache: ${url} → ${resp.status}`); continue; }
+					const tipo = resp.headers.get("content-type") || "";
+					if (/text\/html|text\/css|javascript/.test(tipo)) texto = await resp.text();
+				} catch (erro) {
+					registrar(`cache: ${url} falhou (${erro.message})`);
+					continue;
+				}
+				if (texto == null) continue;
+				const base = url.includes("/") ? url.slice(0, url.lastIndexOf("/") + 1) : "";
+				const refs = [];
+				for (const m of texto.matchAll(/(?:src|href)\s*=\s*["']([^"']+)["']/g)) refs.push(m[1]);
+				for (const m of texto.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/g)) refs.push(m[1]);
+				for (const ref of refs) {
+					if (/^(https?:|data:|#|mailto:|javascript:)/i.test(ref)) continue;
+					const limpo = ref.split("?")[0].split("#")[0];
+					if (!limpo) continue;
+					let absoluto;
+					try { absoluto = new URL(limpo, location.origin + "/" + base).pathname.slice(1); }
+					catch (erro) { continue; }
+					if (/\.(js|css|html|png|jpe?g|gif|svg|mp3|wav|ico|woff2?)$/i.test(absoluto)) fila.push(absoluto);
+				}
+			}
+			registrar(`cache aquecido: ${vistos.size} recursos`);
+		}
+
+		aquecerCache().then(() => {
+			if (MODO === "negocio") testarNegocio();
+			else testarLayout(0);
+		}).catch(erro => {
+			registrar("ERRO no aquecimento: " + erro.message);
+			if (MODO === "negocio") testarNegocio();
+			else testarLayout(0);
+		});
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+	<meta charset="utf-8" />
+	<title>Captura — painel de skills</title>
+	<style>
+		body { font: 13px/1.4 system-ui, sans-serif; background: #12151b; color: #e6edf3; margin: 0; padding: 10px; }
+		iframe { border: 1px solid #444; display: block; background: #000; }
+	</style>
+</head>
+
+<body>
+	<p id="aviso">Abrir com <code>?w=390&amp;h=844</code> (e <code>&amp;expandido=1</code> para abrir as seções).</p>
+	<script>
+		// Captura: um iframe no tamanho do viewport alvo com o painel já aberto,
+		// para o screenshot sair igual ao que o jogador vê.
+		const p = new URLSearchParams(location.search);
+		const w = parseInt(p.get("w") || "390", 10);
+		const h = parseInt(p.get("h") || "844", 10);
+		const expandido = p.get("expandido") === "1";
+		document.getElementById("aviso").remove();
+
+		const frame = document.createElement("iframe");
+		frame.style.width = w + "px";
+		frame.style.height = h + "px";
+		frame.setAttribute("title", "jogo " + w + "x" + h);
+		document.body.appendChild(frame);
+		frame.src = "Caverna.html";
+
+		const esperado = setInterval(() => {
+			const win = frame.contentWindow;
+			let pronto = false;
+			try {
+				pronto = win.eval("typeof UI !== 'undefined' && typeof andar !== 'undefined' && !!document.getElementById('game-root')");
+			} catch (erro) { pronto = false; }
+			if (!pronto) return;
+			clearInterval(esperado);
+			const quebrados = (() => {
+				try {
+					return win.performance.getEntriesByType("resource").some(e => (e.responseStatus || 0) >= 400);
+				} catch (erro) { return false; }
+			})();
+			if (quebrados) { win.location.reload(); return; }
+			setTimeout(() => {
+				try {
+					win.andar = 36; win.maxAndar = 36; win.andarMaxRun = 36;
+					win.nivelJogador = 14; win.xpAtual = 30; win.pontosHabilidade = 6;
+					win.nivelSkillDano = 4; win.nivelSkillEletrica = 5; win.nivelSkillGold = 3;
+					win.nivelSkillFuga = 10; win.nivelSkillFrenesi = 0;
+					win.perkDano = 2; win.perkEletrica = 0; win.perkGold = 0;
+					win.perkFuga = 5; win.perkFrenesi = 1; win.ramoSkillFuga = 2;
+					win.eval("UI.render(); UI.showSkillUpgradePanel()");
+					if (expandido) {
+						frame.contentDocument.querySelectorAll("#skillUpgradeModal .skill-secao-cabecalho[aria-expanded='false']")
+							.forEach(b => b.click());
+					}
+					document.title = "pronto " + w + "x" + h;
+				} catch (erro) {
+					document.title = "erro: " + erro.message;
+				}
+			}, 500);
+		}, 120);
+	</script>
+</body>
+
+</html>

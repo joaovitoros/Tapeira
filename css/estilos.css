@@ -1766,13 +1766,18 @@ body {
 
 #container-Loja {
 	position: fixed;
-	top: 50%;
+	/* A loja respira entre o HUD de pausa/cronômetro (topo) e a base da tela:
+	   centralizá-la com translateY(-50%) fazia o painel cobrir o botão de
+	   pausar em janelas mais baixas. Com top/bottom ancorados a própria
+	   rolagem interna (#Loja) cuida do conteúdo. */
+	top: max(7.5rem, calc(50% - 42.5vh));
 	right: 1rem;
+	bottom: calc(1rem + env(safe-area-inset-bottom));
 	box-sizing: border-box;
 	width: min(45vw, 600px);
 	height: 85vh;
 	overflow: hidden;
-	transform: translateY(-50%);
+	transform: none;
 	z-index: 10;
 	pointer-events: none;
 }
@@ -1926,7 +1931,8 @@ caption {
 	}
 
 	#container-Loja {
-		height: 80vh;
+		/* com o topo ancorado abaixo do HUD, a altura precisa caber até a base */
+		height: min(80vh, calc(100vh - 8.5rem - env(safe-area-inset-bottom)));
 	}
 }
 
@@ -5626,38 +5632,139 @@ input:focus-visible {
 	font-size: 13px;
 }
 
+/* ===================== Painel "Nível e habilidades" ======================
+   Mobile-first: o painel é uma coluna flex com UMA área de rolagem
+   (.skill-upgrade-scroll). Cabeçalho, atalhos e resumo do jogador ficam
+   fixos; só o conteúdo (detalhes + cartões) rola. Tokens locais — usados
+   apenas por esta tela — para espaçamento, bordas e estados. */
+.skill-upgrade-overlay {
+	padding: 12px;
+	padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+}
+
+.skill-upgrade-panel {
+	--skill-gap: 10px;
+	--skill-gap-sm: 6px;
+	--skill-radius: 9px;
+	--skill-borda: rgba(255, 255, 255, 0.12);
+	--skill-fundo: rgba(0, 0, 0, 0.2);
+	--skill-texto: #cbd5e1;
+	--skill-suave: #b8c6d9;
+	--skill-forte: #f2e5ca;
+	--skill-destaque: #ffd36b;
+	--skill-ok: #9ff5c0;
+	--skill-alerta: #ffb4b4;
+
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: var(--skill-gap);
+	min-width: 0;
+	/* a rolagem do modal é só da .skill-upgrade-scroll (nada se perde em
+	   overflow:hidden: o corpo recolhível usa [hidden], não corte) */
+	overflow: hidden;
+	padding: clamp(12px, 3vw, 26px);
+}
+
+.skill-upgrade-panel > .ant-collection-header,
+.skill-upgrade-panel > .skill-upgrade-shortcuts,
+.skill-upgrade-panel > .skill-player-summary,
+.skill-upgrade-panel > .skill-player-xp-bloco {
+	flex: 0 0 auto;
+}
+
+.skill-upgrade-panel .ant-collection-header {
+	gap: 10px;
+}
+
+.skill-upgrade-panel .ant-collection-header h2 {
+	min-width: 0;
+	font-size: clamp(18px, 5vw, 26px);
+	overflow-wrap: anywhere;
+}
+
+/* fechar sempre visível e com área de toque de 48 dp */
+.skill-upgrade-panel .ant-collection-close {
+	flex: 0 0 48px;
+	width: 48px;
+	height: 48px;
+	font-size: 24px;
+	touch-action: manipulation;
+}
+
+/* atalhos: três colunas de largura fluida (sem largura fixa que estoure) */
+.skill-upgrade-shortcuts {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--skill-gap-sm);
+}
+
+.skill-upgrade-shortcut {
+	box-sizing: border-box;
+	min-width: 0;
+	min-height: 48px;
+	padding: 6px 4px;
+	border: 1px solid #4a7fb5;
+	border-radius: 7px;
+	background: linear-gradient(145deg, #235a8c, #163a5e);
+	color: #eaf4ff;
+	font: inherit;
+	font-size: 13px;
+	font-weight: 700;
+	line-height: 1.2;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	cursor: pointer;
+	touch-action: manipulation;
+}
+
+.skill-upgrade-shortcut:hover {
+	background: linear-gradient(145deg, #2d6fa8, #1b4874);
+}
+
+@media (max-width: 360px) {
+	.skill-upgrade-shortcut {
+		font-size: 12px;
+	}
+}
+
+/* resumo do jogador: nível + pontos numa linha compacta que quebra em
+   telas estreitas, sem estourar o modal */
 .skill-player-summary {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px;
-	margin-top: 16px;
+	flex-wrap: wrap;
+	gap: 6px 10px;
+	margin-top: 0;
+	min-width: 0;
 	color: #f4e6bb;
 }
 
 .skill-player-summary strong {
-	font-size: 20px;
+	min-width: 0;
+	font-size: clamp(17px, 4.5vw, 20px);
 }
 
 .skill-player-summary span {
-	padding: 5px 9px;
+	max-width: 100%;
+	padding: 4px 9px;
 	border: 1px solid rgba(255, 211, 107, 0.65);
 	border-radius: 7px;
 	background: rgba(255, 211, 107, 0.12);
 	color: #ffe09a;
-	font-size: 14px;
+	font-size: 13px;
 	font-variant-numeric: tabular-nums;
+	overflow-wrap: anywhere;
 }
 
-.skill-player-bonus {
-	margin-top: 7px;
-	color: #8fe6a8;
-	font-size: 13px;
+.skill-player-xp-bloco {
+	min-width: 0;
 }
 
 .skill-player-xp {
 	height: 12px;
-	margin: 8px 0 16px;
+	margin: 0;
 	overflow: hidden;
 	border: 1px solid rgba(168, 215, 255, 0.5);
 	border-radius: 999px;
@@ -5666,8 +5773,8 @@ input:focus-visible {
 
 .skill-player-xp-label {
 	display: block;
-	margin-top: 9px;
-	color: #b8c6d9;
+	margin-top: 5px;
+	color: var(--skill-suave);
 	font-size: 12px;
 	font-variant-numeric: tabular-nums;
 	text-align: right;
@@ -5682,109 +5789,350 @@ input:focus-visible {
 	transition: width 180ms ease;
 }
 
-.skill-upgrade-list {
+/* única área de rolagem do modal: rolagem vertical natural, sem rolagem
+   horizontal e sem vazar para a página de fundo */
+.skill-upgrade-scroll {
+	box-sizing: border-box;
+	flex: 1 1 auto;
+	min-height: 0;
 	display: grid;
-	gap: 9px;
+	gap: var(--skill-gap);
+	align-content: start;
+	overflow-x: hidden;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: thin;
+	padding-right: 2px;
 }
 
-.skill-upgrade-card {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
+/* seções recolhíveis (Progresso, Perks, Árvore de ramificações) */
+.skill-secao {
+	box-sizing: border-box;
+	min-width: 0;
+	border: 1px solid var(--skill-borda);
+	border-radius: var(--skill-radius);
+	background: var(--skill-fundo);
+}
+
+.skill-secao--destaque {
+	border-color: rgba(255, 211, 107, 0.55);
+}
+
+.skill-secao-cabecalho {
+	box-sizing: border-box;
+	display: flex;
 	align-items: center;
-	gap: 12px;
-	padding: 12px;
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	border-radius: 9px;
-	background: rgba(0, 0, 0, 0.2);
-}
-
-.skill-upgrade-details h3 {
-	margin: 0;
-	color: #f2e5ca;
-	font-size: 16px;
-}
-
-.skill-upgrade-details p {
-	margin: 4px 0;
-	color: #cbd5e1;
-	font-size: 13px;
-}
-
-.skill-upgrade-requirement {
-	color: #ffd36b;
-	font-size: 12px;
-	font-weight: 700;
-}
-
-.skill-upgrade-button {
-	min-width: 92px;
-	min-height: 40px;
-	padding: 7px 11px;
-	border: 1px solid #6eae7b;
-	border-radius: 7px;
-	background: linear-gradient(145deg, #287a43, #174d2a);
-	color: #f2fff3;
+	gap: 8px;
+	width: 100%;
+	min-width: 0;
+	min-height: 48px;
+	padding: 8px 10px;
+	border: 0;
+	background: rgba(255, 255, 255, 0.05);
+	color: var(--skill-forte);
 	font: inherit;
 	font-size: 13px;
 	font-weight: 700;
+	text-align: left;
 	cursor: pointer;
+	touch-action: manipulation;
 }
 
-.skill-upgrade-button:disabled {
-	border-color: rgba(255, 255, 255, 0.12);
-	background: rgba(255, 255, 255, 0.06);
-	color: #8290a0;
-	cursor: not-allowed;
+.skill-secao-titulo {
+	flex: 0 1 auto;
+	min-width: 0;
 }
 
-/* Árvore de ramos no painel de skills (Tier 3 #3): fork no nível 5 e
-   conclusão no nível 10 — linha cheia no cartão, chips com estado */
-.skill-ramos {
-	grid-column: 1 / -1;
+.skill-secao-resumo {
+	flex: 1 1 auto;
+	min-width: 0;
+	color: var(--skill-suave);
+	font-size: 12px;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.skill-secao-seta {
+	flex: 0 0 auto;
+	color: var(--skill-suave);
+	font-size: 14px;
+	line-height: 1;
+	transition: transform 160ms ease;
+}
+
+.skill-secao-cabecalho[aria-expanded="false"] .skill-secao-seta {
+	transform: rotate(-90deg);
+}
+
+.skill-secao-corpo {
+	display: grid;
+	gap: var(--skill-gap-sm);
+	box-sizing: border-box;
+	min-width: 0;
+	padding: 10px;
+}
+
+/* [hidden] precisa vencer o display:grid acima */
+.skill-secao-corpo[hidden] {
+	display: none;
+}
+
+.skill-player-bonus {
+	margin: 0;
+	color: #8fe6a8;
+	font-size: 13px;
+	line-height: 1.4;
+	overflow-wrap: anywhere;
+}
+
+/* ---- árvore de habilidades ----
+   Um tronco por skill, nós encadeados na vertical: raiz (a skill) → perk →
+   fork de ramos (dois caminhos, cada um nó 5 → nó 10). Tocar no nó gasta o
+   ponto; nó travado continua visível com o motivo em texto. */
+.skill-tree {
+	display: grid;
+	gap: var(--skill-gap);
+	min-width: 0;
+}
+
+.skill-tronco {
 	display: grid;
 	gap: 6px;
-	margin-top: 2px;
-	padding-top: 9px;
-	border-top: 1px dashed rgba(255, 255, 255, 0.16);
+	min-width: 0;
 }
 
-.skill-ramos-titulo {
-	color: #f2e5ca;
-	font-size: 13px;
+.skill-no {
+	box-sizing: border-box;
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: start;
+	gap: 10px;
+	width: 100%;
+	min-width: 0;
+	min-height: 48px;
+	padding: 10px;
+	border: 1px solid var(--skill-borda);
+	border-radius: 10px;
+	background: var(--skill-fundo);
+	color: var(--skill-texto);
+	font: inherit;
+	text-align: left;
+	overflow-wrap: anywhere;
 }
 
-.skill-ramos-hint {
+.skill-no--raiz {
+	background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+}
+
+.skill-no--pronto {
+	border-color: rgba(110, 174, 123, 0.6);
+	background: rgba(40, 122, 67, 0.22);
+}
+
+.skill-no--maximo {
+	border-color: rgba(255, 211, 107, 0.5);
+}
+
+.skill-no--travado {
+	border-style: dashed;
+	color: #8290a0;
+}
+
+button.skill-no {
+	cursor: pointer;
+	touch-action: manipulation;
+}
+
+button.skill-no:focus-visible {
+	outline: 2px solid #9ccfff;
+	outline-offset: 2px;
+}
+
+.skill-no-icone {
+	width: 40px;
+	height: 40px;
+	padding: 3px;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: 9px;
+	background: rgba(4, 10, 18, 0.55);
+	object-fit: contain;
+}
+
+.skill-no-glifo {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: 9px;
+	background: rgba(4, 10, 18, 0.55);
 	color: #ffd36b;
+	font-size: 17px;
+	line-height: 1;
+}
+
+.skill-no-corpo {
+	display: grid;
+	gap: 5px;
+	min-width: 0;
+}
+
+.skill-no-linha {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 4px 8px;
+	min-width: 0;
+}
+
+.skill-no-pe {
+	align-items: center;
+	gap: 6px 10px;
+}
+
+.skill-no-nome {
+	min-width: 0;
+	color: var(--skill-forte);
+	font-size: 15px;
+	overflow-wrap: anywhere;
+}
+
+.skill-no-nivel {
+	flex: 0 0 auto;
+	padding: 3px 8px;
+	border: 1px solid rgba(255, 211, 107, 0.65);
+	border-radius: 999px;
+	background: rgba(255, 211, 107, 0.12);
+	color: #ffe09a;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.skill-no-desc {
+	margin: 0;
+	min-width: 0;
+	color: var(--skill-texto);
+	font-size: 12.5px;
+	line-height: 1.4;
+}
+
+/* custo e estado em texto (+ símbolo), nunca só o atributo disabled */
+.skill-no-custo {
+	color: var(--skill-destaque);
 	font-size: 12px;
 	font-weight: 700;
 }
 
-.skill-ramo {
+.skill-no-estado {
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.skill-no-estado--ok {
+	color: var(--skill-ok);
+}
+
+.skill-no-estado--bloqueado {
+	color: var(--skill-alerta);
+}
+
+/* trilho vertical que liga um nó ao próximo */
+.skill-conector {
+	justify-self: center;
+	width: 2px;
+	height: 16px;
+	border-radius: 2px;
+	background: linear-gradient(180deg, rgba(140, 190, 240, 0.65), rgba(140, 190, 240, 0.15));
+}
+
+/* Fork dos ramos: dois caminhos mutuamente exclusivos, cada um lido na
+   vertical (nó 5 em cima, nó 10 embaixo). Lado a lado só em telas largas. */
+.skill-ramos-hint {
+	color: var(--skill-destaque);
+	font-size: 12px;
+	font-weight: 700;
+	overflow-wrap: anywhere;
+}
+
+.skill-ramificacao {
+	display: grid;
+	gap: 8px;
+	min-width: 0;
+}
+
+.skill-caminhos {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 8px;
+	min-width: 0;
+}
+
+@media (min-width: 520px) {
+	.skill-caminhos {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.skill-caminho {
+	display: grid;
+	gap: 8px;
+	min-width: 0;
+	padding: 8px;
+	border: 1px dashed rgba(255, 255, 255, 0.16);
+	border-radius: 9px;
+	background: rgba(255, 255, 255, 0.03);
+}
+
+.skill-caminho--ativo {
+	border-style: solid;
+	border-color: rgba(110, 174, 123, 0.5);
+	background: rgba(40, 122, 67, 0.12);
+}
+
+.skill-caminho--selado {
+	opacity: 0.55;
+}
+
+.skill-ramo-cabecalho {
 	display: flex;
-	align-items: stretch;
-	gap: 6px;
 	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 2px 8px;
+	min-width: 0;
+}
+
+.skill-ramo-caminho {
+	color: var(--skill-forte);
+	font-size: 13px;
+	font-weight: 700;
+	overflow-wrap: anywhere;
 }
 
 .skill-ramo-no {
-	flex: 1 1 130px;
 	min-width: 0;
 	box-sizing: border-box;
 	display: grid;
-	gap: 2px;
+	gap: 3px;
 	justify-items: start;
-	padding: 6px 9px;
+	padding: 8px 10px;
 	border: 1px solid rgba(255, 255, 255, 0.16);
 	border-radius: 7px;
 	background: rgba(255, 255, 255, 0.05);
-	color: #cbd5e1;
+	color: var(--skill-texto);
 	font: inherit;
 	font-size: 12px;
 	text-align: left;
 }
 
 button.skill-ramo-no {
+	min-height: 48px;
 	cursor: pointer;
+	touch-action: manipulation;
 }
 
 button.skill-ramo-no:focus-visible {
@@ -5793,26 +6141,33 @@ button.skill-ramo-no:focus-visible {
 }
 
 .skill-ramo-nome {
-	color: #f2e5ca;
+	color: var(--skill-forte);
 	font-size: 13px;
 	font-weight: 700;
+	overflow-wrap: anywhere;
 }
 
 .skill-ramo-efeito {
 	line-height: 1.3;
+	overflow-wrap: anywhere;
 }
 
 .skill-ramo-estado {
-	color: #8290a0;
+	color: var(--skill-suave);
 	font-size: 11px;
 	font-weight: 700;
 }
 
-.skill-ramo-seta {
-	align-self: center;
-	flex: 0 0 auto;
-	color: #8290a0;
-	font-size: 14px;
+.skill-ramo-estado--ok {
+	color: var(--skill-ok);
+}
+
+.skill-ramo-estado--livre {
+	color: var(--skill-destaque);
+}
+
+.skill-ramo-estado--selado {
+	color: var(--skill-alerta);
 }
 
 .skill-ramo-no--escolhivel {
@@ -5850,29 +6205,36 @@ button.skill-ramo-no:focus-visible {
 	color: #8290a0;
 }
 
-/* Atalhos no topo do painel de skills: Conquistas e Missões */
-.skill-upgrade-shortcuts {
-	display: flex;
-	gap: 8px;
+/* celulares estreitos: menos preenchimento e nós um pouco mais enxutos */
+@media (max-width: 400px) {
+	.skill-upgrade-panel {
+		padding: 12px;
+	}
+
+	.skill-secao-corpo {
+		padding: 8px;
+	}
+
+	.skill-no {
+		padding: 9px;
+		gap: 8px;
+	}
+
+	.skill-caminho {
+		padding: 7px;
+	}
 }
 
-.skill-upgrade-shortcut {
-	flex: 1 1 0;
-	min-height: 38px;
-	padding: 7px 10px;
-	border: 1px solid #4a7fb5;
-	border-radius: 7px;
-	background: linear-gradient(145deg, #235a8c, #163a5e);
-	color: #eaf4ff;
-	font: inherit;
-	font-size: 13px;
-	font-weight: 700;
-	cursor: pointer;
+/* sem animação pesada para quem prefere menos movimento */
+@media (prefers-reduced-motion: reduce) {
+	.skill-secao-seta,
+	.skill-player-xp > div {
+		transition: none;
+	}
 }
 
-.skill-upgrade-shortcut:hover {
-	background: linear-gradient(145deg, #2d6fa8, #1b4874);
-}
+/* Atalhos no topo do painel de skills (Conquistas, Missões, Marcos):
+   regras movidas para o bloco do painel, acima de .skill-player-summary */
 
 /* Baú dourado por tempo */
 .chest-opening {
@@ -6027,8 +6389,8 @@ button.skill-ramo-no:focus-visible {
 }
 
 #golden-chest-tracker {
-	/* Quadrado fixo na coluna ESQUERDA, logo abaixo do 1/4 superior da tela
-	   (top: 25vh + folga): não fica mais colado no rodapé — subiu do jeito
+	/* Quadrado fixo na coluna ESQUERDA, logo abaixo do 1/3 superior da tela
+	   (top: 31.33vh + folga): não fica mais colado no rodapé — subiu do jeito
 	   pedido — e continua alinhado com a coluna da nav (left igual ao de
 	   #container-opcoes em cada layout). Fora do fluxo: não estica a fileira de
 	   botões e sai do alcance de #container-Botoes button/input, que no Android
@@ -6037,7 +6399,7 @@ button.skill-ramo-no:focus-visible {
 	   do conteúdo (linha do baú em cima, info/auto embaixo). */
 	position: fixed;
 	left: 1rem;
-	top: calc(25.33vh + 8px);
+	top: calc(31.33vh + 8px);
 	z-index: 16;
 	box-sizing: border-box;
 	display: flex;
