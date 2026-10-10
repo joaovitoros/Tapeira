@@ -104,6 +104,12 @@ const fs = require('fs');
         !!modal
         && [...modal.querySelectorAll("[data-item]")].map(b => b.getAttribute("data-item")).join(",")
           === "adaga,moedas,mapa");
+      UI.showMilestone("Aviso de teste", "não deve ficar visível sobre o modal");
+      check("baú, selo e milestone ficam escondidos atrás da tela",
+        document.body.classList.contains("itens-build-tela-aberta")
+        && getComputedStyle(document.getElementById("bauBuild")).visibility === "hidden"
+        && getComputedStyle(document.getElementById("bauBuild-selo")).visibility === "hidden"
+        && getComputedStyle(document.getElementById("gameMilestone")).visibility === "hidden");
       const imgsCartao = modal ? [...modal.querySelectorAll(".item-build-cartao img")] : [];
       await Promise.all(imgsCartao.map(i => i.decode().catch(() => {})));
       check("ícones dos cartões carregam",
@@ -124,6 +130,10 @@ const fs = require('fs');
         !document.getElementById("modalItensBuild")
         && !!document.getElementById("bauBuild")
         && document.getElementById("bauBuild-selo")?.textContent === "ITENS");
+      check("fechar a escolha devolve baú, selo e milestone à tela",
+        !document.body.classList.contains("itens-build-tela-aberta")
+        && getComputedStyle(document.getElementById("bauBuild")).visibility === "visible"
+        && getComputedStyle(document.getElementById("gameMilestone")).visibility === "visible");
       IB.carrega({
         itensBuild: ["adaga"],
         bausBuildPendentes: 1,
@@ -239,12 +249,16 @@ const fs = require('fs');
       const tela = document.getElementById("modalItensBuildView");
       check("tela abre com um cartão por slot (3)",
         !!tela && tela.querySelectorAll(".item-build-cartao").length === 3);
+      check("tela de leitura também marca o estado (esconde avisos do baú)",
+        document.body.classList.contains("itens-build-tela-aberta"));
       check("tela mostra nome, efeito e resumo com cópias",
         !!tela && tela.textContent.includes("Adaga Sombria")
         && tela.textContent.includes("+15% de dano")
         && tela.textContent.includes("Adaga Sombria ×2"));
       tela.click(); // clique no fundo (fora do conteúdo) fecha
-      check("clique fora fecha a tela", !document.getElementById("modalItensBuildView"));
+      check("clique fora fecha a tela",
+        !document.getElementById("modalItensBuildView")
+        && !document.body.classList.contains("itens-build-tela-aberta"));
       IB.limpa();
       botaoTela.click();
       check("build vazia mostra aviso de vazio",

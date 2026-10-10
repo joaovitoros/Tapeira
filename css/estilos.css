@@ -8080,6 +8080,15 @@ button.skill-ramo-no:focus-visible {
 	transform: none;
 }
 
+/* com a tela de escolha/leitura da build aberta, os avisos do baú não
+   ficam visíveis por cima do modal (fundo translúcido): ícone do baú,
+   selo "ITENS ×N" e o toast de milestone do marco */
+.itens-build-tela-aberta .bau-build,
+.itens-build-tela-aberta .bau-build-selo,
+.itens-build-tela-aberta #gameMilestone {
+	visibility: hidden;
+}
+
 /* ---- Logs (botão no fim do menu de configuração + tela de histórico) ---- */
 
 #divLogs {
