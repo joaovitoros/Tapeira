@@ -218,6 +218,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	let vidaAtual = vidaAnterior - dano;
 	window["vidaInimigo" + inimigo] = vidaAtual;
 	UI.showDamageNumber(inimigoElement, dano, critico);
+	if (critico) FeedbackCritico();
 	// Assassino: efeitos visuais do hit kill e do veneno
 	if (morteInstantaneaAssassino) {
 		animarHitKill(inimigoElement);
@@ -416,6 +417,33 @@ function Avancar() {
 	} else {
 		return 1;
 	}
+}
+
+// Feedback do crítico: flash na borda + tremor leve da cena. Só visual; a
+// classe sai no animationend (sem timer novo) e há um throttle pra não sacudir
+// a tela a cada golpe quando a chance de crítico está alta.
+let ultimoFeedbackCriticoMs = 0;
+function FeedbackCritico() {
+	const agora = Date.now();
+	if (agora - ultimoFeedbackCriticoMs < 600) return;
+	ultimoFeedbackCriticoMs = agora;
+
+	let flash = document.getElementById("critFlash");
+	if (!flash) {
+		flash = document.createElement("div");
+		flash.id = "critFlash";
+		flash.setAttribute("aria-hidden", "true");
+		document.body.appendChild(flash);
+	}
+	flash.classList.remove("crit-flash--on");
+	void flash.offsetWidth;
+	flash.classList.add("crit-flash--on");
+
+	const raiz = document.documentElement;
+	raiz.classList.remove("crit-shake");
+	void raiz.offsetWidth;
+	raiz.classList.add("crit-shake");
+	raiz.addEventListener("animationend", () => raiz.classList.remove("crit-shake"), { once: true });
 }
 
 function animarImpacto(el, critico, eletrico = false) {
