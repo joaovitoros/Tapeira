@@ -6632,6 +6632,24 @@ button.skill-ramo-no:focus-visible {
 	border-radius: 4px;
 }
 
+/* Checkbox "auto" por item na loja de gold (auto-compra seletiva, andar 100) */
+.auto-item-loja {
+	margin-left: 6px;
+	display: inline-flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.auto-item-loja input {
+	accent-color: #4caf50;
+	cursor: pointer;
+}
+
+.auto-item-loja input:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
 /* Especializações (Tier 3 #1): três builds mutuamente exclusivas na loja de
    gold. Cartão ativo ganha borda verde-água com ✓; a seção inteira fica
    acinzentada enquanto especializacao--travada (antes do 1º reset). */

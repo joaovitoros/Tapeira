@@ -174,6 +174,7 @@ function Salvar() {
 
 		conquistasComp,
 		missoesCompletas,
+		desafiosVencidos,
 		melhorGoldRun: {
 			m: melhorGoldRun.m,
 			e: melhorGoldRun.e
@@ -259,6 +260,7 @@ function Salvar() {
 		autoColeta,
 		autoCompra,
 		autoGasto,
+		autoItensLoja,
 		precoVelComp,
 		lvlVelComp,
 		velAtaqueComp,
@@ -522,12 +524,16 @@ function ValidarSave(save) {
 	if (save.conquistasComp !== undefined
 		&& (!Array.isArray(save.conquistasComp)
 			|| save.conquistasComp.length !== CONQUISTAS_COMP.length
-			|| save.conquistasComp.some(v => v !== 0 && v !== 1))) {
+			|| save.conquistasComp.some((v, i) => !Number.isInteger(v) || v < 0 || v > CONQUISTAS_COMP[i].max))) {
 		throw new TypeError("As conquistas comportamentais do save são inválidas.");
 	}
 	if (save.missoesCompletas !== undefined
 		&& (!Number.isSafeInteger(save.missoesCompletas) || save.missoesCompletas < 0 || save.missoesCompletas > 1000000)) {
 		throw new TypeError("O contador de missões do save é inválido.");
+	}
+	if (save.desafiosVencidos !== undefined
+		&& (!Number.isSafeInteger(save.desafiosVencidos) || save.desafiosVencidos < 0 || save.desafiosVencidos > 1000000)) {
+		throw new TypeError("O contador de desafios vencidos no save é inválido.");
 	}
 	if (save.comprasRun !== undefined
 		&& (!Number.isSafeInteger(save.comprasRun) || save.comprasRun < 0 || save.comprasRun > 1000000)) {
@@ -635,6 +641,12 @@ function ValidarSave(save) {
 			|| save.autoCompra > 1)) {
 		throw new TypeError("O estado da auto-compra no save é inválido.");
 	}
+	if (save.autoItensLoja !== undefined
+		&& (!Array.isArray(save.autoItensLoja)
+			|| save.autoItensLoja.length > 64
+			|| save.autoItensLoja.some(v => v !== 0 && v !== 1))) {
+		throw new TypeError("A seleção de auto-compra da loja no save é inválida.");
+	}
 	if (save.autoGasto !== undefined
 		&& (!Number.isInteger(save.autoGasto)
 			|| save.autoGasto < 0
@@ -677,7 +689,7 @@ function ValidarSave(save) {
 	for (const [key, value] of Object.entries(save)) {
 		// campos não-numéricos já validados especificamente acima (shape conferido)
 		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards",
-			"conquistasComp", "melhorGoldRun"].includes(key)) continue;
+			"conquistasComp", "melhorGoldRun", "autoItensLoja"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");
 		}
@@ -1188,6 +1200,7 @@ function Carregar(saveData, calculaOffline = false) {
 	// de compras no save não dá pra provar o contrário — sem unlock de graça.
 	conquistasComp = Array.isArray(save.conquistasComp) ? save.conquistasComp.slice() : [0, 0, 0, 0, 0];
 	missoesCompletas = save.missoesCompletas ?? 0;
+	desafiosVencidos = save.desafiosVencidos ?? 0;
 	melhorGoldRun = GoldNumber.fromMantissaExponent(save.melhorGoldRun?.m ?? 0, save.melhorGoldRun?.e ?? 0);
 	runInicioMs = save.runInicioMs ?? Date.now();
 	comprasRun = save.comprasRun ?? (andar >= 25 ? 1 : 0);
@@ -1251,6 +1264,7 @@ function Carregar(saveData, calculaOffline = false) {
 	autoColeta = save.autoColeta ?? 1;
 	autoCompra = save.autoCompra ?? 1;
 	autoGasto = save.autoGasto ?? 0; // nasce desligado (opt-in)
+	autoItensLoja = Array.isArray(save.autoItensLoja) ? save.autoItensLoja.slice() : [];
 	// especialização: save antigo nasce sem build (o desbloqueio é a andarVolta)
 	especializacao = save.especializacao ?? 0;
 	especializacaoTrocas = save.especializacaoTrocas ?? 0;
@@ -2116,6 +2130,7 @@ function CriarObjetoSave() {
 
 		conquistasComp,
 		missoesCompletas,
+		desafiosVencidos,
 		melhorGoldRun: {
 			m: melhorGoldRun.m,
 			e: melhorGoldRun.e
@@ -2203,6 +2218,7 @@ function CriarObjetoSave() {
 		autoColeta,
 		autoCompra,
 		autoGasto,
+		autoItensLoja,
 		precoVelComp,
 		lvlVelComp,
 		velAtaqueComp,

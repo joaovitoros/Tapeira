@@ -55,8 +55,9 @@ var validaConquista = 1; //variavel de valdiação para determinar onde será at
 var totalNiveis = 0; //total de níveis ganhos acumulado entre resets (conquista de nível: a cada 100 → -1 inimigo para avançar)
 var bonusCritConquista = 0; //pontos de dano crítico ganhos por conquistas (permanente)
 // Conquistas comportamentais (Tier 4 #1): flags permanentes 0..4 por conquista
-var conquistasComp = [0, 0, 0, 0, 0]; //1 = desbloqueada (não zera no Resetar)
+var conquistasComp = [0, 0, 0, 0, 0]; //nível 0..máx por conquista (não zera no Resetar; save 0/1 antigo vale como nível 1)
 var missoesCompletas = 0; //total de missões concluídas (permanente)
+var desafiosVencidos = 0; //desafios da missão 5 vencidos (permanente, marcos 1/3/10 do Destemido)
 var melhorGoldRun = new GoldNumber(0); //melhor totalGold de uma run (progresso do Milionário)
 var runInicioMs = Date.now(); //cronômetro da run atual (conquista Velocista)
 var comprasRun = 0; //compras da loja de gold nesta run (conquista Poupado)
@@ -1300,9 +1301,11 @@ function VoltaAndar(){
 			goldCompanheiro = GoldCompanheiroPorSegundo();
 		}
 		
-		// conquista Velocista: reset feito com a run abaixo de 10 minutos
-		// (o Resetar logo abaixo reinicia o cronômetro da nova run)
-		if (Date.now() - runInicioMs < 10 * 60 * 1000) DesbloqueiaConquistaComp(0);
+		// conquista Velocista: reset feito com a run abaixo de 10 minutos no
+		// andar 30×nível — um reset profundo carrega todos os níveis de uma
+		// vez (o Resetar logo abaixo reinicia o cronômetro da nova run)
+		if (Date.now() - runInicioMs < 10 * 60 * 1000 && andarAnterior >= 30)
+			SobeNivelConquistaComp(0, Math.floor(andarAnterior / 30));
 		Resetar(); // zera derrotadosRun (a conversão em CM já foi feita acima)
 		RemoverInimigos();
 		Batalha();
@@ -1442,64 +1445,86 @@ function Conquistas(){
 // os flags vivem no save e não zeram no Resetar (só no ZerarTodosSaves);
 // runInicioMs/comprasRun são os trackers desta run (zeram no Resetar).
 const CONQUISTAS_COMP = [
-	{ id: "velocista", nome: "Velocista", desc: "Complete um reset com a run abaixo de 10 minutos", recompensa: "+5% de dano permanente" },
-	{ id: "poupado", nome: "Poupado", desc: "Chegue ao andar 25 sem comprar nada na loja de gold", recompensa: "+5% de gold permanente" },
-	{ id: "missionario", nome: "Missionário", desc: "Conclua 20 missões", recompensa: "+25% no gold de toda missão" },
-	{ id: "destemido", nome: "Destemido", desc: "Vença um desafio da missão 5", recompensa: "+5 s no tempo de fuga" },
-	{ id: "milionario", nome: "Milionário", desc: "Acumule 1M de gold numa única run", recompensa: "+10% de XP permanente" },
+	{ id: "velocista", nome: "Velocista", desc: "Reset com a run abaixo de 10 minutos no andar 30×nível", recompensa: "+5% de dano permanente por nível", max: 10, passo: 30 },
+	{ id: "poupado", nome: "Poupado", desc: "Chegue ao andar 25×nível sem comprar nada na loja de gold", recompensa: "+5% de gold permanente por nível", max: 10, passo: 25 },
+	{ id: "missionario", nome: "Missionário", desc: "Conclua 20/50/100 missões", recompensa: "+25% no gold de toda missão por nível", max: 3, marcos: [20, 50, 100] },
+	{ id: "destemido", nome: "Destemido", desc: "Vença 1/3/10 desafios da missão 5", recompensa: "+5 s no tempo de fuga por nível", max: 3, marcos: [1, 3, 10] },
+	{ id: "milionario", nome: "Milionário", desc: "Acumule 1M/10M/100M de gold numa única run", recompensa: "+10% de XP permanente por nível", max: 3, marcos: [1e6, 1e7, 1e8] },
 ];
 
-function TemConquistaComp(indice) {
-	return conquistasComp[indice] === 1;
+function NivelConquistaComp(indice) {
+	const v = conquistasComp[indice];
+	return Number.isInteger(v) && v > 0 ? v : 0;
 }
 
-// Recompensas — cada uma aplicada num único ponto de fórmula:
-function MultiplicadorDanoConquistaComp() { return TemConquistaComp(0) ? 1.05 : 1; } //Velocista → MultiplicadorDanoNivel
-function MultiplicadorGoldConquistaComp() { return TemConquistaComp(1) ? 1.05 : 1; } //Poupado → AddGold
-function MultiplicadorMissaoConquistaComp() { return TemConquistaComp(2) ? 1.25 : 1; } //Missionário → MissaoRecompensaGold
-function BonusFugaConquistaComp() { return TemConquistaComp(3) ? 5 : 0; } //Destemido → TempoFugaMax
-function MultiplicadorXPConquistaComp() { return TemConquistaComp(4) ? 1.10 : 1; } //Milionário → GanhaXP
+function TemConquistaComp(indice) {
+	return NivelConquistaComp(indice) > 0;
+}
 
-// Toast de desbloqueio (idempotente: já desbloqueada = sem efeito)
-function DesbloqueiaConquistaComp(indice) {
-	if (TemConquistaComp(indice)) return false;
-	conquistasComp[indice] = 1;
+// Recompensas — cada uma aplicada num único ponto de fórmula, escalando
+// linear por nível (save 0/1 antigo = nível 1 = efeito igual ao de antes):
+function MultiplicadorDanoConquistaComp() { return 1 + 0.05 * NivelConquistaComp(0); } //Velocista → MultiplicadorDanoNivel
+function MultiplicadorGoldConquistaComp() { return 1 + 0.05 * NivelConquistaComp(1); } //Poupado → AddGold
+function MultiplicadorMissaoConquistaComp() { return 1 + 0.25 * NivelConquistaComp(2); } //Missionário → MissaoRecompensaGold
+function BonusFugaConquistaComp() { return 5 * NivelConquistaComp(3); } //Destemido → TempoFugaMax
+function MultiplicadorXPConquistaComp() { return 1 + 0.10 * NivelConquistaComp(4); } //Milionário → GanhaXP
+
+// Sobe a conquista até o nível alvo (um milestone por nível novo; idempotente
+// — quem já tem o save 0/1 antigo mantém o que tinha e sobe pelos marcos)
+function SobeNivelConquistaComp(indice, nivelAlvo) {
 	const c = CONQUISTAS_COMP[indice];
-	UI.showInfo("Conquista desbloqueada!\n" + c.nome + ": " + c.recompensa);
-	UI.showMilestone("Conquista: " + c.nome, c.recompensa);
+	const atual = NivelConquistaComp(indice);
+	const alvo = Math.min(Math.max(0, Math.floor(nivelAlvo)), c.max);
+	if (alvo <= atual) return false;
+	conquistasComp[indice] = alvo;
+	if (atual === 0) {
+		UI.showInfo("Conquista desbloqueada!\n" + c.nome + ": " + c.recompensa);
+	}
+	for (let n = atual + 1; n <= alvo; n++) {
+		UI.showMilestone("Conquista: " + c.nome + " — nível " + n, c.recompensa);
+	}
 	return true;
 }
 
 // Registra a conclusão de uma missão e devolve a recompensa com o bônus do
-// Missionário — o desbloqueio aos 20 acontece ANTES do cálculo, então a
-// própria missão 20 já paga os +25%
+// Missionário — o desbloqueio do marco acontece ANTES do cálculo, então a
+// própria missão do marco já paga o bônus do nível novo (20/50/100)
 function MissaoRecompensaGold(valor) {
 	missoesCompletas++;
-	if (missoesCompletas >= 20) DesbloqueiaConquistaComp(2);
+	if (missoesCompletas >= 20)
+		SobeNivelConquistaComp(2, missoesCompletas >= 100 ? 3 : missoesCompletas >= 50 ? 2 : 1);
 	return valor * MultiplicadorMissaoConquistaComp();
 }
 
 // Checagens periódicas (roda junto com Conquistas(), a cada golpe e subida de andar)
 function ConquistasComportamentais() {
-	// Poupado: andar 25 sem nenhuma compra de gold na run
-	if (andar >= 25 && comprasRun === 0) DesbloqueiaConquistaComp(1);
-	// Milionário: 1M de gold nesta run (a melhor run alimenta o progresso da tela)
-	if (GE(totalGold, 1e6)) DesbloqueiaConquistaComp(4);
 	if (GE(totalGold, melhorGoldRun)) melhorGoldRun = new GoldNumber(totalGold);
+	// Poupado: andar 25×nível sem nenhuma compra de gold na run
+	if (comprasRun === 0 && andar >= 25) SobeNivelConquistaComp(1, Math.floor(andar / 25));
+	// Milionário: 1M/10M/100M de gold numa run — a melhor run serve de base,
+	// então marcos já vencidos no passado contam no primeiro golpe pós-load
+	if (GE(melhorGoldRun, 1e6))
+		SobeNivelConquistaComp(4, GE(melhorGoldRun, 1e8) ? 3 : GE(melhorGoldRun, 1e7) ? 2 : 1);
 }
 
-// Texto de progresso da tela de Conquistas para as conquistas ainda travadas
+// Texto de progresso da tela de Conquistas para as conquistas ainda não no máximo
 function ProgressoConquistaComp(indice) {
+	const c = CONQUISTAS_COMP[indice];
+	const nivel = NivelConquistaComp(indice);
+	if (nivel >= c.max) return "nível máximo";
 	if (indice === 0) {
 		const minutos = Math.max(0, (Date.now() - runInicioMs) / 60000);
-		return "run atual em " + minutos.toFixed(1) + " min de 10 min" + (minutos >= 10 ? " (nesta run já passou do tempo)" : "");
+		return "próximo nível: reset abaixo de 10 min no andar " + (c.passo * (nivel + 1))
+			+ " · run atual em " + minutos.toFixed(1) + " min"
+			+ (minutos >= 10 ? " (nesta run já passou do tempo)" : "");
 	}
 	if (indice === 1) {
-		return "nesta run: andar " + andar + " de 25 · " + comprasRun + " compra(s) de gold" + (comprasRun > 0 ? " (quebra o objetivo nesta run)" : "");
+		return "próximo nível: andar " + (c.passo * (nivel + 1)) + " sem comprar · nesta run: andar "
+			+ andar + " · " + comprasRun + " compra(s)" + (comprasRun > 0 ? " (quebra nesta run)" : "");
 	}
-	if (indice === 2) return missoesCompletas + " de 20 missões concluídas";
-	if (indice === 3) return "vença 1 desafio da missão 5";
-	if (indice === 4) return "melhor run: " + FormatGold(melhorGoldRun) + " de 1M";
+	if (indice === 2) return missoesCompletas + " de " + c.marcos[nivel] + " missões concluídas";
+	if (indice === 3) return desafiosVencidos + " de " + c.marcos[nivel] + " desafios vencidos";
+	if (indice === 4) return "melhor run: " + FormatGold(melhorGoldRun) + " de " + FormatGold(c.marcos[nivel]);
 	return "";
 }
 
@@ -1631,8 +1656,9 @@ function MissaoDesafio() {
 	if (missaoDesafioAtual >= missaoDesafioAlvo) {
 		//recompensa escala com o andar: mesma base do bônus de avanço ×5 (≈ 5 baús)
 		const goldRecebido = AddGold(MissaoRecompensaGold(BonusGoldAvanco() * 5));
-		// conquista Destemido: vencer qualquer desafio já vale
-		DesbloqueiaConquistaComp(3);
+		// conquista Destemido: cada desafio vencido conta (marcos 1/3/10)
+		desafiosVencidos++;
+		SobeNivelConquistaComp(3, desafiosVencidos >= 10 ? 3 : desafiosVencidos >= 3 ? 2 : 1);
 		AddTotalGold(goldRecebido, false);
 		UI.showInfo("Desafio concluído!\nVoce recebeu um bonus de " + FormatGold(goldRecebido) + " de gold");
 		UI.showMilestone("Desafio concluído", "Restrição cumprida. Bônus de Gold recebido");
