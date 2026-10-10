@@ -12,7 +12,7 @@ function SobeUmAndar() {
 		// desbloqueio único dos itens de build (piso 100): a partir daí os
 		// baús de build valem para sempre, mesmo depois do reset
 		if (maxAndarAnterior < 100 && maxAndar >= 100) {
-			UI.showMilestone("Itens de build desbloqueados!", "A cada 5 andares um baú de itens aparece");
+			UI.showMilestone("Itens de build desbloqueados!", "A cada 10 andares um baú de itens aparece");
 		}
 	}
 	andarMaxRun = Math.max(andarMaxRun, andar); //pico da run (base dos pontos de perk)
@@ -55,7 +55,7 @@ function SobeUmAndar() {
 	Conquistas();
 	ConquistasComportamentais();
 	CriaBau();
-	// baú de itens da build: a cada 5 andares depois do desbloqueio (andar 100)
+	// baú de itens da build: a cada 10 andares depois do desbloqueio (andar 100)
 	Tapeira.ItensBuild.tentaBau();
 
 	if (missaoAtual == 1) {

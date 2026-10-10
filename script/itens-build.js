@@ -1,9 +1,10 @@
 // ===================== ITENS DA BUILD (por run) ==========================
 // Desbloqueio permanente ao chegar no andar 100 a primeira vez. Depois
-// disso, a cada 5 andares um baú de build aparece — inclusive em runs
+// disso, a cada 10 andares um baú de build aparece — inclusive em runs
 // novas, depois do reset (o andar 100 só destrava o sistema).
-// Os baús são MANUAIS e persistentes: cada marco de 5 andares acumula um,
-// mesmo que os anteriores ainda não tenham sido abertos.
+// Os baús são MANUAIS e persistentes: cada marco de 10 andares acumula um,
+// mesmo que os anteriores ainda não tenham sido abertos. Ignorar o baú
+// ("não escolher nenhum item") consome esse baú — ele some da tela.
 // A escolha é 1 de 3 itens aleatórios; escolher um item já presente
 // acumula o efeito (uma entrada por cópia, teto de 5 escolhas).
 // Os itens são da run: zeram no Resetar (junto com perks/especialização).
@@ -110,7 +111,7 @@
 		// Cada marco gera um baú, acumulado com os que continuam pendentes.
 		tentaBau() {
 			if (!desbloqueada()) return;
-			if (window.andar % 5 !== 0) return;
+			if (window.andar % 10 !== 0) return;
 			if (bausPendentes >= Number.MAX_SAFE_INTEGER) return;
 			bausPendentes++;
 			UI.spawnBauBuild();
@@ -130,9 +131,19 @@
 			UI.showEscolhaItensBuild(opcoesBauAtual.slice(), null);
 		},
 
-		// Fecha o modal sem consumir o baú nem trocar as opções já sorteadas.
-		adiarEscolha() {
-			if (bausPendentes > 0) UI.fechaEscolhaItensBuild();
+		// Jogador abriu o baú e escolheu não pegar nenhum item: este baú é
+		// consumido e some da tela; se ainda houver acumulados, o próximo
+		// já fica pronto (com opções sorteadas de novo).
+		descartaBau() {
+			if (bausPendentes <= 0) return;
+			bausPendentes--;
+			opcoesBauAtual = null;
+			if (bausPendentes > 0) UI.spawnBauBuild();
+			else UI.removeBauBuild();
+			UI.fechaEscolhaItensBuild();
+			UI.showInfo("Baú de itens ignorado"
+				+ (bausPendentes > 0 ? " · restam " + bausPendentes + " baú(s)" : "") + ".");
+			AutoSalvar();
 		},
 
 		// escolha final (chamada pelo modal): id do item novo; slot = índice a

@@ -1501,7 +1501,7 @@ const UI = {
 			["Itens da build", Tapeira.ItensBuild.desbloqueada()
 				? ((Tapeira.ItensBuild.contagem() > 0
 					? Tapeira.ItensBuild.resumo()
-					: "nenhum (baú de itens a cada 5 andares)")
+					: "nenhum (baú de itens a cada 10 andares)")
 					+ (Tapeira.ItensBuild.quantidadeBausPendentes() > 0
 						? ` · ${Tapeira.ItensBuild.quantidadeBausPendentes()} baú(s) pendente(s)`
 						: ""))
@@ -1944,9 +1944,9 @@ const UI = {
     // BAÚ DE ITENS DA BUILD
     // =========================
     // Diferente do baú comum, este é MANUAL e persistente: aparece a cada
-    // 5 andares depois do desbloqueio (andar 100) e some só quando o
-    // jogador escolhe um item — não é removido na troca de andar nem pela
-    // coleta de baús comuns (RemoveBau mexe apenas no id "bau").
+    // 10 andares depois do desbloqueio (andar 100) e some quando o
+    // jogador escolhe um item ou ignora o baú — não é removido na troca
+    // de andar nem pela coleta de baús comuns (RemoveBau mexe no id "bau").
 	spawnBauBuild() {
 		this.removeBauBuild();
 		const quantidade = Tapeira.ItensBuild.quantidadeBausPendentes();
@@ -2189,7 +2189,54 @@ const UI = {
                 Tapeira.ItensBuild.escolhe(escolhendo, Number(botao.getAttribute("data-slot"))));
         });
         modal.querySelector("[data-item-build-skip]").addEventListener("click", () =>
-            Tapeira.ItensBuild.adiarEscolha());
+            Tapeira.ItensBuild.descartaBau());
+
+        document.body.appendChild(modal);
+    },
+
+    // Tela de leitura: os itens atuais da build, no mesmo visual da tela
+    // de troca, mas sem ações — aberta pelo botão no painel Status
+    showItensBuild() {
+        document.getElementById("modalItensBuildView")?.remove();
+
+        const build = Tapeira.ItensBuild;
+        let subtitulo;
+        let corpo;
+
+        if (!build.desbloqueada()) {
+            subtitulo = "Sistema trancado";
+            corpo = `<p class="logs-vazio">Desbloqueia ao chegar no andar 100.</p>`;
+        } else if (build.contagem() === 0) {
+            subtitulo = `0/${build.LIMITE} · baú de itens a cada 10 andares`;
+            corpo = `<p class="logs-vazio">Nenhum item na build ainda.</p>`;
+        } else {
+            subtitulo = build.resumo();
+            // um cartão por slot, no mesmo visual da tela de troca
+            corpo = `<div class="itens-build-grade">` + build.pegaLista().map(idItem => {
+                const registro = build.item(idItem);
+                return `<div class="item-build-cartao item-build-cartao--leitura">
+                    <img src="${registro.icone}" alt="">
+                    <span class="item-build-nome">${registro.nome}</span>
+                    <span class="item-build-efeito">${registro.efeito}</span>
+                </div>`;
+            }).join("") + `</div>`;
+        }
+
+        const modal = document.createElement("div");
+        modal.id = "modalItensBuildView";
+        modal.className = "modal-itens-build";
+        modal.innerHTML = `
+            <div class="modal-itens-build-conteudo" role="dialog" aria-modal="true" aria-label="Itens da build">
+                <div class="itens-build-cabecalho">
+                    <span class="itens-build-titulo">Itens da build</span>
+                    <span class="itens-build-subtitulo">${subtitulo}</span>
+                </div>
+                ${corpo}
+            </div>`;
+        // fecha clicando fora
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) modal.remove();
+        });
 
         document.body.appendChild(modal);
     },
@@ -2317,11 +2364,17 @@ function MostraInfo(msg) {
     UI.showInfo(msg);
 }
 
-// botão "Logs" (fim do menu de configuração): delegado no document para
-// não depender do momento em que o DOM da configuração é montado
+// botões "Logs" (fim do menu de configuração) e "Ver itens da build"
+// (painel Status): delegados no document para não depender do momento em
+// que o DOM desses painéis é montado
 document.addEventListener("click", (e) => {
-    if (e.target instanceof Element && e.target.closest("#btnLogs")) {
+    if (!(e.target instanceof Element)) return;
+    if (e.target.closest("#btnLogs")) {
         UI.showLogs();
+        return;
+    }
+    if (e.target.closest("#btnVerItensBuild")) {
+        UI.showItensBuild();
     }
 });
 

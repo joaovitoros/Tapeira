@@ -916,7 +916,7 @@ test("simulação offline mantém vidas, conta mortes e reinicia onda completa",
     }
 });
 
-test("baú de builds desbloqueia, acumula marcos e consome um por escolha", async () => {
+test("baú de builds desbloqueia a cada 10 andares, acumula e consome por escolha", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
         await page.waitForFunction(() => typeof Tapeira?.ItensBuild?.tentaBau === "function");
@@ -936,10 +936,16 @@ test("baú de builds desbloqueia, acumula marcos e consome um por escolha", asyn
             };
 
             maxAndar = 100;
-            build.tentaBau();
+            build.tentaBau(); // marco 100
             const bauOriginal = document.getElementById("bauBuild");
             andar = 105;
-            build.tentaBau(); // o segundo marco acumula outro baú
+            build.tentaBau(); // fora do marco: não gera baú
+            const foraDoMarco = {
+                quantidade: build.quantidadeBausPendentes(),
+                mesmoBau: bauOriginal === document.getElementById("bauBuild")
+            };
+            andar = 110;
+            build.tentaBau(); // marco 110 acumula sobre o pendente
             const acumulados = {
                 quantidade: build.quantidadeBausPendentes(),
                 bauRecriado: bauOriginal !== document.getElementById("bauBuild"),
@@ -948,64 +954,60 @@ test("baú de builds desbloqueia, acumula marcos e consome um por escolha", asyn
             };
 
             build.abreEscolha();
-            const botoes = [...document.querySelectorAll("#modalItensBuild [data-item]")];
-            const opcoes = botoes.map(botao => botao.getAttribute("data-item"));
-			// Acionar Espaço com o modal aberto não deve re-sortear as três opções.
-			document.getElementById("bauBuild").dispatchEvent(new KeyboardEvent("keydown", {
-				key: " ", bubbles: true, cancelable: true
-			}));
-			const aposEspaco = [...document.querySelectorAll("#modalItensBuild [data-item]")]
-				.map(botao => botao.getAttribute("data-item"));
-			document.querySelector("[data-item-build-skip]").click();
-			const aposAdiar = {
-				pendente: build.quantidadeBausPendentes(),
-				opcoes: build.serializa().opcoesBauBuild
-			};
-			build.abreEscolha();
-			const aoReabrir = [...document.querySelectorAll("#modalItensBuild [data-item]")]
-				.map(botao => botao.getAttribute("data-item"));
-            const primeiroEscolhido = opcoes[0];
-            document.querySelector(`#modalItensBuild [data-item="${primeiroEscolhido}"]`).click();
+            const opcoes = [...document.querySelectorAll("#modalItensBuild [data-item]")]
+                .map(botao => botao.getAttribute("data-item"));
+            // Espaço com o modal aberto não deve re-sortear as três opções.
+            document.getElementById("bauBuild").dispatchEvent(new KeyboardEvent("keydown", {
+                key: " ", bubbles: true, cancelable: true
+            }));
+            const aposEspaco = [...document.querySelectorAll("#modalItensBuild [data-item]")]
+                .map(botao => botao.getAttribute("data-item"));
+            // "Não escolher nenhum item" consome um baú e zera as opções sorteadas.
+            document.querySelector("[data-item-build-skip]").click();
+            const aposDescartar = {
+                quantidade: build.quantidadeBausPendentes(),
+                opcoes: build.serializa().opcoesBauBuild,
+                modalFechado: !document.getElementById("modalItensBuild"),
+                selo: document.getElementById("bauBuild-selo")?.textContent
+            };
+            build.abreEscolha();
+            const aoReabrir = [...document.querySelectorAll("#modalItensBuild [data-item]")]
+                .map(botao => botao.getAttribute("data-item"));
+            const escolhido = aoReabrir[0];
+            document.querySelector(`#modalItensBuild [data-item="${escolhido}"]`).click();
+
+            // um terceiro marco deixa outro baú pendente para o Status mostrar
+            andar = 120;
+            build.tentaBau();
             UI.showStatus();
             const resumoNoStatus = [...document.querySelectorAll("#StatusBody tr")]
                 .find(linha => linha.cells[0]?.textContent === "Itens da build")?.textContent || "";
-            const depoisDaPrimeiraEscolha = {
-                itens: build.pegaLista(),
-                quantidade: build.quantidadeBausPendentes(),
-                pendente: build.pendente(),
-                bauVisivel: !!document.getElementById("bauBuild"),
-                selo: document.getElementById("bauBuild-selo")?.textContent,
-                resumoNoStatus,
-                save: JSON.parse(localStorage.getItem("autoSaveCaverna"))
-            };
-
-            build.abreEscolha();
-            const segundaOpcao = document.querySelector("#modalItensBuild [data-item]");
-            const segundoEscolhido = segundaOpcao.getAttribute("data-item");
-            segundaOpcao.click();
 
             return {
                 bloqueado,
                 desbloqueada: build.desbloqueada(),
-                opcoes,
+                foraDoMarco,
                 acumulados,
+                opcoes,
                 aposEspaco,
-                aposAdiar,
+                aposDescartar,
                 aoReabrir,
-                primeiroEscolhido,
-                depoisDaPrimeiraEscolha,
-                segundoEscolhido,
+                escolhido,
+                nomeEscolhido: build.item(escolhido).nome,
                 lista: build.pegaLista(),
                 quantidadeFinal: build.quantidadeBausPendentes(),
                 pendente: build.pendente(),
                 modalFechado: !document.getElementById("modalItensBuild"),
-                bauRemovido: !document.getElementById("bauBuild"),
+                seloFinal: document.getElementById("bauBuild-selo")?.textContent,
+                resumoNoStatus,
                 save: JSON.parse(localStorage.getItem("autoSaveCaverna"))
             };
         });
 
         assert.deepEqual(result.bloqueado, { desbloqueada: false, pendente: false, bauVisivel: false });
         assert.equal(result.desbloqueada, true);
+        assert.deepEqual(result.foraDoMarco, { quantidade: 1, mesmoBau: true },
+            "andar fora do múltiplo de 10 não gera baú");
         assert.deepEqual(result.acumulados, {
             quantidade: 2,
             bauRecriado: true,
@@ -1015,37 +1017,33 @@ test("baú de builds desbloqueia, acumula marcos e consome um por escolha", asyn
         assert.equal(result.opcoes.length, 3);
         assert.equal(new Set(result.opcoes).size, 3, "as três opções devem ser distintas");
         assert.deepEqual(result.aposEspaco, result.opcoes, "Espaço com o modal aberto não pode rerrolar opções");
-        assert.equal(result.aposAdiar.pendente, 2, "adiar não consome um baú");
-        assert.deepEqual(result.aposAdiar.opcoes, result.opcoes, "adiar preserva as opções sorteadas");
-        assert.deepEqual(result.aoReabrir, result.opcoes, "reabrir o mesmo baú mantém as mesmas opções");
-        const { save: primeiroSave, resumoNoStatus, ...depoisDaPrimeiraEscolha } = result.depoisDaPrimeiraEscolha;
-        assert.deepEqual(depoisDaPrimeiraEscolha, {
-            itens: [result.primeiroEscolhido],
+        assert.deepEqual(result.aposDescartar, {
             quantidade: 1,
-            pendente: true,
-            bauVisivel: true,
+            opcoes: null,
+            modalFechado: true,
             selo: "ITENS"
-        });
-        assert.match(resumoNoStatus, /baú\(s\) pendente\(s\)/);
+        }, "ignorar consome um baú, fecha o modal e zera as opções");
+        assert.equal(result.aoReabrir.length, 3);
+        assert.equal(new Set(result.aoReabrir).size, 3, "ao reabrir, o baú restante sortea 3 opções distintas");
+        assert.deepEqual(result.lista, [result.escolhido]);
+        assert.equal(result.quantidadeFinal, 1, "o terceiro marco deixa mais um baú pendente");
+        assert.equal(result.pendente, true);
+        assert.equal(result.modalFechado, true);
+        assert.equal(result.seloFinal, "ITENS");
+        assert.match(result.resumoNoStatus, /baú\(s\) pendente\(s\)/);
+        assert.ok(result.resumoNoStatus.includes(result.nomeEscolhido),
+            "o Status mostra o item escolhido");
         assert.deepEqual({
-            itensBuild: primeiroSave.itensBuild,
-            bausBuildPendentes: primeiroSave.bausBuildPendentes,
-            bauBuildPendente: primeiroSave.bauBuildPendente,
-            opcoesBauBuild: primeiroSave.opcoesBauBuild
+            itensBuild: result.save.itensBuild,
+            bausBuildPendentes: result.save.bausBuildPendentes,
+            bauBuildPendente: result.save.bauBuildPendente,
+            opcoesBauBuild: result.save.opcoesBauBuild
         }, {
-            itensBuild: [result.primeiroEscolhido],
+            itensBuild: [result.escolhido],
             bausBuildPendentes: 1,
             bauBuildPendente: true,
             opcoesBauBuild: null
         });
-        assert.equal(result.quantidadeFinal, 0);
-        assert.deepEqual(result.lista, [result.primeiroEscolhido, result.segundoEscolhido]);
-        assert.equal(result.pendente, false);
-        assert.equal(result.modalFechado, true);
-        assert.equal(result.bauRemovido, true);
-        assert.deepEqual(result.save.itensBuild, result.lista);
-        assert.equal(result.save.bausBuildPendentes, 0);
-        assert.equal(result.save.bauBuildPendente, false);
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();

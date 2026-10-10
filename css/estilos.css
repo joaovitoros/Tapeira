@@ -8063,6 +8063,23 @@ button.skill-ramo-no:focus-visible {
 	padding: 8px 16px;
 }
 
+/* ---- Tela de leitura dos itens da build (botão no painel Status) ---- */
+
+.status-itens-build-button {
+	display: block;
+	margin: 8px auto 0;
+	font-size: 0.85em;
+	padding: 0.3em 1.2em;
+	opacity: 0.9;
+}
+
+/* cartões da tela de leitura: mesmo visual da troca, mas sem ação */
+.item-build-cartao--leitura,
+.item-build-cartao--leitura:hover {
+	cursor: default;
+	transform: none;
+}
+
 /* ---- Logs (botão no fim do menu de configuração + tela de histórico) ---- */
 
 #divLogs {

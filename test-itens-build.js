@@ -1,7 +1,9 @@
-// Teste focado: itens de build (desbloqueio no andar 100, baú a cada 5
-// andares, acúmulo por cópia, troca na build cheia, save/reset e API
-// encapsulada em window.Tapeira.ItensBuild). Segue o padrão dos testes
-// existentes: Playwright abrindo o jogo preparado (www/Caverna.html).
+// Teste focado: itens de build (desbloqueio no andar 100, baú a cada 10
+// andares com acúmulo de marcos, acúmulo por cópia, "não escolher" que
+// consome o baú, troca na build cheia, tela de leitura no Status,
+// save/reset e API encapsulada em window.Tapeira.ItensBuild). Segue o
+// padrão dos testes existentes: Playwright abrindo o jogo preparado
+// (www/Caverna.html).
 // Execute depois de `npm run prepare:web`:  node test-itens-build.js
 const { chromium } = require('playwright');
 const path = require('path');
@@ -62,65 +64,132 @@ const fs = require('fs');
       check("2 cópias de adaga: dano ×1,3225", arredonda(IB.multDano()) === 1.3225, arredonda(IB.multDano()));
       check("copias() conta por id", IB.copias("adaga") === 2 && IB.copias("moedas") === 0);
 
-      // ---- baú: cadência a cada 5 andares ----
+      // ---- baú: cadência a cada 10 andares (marcos acumulam) ----
       IB.limpa();
+      UI.removeBauBuild();
+      window.maxAndar = 100;
       window.andar = 4;
       IB.tentaBau();
-      check("sem baú no andar 4 (múltiplo de 5 obrigatório)", !document.getElementById("bauBuild"));
+      check("sem baú no andar 4 (múltiplo de 10 obrigatório)", !document.getElementById("bauBuild"));
       window.andar = 5;
       IB.tentaBau();
-      check("baú no andar 5 com selo",
-        !!document.getElementById("bauBuild") && !!document.getElementById("bauBuild-selo"));
-      check("bauBuildPendente vira true", IB.pendente() === true);
-      IB.tentaBau(); // mesmo andar de novo
-      check("sem baú duplicado", document.querySelectorAll("#bauBuild").length === 1);
-      window.andar = 10; // pendente: marcador seguinte não gera outro
+      check("sem baú no andar 5 (agora é a cada 10 andares)",
+        !document.getElementById("bauBuild") && IB.quantidadeBausPendentes() === 0);
+      window.andar = 10;
       IB.tentaBau();
-      check("pendente bloqueia novo baú no andar 10", document.querySelectorAll("#bauBuild").length === 1);
+      check("baú no andar 10 com selo",
+        !!document.getElementById("bauBuild")
+        && document.getElementById("bauBuild-selo")?.textContent === "ITENS");
+      check("bauBuildPendente vira true", IB.pendente() === true);
+      window.andar = 20; // marco seguinte acumula com o que estava pendente
+      IB.tentaBau();
+      check("marco seguinte acumula outro baú (selo ×2)",
+        IB.quantidadeBausPendentes() === 2
+        && document.getElementById("bauBuild-selo")?.textContent === "ITENS ×2"
+        && document.getElementById("bauBuild")?.getAttribute("aria-label") === "Abrir 2 baús de itens da build");
       RemoveBau(); // baú comum não pode sumir com o de build
       check("RemoveBau() não remove o baú de build", !!document.getElementById("bauBuild"));
 
-      // ---- escolha: fluxo normal e empilhamento ----
+      // ---- escolha: fluxo normal e empilhamento (opções fixas no save) ----
+      IB.carrega({
+        itensBuild: [],
+        bausBuildPendentes: 2,
+        bauBuildPendente: true,
+        opcoesBauBuild: ["adaga", "moedas", "mapa"]
+      });
+      UI.spawnBauBuild();
       IB.abreEscolha();
       const modal = document.getElementById("modalItensBuild");
-      check("modal abre com 3 cartões",
-        !!modal && modal.querySelectorAll("[data-item]").length === 3);
+      check("modal abre exatamente com as 3 opções do save",
+        !!modal
+        && [...modal.querySelectorAll("[data-item]")].map(b => b.getAttribute("data-item")).join(",")
+          === "adaga,moedas,mapa");
       const imgsCartao = modal ? [...modal.querySelectorAll(".item-build-cartao img")] : [];
       await Promise.all(imgsCartao.map(i => i.decode().catch(() => {})));
       check("ícones dos cartões carregam",
         imgsCartao.length === 3 && imgsCartao.every(i => i.complete && i.naturalWidth > 0));
-      UI.fechaEscolhaItensBuild();
+      UI.fechaEscolhaItensBuild(); // fechar sem consumir mantém as opções sorteadas
+      IB.abreEscolha();
+      check("reabrir mantém as mesmas opções",
+        [...document.querySelectorAll("#modalItensBuild [data-item]")].map(b => b.getAttribute("data-item")).join(",")
+          === "adaga,moedas,mapa");
+      IB.escolhe("pocaoRubra", null); // id fora das opções atuais do baú
+      check("id fora das opções do baú é ignorado",
+        IB.contagem() === 0 && IB.quantidadeBausPendentes() === 2
+        && !!document.getElementById("modalItensBuild"));
       IB.escolhe("adaga", null);
-      check("escolha normal entra na build",
-        IB.contagem() === 1 && IB.pendente() === false && IB.pegaLista()[0] === "adaga");
-      check("baú e modal somem após escolher",
-        !document.getElementById("bauBuild") && !document.getElementById("modalItensBuild"));
-      IB.carrega({ itensBuild: ["adaga"], bauBuildPendente: true });
+      check("escolha normal entra na build e consome 1 baú",
+        IB.contagem() === 1 && IB.quantidadeBausPendentes() === 1 && IB.pegaLista()[0] === "adaga");
+      check("modal fecha e o baú restante continua na tela",
+        !document.getElementById("modalItensBuild")
+        && !!document.getElementById("bauBuild")
+        && document.getElementById("bauBuild-selo")?.textContent === "ITENS");
+      IB.carrega({
+        itensBuild: ["adaga"],
+        bausBuildPendentes: 1,
+        bauBuildPendente: true,
+        opcoesBauBuild: ["adaga", "pocaoRubra", "lanterna"]
+      });
       UI.spawnBauBuild();
       IB.escolhe("adaga", null); // mesma cópia de novo
       check("item repetido acumula (2 cópias)",
-        IB.contagem() === 2 && IB.copias("adaga") === 2);
+        IB.contagem() === 2 && IB.copias("adaga") === 2 && IB.quantidadeBausPendentes() === 0);
+      check("sem baú quando não sobra pendente", !document.getElementById("bauBuild"));
+
+      // ---- ignorar ("não escolher nenhum item") consome o baú ----
+      IB.carrega({
+        itensBuild: ["adaga"],
+        bausBuildPendentes: 2,
+        bauBuildPendente: true,
+        opcoesBauBuild: ["moedas", "mapa", "relogio"]
+      });
+      UI.spawnBauBuild();
+      IB.abreEscolha();
+      document.querySelector("[data-item-build-skip]").click();
+      check("ignorar consome 1 baú e fecha o modal",
+        IB.quantidadeBausPendentes() === 1 && !document.getElementById("modalItensBuild"));
+      check("baú restante continua na tela (selo ITENS)",
+        !!document.getElementById("bauBuild")
+        && document.getElementById("bauBuild-selo")?.textContent === "ITENS");
+      check("ignorar zera as opções sorteadas", IB.serializa().opcoesBauBuild === null);
+      IB.abreEscolha();
+      const opcoesNovas = [...document.querySelectorAll("#modalItensBuild [data-item]")]
+        .map(b => b.getAttribute("data-item"));
+      check("próximo baú sortea 3 opções distintas",
+        opcoesNovas.length === 3 && new Set(opcoesNovas).size === 3);
+      document.querySelector("[data-item-build-skip]").click();
+      check("último baú ignorado some da tela",
+        IB.quantidadeBausPendentes() === 0
+        && !document.getElementById("bauBuild") && !document.getElementById("bauBuild-selo"));
 
       // ---- build cheia: limite e troca ----
       IB.carrega({
         itensBuild: ["adaga", "moedas", "mapa", "relogio", "grimorio"],
-        bauBuildPendente: true
+        bausBuildPendentes: 1,
+        bauBuildPendente: true,
+        opcoesBauBuild: ["esmeralda", "escudo", "lanterna"]
       });
+      UI.spawnBauBuild();
       check("build cheia com 5", IB.contagem() === 5 && IB.LIMITE === 5);
-      IB.escolhe("esmeralda", null); // sem slot: não pode entrar
-      check("sem slot na build cheia não entra nem limpa o pendente",
-        IB.contagem() === 5 && IB.pendente() === true
+      IB.escolhe("moedas", null); // id fora das opções atuais: não pode entrar
+      check("id fora das opções não entra (build intacta)",
+        IB.contagem() === 5 && IB.quantidadeBausPendentes() === 1
+        && IB.pegaLista().join(",") === "adaga,moedas,mapa,relogio,grimorio");
+      IB.escolhe("esmeralda", null); // build cheia sem slot: o modal precisa escolher
+      check("build cheia sem slot não entra nem consome o baú",
+        IB.contagem() === 5 && IB.quantidadeBausPendentes() === 1
         && IB.pegaLista().join(",") === "adaga,moedas,mapa,relogio,grimorio");
       IB.escolhe("esmeralda", 1); // troca o slot 1 (moedas)
-      check("troca substitui o slot certo",
-        IB.contagem() === 5 && IB.pegaLista()[1] === "esmeralda" && IB.pendente() === false);
+      check("troca substitui o slot certo e consome o baú",
+        IB.contagem() === 5 && IB.pegaLista()[1] === "esmeralda" && IB.quantidadeBausPendentes() === 0);
 
       // ---- save: round-trip e save antigo ----
       IB.carrega({ itensBuild: ["moedas", "moedas"], bauBuildPendente: true });
       const serializado = IB.serializa();
       check("serializa() devolve os campos do save",
         JSON.stringify(serializado.itensBuild) === '["moedas","moedas"]'
-        && serializado.bauBuildPendente === true);
+        && serializado.bauBuildPendente === true
+        && serializado.bausBuildPendentes === 1);
       IB.carrega({}); // save antigo sem os campos
       check("save antigo (sem campos) nasce vazio",
         IB.contagem() === 0 && IB.pendente() === false);
@@ -132,6 +201,9 @@ const fs = require('fs');
         bauBuildPendente: false
       });
       check("load com 6 ids é cortado no limite", IB.contagem() === 5);
+      IB.carrega({ bausBuildPendentes: 2, bauBuildPendente: true, opcoesBauBuild: ["adaga", "moedas"] });
+      check("opções inválidas no save são descartadas",
+        IB.quantidadeBausPendentes() === 2 && IB.serializa().opcoesBauBuild === null);
 
       // ---- validação do save (ValidarSave) ----
       // valida o round-trip JSON, que é exatamente o que o Carregar recebe
@@ -158,11 +230,46 @@ const fs = require('fs');
           && tr.textContent.includes("Adaga Sombria ×2"));
       check("Status mostra a build com cópias", temLinha);
 
+      // ---- tela de leitura dos itens da build (botão no painel Status) ----
+      IB.carrega({ itensBuild: ["adaga", "adaga", "moedas"], bausBuildPendentes: 0, bauBuildPendente: false });
+      const botaoTela = document.getElementById("btnVerItensBuild");
+      check("botão Ver itens da build existe no painel Status",
+        !!botaoTela && document.getElementById("DivStatus").contains(botaoTela));
+      botaoTela.click();
+      const tela = document.getElementById("modalItensBuildView");
+      check("tela abre com um cartão por slot (3)",
+        !!tela && tela.querySelectorAll(".item-build-cartao").length === 3);
+      check("tela mostra nome, efeito e resumo com cópias",
+        !!tela && tela.textContent.includes("Adaga Sombria")
+        && tela.textContent.includes("+15% de dano")
+        && tela.textContent.includes("Adaga Sombria ×2"));
+      tela.click(); // clique no fundo (fora do conteúdo) fecha
+      check("clique fora fecha a tela", !document.getElementById("modalItensBuildView"));
+      IB.limpa();
+      botaoTela.click();
+      check("build vazia mostra aviso de vazio",
+        !!document.querySelector("#modalItensBuildView .logs-vazio"));
+      document.getElementById("modalItensBuildView").remove();
+      const maxAndarAntes = window.maxAndar;
+      window.maxAndar = 99;
+      botaoTela.click();
+      check("sem desbloqueio avisa o andar 100",
+        (document.querySelector("#modalItensBuildView")?.textContent || "").includes("andar 100"));
+      document.getElementById("modalItensBuildView").remove();
+      window.maxAndar = maxAndarAntes;
+
       // ---- reset limpa estado e DOM ----
+      IB.carrega({
+        itensBuild: ["adaga"],
+        bausBuildPendentes: 2,
+        bauBuildPendente: true,
+        opcoesBauBuild: ["moedas", "mapa", "relogio"]
+      });
       UI.spawnBauBuild();
       Resetar();
-      check("reset limpa itens, pendente e o baú da tela",
-        IB.contagem() === 0 && IB.pendente() === false
+      check("reset limpa itens, baús, opções e o ícone da tela",
+        IB.contagem() === 0 && IB.quantidadeBausPendentes() === 0
+        && IB.serializa().opcoesBauBuild === null
         && !document.getElementById("bauBuild") && !document.getElementById("bauBuild-selo"));
     } catch (e) {
       check("exceção no teste", false, e && e.stack || e);
