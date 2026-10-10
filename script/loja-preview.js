@@ -141,9 +141,8 @@ const PREVIEWS_LOJA = {
 };
 
 function NomeFuncaoCompra(btn) {
-	const attr = btn.getAttribute("onclick") || "";
-	const m = attr.match(/^\s*([A-Za-z_$][\w$]*)\s*\(/);
-	return m ? m[1] : null;
+	const fn = CompraLojaFuncao(btn.dataset.compra);
+	return fn ? fn.name : null;
 }
 
 // ids no HTML que não batem com o nome da variável de preço
@@ -190,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		const mostrar = () => MostraPreviewCompra(btn);
 		btn.addEventListener("mouseenter", mostrar);
 		btn.addEventListener("focus", mostrar);
-		// após o clique inline (compra já aplicada), atualiza o preview
+		// após o clique (compra já aplicada), atualiza o preview
 		btn.addEventListener("click", mostrar);
 	});
 });
@@ -226,16 +225,15 @@ function HoldCompraTenta() {
 		HoldCompraPara();
 		return;
 	}
-	// lê o onclick inline (CompraDano(), CompraGold(), ...) e chama de volta
-	const chamada = (btn.getAttribute("onclick") || "").trim();
-	const m = /^([A-Za-z_$][\w$]*)\s*\(\s*\)$/.exec(chamada);
-	if (!m || typeof window[m[1]] !== "function") {
+	// lê o data-compra do botão e chama a Compra* correspondente
+	const id = btn.dataset.compra;
+	if (!CompraLojaFuncao(id)) {
 		HoldCompraPara();
 		return;
 	}
 	// sem gold ou nível máximo: o jogo chama MostraInfo, que neste momento é
 	// o interceptor — ele restaura tudo e avisa uma única vez
-	window[m[1]]();
+	CompraLojaItem(id);
 	if (holdCompraBotao) MostraPreviewCompra(btn); // preview do Tier1 #5 em dia
 }
 
@@ -258,7 +256,7 @@ function HoldCompraInicia(btn) {
 // Delegado no document: não depende de quando o DOM da loja é montado
 document.addEventListener("pointerdown", (e) => {
 	if (e.pointerType === "mouse" && e.button !== 0) return;
-	const btn = e.target && e.target.closest ? e.target.closest("#Loja input.Loja[onclick]") : null;
+	const btn = e.target && e.target.closest ? e.target.closest("#Loja input.Loja[data-compra]") : null;
 	if (!btn) return;
 	if (holdCompraBotao === btn && holdCompraTimer) return; // já segurando
 	HoldCompraInicia(btn);

@@ -88,7 +88,7 @@ navegador, Windows (Electron) e Android (Capacitor).
 
 ## O que foi feito nesta reorganização
 
-1. Suíte de regressão com `npm test` (33 testes) cobrindo menu, saves,
+1. Suíte de regressão com `npm test` (34 testes) cobrindo menu, saves,
    importação de JSON, combate, missões, eventos, automação, companheiros,
    conquistas, progresso offline, builds e hit kill.
 2. Extração, nesta ordem: áudio; validação e persistência de saves;
@@ -112,6 +112,12 @@ navegador, Windows (Electron) e Android (Capacitor).
    `skill-escape`, `skill-frenzy`) registrados em `progressao.js`.
 10. Inimigos migrados: os 4 cliques (`inimigo1..4` → `Bater(id, true)`)
     registrados em `batalha.js`.
+11. Loja migrada para `data-*` + `addEventListener`: compras (`data-compra`,
+    `data-compra-cm`), navegação/fechar (`data-loja`) e cartões de
+    especialização (`data-esp`) em `loja.js`; o preview e o hold-to-buy
+    (`loja-preview.js`) e a auto-compra seletiva (`automacao.js`) passaram a
+    ler `data-compra` em vez do `onclick`; a auto-compra também foi ligada no
+    `change` do checkbox.
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
@@ -120,9 +126,9 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 
 1. **Reduzir handlers `onclick` restantes no HTML:** migrar para
    `addEventListener`, um painel por vez. Já feitos: painel de configuração,
-   navegação lateral, painel de status, habilidades de combate e inimigos.
-   Faltam: inventários da loja (`Compra*`), cartões de especialização,
-   `#autoCompraToggle` (loja) e o menu (`index.html`).
+   navegação lateral, painel de status, habilidades de combate, inimigos e a
+   loja inteira. Faltam: painel de reset (`#manterAndar`, `#btnAndar`), botão
+   de pausa e o menu (`index.html`).
 2. **Investigar o bug de save relatado:** importar JSON e "Salvar e voltar ao
    menu" foram testados e preservam o andar; o caso real ainda não foi
    reproduzido — se voltar a acontecer, é preciso o JSON do save problemático.
@@ -137,7 +143,7 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (33 testes)
+npm test                 # suíte principal (34 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android

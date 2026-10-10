@@ -376,10 +376,9 @@
 				<div class="preview-compra" hidden></div>
 				<table id="TabLoja">
 					<caption>Loja<label class="auto-toggle auto-toggle--loja" id="autoCompraWrap"><input
-								type="checkbox" id="autoCompraToggle"
-								onchange="AlternaAutoCompra(this.checked)" aria-label="Auto-compra da loja" /><span>Auto-compra</span></label><button
+								type="checkbox" id="autoCompraToggle" aria-label="Auto-compra da loja" /><span>Auto-compra</span></label><button
 							type="button" class="btnLojaE btnLojaFechar"
-							onclick="FechaLoja()" aria-label="Fechar loja">×</button></caption>
+							data-loja="fechar" aria-label="Fechar loja">×</button></caption>
 					<thead>
 						<tr>
 							<th>Item</th>
@@ -387,7 +386,7 @@
 							<th>Nivel</th>
 							<th>Comprar</th>
 							<th>
-								<button type="button" class="btnLojaE" onclick="LojaEsmeralda()">&gt;</button>
+								<button type="button" class="btnLojaE" data-loja="esmeralda">&gt;</button>
 							</th>
 						</tr>
 					</thead>
@@ -400,7 +399,7 @@
 							<div id="lvlDano"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraDano()"></td>
+								data-compra="dano"></td>
 					</tr>
 
 					<tr>
@@ -412,7 +411,7 @@
 							<div id="lvlBau"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraBau()"></td>
+								data-compra="bau"></td>
 					</tr>
 
 					<tr>
@@ -424,7 +423,7 @@
 							<div id="lvlEsmBau"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraEsmBau()"></td>
+								data-compra="esmbau"></td>
 					</tr>
 
 					<tr>
@@ -436,7 +435,7 @@
 							<div id="lvlBEspaco"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraBEspaco()"></td>
+								data-compra="bespaco"></td>
 					</tr>
 
 					<tr>
@@ -448,7 +447,7 @@
 							<div id="lvlGold"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraGold()"></td>
+								data-compra="gold"></td>
 					</tr>
 
 					<tr>
@@ -460,7 +459,7 @@
 							<div id="lvlAvan"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraAvanco()"></td>
+								data-compra="avanco"></td>
 					</tr>
 
 					<tr>
@@ -472,7 +471,7 @@
 							<div id="lvlDCrit"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraDCrit()"></td>
+								data-compra="dcrit"></td>
 					</tr>
 
 					<tr>
@@ -484,7 +483,7 @@
 							<div id="lvlSubVida"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraSubVida()"></td>
+								data-compra="subvida"></td>
 					</tr>
 
 					<tr>
@@ -496,7 +495,7 @@
 							<div id="lvlCCrit"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCCrit()"></td>
+								data-compra="ccrit"></td>
 					</tr>
 
 					<tr>
@@ -508,7 +507,7 @@
 							<div id="lvlQTDAvan"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraQTDAvanco()"></td>
+								data-compra="qtdavanco"></td>
 					</tr>
 
 					<tr>
@@ -520,7 +519,7 @@
 							<div id="lvlVelComp"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraVelComp()"></td>
+								data-compra="velcomp"></td>
 					</tr>
 
 				</table>
@@ -531,25 +530,25 @@
 						<span class="especializacao__status" id="espStatus">Nenhuma</span>
 					</div>
 					<div class="especializacao__cartoes">
-						<button type="button" class="esp-cartao" data-esp="1" onclick="EscolheEspecializacao(1)">
+						<button type="button" class="esp-cartao" data-esp="1">
 							<span class="esp-cartao__nome">Força Bruta</span>
 							<span class="esp-cartao__efeito">+40% dano · −25% gold</span>
 						</button>
-						<button type="button" class="esp-cartao" data-esp="2" onclick="EscolheEspecializacao(2)">
+						<button type="button" class="esp-cartao" data-esp="2">
 							<span class="esp-cartao__nome">Toque de Midas</span>
 							<span class="esp-cartao__efeito">+40% gold · −25% dano</span>
 						</button>
-						<button type="button" class="esp-cartao" data-esp="3" onclick="EscolheEspecializacao(3)">
+						<button type="button" class="esp-cartao" data-esp="3">
 							<span class="esp-cartao__nome">Olho de Águia</span>
 							<span class="esp-cartao__efeito">Crítico ×1,8 · −10% dano · −15% gold</span>
 							<span class="esp-cartao__lock" hidden>Desbloqueia no andar 60</span>
 						</button>
-						<button type="button" class="esp-cartao" data-esp="4" onclick="EscolheEspecializacao(4)">
+						<button type="button" class="esp-cartao" data-esp="4">
 							<span class="esp-cartao__nome">Canhão de Vidro</span>
 							<span class="esp-cartao__efeito">+80% dano · −50% tempo de fuga</span>
 							<span class="esp-cartao__lock" hidden>Desbloqueia no andar 70</span>
 						</button>
-						<button type="button" class="esp-cartao" data-esp="5" onclick="EscolheEspecializacao(5)">
+						<button type="button" class="esp-cartao" data-esp="5">
 							<span class="esp-cartao__nome">Cadeia de Ataques</span>
 							<span class="esp-cartao__efeito">−50% dano · +25% por ataque no mesmo alvo (até +400%)</span>
 							<span class="esp-cartao__lock" hidden>Desbloqueia no andar 80</span>
@@ -566,7 +565,7 @@
 				<div class="preview-compra" hidden></div>
 				<table id="TabLojaEsm">
 					<caption>Loja de Esmeralda<button type="button" class="btnLojaE btnLojaFechar"
-							onclick="FechaLoja()" aria-label="Fechar loja">×</button></caption>
+							data-loja="fechar" aria-label="Fechar loja">×</button></caption>
 					<thead>
 						<tr>
 							<th>Bonus</th>
@@ -574,8 +573,8 @@
 							<th>Nivel</th>
 							<th>Comprar</th>
 							<th>
-								<button type="button" class="btnLojaE" onclick="LojaEsmeralda()" aria-label="Loja de gold">&lt;</button>
-								<button type="button" class="btnLojaE" onclick="LojaConhecimento()" aria-label="Loja do Conhecimento">&gt;</button>
+								<button type="button" class="btnLojaE" data-loja="esmeralda" aria-label="Loja de gold">&lt;</button>
+								<button type="button" class="btnLojaE" data-loja="conhecimento" aria-label="Loja do Conhecimento">&gt;</button>
 							</th>
 						</tr>
 					</thead>
@@ -588,7 +587,7 @@
 							<div id="lvlComp1"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraComp1()"></td>
+								data-compra="comp1"></td>
 					</tr>
 
 					<tr>
@@ -600,7 +599,7 @@
 							<div id="lvlAvGold"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraAvGold()"></td>
+								data-compra="avgold"></td>
 					</tr>
 
 					<tr>
@@ -612,7 +611,7 @@
 							<div id="lvlComp2"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraComp2()"></td>
+								data-compra="comp2"></td>
 					</tr>
 
 					<tr>
@@ -624,7 +623,7 @@
 							<div id="lvlComp3"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraComp3()"></td>
+								data-compra="comp3"></td>
 					</tr>
 
 					<tr>
@@ -636,7 +635,7 @@
 							<div id="lvlComp4"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraComp4()"></td>
+								data-compra="comp4"></td>
 					</tr>
 
 					<tr>
@@ -648,7 +647,7 @@
 							<div id="lvlComp5"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraComp5()"></td>
+								data-compra="comp5"></td>
 					</tr>
 
 					<tr>
@@ -660,7 +659,7 @@
 							<div id="lvlComp6"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraComp6()"></td>
+								data-compra="comp6"></td>
 					</tr>
 
 					<tr>
@@ -672,7 +671,7 @@
 							<div id="lvlXP"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraXP()"></td>
+								data-compra="xp"></td>
 					</tr>
 
 					<tr>
@@ -684,7 +683,18 @@
 							<div id="lvlEsmCM"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraEsmCM()"></td>
+								data-compra="esmcm"></td>
+					</tr>
+					<tr id="linhaEsmSlotBuild" hidden>
+						<td>Espaço extra de build (+1 por nível)</td>
+						<td align="center">
+							<div id="precoEsmSlotBuild"></div>
+						</td>
+						<td align="center">
+							<div id="lvlEsmSlotBuild"></div>
+						</td>
+						<td align="center"><input type="button" id="btnEsmSlotBuild" value="Evoluir" class="Loja"
+								data-compra-slot-build aria-label="Comprar espaço extra de build"></td>
 					</tr>
 				</table>
 			</div>
@@ -692,7 +702,7 @@
 				<div class="preview-compra" hidden></div>
 				<table id="TabLojaCM">
 					<caption>Loja do Conhecimento · <span id="lojaCMsaldo">0</span> CM<button type="button"
-							class="btnLojaE btnLojaFechar" onclick="FechaLoja()" aria-label="Fechar loja">×</button></caption>
+							class="btnLojaE btnLojaFechar" data-loja="fechar" aria-label="Fechar loja">×</button></caption>
 					<thead>
 						<tr>
 							<th>Bonus permanente</th>
@@ -700,7 +710,7 @@
 							<th>Nivel</th>
 							<th>Comprar</th>
 							<th>
-								<button type="button" class="btnLojaE" onclick="FechaLojaCM()" aria-label="Voltar à loja de esmeraldas">&lt;</button>
+								<button type="button" class="btnLojaE" data-loja="fechar-cm" aria-label="Voltar à loja de esmeraldas">&lt;</button>
 							</th>
 						</tr>
 					</thead>
@@ -713,7 +723,7 @@
 							<div id="lvlCMDano"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('dano')"></td>
+								data-compra-cm="dano"></td>
 					</tr>
 					<tr>
 						<td>+2% de gold</td>
@@ -724,7 +734,7 @@
 							<div id="lvlCMGold"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('gold')"></td>
+								data-compra-cm="gold"></td>
 					</tr>
 					<tr>
 						<td>+2% de XP</td>
@@ -735,7 +745,7 @@
 							<div id="lvlCMXp"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('xp')"></td>
+								data-compra-cm="xp"></td>
 					</tr>
 					<tr>
 						<td>+2 no tempo de fuga</td>
@@ -746,7 +756,7 @@
 							<div id="lvlCMFuga"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('fuga')"></td>
+								data-compra-cm="fuga"></td>
 					</tr>
 					<tr>
 						<td>+2% de dano crítico e +0,2 no teto</td>
@@ -757,7 +767,7 @@
 							<div id="lvlCMCrit"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('crit')"></td>
+								data-compra-cm="crit"></td>
 					</tr>
 					<tr>
 						<td>+0,5% de chance de formiga aleatória (máx 25%)</td>
@@ -768,7 +778,7 @@
 							<div id="lvlCMFormiga"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('formiga')"></td>
+								data-compra-cm="formiga"></td>
 					</tr>
 					<tr>
 						<td>+1% de chance de vir 2 formigas (máx 100)</td>
@@ -779,7 +789,7 @@
 							<div id="lvlCMDuas"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('duasformigas')"></td>
+								data-compra-cm="duasformigas"></td>
 					</tr>
 					<tr>
 						<td>+2% de dano de companheiro</td>
@@ -790,7 +800,7 @@
 							<div id="lvlCMComp"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('comp')"></td>
+								data-compra-cm="comp"></td>
 					</tr>
 					<tr>
 						<td>+2% de gold do companheiro 2</td>
@@ -801,7 +811,7 @@
 							<div id="lvlCMGoldComp2"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('goldcomp2')"></td>
+								data-compra-cm="goldcomp2"></td>
 					</tr>
 				</table>
 			</div>

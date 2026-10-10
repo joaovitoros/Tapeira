@@ -1503,6 +1503,65 @@ test("baú de builds desbloqueia a cada 10 andares, acumula e consome por escolh
     }
 });
 
+test("loja usa data-* e listeners registrados (compra, navegação, especialização)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.CompraLojaItem === "function" && document.querySelector('[data-compra="dano"]'));
+        const result = await page.evaluate(() => {
+            const controles = [...document.querySelectorAll("[data-compra],[data-compra-cm],[data-loja],[data-esp]")];
+            const inline = controles.filter(el =>
+                el.hasAttribute("onclick") || el.hasAttribute("onchange") || el.hasAttribute("oninput")).length;
+
+            // identidade do despacho antes de stubbá-lo
+            const identidade = {
+                dano: CompraLojaFuncao("dano") === CompraDano,
+                gold: CompraLojaFuncao("gold") === CompraGold,
+                desconhecido: CompraLojaFuncao("naoexiste") === null
+            };
+            const btnDano = document.querySelector('[data-compra="dano"]');
+            const nomePreview = NomeFuncaoCompra(btnDano);
+
+            const chamadas = [];
+            window.CompraDano = () => chamadas.push("CompraDano");
+            window.CompraCM = tipo => chamadas.push("CompraCM:" + tipo);
+            window.FechaLoja = () => chamadas.push("FechaLoja");
+            window.LojaEsmeralda = () => chamadas.push("LojaEsmeralda");
+            window.EscolheEspecializacao = id => chamadas.push("Esp:" + id);
+
+            btnDano.click();
+            document.querySelector('[data-compra-cm="crit"]').click();
+            document.querySelector('[data-loja="fechar"]').click();
+            document.querySelector('[data-esp="3"]').click();
+            document.querySelector('[data-loja="esmeralda"]').click();
+            const chamadasClique = chamadas.slice();
+
+            // hold-to-buy: pointerdown no botão inicia o hold pelo data-compra
+            const antesHold = chamadas.length;
+            btnDano.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "mouse" }));
+            const holdIniciado = holdCompraBotao === btnDano;
+            const holdComprou = chamadas.length > antesHold;
+            HoldCompraPara();
+
+            // auto-compra seletiva: um checkbox por item, achado pelo data-compra
+            MontaCheckboxesAutoLoja();
+            const checkboxes = ITENS_AUTO_COMPRA.map((_, i) => !!document.getElementById("autoItemLoja-" + i));
+
+            return { inline, identidade, nomePreview, chamadasClique, holdIniciado, holdComprou, checkboxes };
+        });
+
+        assert.equal(result.inline, 0, "nenhum controle da loja com handler inline");
+        assert.deepEqual(result.identidade, { dano: true, gold: true, desconhecido: true });
+        assert.equal(result.nomePreview, "CompraDano", "preview deriva do data-compra");
+        assert.deepEqual(result.chamadasClique, ["CompraDano", "CompraCM:crit", "FechaLoja", "Esp:3", "LojaEsmeralda"]);
+        assert.equal(result.holdIniciado, true, "pointerdown inicia o hold pelo data-compra");
+        assert.equal(result.holdComprou, true, "o hold compra pelo data-compra");
+        assert.ok(result.checkboxes.every(Boolean), "um checkbox de auto-compra por item");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("inimigos usam listeners registrados (sem onclick inline)", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
