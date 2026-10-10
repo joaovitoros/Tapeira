@@ -232,9 +232,9 @@ Object.assign(UI, {
             const inimigo = document.getElementById("inimigo" + i);
 
             setTimeout(() => {
-                inimigo.style.visibility = window["vidaInimigo" + i] > 0
-                    ? "visible"
-                    : "hidden";
+                const visivel = window["vidaInimigo" + i] > 0;
+                inimigo.style.visibility = visivel ? "visible" : "hidden";
+                if (visivel) SurgeInimigo(inimigo);
 
             }, 600);
 
@@ -320,3 +320,28 @@ Object.assign(UI, {
     // MODAL
     // =========================
 });
+
+// Materializa o inimigo ao entrar na arena: fade-in no sprite + anel de
+// "surgimento" no chão. Só visual; some no animationend (sem timer novo).
+function SurgeInimigo(el) {
+	if (!el) return;
+	el.classList.remove("inimigo--surgindo");
+	void el.offsetWidth;
+	el.classList.add("inimigo--surgindo");
+	el.getAnimations().forEach(anim =>
+		anim.finished.then(() => el.classList.remove("inimigo--surgindo")).catch(() => {})
+	);
+
+	const rect = el.getBoundingClientRect();
+	const anel = document.createElement("div");
+	anel.className = "inimigo-surgir-anel";
+	anel.setAttribute("aria-hidden", "true");
+	anel.style.left = `${rect.left + rect.width / 2}px`;
+	anel.style.top = `${rect.top + rect.height * 0.86}px`;
+	anel.style.width = `${rect.width}px`;
+	anel.style.height = `${rect.width * 0.42}px`;
+	document.body.appendChild(anel);
+	anel.getAnimations().forEach(anim =>
+		anim.finished.then(() => anel.remove()).catch(() => {})
+	);
+}

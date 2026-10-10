@@ -2229,6 +2229,32 @@ caption {
 	animation: enemy-electric-flash 480ms ease-out forwards;
 }
 
+/* Inimigo "materializando" ao entrar na arena (script/ui-combate.js ->
+   SurgeInimigo): fade-in no sprite + anel no chão. Só visual. */
+.inimigo--surgindo {
+	animation: inimigo-surgir 380ms ease-out;
+}
+
+@keyframes inimigo-surgir {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+.inimigo-surgir-anel {
+	position: fixed;
+	z-index: 5;
+	transform: translate(-50%, -50%);
+	border: 2px solid rgba(150, 220, 255, 0.7);
+	border-radius: 50%;
+	pointer-events: none;
+	animation: inimigo-surgir-anel 480ms ease-out forwards;
+}
+
+@keyframes inimigo-surgir-anel {
+	0% { opacity: 0.85; transform: translate(-50%, -50%) scale(0.3); }
+	100% { opacity: 0; transform: translate(-50%, -50%) scale(1.4); }
+}
+
 .enemy-hit-eyes span {
 	position: absolute;
 	top: 49.5%;
@@ -2597,6 +2623,8 @@ html.crit-shake {
 	.enemy-hit-smoke,
 	.enemy-impact-burst,
 	.enemy-electric-impact,
+	.inimigo--surgindo,
+	.inimigo-surgir-anel,
 	.floor-transition--visible,
 	#contAndar.floor-counter--changed,
 	.floating-game-text {
