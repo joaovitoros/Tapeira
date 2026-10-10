@@ -141,13 +141,16 @@ function XPNecessarioProximoNivel(nivel = nivelJogador) {
 	return 50 + 25 * Math.max(0, nivel - 1);
 }
 
-// Bônus por nível do jogador: a cada nível ganho, +10% de dano.
+// Bônus por nível do jogador: a cada nível ganho, +15% de dano (somado).
 // O −inimigos exigidos para avançar de andar começa em −1 por nível e vai
 // encarecendo (ver BonusQuotaNivel).
 // ×1,05 da conquista Velocista entra no mesmo ponto único (status, DPS e
 // golpes saem sempre coerentes).
+const DANO_POR_NIVEL = 0.15;                                 // fração somada por nível
+const DANO_POR_NIVEL_PCT = Math.round(DANO_POR_NIVEL * 100); // o mesmo em % (UI)
+
 function MultiplicadorDanoNivel() {
-	return (1 + Math.max(0, nivelJogador - 1) * 0.1) * MultiplicadorDanoConquistaComp();
+	return (1 + Math.max(0, nivelJogador - 1) * DANO_POR_NIVEL) * MultiplicadorDanoConquistaComp();
 }
 
 // Quota do andar: quantos inimigos o nível do jogador reduz da exigência.
@@ -254,7 +257,7 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 			: "";
 		UI.showMilestone(
 			niveisGanhos === 1 ? "Nível aumentado!" : `${niveisGanhos} níveis aumentados!`,
-			`Você alcançou o nível ${nivelJogador} e recebeu ${niveisGanhos} ${niveisGanhos === 1 ? "ponto de habilidade" : "pontos de habilidade"}. Bônus: +${niveisGanhos * 10}% de dano${sufixoReducao}.`
+			`Você alcançou o nível ${nivelJogador} e recebeu ${niveisGanhos} ${niveisGanhos === 1 ? "ponto de habilidade" : "pontos de habilidade"}. Bônus: +${niveisGanhos * DANO_POR_NIVEL_PCT}% de dano${sufixoReducao}.`
 		);
 		if (marcosGanhos > 0) {
 			UI.showInfo(`Marco de 50 níveis!\n+${marcosGanhos} no multiplicador de CM no reset (×${FormataMultCM()}).`);

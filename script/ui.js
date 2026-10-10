@@ -301,13 +301,13 @@ const UI = {
         const reducao = BonusQuotaTotal();
         const bonus = document.getElementById("skill-player-bonus");
         if (bonus) {
-            bonus.textContent = `Bônus atual: +${niveis * 10}% de dano · −${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} para avançar`;
+            bonus.textContent = `Bônus atual: +${niveis * DANO_POR_NIVEL_PCT}% de dano · −${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} para avançar`;
         }
         // resumo da seção "Progresso e bônus" quando ela está recolhida
         const resumoProgresso = document.getElementById("skill-player-progresso-resumo");
         if (resumoProgresso) {
             const pontosPerk = PontosPerkDisponiveis();
-            const texto = `+${niveis * 10}% dano · ${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} a menos · ${pontosPerk} ${pontosPerk === 1 ? "ponto" : "pontos"} de perk`;
+            const texto = `+${niveis * DANO_POR_NIVEL_PCT}% dano · ${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} a menos · ${pontosPerk} ${pontosPerk === 1 ? "ponto" : "pontos"} de perk`;
             if (resumoProgresso.textContent !== texto) resumoProgresso.textContent = texto;
         }
         if (button) button.setAttribute("aria-label", `Skills, nível ${nivelJogador}, ${pontosHabilidade} pontos disponíveis`);
