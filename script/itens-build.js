@@ -5,8 +5,9 @@
 // Os baús são MANUAIS e persistentes: cada marco de 10 andares acumula um,
 // mesmo que os anteriores ainda não tenham sido abertos. Ignorar o baú
 // ("não escolher nenhum item") consome esse baú — ele some da tela.
-// A escolha é 1 de 3 itens aleatórios; escolher um item já presente
-// acumula o efeito (uma entrada por cópia, teto de 5 escolhas).
+// A escolha é 1 de 3 itens aleatórios; cada cópia ocupa um slot próprio
+// e acumula o bônus (teto de 6 slots). Na build cheia, descartar um item
+// remove a pilha INTEIRA dele — todas as cópias e o bônus delas somem.
 // Os itens são da run: zeram no Resetar (junto com perks/especialização).
 //
 // Domínio encapsulado: API pequena em window.Tapeira.ItensBuild (AGENTS.md),
@@ -18,7 +19,7 @@
 
 	window.Tapeira = window.Tapeira || {};
 
-	const LIMITE = 5;
+	const LIMITE = 6;
 
 	// Pool de itens (ícones recortados da "Grade de Ícones Fantásticos de RPG").
 	// Todos positivos; o custo é o espaço limitado dos 5 slots da build.
@@ -146,18 +147,18 @@
 			AutoSalvar();
 		},
 
-		// escolha final (chamada pelo modal): id do item novo; slot = índice a
-		// substituir quando a build já está cheia (null no fluxo normal)
-		escolhe(id, slot) {
+		// escolha final (chamada pelo modal): id do item novo; descarta = id do
+		// item que sai quando a build está cheia — a pilha INTEIRA dele sai
+		// (todas as cópias e o bônus delas), e o novo item entra com 1 cópia
+		escolhe(id, descarta) {
 			const registro = item(id);
 			if (!registro || bausPendentes <= 0 || !opcoesBauAtual?.includes(id)) return;
-			if (Number.isInteger(slot) && slot >= 0 && slot < lista.length) {
-				lista[slot] = id; // troca: a cópia escolhida sai
-			} else if (lista.length < LIMITE) {
-				lista.push(id);
-			} else {
-				return; // build cheia e sem slot definido: o modal precisa escolher
+			if (lista.length >= LIMITE) {
+				// build cheia: sem um item para descartar não pode entrar
+				if (!descarta || copias(descarta) === 0) return;
+				lista = lista.filter(idItem => idItem !== descarta);
 			}
+			lista.push(id); // cada cópia ocupa um slot próprio e acumula o bônus
 			bausPendentes--;
 			opcoesBauAtual = null;
 			if (bausPendentes > 0) UI.spawnBauBuild();

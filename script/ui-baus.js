@@ -279,7 +279,8 @@ Object.assign(UI, {
     // =========================
     // Modal próprio (não usa o gameModal para não brigar com o toggle).
     // Fluxo: 3 cartões sorteados; se a build já está cheia, o primeiro
-    // clique escolhe o item novo e o modal vira "qual dos atuais sai".
+    // clique escolhe o item novo e o modal vira "qual item sai" — a
+    // pilha inteira do item descartado some (todas as cópias).
     showEscolhaItensBuild(opcoes, escolhendo) {
         this.fechaEscolhaItensBuild();
 
@@ -291,19 +292,23 @@ Object.assign(UI, {
                 ? `Build cheia (${limite}/${limite}): qual item entra?`
                 : "Baú de itens da build";
         const subtitulo = escolhendo
-            ? `Entra: ${Tapeira.ItensBuild.item(escolhendo).nome} — escolha o que sai`
+            ? `Entra: ${Tapeira.ItensBuild.item(escolhendo).nome} — descartar some a pilha inteira do item`
             : cheia
-                ? "Escolha um dos 3 e depois qual dos atuais sai da build"
-                : "Escolha 1 de 3 — efeitos acumulam se o item já estiver na build";
+                ? "Escolha um dos 3 e depois qual item sai (a pilha inteira some)"
+                : "Escolha 1 de 3 — cópias repetidas ocupam slot próprio e acumulam o bônus";
 
         let corpo = "";
         if (escolhendo) {
-            corpo += `<div class="itens-build-grade">` + Tapeira.ItensBuild.pegaLista().map((idItem, indice) => {
+            // um cartão por item único: descartar leva a pilha inteira
+            const unicos = [...new Set(Tapeira.ItensBuild.pegaLista())];
+            corpo += `<div class="itens-build-grade">` + unicos.map(idItem => {
                 const registro = Tapeira.ItensBuild.item(idItem);
-                return `<button class="item-build-cartao item-build-sair" data-slot="${indice}">
+                const copias = Tapeira.ItensBuild.copias(idItem);
+                return `<button class="item-build-cartao item-build-sair" data-descartar="${idItem}">
                     <img src="${registro.icone}" alt="">
                     <span class="item-build-nome">${registro.nome}</span>
                     <span class="item-build-efeito">${registro.efeito}</span>
+                    ${copias > 1 ? `<span class="item-build-copia">pilha ×${copias} — sai tudo</span>` : ""}
                     <span class="item-build-acao">tirar da build</span>
                 </button>`;
             }).join("") + `</div>`;
@@ -350,9 +355,9 @@ Object.assign(UI, {
                 }
             });
         });
-        modal.querySelectorAll("[data-slot]").forEach(botao => {
+        modal.querySelectorAll("[data-descartar]").forEach(botao => {
             botao.addEventListener("click", () =>
-                Tapeira.ItensBuild.escolhe(escolhendo, Number(botao.getAttribute("data-slot"))));
+                Tapeira.ItensBuild.escolhe(escolhendo, botao.getAttribute("data-descartar")));
         });
         modal.querySelector("[data-item-build-skip]").addEventListener("click", () =>
             Tapeira.ItensBuild.descartaBau());
@@ -379,13 +384,16 @@ Object.assign(UI, {
             corpo = `<p class="logs-vazio">Nenhum item na build ainda.</p>`;
         } else {
             subtitulo = build.resumo();
-            // um cartão por slot, no mesmo visual da tela de troca
-            corpo = `<div class="itens-build-grade">` + build.pegaLista().map(idItem => {
+            // um cartão por item único, com a pilha indicada
+            const unicos = [...new Set(build.pegaLista())];
+            corpo = `<div class="itens-build-grade">` + unicos.map(idItem => {
                 const registro = build.item(idItem);
+                const copias = build.copias(idItem);
                 return `<div class="item-build-cartao item-build-cartao--leitura">
                     <img src="${registro.icone}" alt="">
                     <span class="item-build-nome">${registro.nome}</span>
                     <span class="item-build-efeito">${registro.efeito}</span>
+                    ${copias > 1 ? `<span class="item-build-copia">pilha ×${copias}</span>` : ""}
                 </div>`;
             }).join("") + `</div>`;
         }
