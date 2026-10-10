@@ -1600,7 +1600,7 @@ test("simulação offline mantém vidas, conta mortes e reinicia onda completa",
     }
 });
 
-test("baú de builds desbloqueia a cada 10 andares, acumula e consome por escolha", async () => {
+test("baú de builds desbloqueia a cada 5 andares, acumula e consome por escolha", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
         await page.waitForFunction(() => typeof Tapeira?.ItensBuild?.tentaBau === "function");
@@ -1622,7 +1622,7 @@ test("baú de builds desbloqueia a cada 10 andares, acumula e consome por escolh
             maxAndar = 100;
             build.tentaBau(); // marco 100
             const bauOriginal = document.getElementById("bauBuild");
-            andar = 105;
+            andar = 103;
             build.tentaBau(); // fora do marco: não gera baú
             const foraDoMarco = {
                 quantidade: build.quantidadeBausPendentes(),
@@ -1691,7 +1691,7 @@ test("baú de builds desbloqueia a cada 10 andares, acumula e consome por escolh
         assert.deepEqual(result.bloqueado, { desbloqueada: false, pendente: false, bauVisivel: false });
         assert.equal(result.desbloqueada, true);
         assert.deepEqual(result.foraDoMarco, { quantidade: 1, mesmoBau: true },
-            "andar fora do múltiplo de 10 não gera baú");
+            "andar fora do múltiplo de 5 não gera baú");
         assert.deepEqual(result.acumulados, {
             quantidade: 2,
             bauRecriado: true,
@@ -1972,7 +1972,7 @@ test("tela da build esconde a notificação de baú aberto (chest-opening)", asy
     }
 });
 
-test("efeitos dos itens, limite de dez e troca descartando a pilha inteira", async () => {
+test("efeitos dos itens, limite de vinte e troca descartando a pilha inteira", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
         await page.waitForFunction(() => typeof Tapeira?.ItensBuild?.carrega === "function");
@@ -2006,9 +2006,9 @@ test("efeitos dos itens, limite de dez e troca descartando a pilha inteira", asy
                 multiplicador: build.multDano()
             };
 
-            // Dados desconhecidos são ignorados e a lista nunca ultrapassa o limite (10).
+            // Dados desconhecidos são ignorados e a lista nunca ultrapassa o limite (20).
             build.carrega({
-                itensBuild: ["adaga", "desconhecido", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas"],
+                itensBuild: ["adaga", "desconhecido", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas", "bauPortatil", "esmeralda", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde"],
 				bausBuildPendentes: 1,
 				bauBuildPendente: true,
 				opcoesBauBuild: ["grimorio", "lanterna", "esmeralda"]
@@ -2054,20 +2054,17 @@ test("efeitos dos itens, limite de dez e troca descartando a pilha inteira", asy
         }
         assert.equal(result.multiplicadorNeutro, 1);
         assert.deepEqual(result.copiasAdaga, { contagem: 2, copias: 2, multiplicador: 1.15 ** 2 });
-        assert.deepEqual(result.listaSanitizada, ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna"]);
-        assert.deepEqual(result.escolhaSemDescarte, {
-            lista: ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna"],
-            pendente: true
-        });
-        assert.equal(result.limite, 10);
-        assert.equal(result.opcoesDeTroca, 9, "um cartão por item único na etapa de descarte");
+        const cheia = ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas", "bauPortatil", "esmeralda", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde"];
+        assert.deepEqual(result.listaSanitizada, cheia);
+        assert.deepEqual(result.escolhaSemDescarte, { lista: cheia, pendente: true });
+        assert.equal(result.limite, 20);
+        assert.equal(result.opcoesDeTroca, 12, "um cartão por item único na etapa de descarte");
         assert.equal(result.descarteEscolhido, "adaga");
         assert.equal(result.copiasAdagaAposDescarte, 0, "descartar some a pilha inteira");
-        assert.equal(result.listaFinal.length, 9, "pilha de 2 saiu e o item novo entrou com 1 cópia");
-        assert.deepEqual(result.listaFinal, ["moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna", "grimorio"]);
+        assert.equal(result.listaFinal.length, 18, "pilha de 3 saiu e o item novo entrou com 1 cópia");
         assert.equal(result.pendente, false);
-        assert.match(result.resumo, /9\/10/);
-        assert.match(result.resumo, /Grimório Estelar ×2/, "cópia repetida empilha no resumo");
+        assert.match(result.resumo, /18\/20/);
+        assert.match(result.resumo, /Grimório Estelar ×3/, "cópia repetida empilha no resumo");
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();

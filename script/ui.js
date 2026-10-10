@@ -539,7 +539,7 @@ const UI = {
 			["Itens da build", Tapeira.ItensBuild.desbloqueada()
 				? ((Tapeira.ItensBuild.contagem() > 0
 					? Tapeira.ItensBuild.resumo()
-					: "nenhum (baú de itens a cada 10 andares)")
+					: "nenhum (baú de itens a cada 5 andares)")
 					+ (Tapeira.ItensBuild.quantidadeBausPendentes() > 0
 						? ` · ${Tapeira.ItensBuild.quantidadeBausPendentes()} baú(s) pendente(s)`
 						: ""))

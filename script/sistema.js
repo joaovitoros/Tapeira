@@ -363,7 +363,7 @@ function Resetar() {
 	especializacao = 0;
 	especializacaoTrocas = 0;
 	// itens da build são por run: zeram no reset (o desbloqueio permanente
-	// é o andar 100; os baús voltam a aparecer a cada 10 andares)
+	// é o andar 100; os baús voltam a aparecer a cada 5 andares)
 	Tapeira.ItensBuild.limpa();
 	UI.removeBauBuild?.();
 	UI.fechaEscolhaItensBuild?.();

@@ -380,7 +380,7 @@ Object.assign(UI, {
             subtitulo = "Sistema trancado";
             corpo = `<p class="logs-vazio">Desbloqueia ao chegar no andar 100.</p>`;
         } else if (build.contagem() === 0) {
-            subtitulo = `0/${build.limiteAtual()} · baú de itens a cada 10 andares`;
+            subtitulo = `0/${build.limiteAtual()} · baú de itens a cada 5 andares`;
             corpo = `<p class="logs-vazio">Nenhum item na build ainda.</p>`;
         } else {
             subtitulo = build.resumo();
