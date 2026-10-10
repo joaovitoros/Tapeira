@@ -1,5 +1,5 @@
 // Teste focado: a quota do andar reduz inimigos com custo crescente por nível
-// (começa em −1 a cada 5 níveis; a cada 10 inimigos o próximo −1 exige +5 níveis).
+// (base −1 por nível; a cada 5 inimigos o próximo −1 exige +1 nível por inimigo).
 // Roda direto da fonte (raiz do projeto): node test-quota-nivel.js
 const { chromium } = require('playwright');
 const path = require('path');
@@ -20,8 +20,8 @@ const path = require('path');
 
         // ---- curva de custo crescente (nível → inimigos reduzidos) ----
         const tabela = [
-            [4, 0], [5, 1], [10, 2], [49, 9], [50, 10],
-            [100, 15], [150, 20], [300, 30], [500, 40]
+            [1, 1], [4, 4], [5, 5], [7, 6], [10, 7], [15, 10], [20, 11], [30, 15],
+            [50, 20], [75, 25], [100, 29], [150, 36], [300, 52], [500, 68]
         ];
         for (const [nivel, esperado] of tabela) {
             check(`BonusQuotaNivel(${nivel}) = −${esperado}`,
@@ -39,10 +39,10 @@ const path = require('path');
         totalNiveis = 0;
         nivelJogador = 50;
         qtdInimigosAndar = 100;
-        check("QuotaAndar no nível 50 (100 − 10)", QuotaAndar() === 90, QuotaAndar());
+        check("QuotaAndar no nível 50 (100 − 20)", QuotaAndar() === 80, QuotaAndar());
 
         nivelJogador = 1;
-        check("QuotaAndar no nível 1 (sem redução)", QuotaAndar() === 100, QuotaAndar());
+        check("QuotaAndar no nível 1 (100 − 1)", QuotaAndar() === 99, QuotaAndar());
 
         // ---- mínimo de 1 mesmo com bônus enorme ----
         nivelJogador = 100000;
@@ -50,16 +50,16 @@ const path = require('path');
         check("nunca avança sem ao menos um abate (mínimo 1)", QuotaAndar() === 1, QuotaAndar());
 
         // ---- total exibido no painel bate com o QuotaAndar ----
-        nivelJogador = 29;      // BonusQuotaNivel(29) = 5
+        nivelJogador = 29;      // BonusQuotaNivel(29) = 14
         totalNiveis = 1600;     // conquista = floor(1600/100) = 16
         check("BonusQuotaConquista = conquista de nível", BonusQuotaConquista() === 16, BonusQuotaConquista());
-        check("BonusQuotaTotal = nível + conquista (5 + 16)", BonusQuotaTotal() === 21, BonusQuotaTotal());
+        check("BonusQuotaTotal = nível + conquista (14 + 16)", BonusQuotaTotal() === 30, BonusQuotaTotal());
         qtdInimigosAndar = 100;
-        check("QuotaAndar usa o mesmo total (100 − 21)", QuotaAndar() === 79, QuotaAndar());
+        check("QuotaAndar usa o mesmo total (100 − 30)", QuotaAndar() === 70, QuotaAndar());
 
         UI.showSkillUpgradePanel();
         const bonusTxt = document.getElementById("skill-player-bonus")?.textContent || "";
-        check("painel de skills mostra −21 inimigos (não o antigo −44)", bonusTxt.includes("21 inimigos para avançar"), bonusTxt);
+        check("painel de skills mostra −30 inimigos (mesma fonte do QuotaAndar)", bonusTxt.includes("30 inimigos para avançar"), bonusTxt);
 
         return out;
     });

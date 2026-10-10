@@ -142,8 +142,8 @@ function XPNecessarioProximoNivel(nivel = nivelJogador) {
 }
 
 // Bônus por nível do jogador: a cada nível ganho, +10% de dano.
-// O −inimigos exigidos para avançar de andar segue uma curva de custo
-// crescente (ver BonusQuotaNivel), não mais −1 por nível.
+// O −inimigos exigidos para avançar de andar começa em −1 por nível e vai
+// encarecendo (ver BonusQuotaNivel).
 // ×1,05 da conquista Velocista entra no mesmo ponto único (status, DPS e
 // golpes saem sempre coerentes).
 function MultiplicadorDanoNivel() {
@@ -151,26 +151,32 @@ function MultiplicadorDanoNivel() {
 }
 
 // Quota do andar: quantos inimigos o nível do jogador reduz da exigência.
-// Custo crescente — começa em −1 inimigo a cada 5 níveis e, a cada faixa de
-// 10 inimigos reduzidos, o próximo −1 passa a exigir +5 níveis por inimigo
-// (5 → 10 → 15 …). Ex.: nível 50 → −10; nível 150 → −20; nível 300 → −30.
-const QUOTA_FAIXA_INIMIGOS = 10;
-const QUOTA_FAIXA_NIVEIS_BASE = 5;
-const QUOTA_FAIXA_NIVEIS_PASSO = 5;
+// Base como era antes (−1 inimigo por nível), mas com custo crescente: a cada
+// faixa de 5 inimigos reduzidos, o próximo −1 passa a exigir +1 nível por
+// inimigo (1 → 2 → 3 …). Ex.: nível 50 → −20; nível 100 → −29; nível 300 → −52.
+const QUOTA_FAIXA_INIMIGOS = 5;
+const QUOTA_FAIXA_NIVEIS_BASE = 1;
+const QUOTA_FAIXA_NIVEIS_PASSO = 1;
+
+// níveis acumulados para completar k faixas (genérico para as constantes acima)
+function quotaNiveisFaixas(k) {
+	return QUOTA_FAIXA_INIMIGOS * (QUOTA_FAIXA_NIVEIS_BASE * k + QUOTA_FAIXA_NIVEIS_PASSO * k * (k - 1) / 2);
+}
 
 function BonusQuotaNivel(nivel = nivelJogador) {
-	let restante = Math.max(0, Math.floor(Number(nivel) || 0));
-	// faixas completas: 25·k·(k+1) níveis liberam k·10 inimigos
-	let k = Math.floor((Math.sqrt(625 + 100 * restante) - 25) / 50);
+	const restante0 = Math.max(0, Math.floor(Number(nivel) || 0));
+	// chute pela raiz da quadrática e ajuste fino (robusto às constantes)
+	const a = QUOTA_FAIXA_INIMIGOS * QUOTA_FAIXA_NIVEIS_PASSO / 2;
+	const b = QUOTA_FAIXA_INIMIGOS * (QUOTA_FAIXA_NIVEIS_BASE - QUOTA_FAIXA_NIVEIS_PASSO / 2);
+	let k = a > 0
+		? Math.floor((Math.sqrt(b * b + 4 * a * restante0) - b) / (2 * a))
+		: (b > 0 ? Math.floor(restante0 / b) : 0);
 	if (k < 0) k = 0;
-	while (25 * (k + 1) * (k + 2) <= restante) k++;
-	while (k > 0 && 25 * k * (k + 1) > restante) k--;
-	let reduzidos = k * QUOTA_FAIXA_INIMIGOS;
-	restante -= 25 * k * (k + 1);
-	// resto da faixa em curso: cada inimigo custa 5·(k+1) níveis
-	const niveisPorInimigo = QUOTA_FAIXA_NIVEIS_BASE * (k + 1);
-	reduzidos += Math.floor(restante / niveisPorInimigo);
-	return reduzidos;
+	while (quotaNiveisFaixas(k + 1) <= restante0) k++;
+	while (k > 0 && quotaNiveisFaixas(k) > restante0) k--;
+	const restante = restante0 - quotaNiveisFaixas(k);
+	const niveisPorInimigo = QUOTA_FAIXA_NIVEIS_BASE + k * QUOTA_FAIXA_NIVEIS_PASSO;
+	return k * QUOTA_FAIXA_INIMIGOS + Math.floor(restante / niveisPorInimigo);
 }
 
 // Redução vinda da conquista de nível (a cada 100 níveis acumulados)
