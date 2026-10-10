@@ -32,7 +32,8 @@ function NormalizaPrecosLoja() {
 	const nomesPrecos = [
 		"precoDano", "precoBau", "precoGold", "precoBEspaco", "precoAvan",
 		"precoDCrit", "precoVidaInimigo", "precoCCrit", "precoQTDAvanco",
-		"precoComp1", "precoAvGold", "precoComp2", "precoComp3", "precoXP",
+		"precoComp1", "precoAvGold", "precoComp2", "precoComp3", "precoComp4",
+		"precoComp5", "precoComp6", "precoXP",
 		"precoEsmCM", "precoEsmBau", "precoVelComp"
 	];
 
@@ -868,6 +869,15 @@ function LojaEsmeralda(){
 		document.getElementById("precoComp3").innerHTML=precoComp3;
 		document.getElementById("lvlComp3").innerHTML=lvlComp3;
 
+		document.getElementById("precoComp4").innerHTML=precoComp4;
+		document.getElementById("lvlComp4").innerHTML=lvlComp4;
+
+		document.getElementById("precoComp5").innerHTML=precoComp5;
+		document.getElementById("lvlComp5").innerHTML=lvlComp5;
+
+		document.getElementById("precoComp6").innerHTML=precoComp6;
+		document.getElementById("lvlComp6").innerHTML=lvlComp6;
+
 		document.getElementById("precoXP").innerHTML=precoXP;
 		document.getElementById("lvlXP").innerHTML=lvlXP;
 
@@ -958,7 +968,6 @@ function CompraComp3(){
 	NormalizaPrecosLoja();
 	if(N(esmeraldas) >= N(precoComp3)){
 		esmeraldas = N(esmeraldas) - N(precoComp3);
-		tempoEsperaCompanheiro = N(tempoEsperaCompanheiro) + N(tempoComp3);
 		precoComp3 = N(precoComp3) * 2;
 		lvlComp3++;
 
@@ -967,6 +976,71 @@ function CompraComp3(){
 		document.getElementById("contEmeraldas").innerHTML=esmeraldas;
 		document.getElementById("precoComp3").innerHTML=precoComp3;
 		document.getElementById("lvlComp3").innerHTML=lvlComp3;
+
+		MostraStatus();
+		CriarCompanheiros();
+		SincronizaIntervalosNovosCompanheiros();
+	}else{
+		MostraInfo("Voce não tem esmeraldas o suficiente para essa compra!");
+	}
+}
+
+// Companheiro 4 (Alquimista): buff aleatório a cada 20s
+function CompraComp4(){
+	NormalizaPrecosLoja();
+	if(N(esmeraldas) >= N(precoComp4)){
+		esmeraldas = N(esmeraldas) - N(precoComp4);
+		precoComp4 = N(precoComp4) * 2;
+		lvlComp4++;
+
+		ChamaSom('audio6');
+
+		document.getElementById("contEmeraldas").innerHTML=esmeraldas;
+		document.getElementById("precoComp4").innerHTML=precoComp4;
+		document.getElementById("lvlComp4").innerHTML=lvlComp4;
+
+		MostraStatus();
+		CriarCompanheiros();
+		SincronizaIntervalosNovosCompanheiros();
+	}else{
+		MostraInfo("Voce não tem esmeraldas o suficiente para essa compra!");
+	}
+}
+
+// Companheiro 5 (Assassino): passiva de morte instantânea
+function CompraComp5(){
+	NormalizaPrecosLoja();
+	if(N(esmeraldas) >= N(precoComp5)){
+		esmeraldas = N(esmeraldas) - N(precoComp5);
+		precoComp5 = N(precoComp5) * 2;
+		lvlComp5++;
+
+		ChamaSom('audio6');
+
+		document.getElementById("contEmeraldas").innerHTML=esmeraldas;
+		document.getElementById("precoComp5").innerHTML=precoComp5;
+		document.getElementById("lvlComp5").innerHTML=lvlComp5;
+
+		MostraStatus();
+		CriarCompanheiros();
+	}else{
+		MostraInfo("Voce não tem esmeraldas o suficiente para essa compra!");
+	}
+}
+
+// Companheiro 6 (Explorador do mapa): chance de avançar mais de um andar
+function CompraComp6(){
+	NormalizaPrecosLoja();
+	if(N(esmeraldas) >= N(precoComp6)){
+		esmeraldas = N(esmeraldas) - N(precoComp6);
+		precoComp6 = N(precoComp6) * 2;
+		lvlComp6++;
+
+		ChamaSom('audio6');
+
+		document.getElementById("contEmeraldas").innerHTML=esmeraldas;
+		document.getElementById("precoComp6").innerHTML=precoComp6;
+		document.getElementById("lvlComp6").innerHTML=lvlComp6;
 
 		MostraStatus();
 		CriarCompanheiros();
@@ -1024,6 +1098,12 @@ function CompraEsmCM(){
 
 function FormataPct(x, casas) {
 	return (N(x) * 100).toFixed(casas === undefined ? 2 : casas) + "%";
+}
+
+// Percentual sem zeros sobrando (para os efeitos que crescem em passos
+// pequenos): 0,005 → "0,5%", 0,0065 → "0,65%", 0,01 → "1%"
+function PctTexto(ratio) {
+	return (Math.round(N(ratio) * 100000) / 1000).toString().replace(".", ",") + "%";
 }
 
 const PREVIEWS_LOJA = {
@@ -1097,12 +1177,36 @@ const PREVIEWS_LOJA = {
 		return "Bônus de gold do avanço: " + N(mulGoldAvanco).toFixed(2) + " → " + prox.toFixed(2);
 	},
 	CompraComp2() {
-		const prox = GoldCompanheiroPorSegundo(N(lvlComp2) + 1);
-		return "Gold do companheiro: " + FormatGold(N(goldCompanheiro)) + " → " + FormatGold(prox) + "/seg";
+		const n = N(lvlComp2);
+		const pctAtual = 25 + 10 * Math.max(0, n - 1);
+		const pctProx = 25 + 10 * n;
+		const prox = GoldCompanheiroPorSegundo(n + 1);
+		// 25% do gold de um inimigo no nível 1, +10% por upgrade
+		return "Gold do companheiro: " + FormatGold(N(goldCompanheiro)) + " → " + FormatGold(prox)
+			+ "/seg (" + (n > 0 ? pctAtual + "% → " + pctProx : pctProx) + "% do gold de um inimigo)";
 	},
 	CompraComp3() {
-		return "Tempo bônus do companheiro: " + N(tempoEsperaCompanheiro) + "s → "
-			+ (N(tempoEsperaCompanheiro) + N(tempoComp3)) + "s";
+		const n = Math.max(0, N(lvlComp3) | 0);
+		const pct = lv => Math.min(50, 10 + 2 * Math.max(0, lv - 1));
+		return "Mago do Relógio: enche " + (n > 0 ? pct(n) + "% → " + pct(n + 1) : pct(1))
+			+ "% de uma skill a cada 5s (teto 50%)";
+	},
+	CompraComp4() {
+		const n = Math.max(0, N(lvlComp4) | 0);
+		const seg = lv => Math.max(10, 20 - Math.max(0, lv - 1));
+		return "Alquimista: buff aleatório (dano/gold/velocidade/baú) a cada "
+			+ (n > 0 ? seg(n) + "s → " + seg(n + 1) : seg(1)) + "s (mínimo 10s)";
+	},
+	CompraComp5() {
+		const n = Math.max(0, N(lvlComp5) | 0);
+		const ch = lv => 0.005 + 0.0005 * Math.max(0, lv - 1);
+		return "Assassino: morte instantânea " + (n > 0 ? PctTexto(ch(n)) + " → " + PctTexto(ch(n + 1)) : PctTexto(ch(1)))
+			+ " (metade em automáticos)";
+	},
+	CompraComp6() {
+		const chance = Math.min(50, 5 + 2 * Math.max(0, N(lvlComp6) - 1));
+		const prox = Math.min(50, 5 + 2 * N(lvlComp6));
+		return "Explorador: " + chance + "% → " + prox + "% de avançar +1 andar";
 	},
 	CompraXP() {
 		const n = Math.max(0, N(lvlXP) | 0);

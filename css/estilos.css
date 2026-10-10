@@ -89,7 +89,7 @@ body{
 }
 
 
-.player, .companheiro1, .companheiro2, .companheiro3, .companheiroXP{
+.player, .companheiro1, .companheiro2, .companheiro3, .companheiro4, .companheiro5, .companheiro6, .companheiroXP{
     position: absolute;
 	height: 250px;
     width: 190px;
@@ -97,28 +97,49 @@ body{
     left: 40vw;
 }
 
-.player:hover, .companheiro1:hover, .companheiro2:hover, .companheiro3:hover, .companheiroXP:hover{
+.player:hover, .companheiro1:hover, .companheiro2:hover, .companheiro3:hover, .companheiro4:hover, .companheiro5:hover, .companheiro6:hover, .companheiroXP:hover{
 	cursor: pointer;
 }
 .companheiro1{
 	height: 90px;
     width: 95px;
     top: 26vw;
-    left: 35vw;
+    left: 27vw;
 }
 
 .companheiro2{
 	height: 90px;
     width: 95px;
     top: 26vw;
-    left: 45vw;
+    left: 32.5vw;
+}
+
+.companheiro4{
+	height: 90px;
+	width: 95px;
+	top: 26vw;
+	left: 56.5vw;
+}
+
+.companheiro5{
+	height: 90px;
+	width: 95px;
+	top: 26vw;
+	left: 62vw;
+}
+
+.companheiro6{
+	height: 90px;
+	width: 95px;
+	top: 26vw;
+	left: 67.5vw;
 }
 
 .companheiro3{
 	height: 90px;
     width: 95px;
 	top: 26vw;
-	left: 55vw;
+	left: 38vw;
 }
 .bau{
 	position: absolute;
@@ -129,6 +150,34 @@ body{
 }
 .bau:hover{
 	cursor: pointer;
+}
+/* Selo do buff do Alquimista (criado por AtualizaBuffAlquimistaUI):
+   pílula fixa abaixo do HUD de gold, só some quando o buff expira */
+.buff-alquimista {
+	position: fixed;
+	top: calc(1rem + 6.25vh + 8px);
+	right: 1rem;
+	z-index: 6;
+	padding: 6px 12px;
+	box-sizing: border-box;
+	border-radius: 999px;
+	background: rgba(14, 22, 38, 0.92);
+	border: 1px solid rgba(140, 220, 255, 0.55);
+	color: #eaf1fc;
+	font-size: clamp(12px, 1.1vw, 16px);
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+	pointer-events: none;
+	box-shadow: 0 0 14px rgba(90, 200, 255, 0.35);
+	animation: buff-alquimista-pulse 1.2s ease-in-out infinite;
+}
+@keyframes buff-alquimista-pulse {
+	0%, 100% { transform: scale(1); }
+	50% { transform: scale(1.05); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.buff-alquimista { animation: none; }
 }
 .habilidade1{
 	position: absolute;
@@ -1250,6 +1299,9 @@ body {
 .companheiro1,
 .companheiro2,
 .companheiro3,
+.companheiro4,
+.companheiro5,
+.companheiro6,
 .companheiroXP,
 .bau,
 .inimigo1,
@@ -1272,18 +1324,25 @@ body {
 .companheiro1,
 .companheiro2,
 .companheiro3,
+.companheiro4,
+.companheiro5,
+.companheiro6,
 .companheiroXP {
 	top: calc(var(--game-unit) * 26);
 	width: calc(var(--game-unit) * 5.3);
 	height: calc(var(--game-unit) * 5);
 }
 
-.companheiro1 { left: 35%; }
-.companheiro2 { left: 45%; }
-.companheiro3 { left: 55%; }
-/* mago do bônus de XP: entra na fileira à direita, no vão entre o comp3 e a
-   coluna do inimigo 3 (empurrado de 70% p/ 74% pra abrir esse vão) */
-.companheiroXP { left: 63%; }
+.companheiro1 { left: 27%; }
+.companheiro2 { left: 32.5%; }
+.companheiro3 { left: 38%; }
+/* fileira do grupo: tudo encostado no player (40%) e dentro da "roda" de
+   inimigos (20%/25% à esquerda, 74% à direita, 57% embaixo) — 3 comps à
+   esquerda do player; XP e os 3 novos à direita, fechando antes do inimigo 3 */
+.companheiroXP { left: 51%; }
+.companheiro4 { left: 56.5%; }
+.companheiro5 { left: 62%; }
+.companheiro6 { left: 67.5%; }
 
 .bau {
 	top: calc(var(--game-unit) * 37);
@@ -1945,6 +2004,9 @@ caption {
 .companheiro1,
 .companheiro2,
 .companheiro3,
+.companheiro4,
+.companheiro5,
+.companheiro6,
 .companheiroXP {
 	transform-origin: center bottom;
 }
@@ -1961,17 +2023,30 @@ caption {
 	animation: idle-companion-three 4.6s ease-in-out infinite;
 }
 
+.companheiro4 {
+	animation: idle-companion-three 5.1s ease-in-out infinite;
+}
+
+.companheiro5 {
+	animation: idle-companion-one 4.4s ease-in-out infinite;
+}
+
+.companheiro6 {
+	animation: idle-companion-two 5.8s ease-in-out infinite;
+}
+
 .companheiroXP {
 	animation: idle-companion-two 5.2s ease-in-out infinite;
 }
 
 /* O comerciante itinerante em pessoa: aparece só durante o evento dele
-   (visibility trocado em eventos.js) e encosta na fileira dos companheiros,
-   junto ao grupo do player — mesma linha de todo mundo (top: 26u). */
+   (visibility trocado em eventos.js). Como o comp1 agora abre a fileira em
+   27%, o comerciante desce um degrau (logo abaixo da fileira, x33%) pra não
+   encostar nele. */
 .comerciante {
 	position: absolute;
-	top: calc(var(--game-unit) * 26);
-	left: 27%;
+	top: calc(var(--game-unit) * 31 + 4px);
+	left: 33%;
 	z-index: 4;
 	width: calc(var(--game-unit) * 5.3);
 	height: calc(var(--game-unit) * 5);
@@ -2380,6 +2455,9 @@ caption {
 	.companheiro1,
 	.companheiro2,
 	.companheiro3,
+	.companheiro4,
+	.companheiro5,
+	.companheiro6,
 	.companheiroXP,
 	.comerciante,
 	.inimigo1,
@@ -2552,6 +2630,9 @@ caption {
 .companheiro1,
 .companheiro2,
 .companheiro3,
+.companheiro4,
+.companheiro5,
+.companheiro6,
 .companheiroXP {
 	filter: drop-shadow(0 7px 5px rgba(0, 0, 0, 0.34));
 }
@@ -3643,6 +3724,9 @@ input:focus-visible {
 	.companheiro1,
 	.companheiro2,
 	.companheiro3,
+	.companheiro4,
+	.companheiro5,
+	.companheiro6,
 	.companheiroXP,
 	.inimigo1,
 	.inimigo2,
@@ -3861,6 +3945,26 @@ input:focus-visible {
 	.companheiroXP {
 		top: clamp(330px, 48vh, 420px);
 		left: 67%;
+	}
+
+	/* novos companheiros: fileira de baixo (a de cima já está lotada entre
+	   o player e as colunas de inimigo em 12% e 76%) */
+	.companheiro4,
+	.companheiro5,
+	.companheiro6 {
+		top: clamp(385px, 54vh, 475px);
+	}
+
+	.companheiro4 {
+		left: 29%;
+	}
+
+	.companheiro5 {
+		left: 46%;
+	}
+
+	.companheiro6 {
+		left: 63%;
 	}
 
 	.comerciante {
@@ -4114,6 +4218,9 @@ input:focus-visible {
 	.companheiro1,
 	.companheiro2,
 	.companheiro3,
+	.companheiro4,
+	.companheiro5,
+	.companheiro6,
 	.companheiroXP,
 	.inimigo1,
 	.inimigo2,
@@ -4198,12 +4305,16 @@ input:focus-visible {
 	.companheiro1,
 	.companheiro2,
 	.companheiro3,
+	.companheiro4,
+	.companheiro5,
+	.companheiro6,
 	.companheiroXP {
 		top: 34vh;
 	}
 
 	.comerciante {
-		top: 34vh;
+		/* um degrau abaixo da fileira (34vh + 5u) pra não colidir com o comp1 */
+		top: calc(34vh + 5 * var(--game-unit) + 4px);
 		left: 28%;
 	}
 
@@ -5153,6 +5264,26 @@ input:focus-visible {
 
 	.companheiroXP {
 		left: 67%;
+	}
+
+	/* novos companheiros: fileira de baixo, desviando das colunas de
+	   inimigo em 12% e 76% (mesma lógica do mobile retrato) */
+	.companheiro4,
+	.companheiro5,
+	.companheiro6 {
+		top: clamp(575px, 63vh, 790px);
+	}
+
+	.companheiro4 {
+		left: 29%;
+	}
+
+	.companheiro5 {
+		left: 47%;
+	}
+
+	.companheiro6 {
+		left: 65%;
 	}
 
 	.comerciante {

@@ -1,3 +1,68 @@
+// Sobe um andar: toda a lógica de avanço (desbloqueios, marcos de
+// gold, fundo, inimigos, baú, missões). Extraída para que o
+// Explorador do mapa (comp 6) possa subir mais de um andar por vez.
+function SobeUmAndar() {
+	andar++;
+
+	if (andar > maxAndar) {
+		const maxAndarAnterior = maxAndar;
+		maxAndar = andar;
+		// desbloqueios de automação (pisos 40 e 50) comemoram na hora
+		VerificaDesbloqueioAutomacao(maxAndarAnterior, maxAndar);
+	}
+	andarMaxRun = Math.max(andarMaxRun, andar); //pico da run (base dos pontos de perk)
+
+	// Marco a cada 10 andares: +10% de gold nesta run (não re-dispara se o jogador fugir e subir de novo)
+	if (andar % 10 === 0 && andar > marcoGoldRun) {
+		marcoGoldRun = andar;
+		mulGold = N(mulGold) * 1.1;
+		if (lvlComp2 > 0) {
+			goldCompanheiro = GoldCompanheiroPorSegundo();
+		}
+		UI.showMilestone("Marco do andar " + andar, "+10% de gold nesta run");
+	}
+
+	// fundo da caverna gira a cada andar vencido (crossfade ~1,2s)
+	ProximoFundo?.();
+
+	RemoverInimigos();
+	RemoveBau();
+
+	let bonusAndar = BonusGoldAvanco();
+
+	const goldRecebido = AddGold(bonusAndar);
+	AddTotalGold(goldRecebido, false);
+	UI.showCurrencyReward("gold", goldRecebido);
+
+	const elAndar = document.getElementById("contAndar");
+	const elTitulo = document.getElementById("titulo");
+
+	if (elAndar) elAndar.innerHTML = andar;
+	if (elTitulo) elTitulo.innerHTML = "Caverna (Andar: " + andar + ")";
+	UI.showFloorTransition(andar);
+
+	qtdInimigosAndar++;
+
+	inimigosDerrotados = 0;
+
+	AutoSalvar();
+
+	Conquistas();
+	ConquistasComportamentais();
+	CriaBau();
+
+	if (missaoAtual == 1) {
+		MissaoColetaGold(bonusAndar * 2);
+	}
+
+	MostraStatus?.();
+
+	CarregarStatus();
+	CriarInimigos();
+
+	TentaEventoAndar(); //eventos aleatórios rolam só ao subir de andar
+}
+
 function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	if (jogoPausado || fugaEmAndamento) return;
 
@@ -19,6 +84,11 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	const ataqueCorrenteEletrica = ataquesCorrenteEletrica > 0;
 	const vidaAnterior = window["vidaInimigo" + inimigo];
 	if (vidaAnterior <= 0) return;
+	// Assassino (comp 5): passiva de morte instantânea.
+	// 0,5% no nv1 (+0,05% por nível) no ataque manual; metade disso
+	// nos automáticos e do companheiro — ChanceMorteAssassino().
+	const morteInstantaneaAssassino = lvlComp5 > 0
+		&& Math.random() < ChanceMorteAssassino(validaDano);
 	// especialização Cadeia de Ataques: este golpe conta pro stack do alvo
 	// (16 acertos fecham o cap; os contadores zeram em cada onda nova)
 	if (especializacao === 5) ataquesCadeia[inimigo] = N(ataquesCadeia[inimigo]) + 1;
@@ -55,6 +125,8 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	dano *= MultiplicadorDanoEspecializacao(critico);
 	// Cadeia de Ataques: dano extra por ataque acumulado no MESMO alvo
 	dano *= MultiplicadorCadeiaAtaques(inimigo);
+	// Alquimista: buff de Dano ×2 por 10s
+	dano *= MultiplicadorBuffDano();
 
 	if (validaDano) UI.playAttackAnimation(inimigoElement);
 
@@ -115,6 +187,9 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	}
 
 	ChamaSom(critico ? "audio8" : "audio3");
+	// Assassino: se a passiva acertou, o golpe mata na hora
+	// (dano = vida toda, o fluxo de abate roda normalmente)
+	if (morteInstantaneaAssassino) dano = vidaAnterior;
 	let vidaAtual = vidaAnterior - dano;
 	window["vidaInimigo" + inimigo] = vidaAtual;
 	UI.showDamageNumber(inimigoElement, dano, critico);
@@ -212,65 +287,16 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 			inimigosDerrotados = 0;
 		} else {
 
-			andar++;
+			SobeUmAndar();
 
-			if (andar > maxAndar) {
-				const maxAndarAnterior = maxAndar;
-				maxAndar = andar;
-				// desbloqueios de automação (pisos 40 e 50) comemoram na hora
-				VerificaDesbloqueioAutomacao(maxAndarAnterior, maxAndar);
-			}
-			andarMaxRun = Math.max(andarMaxRun, andar); //pico da run (base dos pontos de perk)
-
-			// Marco a cada 10 andares: +10% de gold nesta run (não re-dispara se o jogador fugir e subir de novo)
-			if (andar % 10 === 0 && andar > marcoGoldRun) {
-				marcoGoldRun = andar;
-				mulGold = N(mulGold) * 1.1;
-				if (lvlComp2 > 0) {
-					goldCompanheiro = GoldCompanheiroPorSegundo();
+			// Explorador do mapa (comp 6): chance de avançar mais um
+			// andar de uma vez — 5% no nível 1, +2% por nível (teto 50%)
+			if (lvlComp6 > 0) {
+				const chanceExplorador = Math.min(0.5, 0.05 + 0.02 * (lvlComp6 - 1));
+				if (Math.random() < chanceExplorador) {
+					SobeUmAndar();
 				}
-				UI.showMilestone("Marco do andar " + andar, "+10% de gold nesta run");
 			}
-
-			// fundo da caverna gira a cada andar vencido (crossfade ~1,2s)
-			ProximoFundo?.();
-
-			RemoverInimigos();
-			RemoveBau();
-
-			let bonusAndar = BonusGoldAvanco();
-
-			const goldRecebido = AddGold(bonusAndar);
-			AddTotalGold(goldRecebido, false);
-			UI.showCurrencyReward("gold", goldRecebido);
-
-			const elAndar = document.getElementById("contAndar");
-			const elTitulo = document.getElementById("titulo");
-
-			if (elAndar) elAndar.innerHTML = andar;
-			if (elTitulo) elTitulo.innerHTML = "Caverna (Andar: " + andar + ")";
-			UI.showFloorTransition(andar);
-
-			qtdInimigosAndar++;
-
-			inimigosDerrotados = 0;
-
-			AutoSalvar();
-
-			Conquistas();
-			ConquistasComportamentais();
-			CriaBau();
-
-			if (missaoAtual == 1) {
-				MissaoColetaGold(bonusAndar * 2);
-			}
-
-			MostraStatus?.();
-
-			CarregarStatus();
-			CriarInimigos();
-
-			TentaEventoAndar(); //eventos aleatórios rolam só ao subir de andar
 		}
 
 		// O cronometro continua ativo no proximo andar. Cancela-lo aqui fazia

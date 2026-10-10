@@ -1196,6 +1196,14 @@ const UI = {
         const multEspNormal = MultiplicadorDanoEspecializacao(false);
         const multEspCritico = MultiplicadorDanoEspecializacao(true);
 
+        // Alquimista: mostra o buff vigente (senão, o resumo do ciclo de 20s)
+        const infoBuff = (typeof buffAtivo !== "undefined" && buffAtivo && Date.now() < buffAtivo.fimMs
+            ? BUFFS_ALQUIMISTA.find(b => b.tipo === buffAtivo.tipo)
+            : null);
+        const buffAlqTxt = infoBuff
+            ? "buff ativo: " + infoBuff.nome + " (" + Math.max(0, Math.ceil((buffAtivo.fimMs - Date.now()) / 1000)) + "s)"
+            : "buff aleatório a cada " + (IntervaloAlquimistaMs() / 1000) + "s (10s cada)";
+
         const stats = [
             // Cadeia de Ataques: o valor "no cap" é o golpe cheio com o stack
             // de +400% fechado (base ×0,5 ×5 = ×2,5)
@@ -1214,8 +1222,16 @@ const UI = {
             ["Especialização", especializacao > 0 ? ESPECIALIZACOES[especializacao].nome : "—"],
             // DPS de verdade: a Velocidade do Companheiro multiplica os hits/s
             ["DPS companheiros", (danoComp * multDanoTotal * multEspNormal * N(velAtaqueComp)).toFixed(2)],
-            ["GoldPS companions", FormatGold(goldCompanheiro)],
-            ["Tempo bônus", tempoEsperaCompanheiro + " seg"],
+            // Companheiros: nível + efeito vigente de cada um (loja de esmeraldas)
+            ["Companheiro 1 — dano", N(lvlComp1) > 0 ? "nível " + (N(lvlComp1) | 0) + ": " + FormataPct(danoComp1, 0) + " do seu dano" : "não comprado"],
+            ["Companheiro 2 — gold", N(lvlComp2) > 0 ? "nível " + (N(lvlComp2) | 0) + ": " + FormatGold(goldCompanheiro) + "/s (" + (25 + 10 * (N(lvlComp2) - 1)) + "% do gold de um inimigo)" : "não comprado"],
+            ["Companheiro 3 — Mago do Relógio", N(lvlComp3) > 0 ? "nível " + (N(lvlComp3) | 0) + ": +" + (PctCargaMago() * 100).toFixed(0) + "% de uma skill a cada 5s" : "não comprado"],
+            ["Companheiro 4 — Alquimista", N(lvlComp4) > 0 ? "nível " + (N(lvlComp4) | 0) + ": " + buffAlqTxt : "não comprado"],
+            ["Companheiro 5 — Assassino", N(lvlComp5) > 0 ? "nível " + (N(lvlComp5) | 0) + ": " + PctTexto(ChanceMorteAssassino(true)) + " de morte instantânea (" + PctTexto(ChanceMorteAssassino(false)) + " em automáticos)" : "não comprado"],
+            ["Companheiro 6 — Explorador", N(lvlComp6) > 0 ? "nível " + (N(lvlComp6) | 0) + ": " + Math.min(50, 5 + 2 * Math.max(0, N(lvlComp6) - 1)) + "% de avançar +1 andar" : "não comprado"],
+            // Conhecimento Mug que vale no reset — recalculado na hora em que
+            // o painel abre (base da loja/marcos × resets curtos)
+            ["Multiplicador CM", "×" + FormataMultCM()],
             ["Bônus XP", "+" + BonusXPLoja()],
             ["XP por inimigo", (XPPorInimigo() * BonusXPConhecimento()).toFixed(2)],
             // total do bônus do CM: +2% por nível (dobro do +1% original)
@@ -2271,9 +2287,11 @@ function MostraMarcos() {
                     A cada 50 níveis o multiplicador de CM no reset ganha +1 — o
                     mesmo marco não paga de novo depois do reset. A cada 100 níveis
                     acumulados entre resets, 1 inimigo a menos é exigido para avançar.
-                    Resetar pelo menos 10 andares abaixo do recorde dá +5%
-                    permanente nesse multiplicador, e a cada reset curto novo o
-                    bônus acumula (multiplicativo).
+                    Resetar perto do recorde — até 10 andares antes dele
+                    (ex.: reset no 88 com recorde 97) dá +5% permanente
+                    nesse multiplicador, e a cada reset curto novo o
+                    bônus acumula (multiplicativo). Resetar longe (ex.: no
+                    20 com recorde 97) não conta.
                 </div>
             </div>
 

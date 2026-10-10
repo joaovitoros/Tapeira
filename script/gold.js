@@ -194,6 +194,8 @@ function AddGold(valor, aplicaBonusFormigas = true) {
         }
         // especialização: buff/nerf de gold no tempo do ganho (gasto não passa por aqui)
         valorFinal = valorFinal * MultiplicadorGoldEspecializacao();
+        // Alquimista: buff de Gold ×2 por 10s
+        valorFinal = valorFinal * MultiplicadorBuffGold();
     }
     gold.add(valorFinal);
 

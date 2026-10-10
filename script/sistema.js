@@ -222,6 +222,15 @@ function Salvar() {
 		tempoComp3,
 		lvlComp3,
 
+		precoComp4,
+		lvlComp4,
+
+		precoComp5,
+		lvlComp5,
+
+		precoComp6,
+		lvlComp6,
+
 		precoXP,
 		lvlXP,
 		marcosNivel50,
@@ -1091,7 +1100,9 @@ function Carregar(saveData, calculaOffline = false) {
 	danoComp = save.danoComp ?? 0;
 	danoCritComp = save.danoCritComp ?? 0;
 	goldCompanheiro = save.goldCompanheiro ?? 0;
-	tempoEsperaCompanheiro = save.tempoEsperaCompanheiro ?? 0;
+	// migração: o comp 3 (Mago do Relógio) não dá mais tempo extra —
+	// o tempo acumulado em saves antigos é descartado
+	tempoEsperaCompanheiro = 0;
 
 	esmeraldas = save.esmeraldas ?? 0;
 	numVoltas = save.numVoltas ?? 0;
@@ -1162,6 +1173,15 @@ function Carregar(saveData, calculaOffline = false) {
 	tempoComp3 = save.tempoComp3 ?? 1;
 	lvlComp3 = save.lvlComp3 ?? 0;
 
+	precoComp4 = save.precoComp4 ?? 6;
+	lvlComp4 = save.lvlComp4 ?? 0;
+
+	precoComp5 = save.precoComp5 ?? 8;
+	lvlComp5 = save.lvlComp5 ?? 0;
+
+	precoComp6 = save.precoComp6 ?? 10;
+	lvlComp6 = save.lvlComp6 ?? 0;
+
 	precoXP = save.precoXP ?? 1;
 	lvlXP = save.lvlXP ?? 0;
 	marcosNivel50 = save.marcosNivel50 ?? 0;
@@ -1218,6 +1238,9 @@ function Carregar(saveData, calculaOffline = false) {
 	// tick do companheiro reacomoda com a velocidade carregada (o bloco de
 	// intervalos do PreCarregamento limpa e recria logo em seguida)
 	SincronizaIntervaloDanoComp();
+	// intervalos dos novos companheiros (Mago do Relógio e
+	// Alquimista) também iniciam no load
+	SincronizaIntervalosNovosCompanheiros();
 
 	RemoverInimigos();
 	AbreLoja();
@@ -1794,8 +1817,15 @@ function PreCarregamento() {
 		intervaloDanoComp = null;
 	}
 	SincronizaIntervaloDanoComp();
+	// intervalos dos novos companheiros (Mago do Relógio e
+	// Alquimista): handles gerenciados, limpos e recriados aqui
+	SincronizaIntervalosNovosCompanheiros();
+	// buff do Alquimista não sobrevive ao reset
+	buffAtivo = null;
+	AtualizaBuffAlquimistaUI();
+	// selo do buff: contagem regressiva e limpeza ao expirar (1s)
+	intervalos.push(setInterval(AtualizaBuffAlquimistaUI, 1000));
 	intervalos.push(setInterval(GoldCompanheiros, 1000));
-	intervalos.push(setInterval(TempoCompanheiros, 10000));
 	intervalos.push(setInterval(HabilidadeDano, 1000));
 
 	if (qtdSave == 0) {
@@ -2177,6 +2207,15 @@ function CriarObjetoSave() {
 		precoComp3,
 		tempoComp3,
 		lvlComp3,
+
+		precoComp4,
+		lvlComp4,
+
+		precoComp5,
+		lvlComp5,
+
+		precoComp6,
+		lvlComp6,
 
 		precoXP,
 		lvlXP,

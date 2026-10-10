@@ -224,11 +224,169 @@ function MultiplicadorGoldComp2() {
 }
 
 // Gold do Companheiro 2 (GoldPS) por segundo — fonte única da fórmula:
-// nível × (1 + nível/20) × mulGold × bônus do CM × 3 — escala por nível com
-// curva suave (cada nível vale ~5% mais que o anterior) e fator ×3
+// 25% do gold de um inimigo no nível 1, +10% por upgrade (nível n vale
+// 25% + 10%×(n−1) do gold de um inimigo do andar atual), × bônus do CM.
+// Como depende do andar e dos bônus, é recomposto a cada tick em
+// GoldCompanheiros() e no load.
 function GoldCompanheiroPorSegundo(nivel = lvlComp2) {
 	const n = N(nivel);
-	return n * (1 + n / 20) * N(mulGold) * MultiplicadorGoldComp2() * 3;
+	if (n <= 0) return 0;
+	const fracao = 0.25 + 0.10 * (n - 1);
+	const goldPorInimigo = N(andar) * N(mulGold) * MultiplicadorGoldConhecimento()
+		* MultiplicadorGoldFormigas() * MultiplicadorGoldEspecializacao();
+	return goldPorInimigo * fracao * MultiplicadorGoldComp2();
+}
+
+// ============================================================
+// NOVOS COMPANHEIROS (Fauna Fantástica)
+// ============================================================
+// Companheiro 3 (Mago do Relógio): a cada 5s enche 10% da barra de
+// uma skill aleatória (substituiu o bônus de tempo).
+// Companheiro 4 (Alquimista): a cada 20s sorteia um buff por 10s.
+// Companheiro 5 (Assassino): passiva — ataque tem chance de matar
+//   instantaneamente (0,5% manual; metade em automáticos/companheiro).
+// Companheiro 6 (Explorador do mapa): chance de avançar mais de um
+//   andar por vez (escala com o nível: 5% + 2% por nível).
+
+// Buffs do Alquimista: tipo → multiplicador e nome amigável
+const BUFFS_ALQUIMISTA = [
+	{ tipo: "dano",     mult: 2,   nome: "Dano ×2" },
+	{ tipo: "gold",     mult: 2,   nome: "Gold ×2" },
+	{ tipo: "velocidade", mult: 2, nome: "Velocidade ×2" },
+	{ tipo: "bau",      mult: 3,   nome: "Baú ×3" }
+];
+const DURACAO_BUFF_MS = 10000; // 10s
+
+// Verifica se o buff do tipo está vigente (e limpa o expirado)
+function BuffAtivo(tipo) {
+	if (!buffAtivo) return false;
+	if (Date.now() >= buffAtivo.fimMs) {
+		buffAtivo = null;
+		return false;
+	}
+	return buffAtivo.tipo === tipo;
+}
+
+function MultiplicadorBuffDano() { return BuffAtivo("dano") ? 2 : 1; }
+function MultiplicadorBuffGold() { return BuffAtivo("gold") ? 2 : 1; }
+function MultiplicadorBuffVelocidade() { return BuffAtivo("velocidade") ? 2 : 1; }
+function MultiplicadorBuffBau() { return BuffAtivo("bau") ? 3 : 1; }
+
+// Sorteia e aplica um buff aleatório (chamado a cada 20s pelo Alquimista)
+function SorteiaBuffAlquimista() {
+	if (jogoPausado || fugaEmAndamento) return;
+	if (lvlComp4 <= 0) return;
+	const sorteado = BUFFS_ALQUIMISTA[Math.floor(Math.random() * BUFFS_ALQUIMISTA.length)];
+	buffAtivo = { tipo: sorteado.tipo, fimMs: Date.now() + DURACAO_BUFF_MS };
+	UI.showInfo("Alquimista: " + sorteado.nome + " por 10s!");
+	AtualizaBuffAlquimistaUI();
+}
+
+// Indicador do buff ativo no HUD (cria/atualiza/remove o selo)
+function AtualizaBuffAlquimistaUI() {
+	let selo = document.getElementById("buffAlquimista");
+	if (!buffAtivo || Date.now() >= buffAtivo.fimMs) {
+		selo?.remove();
+		return;
+	}
+	const info = BUFFS_ALQUIMISTA.find(b => b.tipo === buffAtivo.tipo);
+	if (!info) return;
+	if (!selo) {
+		selo = document.createElement("div");
+		selo.id = "buffAlquimista";
+		selo.className = "buff-alquimista";
+		document.body.appendChild(selo);
+	}
+	const resta = Math.max(0, Math.ceil((buffAtivo.fimMs - Date.now()) / 1000));
+	selo.innerHTML = "🧪 " + info.nome + " (" + resta + "s)";
+}
+
+// ---- Efeitos por nível dos novos companheiros (3, 4 e 5) ----
+// Mago: fatia da skill preenchida por disparo — 10% no nv1, +2% por nível
+// (teto 50%)
+function PctCargaMago() {
+	return Math.min(0.50, 0.10 + 0.02 * Math.max(0, Math.floor(Number(lvlComp3) || 0) - 1));
+}
+
+// Alquimista: intervalo entre buffs — 20s no nv1, −1s por nível (mín 10s)
+function IntervaloAlquimistaMs() {
+	return Math.max(10000, 20000 - 1000 * Math.max(0, Math.floor(Number(lvlComp4) || 0) - 1));
+}
+
+// Assassino: chance de morte instantânea — 0,5% no nv1, +0,05% por nível;
+// a metade (0,25% +0,025%) vale nos golpes automáticos e do companheiro
+function ChanceMorteAssassino(manual) {
+	const n = Math.max(0, Math.floor(Number(lvlComp5) || 0) - 1);
+	return (manual ? 0.005 : 0.0025) + (manual ? 0.0005 : 0.00025) * n;
+}
+
+// Mago do Relógio: enche uma fatia da barra de uma skill aleatória.
+// Considera só as skills desbloqueadas e que ainda não estão cheias.
+function CarregaSkillAleatoriaMago() {
+	if (jogoPausado || fugaEmAndamento) return;
+	if (lvlComp3 <= 0) return;
+
+	// skill de Dano (barra própria: qtdCarregaHabilidade/abateshabilidadeDano)
+	const candidatas = [];
+	if (qtdCarregaHabilidade < abateshabilidadeDano) candidatas.push("dano");
+	habilidadesCombate.forEach(skill => {
+		if (maxAndar < skill.unlockFloor) return;
+		const atual = ContagemSkill(skill.id);
+		if (atual < skill.killsRequired) candidatas.push(skill.id);
+	});
+	if (candidatas.length === 0) return;
+
+	const escolhida = candidatas[Math.floor(Math.random() * candidatas.length)];
+	const teto = TetoSkill(escolhida);
+	// PctCargaMago() do teto, arredondado para cima e no mínimo 1
+	const quanto = Math.max(1, Math.ceil(teto * PctCargaMago()));
+	AdicionaCargaSkill(escolhida, quanto);
+}
+
+// Leitura/escrita uniforme da carga das skills de combate
+function ContagemSkill(id) {
+	if (id === "dano") return qtdCarregaHabilidade;
+	if (id === "electric") return abatesCorrenteEletrica;
+	if (id === "gold") return abatesBonusGoldAtaque;
+	if (id === "escape") return abatesPausaFuga;
+	if (id === "frenzy") return abatesFrenesi;
+	return 0;
+}
+function TetoSkill(id) {
+	if (id === "dano") return abateshabilidadeDano;
+	const skill = habilidadesCombate.find(s => s.id === id);
+	return skill ? skill.killsRequired : 0;
+}
+function AdicionaCargaSkill(id, quanto) {
+	const teto = TetoSkill(id);
+	if (id === "dano") {
+		qtdCarregaHabilidade = Math.min(teto, qtdCarregaHabilidade + quanto);
+		AtualizaQTDHabildiade1();
+		VerificaHabilidade();
+	} else if (id === "electric") {
+		abatesCorrenteEletrica = Math.min(teto, abatesCorrenteEletrica + quanto);
+	} else if (id === "gold") {
+		abatesBonusGoldAtaque = Math.min(teto, abatesBonusGoldAtaque + quanto);
+	} else if (id === "escape") {
+		abatesPausaFuga = Math.min(teto, abatesPausaFuga + quanto);
+	} else if (id === "frenzy") {
+		abatesFrenesi = Math.min(teto, abatesFrenesi + quanto);
+	}
+	AtualizaHabilidadesCombate();
+}
+
+// Handles gerenciados dos intervalos dos novos companheiros.
+// Criados no load e na compra; limpos no PreCarregamento.
+function SincronizaIntervalosNovosCompanheiros() {
+	if (intervaloMagoRelogio !== null) clearInterval(intervaloMagoRelogio);
+	intervaloMagoRelogio = null;
+	if (intervaloAlquimista !== null) clearInterval(intervaloAlquimista);
+	intervaloAlquimista = null;
+
+	if (lvlComp3 > 0) intervaloMagoRelogio = setInterval(CarregaSkillAleatoriaMago, 5000);
+	// intervalo do Alquimista encurta com o nível (20s −1s/nv, mín 10s) —
+	// por isso é recriado aqui a cada compra/load em vez de fixo
+	if (lvlComp4 > 0) intervaloAlquimista = setInterval(SorteiaBuffAlquimista, IntervaloAlquimistaMs());
 }
 
 // Loja de esmeralda "CM em dobro": ×2 no Conhecimento Mug ganho por nível
@@ -242,17 +400,23 @@ function MultiplicadorCM() {
 		* BonusCMResetCurto();
 }
 
-// Reset curto: reset feito ≥10 andares abaixo do recorde (maxAndar) dá +5%
+// Reset curto: reset feito PERTO do recorde — até 10 andares antes dele
+// (recorde 97, reset no 88 = 9 → conta; reset no 20 → não) — dá +5%
 // permanente no multiplicador de CM — acumulativo (1,05^N), contado no
 // VoltaAndar e não zerado no Resetar. O teto 10000 mantém 1,05^N finito.
 function BonusCMResetCurto() {
 	return Math.pow(1.05, Math.max(0, Math.floor(Number(resetsCurtosCM) || 0)));
 }
 
-// Multiplicador de CM em texto legível ("1", "1,05", "1,1025") — vírgula e
-// no máximo 4 casas; os cálculos continuam usando o valor cheio
+// Multiplicador de CM em texto legível ("1,00", "1,05", "1,1025") — vírgula
+// com no mínimo 2 casas decimais (os resets curtos somam frações pequenas)
+// e no máximo 4; os cálculos continuam usando o valor cheio
 function FormataMultCM(valor = MultiplicadorCM()) {
-	return String(Number(valor.toFixed(4))).replace(".", ",");
+	let texto = Number(valor).toFixed(4); // fixa e arredonda em 4 casas
+	texto = texto.replace(/0+$/, "").replace(/\.$/, ""); // corta zeros sobrando
+	const partes = texto.split(".");
+	const decimais = (partes[1] || "").padEnd(2, "0"); // "1" vira "1,00"
+	return partes[0] + "," + decimais;
 }
 
 // Sobra de pontos vira CM (andar 65+): cada ponto de habilidade ainda na
@@ -406,13 +570,33 @@ var precoComp3 = 4;
 var tempoComp3 = 1;
 var lvlComp3 = 0;
 
+// Companheiro 4 (Alquimista): a cada 20s sorteia um buff aleatório por 10s
+var precoComp4 = 6;
+var lvlComp4 = 0;
+
+// Companheiro 5 (Assassino): passiva de morte instantânea
+var precoComp5 = 8;
+var lvlComp5 = 0;
+
+// Companheiro 6 (Explorador do mapa): chance de avançar mais de um andar
+var precoComp6 = 10;
+var lvlComp6 = 0;
+
+// Buffs do Alquimista (comp 4): sorteia um dos 4 a cada 20s, vale por 10s.
+// buffAtivo guarda o tipo e o timestamp (ms) de fim.
+var buffAtivo = null; // { tipo: "dano"|"gold"|"velocidade"|"bau", fimMs }
+// Handles dos intervalos dos novos companheiros (gerenciados: criados na
+// compra/load e limpos no PreCarregamento junto com os demais intervalos)
+var intervaloMagoRelogio = null; // comp 3: carrega skill a cada 5s
+var intervaloAlquimista = null;  // comp 4: sorteia buff a cada 20s −1s por nível
+
 var precoXP = 1;
 var lvlXP = 0;
 // marcos de 50 níveis do jogador já reivindicados (+1 cada no MultiplicadorCM)
 // permanente: não zera no Resetar, então o mesmo marco não paga duas vezes
 var marcosNivel50 = 0;
-// resets feitos ≥10 andares abaixo do recorde (maxAndar): +5% permanente no
-// MultiplicadorCM cada — acumulativo (1,05^N), não zera no Resetar
+// resets feitos perto do recorde (até 10 andares antes do maxAndar): +5%
+// permanente no MultiplicadorCM cada — acumulativo (1,05^N), não zera no Resetar
 var resetsCurtosCM = 0;
 
 var precoEsmCM = 10;
@@ -554,6 +738,48 @@ function CriarCompanheiros(){
 		companheiro.setAttributeNode(att3);
 		document.body.appendChild(companheiro);
 	}
+	// Companheiro 4 (Alquimista): buff aleatório a cada 20s
+	if(lvlComp4>0 && !document.getElementById("companheiro4")){
+		companheiro = document.createElement("img");
+		att1 = document.createAttribute("src");
+		att2 = document.createAttribute("class");
+		att3 = document.createAttribute("id");
+		att1.value = "imagens/companheiro4.png";
+		att2.value = "companheiro4";
+		att3.value = "companheiro4";
+		companheiro.setAttributeNode(att1);
+		companheiro.setAttributeNode(att2);
+		companheiro.setAttributeNode(att3);
+		document.body.appendChild(companheiro);
+	}
+	// Companheiro 5 (Assassino): morte instantânea passiva
+	if(lvlComp5>0 && !document.getElementById("companheiro5")){
+		companheiro = document.createElement("img");
+		att1 = document.createAttribute("src");
+		att2 = document.createAttribute("class");
+		att3 = document.createAttribute("id");
+		att1.value = "imagens/companheiro5.png";
+		att2.value = "companheiro5";
+		att3.value = "companheiro5";
+		companheiro.setAttributeNode(att1);
+		companheiro.setAttributeNode(att2);
+		companheiro.setAttributeNode(att3);
+		document.body.appendChild(companheiro);
+	}
+	// Companheiro 6 (Explorador do mapa): avança mais de um andar
+	if(lvlComp6>0 && !document.getElementById("companheiro6")){
+		companheiro = document.createElement("img");
+		att1 = document.createAttribute("src");
+		att2 = document.createAttribute("class");
+		att3 = document.createAttribute("id");
+		att1.value = "imagens/companheiro6.png";
+		att2.value = "companheiro6";
+		att3.value = "companheiro6";
+		companheiro.setAttributeNode(att1);
+		companheiro.setAttributeNode(att2);
+		companheiro.setAttributeNode(att3);
+		document.body.appendChild(companheiro);
+	}
 	// item 5 da loja de esmeraldas: o mago só entra na tela com o bônus comprado
 	if(lvlXP>0 && !document.getElementById("companheiroXP")){
 		companheiro = document.createElement("img");
@@ -573,7 +799,9 @@ function CriarCompanheiros(){
 
 
 function CriaBau(){
-	const chance = Math.max(0, Math.min(1, Number(chanceBau) || 0));
+	const base = Math.max(0, Math.min(1, Number(chanceBau) || 0));
+	// Alquimista: buff de Baú ×3 por 10s
+	const chance = Math.min(1, base * MultiplicadorBuffBau());
 	if (Math.random() >= chance) return;
 
 	const chanceExtra = ChanceBauExtraFormigas();
@@ -1072,6 +1300,10 @@ function HabilidadeDano(){
 	AtualizaQTDHabildiade1();
 	if(verificaHabilidadeDano){
 		DanoAutomatico(false,true);
+		// Alquimista: buff de Velocidade ×2 — golpe extra no mesmo tick
+		if (MultiplicadorBuffVelocidade() > 1) {
+			DanoAutomatico(false,true);
+		}
 		document.getElementById("QTDTempoHab1").innerHTML=tempoHabilidadeDano--;
 		document.getElementById("BaraQTDHab1").style.color="#f00";
 		if(tempoHabilidadeDano==0){
@@ -1087,6 +1319,10 @@ function DanoCompanheiros(){
 	if (jogoPausado) return;
 	if(danoComp>0){
 		DanoAutomatico(false,false);
+		// Alquimista: buff de Velocidade ×2 — golpe extra no mesmo tick
+		if (MultiplicadorBuffVelocidade() > 1) {
+			DanoAutomatico(false,false);
+		}
 	}
 }
 
@@ -1106,7 +1342,10 @@ function SincronizaIntervaloDanoComp() {
 
 function GoldCompanheiros(){
 	if (jogoPausado) return;
-	const goldRecebido = goldCompanheiro * MultiplicadorGoldFormigas();
+	// fórmula nova depende do andar e dos bônus: recompõe a cada tick
+	// (o MultiplicadorGoldFormigas já está dentro de GoldCompanheiroPorSegundo)
+	goldCompanheiro = GoldCompanheiroPorSegundo();
+	const goldRecebido = goldCompanheiro;
 	AddGold(goldRecebido, false);
 	AddTotalGold(goldRecebido, false);
 
@@ -1285,10 +1524,11 @@ function VoltaAndar(){
 			cmRecebido = Math.round(derrotadosRun * MultiplicadorCM() * BonusCMPontosSobra());
 			conhecimentoMug = conhecimentoMug + cmRecebido;
 		}
-		// Reset curto: ≥10 andares abaixo do recorde (maxAndar) dá +5% no
-		// multiplicador de CM — permanente e acumulativo, mas só a partir do
-		// PRÓXIMO reset (a conversão acima já usou o valor anterior)
-		const resetCurto = maxAndar - andarAnterior >= 10;
+		// Reset curto: reset feito PERTO do recorde — até 10 andares antes
+		// dele (recorde 97, reset no 88 = 9 andares → conta; no 20 → não) —
+		// dá +5% no multiplicador de CM, permanente e acumulativo, mas só a
+		// partir do PRÓXIMO reset (a conversão acima já usou o valor anterior)
+		const resetCurto = maxAndar - andarAnterior <= 10;
 		if (resetCurto) resetsCurtosCM = Math.min(10000, resetsCurtosCM + 1);
 		
 		andar=1;
