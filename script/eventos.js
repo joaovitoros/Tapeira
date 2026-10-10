@@ -94,7 +94,8 @@ function ElegivelEvento(nome) {
 function TentaEventoAndar() {
 	if (eventoAtivo || eventoPendente) return;
 	if (Date.now() - eventoUltimoMs < EVENTO_COOLDOWN_MS) return;
-	if (Math.random() >= EVENTO_CHANCE) return;
+	// Mapa do Aventureiro (itens da build): +25% por cópia na chance de evento
+	if (Math.random() >= EVENTO_CHANCE * Tapeira.ItensBuild.multEvento()) return;
 
 	const elegiveis = ["comercio", "meteoro", "nevoa", "veia", "inseto", "fissura", "emboscada"].filter(ElegivelEvento);
 	if (elegiveis.length === 0) return;

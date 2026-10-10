@@ -9,6 +9,11 @@ function SobeUmAndar() {
 		maxAndar = andar;
 		// desbloqueios de automação (pisos 40 e 50) comemoram na hora
 		VerificaDesbloqueioAutomacao(maxAndarAnterior, maxAndar);
+		// desbloqueio único dos itens de build (piso 100): a partir daí os
+		// baús de build valem para sempre, mesmo depois do reset
+		if (maxAndarAnterior < 100 && maxAndar >= 100) {
+			UI.showMilestone("Itens de build desbloqueados!", "A cada 5 andares um baú de itens aparece");
+		}
 	}
 	andarMaxRun = Math.max(andarMaxRun, andar); //pico da run (base dos pontos de perk)
 
@@ -50,6 +55,8 @@ function SobeUmAndar() {
 	Conquistas();
 	ConquistasComportamentais();
 	CriaBau();
+	// baú de itens da build: a cada 5 andares depois do desbloqueio (andar 100)
+	Tapeira.ItensBuild.tentaBau();
 
 	if (missaoAtual == 1) {
 		MissaoColetaGold(bonusAndar * 2);
@@ -75,8 +82,11 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	if (validaDano) {
 		dano = danoJogador;
 		danoCritico = danoCritJogador;
+		// itens da build: Poção Rubra aumenta o dano do crítico do jogador
+		danoCritico *= Tapeira.ItensBuild.multDanoCrit();
 	} else {
-		dano = danoComp;
+		// Colar das Formigas: +dano no Companheiro 1
+		dano = danoComp * Tapeira.ItensBuild.multDanoComp();
 		danoCritico = danoCritJogador * danoComp1;
 	}
 
@@ -106,6 +116,8 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		if (perkDano > 0) dano = dano * (1 + 0.25 * perkDano);
 		// ramo Canhão da árvore: +50% por nó (nv 5 e nv 10) no mesmo hit
 		dano *= MultiplicadorRamoDanoAutomatico();
+		// Lanterna Ancestral (itens da build): +20% por cópia neste hit
+		dano *= Tapeira.ItensBuild.multDanoAuto();
 	}
 	// ramo Oportunidade da árvore: golpes do jogador valem mais enquanto
 	// a fuga está pausada pela skill de escape
@@ -121,6 +133,11 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	TocaSomSintetico(critico ? "critico" : "impacto");
 	dano *= MultiplicadorDanoFormigas();
 	dano *= MultiplicadorDanoNivel();
+	// itens da build: Adaga Sombria (+dano acumulado por cópia) e Escudo
+	// do Guardião (bônus em andares múltiplos de 10, onde um guardião
+	// bloqueia o caminho)
+	dano *= Tapeira.ItensBuild.multDano();
+	if (andar % 10 === 0) dano *= Tapeira.ItensBuild.multGuardiao();
 	// especialização: buff/nerf aplicado no tempo do hit (não muta danoJogador)
 	dano *= MultiplicadorDanoEspecializacao(critico);
 	// Cadeia de Ataques: dano extra por ataque acumulado no MESMO alvo
@@ -461,7 +478,8 @@ function DanoCritico(critico) {
 
 	valida = Math.random();
 
-	if (valida <= chanceCrit) {
+	// Poção de Ferro (itens da build): +50% por cópia na chance de crítico
+	if (valida <= chanceCrit * Tapeira.ItensBuild.multChanceCrit()) {
 		MostraInfo("Dano critico de: " + critico);
 		return true;
 	} else {

@@ -1471,6 +1471,10 @@ const UI = {
             // Conhecimento Mug que vale no reset — recalculado na hora em que
             // o painel abre (base da loja/marcos × resets curtos)
             ["Multiplicador CM", "×" + FormataMultCM()],
+            // itens da build: por run (zeram no reset); desbloqueio no andar 100
+            ["Itens da build", Tapeira.ItensBuild.desbloqueada()
+                ? (Tapeira.ItensBuild.contagem() > 0 ? Tapeira.ItensBuild.resumo() : "nenhum (baú de itens a cada 5 andares)")
+                : "desbloqueia no andar 100"],
             ["Bônus XP", "+" + BonusXPLoja()],
             ["XP por inimigo", (XPPorInimigo() * BonusXPConhecimento()).toFixed(2)],
             // total do bônus do CM: +2% por nível (dobro do +1% original)
@@ -1906,6 +1910,65 @@ const UI = {
     },
 
     // =========================
+    // BAÚ DE ITENS DA BUILD
+    // =========================
+    // Diferente do baú comum, este é MANUAL e persistente: aparece a cada
+    // 5 andares depois do desbloqueio (andar 100) e some só quando o
+    // jogador escolhe um item — não é removido na troca de andar nem pela
+    // coleta de baús comuns (RemoveBau mexe apenas no id "bau").
+    spawnBauBuild() {
+        this.removeBauBuild();
+        const bau = document.createElement("img");
+
+        bau.src = "imagens/bau-aventura.svg";
+        bau.className = "bau bau-build";
+        bau.id = "bauBuild";
+        bau.alt = "";
+        bau.setAttribute("role", "button");
+        bau.setAttribute("tabindex", "0");
+        bau.setAttribute("aria-label", "Abrir baú de itens da build");
+        bau.title = "Baú de itens da build: escolha 1 de 3";
+        bau.addEventListener("click", () => Tapeira.ItensBuild.abreEscolha());
+        bau.addEventListener("keydown", event => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                Tapeira.ItensBuild.abreEscolha();
+            }
+        });
+
+        document.body.appendChild(bau);
+
+        const selo = document.createElement("span");
+        selo.id = "bauBuild-selo";
+        selo.className = "bau-build-selo";
+        selo.setAttribute("aria-hidden", "true");
+        selo.textContent = "ITENS";
+        document.body.appendChild(selo);
+
+        const posicionaSelo = () => {
+            if (!bau.isConnected || !selo.isConnected) return;
+            const rect = bau.getBoundingClientRect();
+            selo.style.left = `${rect.left + rect.width / 2}px`;
+            selo.style.top = `${rect.top - 4}px`;
+        };
+        if (this.bauBuildResizeHandler) {
+            window.removeEventListener("resize", this.bauBuildResizeHandler);
+        }
+        this.bauBuildResizeHandler = posicionaSelo;
+        window.addEventListener("resize", posicionaSelo);
+        posicionaSelo();
+    },
+
+    removeBauBuild() {
+        if (this.bauBuildResizeHandler) {
+            window.removeEventListener("resize", this.bauBuildResizeHandler);
+            this.bauBuildResizeHandler = null;
+        }
+        document.getElementById("bauBuild")?.remove();
+        document.getElementById("bauBuild-selo")?.remove();
+    },
+
+    // =========================
     // COMPANHEIROS (VISUAL)
     // =========================
 
@@ -2006,6 +2069,91 @@ const UI = {
         if (modal) {
             modal.style.display = "none";
         }
+    },
+
+    // =========================
+    // ESCOLHA DE ITEM DA BUILD
+    // =========================
+    // Modal próprio (não usa o gameModal para não brigar com o toggle).
+    // Fluxo: 3 cartões sorteados; se a build já está cheia, o primeiro
+    // clique escolhe o item novo e o modal vira "qual dos atuais sai".
+    showEscolhaItensBuild(opcoes, escolhendo) {
+        this.fechaEscolhaItensBuild();
+
+        const limite = Tapeira.ItensBuild.LIMITE;
+        const cheia = Tapeira.ItensBuild.contagem() >= limite;
+        const titulo = escolhendo
+            ? "Trocar qual item?"
+            : cheia
+                ? `Build cheia (${limite}/${limite}): qual item entra?`
+                : "Baú de itens da build";
+        const subtitulo = escolhendo
+            ? `Entra: ${Tapeira.ItensBuild.item(escolhendo).nome} — escolha o que sai`
+            : cheia
+                ? "Escolha um dos 3 e depois qual dos atuais sai da build"
+                : "Escolha 1 de 3 — efeitos acumulam se o item já estiver na build";
+
+        let corpo = "";
+        if (escolhendo) {
+            corpo += `<div class="itens-build-grade">` + Tapeira.ItensBuild.pegaLista().map((idItem, indice) => {
+                const registro = Tapeira.ItensBuild.item(idItem);
+                return `<button class="item-build-cartao item-build-sair" data-slot="${indice}">
+                    <img src="${registro.icone}" alt="">
+                    <span class="item-build-nome">${registro.nome}</span>
+                    <span class="item-build-efeito">${registro.efeito}</span>
+                    <span class="item-build-acao">tirar da build</span>
+                </button>`;
+            }).join("") + `</div>`;
+        } else {
+            corpo += `<div class="itens-build-grade">` + opcoes.map(idItem => {
+                const registro = Tapeira.ItensBuild.item(idItem);
+                const copias = Tapeira.ItensBuild.copias(idItem);
+                return `<button class="item-build-cartao" data-item="${idItem}">
+                    <img src="${registro.icone}" alt="">
+                    <span class="item-build-nome">${registro.nome}</span>
+                    <span class="item-build-efeito">${registro.efeito}</span>
+                    ${copias > 0 ? `<span class="item-build-copia">já na build ×${copias} → ×${copias + 1}</span>` : ""}
+                    <span class="item-build-acao">escolher</span>
+                </button>`;
+            }).join("") + `</div>`;
+        }
+
+        const modal = document.createElement("div");
+        modal.id = "modalItensBuild";
+        modal.className = "modal-itens-build";
+        modal.innerHTML = `
+            <div class="modal-itens-build-conteudo" role="dialog" aria-modal="true" aria-label="Escolha de item da build">
+                <div class="itens-build-cabecalho">
+                    <span class="itens-build-titulo">${titulo}</span>
+                    <span class="itens-build-subtitulo">${subtitulo}</span>
+                </div>
+                ${corpo}
+            </div>`;
+        // fecha clicando fora (o baú continua pendente: pode reabrir)
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) this.fechaEscolhaItensBuild();
+        });
+
+        modal.querySelectorAll("[data-item]").forEach(botao => {
+            botao.addEventListener("click", () => {
+                const idItem = botao.getAttribute("data-item");
+                if (Tapeira.ItensBuild.contagem() >= limite) {
+                    this.showEscolhaItensBuild(opcoes, idItem); // passo 2: qual sai
+                } else {
+                    Tapeira.ItensBuild.escolhe(idItem, null);
+                }
+            });
+        });
+        modal.querySelectorAll("[data-slot]").forEach(botao => {
+            botao.addEventListener("click", () =>
+                Tapeira.ItensBuild.escolhe(escolhendo, Number(botao.getAttribute("data-slot"))));
+        });
+
+        document.body.appendChild(modal);
+    },
+
+    fechaEscolhaItensBuild() {
+        document.getElementById("modalItensBuild")?.remove();
     },
 };
 

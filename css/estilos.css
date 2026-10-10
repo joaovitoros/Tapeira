@@ -7900,3 +7900,159 @@ button.skill-ramo-no:focus-visible {
 		font-size: 14px;
 	}
 }
+
+/* ===================== Itens da build (por run) ==========================
+   Baú de build: visual próprio (brilho violeta + selo "ITENS") para não se
+   confundir com o baú comum; posição à direita da arena. O baú de build NÃO
+   é removido na troca de andar — some só quando o item é escolhido. */
+.bau-build {
+	top: 26vw;
+	left: 62vw;
+	z-index: 2;
+	background: radial-gradient(
+		ellipse at 50% 68%,
+		rgba(190, 120, 255, 0.22),
+		rgba(190, 120, 255, 0.08) 42%,
+		transparent 72%
+	);
+	filter:
+		drop-shadow(0 5px 3px rgba(0, 0, 0, 0.48))
+		drop-shadow(0 0 8px rgba(185, 115, 255, 0.55))
+		hue-rotate(215deg) saturate(1.15);
+}
+
+.bau-build:hover {
+	filter:
+		drop-shadow(0 6px 4px rgba(0, 0, 0, 0.5))
+		drop-shadow(0 0 12px rgba(205, 150, 255, 0.95))
+		hue-rotate(215deg) saturate(1.2);
+}
+
+.bau-build-selo {
+	position: fixed;
+	transform: translate(-50%, -100%);
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: rgba(58, 30, 88, 0.92);
+	border: 1px solid rgba(200, 160, 255, 0.7);
+	color: #f2e6ff;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 1px;
+	pointer-events: none;
+	z-index: 3;
+	white-space: nowrap;
+}
+
+/* Modal da escolha (1 de 3; vira "qual sai" quando a build está cheia) */
+.modal-itens-build {
+	position: fixed;
+	inset: 0;
+	background: rgba(10, 6, 16, 0.72);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 40;
+	padding: 12px;
+}
+
+.modal-itens-build-conteudo {
+	background: linear-gradient(180deg, #2c2033, #1d1522);
+	border: 1px solid rgba(200, 160, 255, 0.35);
+	border-radius: 14px;
+	padding: 16px;
+	max-width: 720px;
+	width: 100%;
+	max-height: 90vh;
+	overflow-y: auto;
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+.itens-build-cabecalho {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin-bottom: 12px;
+}
+
+.itens-build-titulo {
+	font-weight: 800;
+	font-size: 1.1rem;
+	color: #f4ecff;
+}
+
+.itens-build-subtitulo {
+	font-size: 0.8rem;
+	color: #b9a8cf;
+}
+
+.itens-build-grade {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 10px;
+}
+
+@media (max-width: 560px) {
+	.itens-build-grade {
+		grid-template-columns: 1fr;
+	}
+}
+
+.item-build-cartao {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: 10px;
+	padding: 10px 8px;
+	cursor: pointer;
+	color: inherit;
+	font-family: inherit;
+	transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.item-build-cartao:hover {
+	transform: translateY(-2px);
+	border-color: rgba(200, 160, 255, 0.8);
+	background: rgba(160, 110, 240, 0.12);
+}
+
+.item-build-cartao img {
+	width: 64px;
+	height: 64px;
+	object-fit: contain;
+}
+
+.item-build-nome {
+	font-weight: 700;
+	font-size: 0.92rem;
+	color: #f4ecff;
+}
+
+.item-build-efeito {
+	font-size: 0.78rem;
+	color: #cbbde0;
+	text-align: center;
+}
+
+.item-build-copia {
+	font-size: 0.72rem;
+	color: #9fe6b8;
+	font-weight: 700;
+	text-align: center;
+}
+
+.item-build-acao {
+	margin-top: 4px;
+	font-size: 0.75rem;
+	font-weight: 800;
+	letter-spacing: 0.5px;
+	color: #d9c3ff;
+	text-transform: uppercase;
+}
+
+.item-build-sair .item-build-acao {
+	color: #ff9c9c;
+}

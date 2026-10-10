@@ -189,6 +189,8 @@ function AddGold(valor, aplicaBonusFormigas = true) {
         // bônus permanentes no ganho: +1% por nível da Loja do Conhecimento e
         // +5% da conquista Poupado (gasto não passa por aqui)
         valorFinal = Number(valor) * MultiplicadorGoldConhecimento() * MultiplicadorGoldConquistaComp();
+        // Saco de Moedas (itens da build): +20% por cópia no ganho de gold
+        valorFinal = valorFinal * Tapeira.ItensBuild.multGold();
         if (aplicaBonusFormigas) {
             valorFinal = valorFinal * MultiplicadorGoldFormigas();
         }

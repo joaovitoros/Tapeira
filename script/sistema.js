@@ -275,7 +275,12 @@ function Salvar() {
 		velAtaqueComp,
 		patenteVelComp,
 		especializacao,
-		especializacaoTrocas
+		especializacaoTrocas,
+
+		// itens da build: a run salva mantém os escolhidos e o baú pendente
+		// (zeram no reset, como as perks e a especialização)
+		itensBuild: Tapeira.ItensBuild.pegaLista(),
+		bauBuildPendente: Tapeira.ItensBuild.pendente()
 	};
 
 	save.saveFormat = "tapeira-save";
@@ -674,6 +679,17 @@ function ValidarSave(save) {
 			|| save.especializacaoTrocas > TROCA_ESPECIALIZACAO_MAX)) {
 		throw new TypeError("A contagem de trocas de especialização no save é inválida.");
 	}
+	if (save.itensBuild !== undefined
+		&& (!Array.isArray(save.itensBuild)
+			|| save.itensBuild.length > Tapeira.ItensBuild.LIMITE
+			|| save.itensBuild.some(id => !Tapeira.ItensBuild.item(id)))) {
+		throw new TypeError("Os itens da build no save são inválidos.");
+	}
+	if (save.bauBuildPendente !== undefined
+		&& save.bauBuildPendente !== true
+		&& save.bauBuildPendente !== false) {
+		throw new TypeError("O estado do baú de itens da build no save é inválido.");
+	}
 	if (save.ultimaAtualizacaoBauDourado !== undefined
 		&& (!Number.isFinite(save.ultimaAtualizacaoBauDourado)
 			|| save.ultimaAtualizacaoBauDourado < 0)) {
@@ -698,7 +714,8 @@ function ValidarSave(save) {
 	for (const [key, value] of Object.entries(save)) {
 		// campos não-numéricos já validados especificamente acima (shape conferido)
 		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards",
-			"conquistasComp", "melhorGoldRun", "autoItensLoja"].includes(key)) continue;
+			"conquistasComp", "melhorGoldRun", "autoItensLoja",
+			"itensBuild", "bauBuildPendente"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");
 		}
@@ -1291,6 +1308,8 @@ function Carregar(saveData, calculaOffline = false) {
 	// especialização: save antigo nasce sem build (o desbloqueio é a andarVolta)
 	especializacao = save.especializacao ?? 0;
 	especializacaoTrocas = save.especializacaoTrocas ?? 0;
+	// itens da build: save antigo nasce vazio; ids desconhecidos são ignorados
+	Tapeira.ItensBuild.carrega(save);
 	ultimaDataSaveOffline = calculaOffline
 		? (save.offlineLastSavedAt ?? Date.now())
 		: Date.now();
@@ -1305,6 +1324,8 @@ function Carregar(saveData, calculaOffline = false) {
 	if (calculaOffline) CalculaProgressoOffline(ultimaDataSaveOffline);
 	UI.updateGoldenChestProgress();
 	UI.updateSkillProgress();
+	// baú de itens da build pendente sobrevive ao reload: repõe o ícone
+	if (Tapeira.ItensBuild.pendente()) UI.spawnBauBuild();
 
 	const salvou = AutoSaveLocal();
 	if (recompensasOfflinePendentes) {
@@ -1860,6 +1881,11 @@ function Resetar() {
 	// (o desbloqueio permanente é a própria andarVolta)
 	especializacao = 0;
 	especializacaoTrocas = 0;
+	// itens da build são por run: zeram no reset (o desbloqueio permanente
+	// é o andar 100; os baús voltam a aparecer a cada 5 andares)
+	Tapeira.ItensBuild.limpa();
+	UI.removeBauBuild?.();
+	UI.fechaEscolhaItensBuild?.();
 	limiteInimigos = 1; //usada para controlar quantos inimigos podem ser criados na tela ao mesmo tempo
 	gold = new GoldNumber(0); //quantidade de dinheiro do jogador
 	totalGold = new GoldNumber(0); //quantidade total de dinheiro do jogador
@@ -2263,7 +2289,12 @@ function CriarObjetoSave() {
 		velAtaqueComp,
 		patenteVelComp,
 		especializacao,
-		especializacaoTrocas
+		especializacaoTrocas,
+
+		// itens da build: a run salva mantém os escolhidos e o baú pendente
+		// (zeram no reset, como as perks e a especialização)
+		itensBuild: Tapeira.ItensBuild.pegaLista(),
+		bauBuildPendente: Tapeira.ItensBuild.pendente()
 	};
 }
 

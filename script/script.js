@@ -209,7 +209,8 @@ function TempoFugaMax() {
 	const base = 120 + cmNivelFuga * 2;
 	const tempo = especializacao === 4 ? Math.floor(base * 0.5) : base;
 	// +5 s da conquista Destemido entra por fora (sempre +5, mesmo no ÷2 do Canhão)
-	return tempo + BonusFugaConquistaComp();
+	// Relógio de Bolso (itens da build): +10% por cópia no tempo total
+	return (tempo + BonusFugaConquistaComp()) * Tapeira.ItensBuild.multFuga();
 }
 
 // Chance de drop de formiga aleatória por abate: 1% base + 0,5% por nível da
@@ -800,8 +801,8 @@ function CriarCompanheiros(){
 
 function CriaBau(){
 	const base = Math.max(0, Math.min(1, Number(chanceBau) || 0));
-	// Alquimista: buff de Baú ×3 por 10s
-	const chance = Math.min(1, base * MultiplicadorBuffBau());
+	// Alquimista: buff de Baú ×3 por 10s; Baú Portátil (itens da build): +15% por cópia
+	const chance = Math.min(1, base * MultiplicadorBuffBau() * Tapeira.ItensBuild.multBau());
 	if (Math.random() >= chance) return;
 
 	const chanceExtra = ChanceBauExtraFormigas();
@@ -821,7 +822,8 @@ function ColetaBau(){
 		RemoveBau();
 	}
 	ChamaSom('audio4');
-	if(valida<=chanceEsmeraldaBau){
+	// Esmeralda Bruta (itens da build): +50% por cópia na chance de esmeralda
+	if(valida<=chanceEsmeraldaBau * Tapeira.ItensBuild.multEsmBau()){
 		UI.showChestOpening("normal", "emerald", "Esmeralda encontrada", "+1 Esmeralda", "#72e7c1");
 		esmeraldas++;
 		document.getElementById("contEmeraldas").innerHTML=esmeraldas;
@@ -1029,7 +1031,8 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 			: abates * xpPorAbate;
 	// +2% de XP por nível da Loja do Conhecimento e +10% da conquista
 	// Milionário (arredonda pra baixo e respeita o teto de XP restante)
-	const xpBase = Math.min(limiteXP, Math.floor(xpCalculado * BonusXPConhecimento() * MultiplicadorXPConquistaComp()));
+	// Grimório Estelar (itens da build): +20% por cópia no XP por abate
+	const xpBase = Math.min(limiteXP, Math.floor(xpCalculado * BonusXPConhecimento() * MultiplicadorXPConquistaComp() * Tapeira.ItensBuild.multXP()));
 	if (!Number.isSafeInteger(xpBase) || xpBase < 0) {
 		throw new TypeError("A quantidade de experiência precisa ser um inteiro não negativo.");
 	}
