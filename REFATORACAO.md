@@ -150,6 +150,13 @@ navegador, Windows (Electron) e Android (Capacitor).
 18. Otimização de assets: PNGs reencodados **sem perda** (lossless,
     29,8 → 9,2 MB) e o mp3 de fundo de 320 → 128 kbps (6,6 → 2,6 MB). O `www`
     caiu de 61 → ~13 MB.
+19. Bundle minificado no `www`: `scripts/prepare-bundle.js` concatena os
+    scripts na ordem do `script-manifest.js` e minifica com esbuild **sem
+    renomear identificadores** (o jogo acessa globais por string). O
+    `prepare:web` passou a gerar `bundle-caverna.js` (300 KB) e
+    `bundle-index.js` (230 KB) — as 35 requisições da caverna viram 3 (bundle +
+    `android-save` + `dev-tools`). A fonte e a suíte seguem com os scripts
+    individuais; `test-bundle.js` valida o bundle sobre o `www`.
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
@@ -159,11 +166,8 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 Os itens do plano original (handlers inline, bug de save, consolidação do
 carregamento e unificação do save) estão concluídos. Candidatos naturais agora:
 
-1. **Bundle/minify do JS:** concatenar os scripts na ordem do
-   `scripts/script-manifest.js` e minificar com esbuild — 36 requisições viram
-   1 e o parse cai. É o passo seguinte direto da lista única.
-2. **Cachear `getElementById` e consolidar ticks** (1s/250ms) nos laços.
-3. **Assets restantes:** tirar as folhas de arte-fonte do pacote
+1. **Cachear `getElementById` e consolidar ticks** (1s/250ms) nos laços.
+2. **Assets restantes:** tirar as folhas de arte-fonte do pacote
    (`Grade de Ícones`, `Fauna Fantastica`, `personagens.png`) e otimizar os
    sprites gerados pelo build — `prepare-animation-sprites.ps1` os recria sem
    otimização (~711 KB).
@@ -171,7 +175,7 @@ carregamento e unificação do save) estão concluídos. Candidatos naturais ago
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (41 testes)
+npm test                 # suíte principal (42 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android
