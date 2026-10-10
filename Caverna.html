@@ -218,8 +218,7 @@
 
 		<div id="container-opcoes">
 			<section id="golden-chest-tracker" aria-label="Baú dourado">
-				<button type="button" id="golden-chest-claim" class="golden-chest-tracker__main"
-					onclick="ColetaBauDourado()" disabled>
+				<button type="button" id="golden-chest-claim" class="golden-chest-tracker__main" disabled>
 					<img src="imagens/bau-dourado.svg" alt="" class="golden-chest-tracker__icon">
 					<span id="golden-chest-progress-text">20:00</span>
 				</button>
@@ -227,8 +226,7 @@
 				<div class="golden-chest-tracker__bottom">
 					<button type="button" id="golden-chest-info" class="golden-chest-tracker__info"
 						aria-expanded="false" aria-controls="golden-chest-desc"
-						aria-label="Sobre o baú dourado" title="Sobre o baú dourado"
-						onclick="UI.toggleGoldenChestInfo()">
+						aria-label="Sobre o baú dourado" title="Sobre o baú dourado">
 						<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
 							<circle cx="12" cy="12" r="9.4" />
 							<path d="M12 11.2v5.2" />
@@ -240,7 +238,6 @@
 						<label class="auto-toggle" id="autoColetaWrap">
 							<span class="golden-chest-tracker__auto-label">auto</span>
 							<input type="checkbox" id="autoColetaToggle"
-								onchange="AlternaAutoColeta(this.checked)"
 								aria-label="Auto-coleta de baús" />
 						</label>
 					</div>

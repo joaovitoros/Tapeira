@@ -315,3 +315,9 @@ function VerificaDesbloqueioAutomacao(anterior, novo) {
 	}
 	SyncTogglesAutomacao();
 }
+
+// Auto-coleta: alterna pelo próprio checkbox (sem onchange inline no HTML).
+document.addEventListener("DOMContentLoaded", () => {
+	const toggle = document.getElementById("autoColetaToggle");
+	if (toggle) toggle.addEventListener("change", () => AlternaAutoColeta(toggle.checked));
+});

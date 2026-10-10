@@ -435,3 +435,13 @@ Object.assign(UI, {
         }
     }
 });
+
+// Baú dourado: abre e mostra a descrição por addEventListener (sem onclick
+// inline no HTML). O botão de coleta nasce desabilitado e é ligado pelo jogo
+// quando o baú está pronto.
+document.addEventListener("DOMContentLoaded", () => {
+	const claim = document.getElementById("golden-chest-claim");
+	if (claim) claim.addEventListener("click", () => ColetaBauDourado());
+	const info = document.getElementById("golden-chest-info");
+	if (info) info.addEventListener("click", () => UI.toggleGoldenChestInfo());
+});

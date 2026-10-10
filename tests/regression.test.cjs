@@ -216,6 +216,67 @@ test("navegação lateral usa delegação registrada (sem onclick inline)", asyn
     }
 });
 
+test("painel de status (baú dourado e auto-coleta) usa listeners registrados", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            document.getElementById("autoColetaToggle") && typeof window.ColetaBauDourado === "function");
+        const result = await page.evaluate(() => {
+            const ids = ["golden-chest-claim", "golden-chest-info", "autoColetaToggle"];
+            const inline = [];
+            for (const id of ids) {
+                const el = document.getElementById(id);
+                if (!el) { inline.push(id + ":ausente"); continue; }
+                for (const attr of ["onclick", "onchange", "oninput"]) {
+                    if (el.hasAttribute(attr)) inline.push(id + ":" + attr);
+                }
+            }
+
+            // info do baú: o clique alterna a descrição
+            const desc = document.getElementById("golden-chest-desc");
+            document.getElementById("golden-chest-info").click();
+            const infoAberta = !desc.hidden;
+            document.getElementById("golden-chest-info").click();
+            const infoFechada = desc.hidden;
+
+            // auto-coleta: o change liga/desliga o estado
+            const toggle = document.getElementById("autoColetaToggle");
+            toggle.checked = true;
+            toggle.dispatchEvent(new Event("change", { bubbles: true }));
+            const ligada = autoColeta;
+            toggle.checked = false;
+            toggle.dispatchEvent(new Event("change", { bubbles: true }));
+            const desligada = autoColeta;
+
+            // coleta do baú: com o baú pendente, o clique entrega a recompensa
+            window.ChamaSom = () => {};
+            UI.showChestOpening = () => {};
+            UI.showCurrencyReward = () => {};
+            UI.showInfo = () => {};
+            const randomOriginal = Math.random;
+            Math.random = () => 0; // cai no ramo do gold
+            bauDouradoPendente = 1;
+            const claim = document.getElementById("golden-chest-claim");
+            claim.disabled = false;
+            claim.click();
+            const pendenteAposColeta = bauDouradoPendente;
+            Math.random = randomOriginal;
+
+            return { inline, infoAberta, infoFechada, ligada, desligada, pendenteAposColeta };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.equal(result.infoAberta, true, "golden-chest-info abre a descrição");
+        assert.equal(result.infoFechada, true, "segundo clique fecha a descrição");
+        assert.equal(result.ligada, 1);
+        assert.equal(result.desligada, 0);
+        assert.equal(result.pendenteAposColeta, 0, "o clique no baú pronto consome a recompensa");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("save antigo é migrado sem perder compatibilidade", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

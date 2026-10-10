@@ -88,7 +88,7 @@ navegador, Windows (Electron) e Android (Capacitor).
 
 ## O que foi feito nesta reorganização
 
-1. Suíte de regressão com `npm test` (29 testes) cobrindo menu, saves,
+1. Suíte de regressão com `npm test` (30 testes) cobrindo menu, saves,
    importação de JSON, combate, missões, eventos, automação, companheiros,
    conquistas, progresso offline, builds e hit kill.
 2. Extração, nesta ordem: áudio; validação e persistência de saves;
@@ -106,6 +106,8 @@ navegador, Windows (Electron) e Android (Capacitor).
    zerar, importar JSON, volumes e tela — sem handlers inline no HTML.
 7. Navegação lateral migrada para a delegação de clique já existente em
    `ui.js` (Status, Loja, Config, Formigas e Skills).
+8. Painel de status migrado: baú dourado (coleta e info) em `ui-baus.js` e
+   auto-coleta em `automacao.js`, ligados no `DOMContentLoaded`.
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
@@ -113,10 +115,10 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 ## Próximos passos sugeridos (em ordem de valor)
 
 1. **Reduzir handlers `onclick` restantes no HTML:** migrar para
-   `addEventListener`, um painel por vez. Já feitos: painel de configuração e
-   navegação lateral. Faltam: Status (auto-coleta/baú dourado), inventários da
-   loja (`Compra*`), cartões de especialização, habilidades de combate,
-   inimigos (`Bater`) e o menu (`index.html`).
+   `addEventListener`, um painel por vez. Já feitos: painel de configuração,
+   navegação lateral e painel de status. Faltam: inventários da loja
+   (`Compra*`), cartões de especialização, habilidades de combate, inimigos
+   (`Bater`) e o menu (`index.html`).
 2. **Investigar o bug de save relatado:** importar JSON e "Salvar e voltar ao
    menu" foram testados e preservam o andar; o caso real ainda não foi
    reproduzido — se voltar a acontecer, é preciso o JSON do save problemático.
@@ -131,7 +133,7 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (29 testes)
+npm test                 # suíte principal (30 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android
