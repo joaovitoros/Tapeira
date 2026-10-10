@@ -42,7 +42,8 @@ const path = require('path');
 
         // ---- painel das formigas reflete o composto ----
         const texto = UI.antBonusDescription("vermelhas", 41);
-        check("painel mostra ×7,39 (composto)", texto.includes("7,39") || texto.includes("7.39"), texto);
+        check("painel mostra o multiplicador e a porcentagem (×7.39 · +639%)",
+            texto.includes("7.39") && texto.includes("+639%"), texto);
 
         return out;
     });

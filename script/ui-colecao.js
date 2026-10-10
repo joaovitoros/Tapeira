@@ -98,10 +98,12 @@ Object.assign(UI, {
 
     antBonusDescription(id, sets) {
         if (id === "vermelhas") {
-            return `Bônus de dano: ×${Math.pow(1.05, sets).toFixed(2)} (${sets} conjunto${sets === 1 ? "" : "s"} · ×1,05 composto cada).`;
+            const mult = Math.pow(1.05, sets);
+            return `Bônus de dano: ×${mult.toFixed(2)} (+${((mult - 1) * 100).toFixed(0)}%) · ${sets} conjunto${sets === 1 ? "" : "s"} · ×1,05 composto cada.`;
         }
         if (id === "amarelas") {
-            return `Bônus de ganho de Gold: ×${Math.pow(1.05, sets).toFixed(2)} (${sets} conjunto${sets === 1 ? "" : "s"} · ×1,05 composto cada).`;
+            const mult = Math.pow(1.05, sets);
+            return `Bônus de ganho de Gold: ×${mult.toFixed(2)} (+${((mult - 1) * 100).toFixed(0)}%) · ${sets} conjunto${sets === 1 ? "" : "s"} · ×1,05 composto cada.`;
         }
         if (id === "marrons") {
             const chanceExtraPontos = (sets * 1).toFixed(0);
