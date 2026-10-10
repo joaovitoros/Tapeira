@@ -49,6 +49,18 @@ const path = require('path');
         qtdInimigosAndar = 3;
         check("nunca avança sem ao menos um abate (mínimo 1)", QuotaAndar() === 1, QuotaAndar());
 
+        // ---- total exibido no painel bate com o QuotaAndar ----
+        nivelJogador = 29;      // BonusQuotaNivel(29) = 5
+        totalNiveis = 1600;     // conquista = floor(1600/100) = 16
+        check("BonusQuotaConquista = conquista de nível", BonusQuotaConquista() === 16, BonusQuotaConquista());
+        check("BonusQuotaTotal = nível + conquista (5 + 16)", BonusQuotaTotal() === 21, BonusQuotaTotal());
+        qtdInimigosAndar = 100;
+        check("QuotaAndar usa o mesmo total (100 − 21)", QuotaAndar() === 79, QuotaAndar());
+
+        UI.showSkillUpgradePanel();
+        const bonusTxt = document.getElementById("skill-player-bonus")?.textContent || "";
+        check("painel de skills mostra −21 inimigos (não o antigo −44)", bonusTxt.includes("21 inimigos para avançar"), bonusTxt);
+
         return out;
     });
 

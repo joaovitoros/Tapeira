@@ -173,11 +173,20 @@ function BonusQuotaNivel(nivel = nivelJogador) {
 	return reduzidos;
 }
 
+// Redução vinda da conquista de nível (a cada 100 níveis acumulados)
+function BonusQuotaConquista() {
+	return Math.floor(Math.max(0, totalNiveis | 0) / 100);
+}
+
+// Total de inimigos que a quota do andar reduz (nível + conquista): fonte
+// única para o QuotaAndar e para os painéis que exibem o bônus
+function BonusQuotaTotal() {
+	return BonusQuotaNivel(nivelJogador) + BonusQuotaConquista();
+}
+
 function QuotaAndar() {
-	const bonusNivel = BonusQuotaNivel(nivelJogador);
-	const bonusConquista = Math.floor(Math.max(0, totalNiveis | 0) / 100);
 	// mínimo de 1: mesmo com bônus acumulados, nunca avança sem pelo menos um abate
-	return Math.max(1, qtdInimigosAndar - bonusNivel - bonusConquista);
+	return Math.max(1, qtdInimigosAndar - BonusQuotaTotal());
 }
 
 // Bônus do item de XP da loja de esmeraldas: cada nível soma o próprio
@@ -232,9 +241,14 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 		const marcosGanhos = ConfereMarcosNivel50();
 		const conquistaAntes = Math.floor(Math.max(0, totalNiveis | 0) / 100);
 		totalNiveis = Math.min(Number.MAX_SAFE_INTEGER, (totalNiveis | 0) + niveisGanhos);
+		// a redução de inimigos agora tem custo crescente: mostra o delta real
+		const reducaoGanha = BonusQuotaNivel(nivelJogador) - BonusQuotaNivel(nivelJogador - niveisGanhos);
+		const sufixoReducao = reducaoGanha > 0
+			? ` e −${reducaoGanha} ${reducaoGanha === 1 ? "inimigo" : "inimigos"} para avançar`
+			: "";
 		UI.showMilestone(
 			niveisGanhos === 1 ? "Nível aumentado!" : `${niveisGanhos} níveis aumentados!`,
-			`Você alcançou o nível ${nivelJogador} e recebeu ${niveisGanhos} ${niveisGanhos === 1 ? "ponto de habilidade" : "pontos de habilidade"}. Bônus: +${niveisGanhos * 10}% de dano e −${niveisGanhos} ${niveisGanhos === 1 ? "inimigo" : "inimigos"} para avançar.`
+			`Você alcançou o nível ${nivelJogador} e recebeu ${niveisGanhos} ${niveisGanhos === 1 ? "ponto de habilidade" : "pontos de habilidade"}. Bônus: +${niveisGanhos * 10}% de dano${sufixoReducao}.`
 		);
 		if (marcosGanhos > 0) {
 			UI.showInfo(`Marco de 50 níveis!\n+${marcosGanhos} no multiplicador de CM no reset (×${FormataMultCM()}).`);

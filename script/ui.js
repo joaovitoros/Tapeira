@@ -298,8 +298,7 @@ const UI = {
         const xpLabel = document.getElementById("skill-player-xp-label");
         if (xpLabel) xpLabel.textContent = `${xpAtual} / ${nextLevelXP} XP para o próximo nível`;
         const niveis = Math.max(0, nivelJogador - 1);
-        const conquistas = Math.floor(Math.max(0, totalNiveis | 0) / 100);
-        const reducao = niveis + conquistas;
+        const reducao = BonusQuotaTotal();
         const bonus = document.getElementById("skill-player-bonus");
         if (bonus) {
             bonus.textContent = `Bônus atual: +${niveis * 10}% de dano · −${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} para avançar`;
