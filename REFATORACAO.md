@@ -134,6 +134,10 @@ navegador, Windows (Electron) e Android (Capacitor).
     (`ui-combate.js`) viraram `addEventListener`. Não sobrou handler inline
     vivo em JS (só `xhr.onload`/`reader.onload`, que não são de DOM, e um
     trecho comentado).
+15. `Salvar` e `CriarObjetoSave` unificados: `Salvar` reusa
+    `CriarObjetoSave(false)` (o auto save usa `CriarObjetoSave()`, com os
+    campos offline). Some a duplicação do objeto de save e o `getRawGold`
+    morto que estava em `Salvar`.
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
@@ -143,15 +147,11 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 1. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
    duas páginas; uma lista única (gerador ou bundler com esbuild) evita
    esquecimento.
-2. **Unificar a montagem do save:** `Salvar` (exportação) e `CriarObjetoSave`
-   (auto save) repetem quase todo o mesmo objeto — a exportação apenas omite
-   os campos offline. `Salvar` ainda define um `getRawGold` local sem uso.
-   Unificar evita que um campo novo entre só num dos caminhos.
 
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (38 testes)
+npm test                 # suíte principal (40 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android

@@ -316,6 +316,41 @@ test("pontos de perk contam o Toque Frenético e saves da época do bug continua
     }
 });
 
+test("Salvar e o auto save compartilham o mesmo objeto (só os campos offline diferem)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.CriarObjetoSave === "function" && typeof window.Salvar === "function");
+        const result = await page.evaluate(async () => {
+            const comOffline = Object.keys(CriarObjetoSave(true));
+            const bruto = CriarObjetoSave(false);
+            // JSON.stringify descarta chaves de valor undefined: o esperado
+            // precisa refletir isso para comparar com o JSON exportado.
+            const semOfflineDefinidas = Object.keys(bruto).filter(k => bruto[k] !== undefined);
+
+            let blob = null;
+            window.saveAs = capturado => { blob = capturado; };
+            Salvar();
+            const salvo = blob ? JSON.parse(await blob.text()) : null;
+
+            return {
+                temOffline: comOffline.includes("offlineLastSavedAt") && comOffline.includes("offlinePendingRewards"),
+                semOfflineTem: Object.keys(bruto).includes("offlineLastSavedAt") || Object.keys(bruto).includes("offlinePendingRewards"),
+                chavesSalvo: salvo ? Object.keys(salvo) : null,
+                chavesEsperadas: semOfflineDefinidas.concat(["saveFormat", "saveVersion", "exportedAt"]),
+                formato: salvo ? [salvo.saveFormat, salvo.saveVersion, typeof salvo.exportedAt] : null
+            };
+        });
+
+        assert.equal(result.temOffline, true, "o auto save inclui os campos offline");
+        assert.equal(result.semOfflineTem, false, "a exportação não inclui os campos offline");
+        assert.deepEqual(result.chavesSalvo, result.chavesEsperadas, "exportação = auto save sem offline + formato");
+        assert.deepEqual(result.formato, ["tapeira-save", 1, "string"]);
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("save antigo é migrado sem perder compatibilidade", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

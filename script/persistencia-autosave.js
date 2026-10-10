@@ -6,11 +6,9 @@
 // pela sessão nova no andar 1. Um JSON válido importado libera o salvamento de novo.
 let autoSaveBloqueadoPorIncompatibilidade = false;
 
-function CriarObjetoSave() {
+function CriarObjetoSave(incluirOffline = true) {
 
-	console.log(gold, totalGold);
-
-	return {
+	const save = {
 
 		numInimigosTela,
 		andar,
@@ -224,6 +222,13 @@ function CriarObjetoSave() {
 		// itens da build e opções do baú atual (estado por run)
 		...Tapeira.ItensBuild.serializa()
 	};
+
+	if (!incluirOffline) {
+		delete save.offlineLastSavedAt;
+		delete save.offlinePendingRewards;
+	}
+
+	return save;
 }
 
 function AutoSaveLocal() {
