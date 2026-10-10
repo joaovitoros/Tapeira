@@ -1601,6 +1601,65 @@ test("loja usa data-* e listeners registrados (compra, navegação, especializa�
     }
 });
 
+test("reset e pausa usam listeners registrados (sem onclick/onload inline)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => document.getElementById("btnPause") && typeof window.PedeReset === "function");
+        const result = await page.evaluate(() => {
+            const ids = ["manterAndar", "btnAndar", "btnPause"];
+            const inline = ids.filter(id => document.getElementById(id)?.hasAttribute("onclick"));
+            const bodyOnload = document.body.hasAttribute("onload");
+
+            const chamadas = [];
+            window.AlternaManterAndar = () => chamadas.push("AlternaManterAndar");
+            window.PedeReset = () => chamadas.push("PedeReset");
+            window.AlternaPausa = () => chamadas.push("AlternaPausa");
+
+            const manter = document.getElementById("manterAndar");
+            manter.checked = true;
+            manter.dispatchEvent(new Event("change", { bubbles: true }));
+            document.getElementById("btnAndar").click();
+            document.getElementById("btnPause").click();
+
+            return { inline, bodyOnload, chamadas };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.equal(result.bodyOnload, false, "o <body> não tem mais onload inline");
+        assert.deepEqual(result.chamadas, ["AlternaManterAndar", "PedeReset", "AlternaPausa"]);
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("menu usa listeners registrados (sem onclick/onload inline)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("index.html");
+    try {
+        await page.waitForFunction(() => document.getElementById("btn-Jogar") && typeof window.PrepararMenu === "function");
+        const result = await page.evaluate(() => {
+            const inline = ["btn-Jogar", "btn-SairJogo"].filter(id => document.getElementById(id)?.hasAttribute("onclick"));
+            const bodyOnload = document.body.hasAttribute("onload");
+
+            const chamadas = [];
+            window.Menu = () => chamadas.push("Menu");
+            window.SairDoJogo = () => chamadas.push("SairDoJogo");
+
+            document.getElementById("btn-Jogar").click();
+            document.getElementById("btn-SairJogo").click();
+
+            return { inline, bodyOnload, chamadas };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.equal(result.bodyOnload, false, "o <body> não tem mais onload inline");
+        assert.deepEqual(result.chamadas, ["Menu", "SairDoJogo"]);
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("inimigos usam listeners registrados (sem onclick inline)", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

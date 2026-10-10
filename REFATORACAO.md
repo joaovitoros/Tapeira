@@ -123,17 +123,21 @@ navegador, Windows (Electron) e Android (Capacitor).
     ser comprado sem gastar o pool e o `ValidarSave` rejeitava saves legítimos.
     Agora o frenesi conta nos pontos e o validador tolera o excedente histórico
     (até `perkFrenesi`) — saves da época do bug continuam carregando.
+13. Handlers inline restantes migrados: painel de reset (`#manterAndar` e
+    `#btnAndar` em `script.js`), botão de pausa (`keymap.js`) e menu
+    (`index.html`, em `sistema.js`). Os dois `onload` do `<body>` viraram um
+    listener de `load` por página em `sistema.js`. Não sobrou handler inline
+    vivo no HTML (resta só um `<input>` comentado e inerte).
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
 
 ## Próximos passos sugeridos (em ordem de valor)
 
-1. **Reduzir handlers `onclick` restantes no HTML:** migrar para
-   `addEventListener`, um painel por vez. Já feitos: painel de configuração,
-   navegação lateral, painel de status, habilidades de combate, inimigos e a
-   loja inteira. Faltam: painel de reset (`#manterAndar`, `#btnAndar`), botão
-   de pausa e o menu (`index.html`).
+1. **Handlers inline gerados por JS:** o HTML está limpo, mas `eventos.js`,
+   `script.js` (modais de reset), `ui-telas.js`, `ui.js` e `ui-combate.js`
+   ainda montam markup com `onclick="…"`/`.onclick =`. Migrar para
+   `addEventListener`/delegação quando cada tela for tocada.
 2. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
    duas páginas; uma lista única (gerador ou bundler com esbuild) evita
    esquecimento.
@@ -145,7 +149,7 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (35 testes)
+npm test                 # suíte principal (37 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android

@@ -294,3 +294,9 @@ document.onkeypress = function(evt) {
 	}
 };
 ////
+
+// Botão de pausa por addEventListener (sem onclick inline no HTML).
+document.addEventListener("DOMContentLoaded", () => {
+	const pausar = document.getElementById("btnPause");
+	if (pausar) pausar.addEventListener("click", () => AlternaPausa());
+});

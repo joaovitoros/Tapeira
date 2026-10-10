@@ -43,7 +43,7 @@
 	<script src="script/progresso-offline.js"></script>
 </head>
 
-<body class="Batalha" onload="PreCarregamento()">
+<body class="Batalha">
 	<!-- Camadas de fundo da caverna: se cruzam a cada andar vencido (script.js) -->
 	<div id="fundoA" class="fundo-camada" aria-hidden="true"></div>
 	<div id="fundoB" class="fundo-camada" aria-hidden="true"></div>
@@ -73,11 +73,11 @@
 					<span class="manter-label-desktop">Manter no andar:</span>
 					<span class="manter-label-mobile" aria-hidden="true">Manter</span>
 				</label>
-				<input type="checkbox" id="manterAndar" aria-label="Manter no andar" onclick="AlternaManterAndar()">
+				<input type="checkbox" id="manterAndar" aria-label="Manter no andar">
 			</div>
 
 			<div id="container-VoltarAndar">
-				<button type="button" id="btnAndar" class="btn-Padrao" onclick="PedeReset()">
+				<button type="button" id="btnAndar" class="btn-Padrao">
 					<span class="voltar-label-desktop">Voltar andar</span>
 					<span class="voltar-label-mobile" aria-hidden="true">Voltar</span>
 					<span class="voltar-seta" aria-hidden="true">
@@ -97,7 +97,7 @@
 			</div>
 			<div class="contTempo" id="contTempo" role="timer" aria-label="Tempo restante para a fuga dos inimigos"></div>
 			<button type="button" id="btnPause" class="pause-button" aria-label="Pausar jogo"
-				title="Pausar jogo" onclick="AlternaPausa()">
+				title="Pausar jogo">
 				<span class="pause-button-icon" aria-hidden="true">Ⅱ</span>
 				<span class="pause-button-label">Pausar</span>
 			</button>

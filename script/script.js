@@ -642,3 +642,12 @@ function AlternaManterAndar(){
 	}
 	UI.showInfo(chk.checked ? "Manter no andar ativado: voce vai ficar farmando neste andar." : "Manter no andar desativado: avanco automatico reativado.");
 }
+
+// Painel de reset: checkbox "manter no andar" e botão "voltar andar" por
+// addEventListener (sem onclick inline no HTML).
+document.addEventListener("DOMContentLoaded", () => {
+	const manter = document.getElementById("manterAndar");
+	if (manter) manter.addEventListener("change", () => AlternaManterAndar());
+	const voltar = document.getElementById("btnAndar");
+	if (voltar) voltar.addEventListener("click", () => PedeReset());
+});

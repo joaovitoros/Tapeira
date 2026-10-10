@@ -65,6 +65,21 @@ function RegistraEventosConfig() {
 
 document.addEventListener("DOMContentLoaded", RegistraEventosConfig);
 
+// Botões do menu (index.html) por addEventListener (sem onclick inline).
+document.addEventListener("DOMContentLoaded", () => {
+	const jogar = document.getElementById("btn-Jogar");
+	if (jogar) jogar.addEventListener("click", () => Menu());
+	const sair = document.getElementById("btn-SairJogo");
+	if (sair) sair.addEventListener("click", () => SairDoJogo());
+});
+
+// Inicialização por página (substitui os antigos onload do <body>): a
+// caverna chama PreCarregamento; o menu chama PrepararMenu.
+window.addEventListener("load", () => {
+	if (document.getElementById("game-root")) PreCarregamento();
+	else PrepararMenu();
+});
+
 function AutoSalvar() {
 	if (saveAnd == andar) {
 		saveAnd += 10;
