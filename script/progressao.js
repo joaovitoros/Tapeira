@@ -141,16 +141,40 @@ function XPNecessarioProximoNivel(nivel = nivelJogador) {
 	return 50 + 25 * Math.max(0, nivel - 1);
 }
 
-// Bônus por nível do jogador: a cada nível ganho, +10% de dano e
-// −1 inimigo exigido para avançar de andar (quota mínima de 1).
+// Bônus por nível do jogador: a cada nível ganho, +10% de dano.
+// O −inimigos exigidos para avançar de andar segue uma curva de custo
+// crescente (ver BonusQuotaNivel), não mais −1 por nível.
 // ×1,05 da conquista Velocista entra no mesmo ponto único (status, DPS e
 // golpes saem sempre coerentes).
 function MultiplicadorDanoNivel() {
 	return (1 + Math.max(0, nivelJogador - 1) * 0.1) * MultiplicadorDanoConquistaComp();
 }
 
+// Quota do andar: quantos inimigos o nível do jogador reduz da exigência.
+// Custo crescente — começa em −1 inimigo a cada 5 níveis e, a cada faixa de
+// 10 inimigos reduzidos, o próximo −1 passa a exigir +5 níveis por inimigo
+// (5 → 10 → 15 …). Ex.: nível 50 → −10; nível 150 → −20; nível 300 → −30.
+const QUOTA_FAIXA_INIMIGOS = 10;
+const QUOTA_FAIXA_NIVEIS_BASE = 5;
+const QUOTA_FAIXA_NIVEIS_PASSO = 5;
+
+function BonusQuotaNivel(nivel = nivelJogador) {
+	let restante = Math.max(0, Math.floor(Number(nivel) || 0));
+	// faixas completas: 25·k·(k+1) níveis liberam k·10 inimigos
+	let k = Math.floor((Math.sqrt(625 + 100 * restante) - 25) / 50);
+	if (k < 0) k = 0;
+	while (25 * (k + 1) * (k + 2) <= restante) k++;
+	while (k > 0 && 25 * k * (k + 1) > restante) k--;
+	let reduzidos = k * QUOTA_FAIXA_INIMIGOS;
+	restante -= 25 * k * (k + 1);
+	// resto da faixa em curso: cada inimigo custa 5·(k+1) níveis
+	const niveisPorInimigo = QUOTA_FAIXA_NIVEIS_BASE * (k + 1);
+	reduzidos += Math.floor(restante / niveisPorInimigo);
+	return reduzidos;
+}
+
 function QuotaAndar() {
-	const bonusNivel = Math.max(0, nivelJogador - 1);
+	const bonusNivel = BonusQuotaNivel(nivelJogador);
 	const bonusConquista = Math.floor(Math.max(0, totalNiveis | 0) / 100);
 	// mínimo de 1: mesmo com bônus acumulados, nunca avança sem pelo menos um abate
 	return Math.max(1, qtdInimigosAndar - bonusNivel - bonusConquista);
