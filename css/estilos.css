@@ -53,32 +53,47 @@ body{
 }
 .btn-Padrao{
 	display:inline-block;
-	margin:0 0.3em 0.3em 0; 
-	border-radius:0.2em;
+	margin:0 0.3em 0.3em 0;
+	border-radius: 8px;
 	box-sizing: border-box;
 
 	font-family: 'Segoe UI', sans-serif;
-	font-weight: 600;
+	font-weight: 700;
 
 	color:#ffffff;
 	text-align: center;
-	transition: all 0.2s;
-	cursor:pointer;	
+	transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, border-color 140ms ease;
+	cursor:pointer;
 
 	text-shadow:0px 1px 2px rgba(0,0,0,0.8);
 
-	padding: 0.35em 1.2em;
+	padding: 0.4em 1.2em;
 
-	background: linear-gradient(to bottom, #2b2f3a, #1b1f2a);
-	border: 1px solid #3b4255;
+	background: linear-gradient(to bottom, #333a49, #1b1f2a);
+	border: 1px solid #46506a;
+	box-shadow:
+		0 3px 0 #10131b,
+		0 6px 14px rgba(0, 0, 0, 0.35),
+		inset 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .btn-Padrao:hover{
-	background: linear-gradient(to bottom, #3a4255, #2b2f3a);
+	background: linear-gradient(to bottom, #414a5f, #2b3040);
+	border-color: #5c6a8c;
+	transform: translateY(-1px);
+	box-shadow:
+		0 4px 0 #10131b,
+		0 8px 18px rgba(0, 0, 0, 0.4),
+		0 0 14px rgba(120, 160, 255, 0.18),
+		inset 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .btn-Padrao:active {
-    transform: translateY(1px);
+	transform: translateY(1px);
+	box-shadow:
+		0 1px 0 #10131b,
+		0 3px 8px rgba(0, 0, 0, 0.35),
+		inset 0 1px rgba(255, 255, 255, 0.05);
 }
 
 #btn-Jogar{
@@ -6872,11 +6887,13 @@ button.skill-ramo-no:focus-visible {
 	font: 700 12px/1.25 "Segoe UI", sans-serif;
 	text-align: left;
 	cursor: pointer;
-	transition: border-color 0.15s, box-shadow 0.15s;
+	transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
 .esp-cartao:hover:not(:disabled) {
 	border-color: #ffe08a;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 224, 138, 0.22);
 }
 
 .esp-cartao__efeito {
