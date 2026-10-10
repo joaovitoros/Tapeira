@@ -43,6 +43,16 @@ const path = require('path');
             painel && getComputedStyle(painel).animationName.includes("painel-conteudo-abre"),
             painel ? getComputedStyle(painel).animationName : "sem painel");
 
+        // re-renderização (compra/level-up) NÃO replaya a entrada
+        UI.showSkillUpgradePanel();
+        const ov2 = document.getElementById("skillUpgradeModal");
+        const painel2 = ov2.querySelector(".ant-collection-panel");
+        check("re-render do painel não replaya a entrada",
+            ov2.classList.contains("sem-entrada")
+            && getComputedStyle(ov2).animationName === "none"
+            && getComputedStyle(painel2).animationName === "none",
+            ov2.className + " / " + getComputedStyle(ov2).animationName + " / " + getComputedStyle(painel2).animationName);
+
         return out;
     });
 

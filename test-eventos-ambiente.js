@@ -38,6 +38,20 @@ const path = require('path');
         check("fim do evento limpa a classe", elDepois && elDepois.className === "",
             elDepois ? JSON.stringify(elDepois.className) : "sem elemento");
 
+        // inseto: wrapper com sombra no chão (a imagem fica dentro)
+        IniciaEvento("inseto");
+        const inseto = document.getElementById("eventoInseto");
+        check("inseto usa wrapper com sombra no chão",
+            inseto && inseto.classList.contains("evento-inseto-wrap")
+            && getComputedStyle(inseto, "::after").content !== "none"
+            && !!inseto.querySelector("img.evento-inseto"),
+            inseto ? inseto.className : "sem inseto");
+        EncerraEvento(true);
+
+        // rastro do meteoro: faixa que cai no ponto onde o fragmento pousou
+        CriaRastroMeteoro(document.body, 100, 100);
+        check("rastro do meteoro criado", !!document.querySelector(".evento-meteoro-rastro"));
+
         return out;
     });
 

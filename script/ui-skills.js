@@ -59,11 +59,14 @@ Object.assign(UI, {
         const focoAnterior = document.activeElement instanceof HTMLElement
             ? document.activeElement.dataset.focusKey
             : null;
+        // re-render (level-up, compra, seção recolhida) recria o painel: não
+        // pode replayar a animação de entrada, senão a tela "pisca" a cada ação
+        const reRenderizacao = !!document.getElementById("skillUpgradeModal");
         document.getElementById("skillUpgradeModal")?.remove();
 
         const overlay = document.createElement("div");
         overlay.id = "skillUpgradeModal";
-        overlay.className = "ant-collection-overlay skill-upgrade-overlay";
+        overlay.className = "ant-collection-overlay skill-upgrade-overlay" + (reRenderizacao ? " sem-entrada" : "");
         overlay.setAttribute("role", "dialog");
         overlay.setAttribute("aria-modal", "true");
         overlay.setAttribute("aria-labelledby", "skill-upgrade-title");

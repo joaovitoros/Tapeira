@@ -465,6 +465,7 @@ function CriaFragmento(cont, tipo, base) {
 	const y = Math.max(70, Math.min(window.innerHeight - 150, base.y + (Math.random() * 2 - 1) * margemY));
 	el.style.left = Math.round(x) + "px";
 	el.style.top = Math.round(y) + "px";
+	CriaRastroMeteoro(cont, Math.round(x), Math.round(y));
 
 	el.addEventListener("click", () => ColetaFragmento(tipo, el));
 	el.addEventListener("keydown", (evt) => {
@@ -477,6 +478,18 @@ function CriaFragmento(cont, tipo, base) {
 	cont.appendChild(el);
 	// some sozinho em 5s (é bônus de presença: precisa estar na tela)
 	setTimeout(() => el.remove(), 5000);
+}
+
+// Rastro do meteoro: uma faixa curta que "cai" e some no ponto onde o
+// fragmento pousou (só visual; some no animationend).
+function CriaRastroMeteoro(cont, x, y) {
+	const rastro = document.createElement("div");
+	rastro.className = "evento-meteoro-rastro";
+	rastro.setAttribute("aria-hidden", "true");
+	rastro.style.left = x + "px";
+	rastro.style.top = y + "px";
+	cont.appendChild(rastro);
+	rastro.addEventListener("animationend", () => rastro.remove(), { once: true });
 }
 
 function ColetaFragmento(tipo, el) {
@@ -518,22 +531,27 @@ function GaranteContainerFragmentos() {
 // o evento. Com movimento reduzido ele aparece parado em vez de cruzar.
 function CriaInseto() {
 	const cont = GaranteContainerFragmentos();
-	const el = document.createElement("img");
-	el.className = "evento-inseto";
-	el.id = "eventoInseto";
-	el.src = "imagens/inimigo.png";
-	el.alt = "";
-	el.setAttribute("role", "button");
-	el.setAttribute("tabindex", "0");
-	el.setAttribute("aria-label", "Inseto fugaz — clique pra coletar o prêmio");
-	el.addEventListener("click", () => PremioInseto(el));
-	el.addEventListener("keydown", (evt) => {
+	// O wrapper carrega a animação de travessia e a sombra no chão; a imagem
+	// (inimigo.png) fica dentro. O clique/prêmio segue no elemento #eventoInseto.
+	const wrap = document.createElement("div");
+	wrap.className = "evento-inseto-wrap";
+	wrap.id = "eventoInseto";
+	wrap.setAttribute("role", "button");
+	wrap.setAttribute("tabindex", "0");
+	wrap.setAttribute("aria-label", "Inseto fugaz — clique pra coletar o prêmio");
+	wrap.addEventListener("click", () => PremioInseto(wrap));
+	wrap.addEventListener("keydown", (evt) => {
 		if (evt.key === "Enter" || evt.key === " ") {
 			evt.preventDefault();
-			PremioInseto(el);
+			PremioInseto(wrap);
 		}
 	});
-	cont.appendChild(el);
+	const el = document.createElement("img");
+	el.className = "evento-inseto";
+	el.src = "imagens/inimigo.png";
+	el.alt = "";
+	wrap.appendChild(el);
+	cont.appendChild(wrap);
 }
 
 function PremioInseto(el) {

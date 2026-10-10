@@ -5885,6 +5885,13 @@ input:focus-visible {
 	to { opacity: 1; transform: none; }
 }
 
+/* Re-renderização do painel (level-up, compra, seção): sem animação de entrada
+   — senão a tela pisca a cada ação. A entrada anima só na 1ª abertura. */
+.sem-entrada,
+.sem-entrada .ant-collection-panel {
+	animation: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.ant-collection-overlay,
 	.ant-collection-panel {
@@ -7838,20 +7845,38 @@ button.skill-ramo-no:focus-visible {
 }
 
 /* Inseto fugaz: cruza a tela uma vez (~4s) e some na borda. A posição vem
-   do keyframes (left: 0 + translateX), então ele passa por toda a viewport. */
-.evento-inseto {
+   do keyframes (left: 0 + translateX), então ele passa por toda a viewport.
+   O wrapper carrega a animação e a sombra no chão; a imagem fica dentro. */
+.evento-inseto-wrap {
 	position: absolute;
 	bottom: clamp(90px, 14vh, 160px);
 	left: 0;
-	width: clamp(40px, 5vw, 58px);
-	height: auto;
 	pointer-events: auto;
 	cursor: pointer;
-	filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55));
 	animation: evento-inseto-cruza 4s linear forwards;
 }
 
-.evento-inseto:focus-visible {
+.evento-inseto-wrap::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: -5px;
+	width: 72%;
+	height: 10px;
+	transform: translateX(-50%);
+	border-radius: 50%;
+	background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0) 72%);
+	pointer-events: none;
+}
+
+.evento-inseto {
+	display: block;
+	width: clamp(40px, 5vw, 58px);
+	height: auto;
+	filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55));
+}
+
+.evento-inseto-wrap:focus-visible {
 	outline: 2px solid #ffe08a;
 	outline-offset: 2px;
 	border-radius: 6px;
@@ -7874,6 +7899,23 @@ button.skill-ramo-no:focus-visible {
 	0% { opacity: 0; }
 	15% { opacity: 1; }
 	100% { opacity: 0; }
+}
+
+/* Rastro do meteoro caindo no ponto onde o fragmento pousou (só visual) */
+.evento-meteoro-rastro {
+	position: absolute;
+	width: 3px;
+	height: 62px;
+	border-radius: 2px;
+	pointer-events: none;
+	transform-origin: bottom center;
+	background: linear-gradient(to top, rgba(255, 224, 138, 0.9), rgba(255, 160, 60, 0));
+	animation: evento-meteoro-rastro 420ms ease-out forwards;
+}
+
+@keyframes evento-meteoro-rastro {
+	0% { opacity: 0.9; transform: translate(-50%, -190%) rotate(14deg); }
+	100% { opacity: 0; transform: translate(-50%, -90%) rotate(14deg); }
 }
 
 /* Float "+N CM" da Névoa (mesmo padrão dos floats de gold/XP) */
@@ -8023,7 +8065,7 @@ button.skill-ramo-no:focus-visible {
 	}
 
 	/* sem movimento: o inseto aparece parado em vez de cruzar a tela */
-	.evento-inseto {
+	.evento-inseto-wrap {
 		animation: none;
 		left: auto;
 		right: clamp(24px, 6vw, 64px);
@@ -8032,6 +8074,10 @@ button.skill-ramo-no:focus-visible {
 	.meteoro-flash {
 		animation: none;
 		opacity: 0.45;
+	}
+
+	.evento-meteoro-rastro {
+		animation-duration: 1ms;
 	}
 }
 
