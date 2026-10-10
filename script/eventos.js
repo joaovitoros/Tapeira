@@ -149,6 +149,7 @@ function IniciaEvento(nome) {
 	const info = EVENTO_INFO[nome];
 	UI.showMilestone(info.titulo, info.dica);
 	ChamaSom("audio4");
+	AplicaAmbienteEvento(nome);
 	MontaPainelEvento();
 	if (!eventoTick) eventoTick = setInterval(EventoTick, 250);
 }
@@ -191,6 +192,7 @@ function EncerraEvento(resetarCooldown) {
 
 	const painel = document.getElementById("eventoPainel");
 	if (painel) painel.remove();
+	AplicaAmbienteEvento(null);
 	const fragmentos = document.getElementById("eventoFragmentos");
 	if (fragmentos) fragmentos.innerHTML = "";
 	// cobre todos os fins do evento (tempo, ✕, ESC, reset e load)
@@ -244,6 +246,22 @@ function EventoTick() {
 		return;
 	}
 	AtualizaPainelEvento();
+}
+
+// ---------------------------------------------------------
+// Ambiente visual do evento (só CSS): o elemento fixo #eventoAmbiente recebe
+// a classe do evento ativo e o CSS pinta a caverna (névoa, veia, vinheta…).
+// Sem timers novos; respeita prefers-reduced-motion.
+// ---------------------------------------------------------
+function AplicaAmbienteEvento(nome) {
+	let el = document.getElementById("eventoAmbiente");
+	if (!el) {
+		el = document.createElement("div");
+		el.id = "eventoAmbiente";
+		el.setAttribute("aria-hidden", "true");
+		document.body.appendChild(el);
+	}
+	el.className = nome ? "evento-" + nome : "";
 }
 
 // ---------------------------------------------------------

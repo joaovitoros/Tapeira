@@ -7716,6 +7716,93 @@ button.skill-ramo-no:focus-visible {
 	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95), 0 0 9px rgba(157, 123, 255, 0.85);
 }
 
+/* Camada de ambiente do evento (script/eventos.js -> AplicaAmbienteEvento):
+   um elemento fixo cobre a caverna (atrás dos inimigos e do HUD) e recebe a
+   classe do evento ativo. Só visual, sem timers novos e sem capturar clique. */
+#eventoAmbiente {
+	position: fixed;
+	inset: 0;
+	z-index: 3;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 450ms ease;
+}
+
+#eventoAmbiente.evento-nevoa {
+	opacity: 1;
+	background:
+		radial-gradient(120% 90% at 50% 35%, rgba(160, 130, 255, 0.18), rgba(160, 130, 255, 0) 70%),
+		radial-gradient(80% 70% at 18% 85%, rgba(120, 205, 255, 0.12), rgba(120, 205, 255, 0) 62%);
+	animation: evento-nevoa-drift 9s ease-in-out infinite alternate;
+}
+
+#eventoAmbiente.evento-veia {
+	opacity: 1;
+	background:
+		radial-gradient(140% 110% at 50% 115%, rgba(60, 255, 150, 0.16), rgba(60, 255, 150, 0) 62%),
+		radial-gradient(55% 45% at 84% 28%, rgba(120, 255, 190, 0.1), rgba(120, 255, 190, 0) 62%);
+	animation: evento-veia-pulse 2.4s ease-in-out infinite;
+}
+
+#eventoAmbiente.evento-fissura {
+	opacity: 1;
+	background:
+		radial-gradient(120% 100% at 50% 50%, rgba(120, 200, 255, 0) 42%, rgba(120, 200, 255, 0.22) 100%);
+	animation: evento-fissura-pulse 3.6s ease-in-out infinite;
+}
+
+#eventoAmbiente.evento-emboscada {
+	opacity: 1;
+	background:
+		radial-gradient(120% 100% at 50% 50%, rgba(255, 60, 60, 0) 38%, rgba(255, 40, 40, 0.3) 100%);
+	animation: evento-emboscada-pulse 1.6s ease-in-out infinite;
+}
+
+#eventoAmbiente.evento-comercio {
+	opacity: 1;
+	background:
+		radial-gradient(85% 80% at 28% 72%, rgba(255, 190, 90, 0.16), rgba(255, 190, 90, 0) 65%);
+}
+
+#eventoAmbiente.evento-meteoro {
+	opacity: 1;
+	background:
+		radial-gradient(120% 90% at 50% 18%, rgba(255, 150, 60, 0.13), rgba(255, 150, 60, 0) 62%);
+}
+
+#eventoAmbiente.evento-inseto {
+	opacity: 1;
+	background:
+		radial-gradient(70% 60% at 80% 60%, rgba(180, 255, 120, 0.1), rgba(180, 255, 120, 0) 62%);
+}
+
+@keyframes evento-nevoa-drift {
+	from { transform: translate3d(-2%, 1%, 0) scale(1.05); }
+	to { transform: translate3d(2%, -1.5%, 0) scale(1.12); }
+}
+
+@keyframes evento-veia-pulse {
+	0%, 100% { filter: brightness(1); }
+	50% { filter: brightness(1.3); }
+}
+
+@keyframes evento-fissura-pulse {
+	0%, 100% { opacity: 0.72; }
+	50% { opacity: 1; }
+}
+
+@keyframes evento-emboscada-pulse {
+	0%, 100% { opacity: 0.72; }
+	50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#eventoAmbiente {
+		transition: none;
+		animation: none !important;
+	}
+}
+
 /* Telas baixas (ex.: 640×360): painel compacto no canto superior esquerdo —
    longe da barra de skills e do rastreador do baú dourado (que vira
    top-right exatamente nesses tamanhos). */
