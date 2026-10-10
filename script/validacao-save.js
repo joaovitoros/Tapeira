@@ -347,7 +347,7 @@ function ValidarSave(save) {
 	if (save.autoItensLoja !== undefined
 		&& (!Array.isArray(save.autoItensLoja)
 			|| save.autoItensLoja.length > 64
-			|| save.autoItensLoja.some(v => v !== 0 && v !== 1))) {
+			|| save.autoItensLoja.some(v => v !== 0 && v !== 1 && v !== null))) {
 		throw new TypeError("A seleção de auto-compra da loja no save é inválida.");
 	}
 	if (save.autoGasto !== undefined

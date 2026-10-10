@@ -21,9 +21,10 @@ var autoCompra = 1;
 // Auto-gasto nasce DESLIGADO (opt-in): o gasto é aleatório — quem quiser
 // escolher as skills na mão deixa desligado. Persistido, não zera no reset
 var autoGasto = 0;
-// Seleção individual da auto-compra (0/1 por item, na ordem de
-// ITENS_AUTO_COMPRA) — nasce vazia (nada marcado, opt-in) e é permanente;
-// save antigo sem o campo continua comprando tudo até o andar 100
+// Seleção individual da auto-compra: 0 = NÃO comprar, 1/ausente = comprar.
+// Nasce "tudo marcado" — a auto-compra compra todos os itens (como abaixo do
+// andar 100) e só o que o jogador desmarcar explicitamente fica de fora.
+// É normalizada para um array 0/1 do tamanho de ITENS_AUTO_COMPRA e é permanente.
 var autoItensLoja = [];
 
 function AutoColetaDesbloqueada() {
@@ -43,17 +44,14 @@ function AlternaAutoColeta(ligado) {
 
 function AlternaAutoCompra(ligado) {
 	autoCompra = ligado ? 1 : 0;
-	// ligar com a seletiva ativa (andar 100+) limpa a seleção individual —
-	// nada é comprado até marcar de novo (evita a loja comprar tudo de uma vez)
-	if (ligado && AutoCompraSeletivaDesbloqueada()) {
-		autoItensLoja = [];
-		SyncCheckboxesAutoLoja();
-	}
+	// a seleção individual é permanente: ligar/desligar NÃO apaga os itens
+	// marcados (antes, ligar zerava a seleção e a auto-compra parava no andar 100)
+	SyncCheckboxesAutoLoja();
 	SyncTogglesAutomacao();
 	AutoSaveLocal();
 	MostraInfo(ligado
 		? (AutoCompraSeletivaDesbloqueada()
-			? "Auto-compra ligada — marque na loja os itens que devem ser comprados sozinhos."
+			? "Auto-compra ligada — desmarque na loja o que NÃO deve ser comprado sozinho."
 			: "Auto-compra ligada.")
 		: "Auto-compra desligada.");
 }
@@ -77,10 +75,29 @@ function AutoCompraSeletivaDesbloqueada() {
 	return maxAndar >= ANDAR_AUTO_COMPRA_SELETIVA;
 }
 
+// Seleção padrão da auto-compra: tudo marcado (compra todos os itens)
+function SelecaoAutoLojaPadrao() {
+	return ITENS_AUTO_COMPRA.map(() => 1);
+}
+
+// Garante que autoItensLoja seja um array 0/1 do tamanho de ITENS_AUTO_COMPRA,
+// com as posições ausentes valendo 1 (marcado). Sem isso, uma seleção "vazia"
+// (save antigo ou recém-nascida) parava a auto-compra no andar 100 (o bug da
+// seletiva) e um array esparso virava null no JSON e era rejeitado no load.
+function NormalizaSelecaoAutoLoja() {
+	const normalizada = SelecaoAutoLojaPadrao();
+	for (let idx = 0; idx < normalizada.length; idx++) {
+		if (autoItensLoja[idx] === 0) normalizada[idx] = 0;
+	}
+	autoItensLoja = normalizada;
+	return autoItensLoja;
+}
+
 // Marca/desmarca um item para a auto-compra seletiva (índice da tabela
 // ITENS_AUTO_COMPRA) — seleção permanente, como o toggle geral
 function MarcaAutoItemLoja(indice, marcado) {
 	if (!AutoCompraSeletivaDesbloqueada()) return;
+	NormalizaSelecaoAutoLoja();
 	autoItensLoja[indice] = marcado ? 1 : 0;
 	SyncCheckboxesAutoLoja();
 	AutoSaveLocal();
@@ -118,6 +135,7 @@ function MontaCheckboxesAutoLoja() {
 // Montagem preguiçosa no primeiro tick — o HTML da loja já existe no load.
 function SyncCheckboxesAutoLoja() {
 	MontaCheckboxesAutoLoja();
+	NormalizaSelecaoAutoLoja();
 	const destravado = AutoCompraSeletivaDesbloqueada();
 	for (let idx = 0; idx < ITENS_AUTO_COMPRA.length; idx++) {
 		const el = document.getElementById("autoItemLoja-" + idx);
@@ -126,7 +144,7 @@ function SyncCheckboxesAutoLoja() {
 		el.disabled = !destravado;
 		const wrap = el.closest(".auto-item-loja");
 		if (wrap) wrap.title = destravado
-			? "Marcado = a auto-compra evolui este item sozinho"
+			? "Desmarcado = a auto-compra NÃO compra este item sozinho"
 			: "Seleção individual desbloqueia no andar 100";
 	}
 }
@@ -223,15 +241,15 @@ function AutoCompraMaisBarato() {
 
 	NormalizaPrecosLoja();
 
-	// seletiva (andar 100+): só os itens marcados na loja entram — abaixo
-	// do 100 a auto-compra continua comprando tudo como sempre
+	// seletiva (andar 100+): só os itens DESMARCADOS ficam de fora; o padrão
+	// (nada tocado / save antigo) compra tudo, como abaixo do 100
 	const seletivo = AutoCompraSeletivaDesbloqueada();
 
 	let alvo = null;
 	let alvoPreco = 0;
 	for (let idx = 0; idx < ITENS_AUTO_COMPRA.length; idx++) {
 		const item = ITENS_AUTO_COMPRA[idx];
-		if (seletivo && autoItensLoja[idx] !== 1) continue;
+		if (seletivo && autoItensLoja[idx] === 0) continue;
 		let preco;
 		if (item.teto && ITENS_PATENTE[item.teto].noTeto()) {
 			if (!TemProximaPatente(item.teto)) continue; // patente máxima
@@ -309,7 +327,7 @@ function VerificaDesbloqueioAutomacao(anterior, novo) {
 	if (anterior < ANDAR_AUTO_COMPRA_SELETIVA && novo >= ANDAR_AUTO_COMPRA_SELETIVA) {
 		UI.showMilestone(
 			"Auto-compra seletiva desbloqueada",
-			"Marque na loja os itens que a loja deve comprar sozinha — desmarcados ficam manuais"
+			"Desmarque na loja os itens que ela NÃO deve comprar sozinha — por padrão ela compra tudo"
 		);
 	}
 	SyncTogglesAutomacao();

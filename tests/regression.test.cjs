@@ -1244,17 +1244,30 @@ test("automação respeita desbloqueios, compra mais barato e gasta pontos eleg�
                 chanceBau
             };
 
-            // No andar 100+, seleção vazia não deve comprar todos os itens.
+            // No andar 100+, a seleção padrão (vazia = tudo marcado) compra TUDO.
             maxAndar = 100;
             autoItensLoja = [];
             gold = new GoldNumber(10);
+            precoBau = 5;
             const nivelAntesDaSeletiva = lvlBau;
             AutoCompraMaisBarato();
-            const semItemSelecionado = lvlBau === nivelAntesDaSeletiva;
-            autoItensLoja[1] = 1; // índice 1 = baú
+            const seletivaPadraoCompra = lvlBau === nivelAntesDaSeletiva + 1;
+
+            // Desmarcar o baú tira ele da auto-compra.
+            autoItensLoja = [];
+            autoItensLoja[1] = 0; // índice 1 = baú, desmarcado
+            gold = new GoldNumber(10);
+            precoBau = 5;
+            const nivelAntesDoDesmarque = lvlBau;
+            AutoCompraMaisBarato();
+            const seletivaDesmarcadaNaoCompra = lvlBau === nivelAntesDoDesmarque;
+
+            // Marcar de novo volta a comprar.
+            autoItensLoja[1] = 1;
+            gold = new GoldNumber(10);
             precoBau = 5;
             AutoCompraMaisBarato();
-            const seletivaComprou = lvlBau === nivelAntesDaSeletiva + 1;
+            const seletivaComprou = lvlBau === nivelAntesDoDesmarque + 1;
 
             // Auto-gasto distribui pontos só em habilidades desbloqueadas.
             maxAndar = 54;
@@ -1280,7 +1293,8 @@ test("automação respeita desbloqueios, compra mais barato e gasta pontos eleg�
                 seletivaAindaBloqueada,
                 seletivaDesbloqueada,
                 comprouMaisBarato,
-                semItemSelecionado,
+                seletivaPadraoCompra,
+                seletivaDesmarcadaNaoCompra,
                 seletivaComprou,
                 bloqueadoNaoGasta,
                 pontosEnquantoBloqueado,
@@ -1302,7 +1316,8 @@ test("automação respeita desbloqueios, compra mais barato e gasta pontos eleg�
         assert.equal(result.comprouMaisBarato.gold, 5);
         assert.equal(result.comprouMaisBarato.nivelBau, 2);
         assert.ok(Math.abs(result.comprouMaisBarato.chanceBau - 0.15) < 1e-10);
-        assert.equal(result.semItemSelecionado, true);
+        assert.equal(result.seletivaPadraoCompra, true);
+        assert.equal(result.seletivaDesmarcadaNaoCompra, true);
         assert.equal(result.seletivaComprou, true);
         assert.equal(result.bloqueadoNaoGasta, 0);
         assert.equal(result.pontosEnquantoBloqueado, 2);
