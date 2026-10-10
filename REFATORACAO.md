@@ -32,7 +32,9 @@ navegador, Windows (Electron) e Android (Capacitor).
 | --- | ---: | --- |
 | `sistema.js` | 473 | Menu, configurações, desktop, baú dourado (tick), inicialização e `Resetar` |
 | `script.js` | 579 | Estado global, Conhecimento Mug, loja (variáveis), fundo da caverna, avanço de inimigos, portões e `VoltaAndar` |
-| `persistencia.js` | 798 | Exportar/importar JSON, `Carregar`, auto save local |
+| `persistencia.js` | 320 | Exportar/importar o save em arquivo JSON (`Salvar`, `CarregarArquivo`) |
+| `persistencia-carregar.js` | 336 | `Carregar`: montagem do estado a partir de um save |
+| `persistencia-autosave.js` | 293 | Auto save local (`CriarObjetoSave`, `AutoSaveLocal`, `CarregarAutoSave`, `LimparAutoSave`) |
 | `validacao-save.js` | 392 | `ValidarSave` e migração/compatibilidade de saves |
 | `progresso-offline.js` | 259 | Simulação e entrega do progresso offline |
 | `audio.js` | 217 | Sons, ambiente sintetizado e volumes |
@@ -93,25 +95,29 @@ navegador, Windows (Electron) e Android (Capacitor).
    progresso offline; missões; progressão (XP/skills/perks); conquistas;
    companheiros; recompensas; interface (`ui.js`); loja (`loja.js`).
 3. `AGENTS.md` passou a descrever os limites de cada módulo.
+4. `persistencia.js` dividido em três: exportação/importação de arquivo
+   (`Salvar`, `CarregarArquivo`), montagem do estado (`persistencia-carregar.js`)
+   e auto save local (`persistencia-autosave.js`).
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
 
 ## Próximos passos sugeridos (em ordem de valor)
 
-1. **Reduzir `persistencia.js` (798):** separar `Carregar` (montagem do
-   estado) do auto save/exportação; é a área mais sensível a regressões,
-   então exige cuidado e testes antes.
-2. **Cobrir `eventos.js` (615):** faltam testes para chuva de meteoros,
+1. **Cobrir `eventos.js` (615):** faltam testes para chuva de meteoros,
    névoa, veia, inseto, fissura e emboscada (só o comércio está coberto).
-3. **Reduzir handlers `onclick` no HTML:** migrar para `addEventListener`
+2. **Reduzir handlers `onclick` no HTML:** migrar para `addEventListener`
    registrado no JavaScript, um painel por vez.
-4. **Investigar o bug de save relatado:** importar JSON e "Salvar e voltar ao
+3. **Investigar o bug de save relatado:** importar JSON e "Salvar e voltar ao
    menu" foram testados e preservam o andar; o caso real ainda não foi
    reproduzido — se voltar a acontecer, é preciso o JSON do save problemático.
-5. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
+4. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
    duas páginas; uma lista única (gerador ou bundler com esbuild) evita
    esquecimento.
+5. **Unificar a montagem do save:** `Salvar` (exportação) e `CriarObjetoSave`
+   (auto save) repetem quase todo o mesmo objeto — a exportação apenas omite
+   os campos offline. `Salvar` ainda define um `getRawGold` local sem uso.
+   Unificar evita que um campo novo entre só num dos caminhos.
 
 ## Como validar
 
