@@ -1236,7 +1236,33 @@ const UI = {
     },
 
     showInfo(mensagem) {
-        document.getElementById("Infos").innerHTML = mensagem;
+        // a caixa "Infos" saiu da tela: a mensagem vira um registro no
+        // histórico, que abre pelo botão "Logs" no menu de configurações
+        Tapeira.Logs.adiciona(mensagem);
+    },
+
+    // Tela de logs: as últimas 500 mensagens que dariam para a caixa "Infos"
+    showLogs() {
+        const entradas = Tapeira.Logs.pegaLista().reverse(); // mais recente primeiro
+        this.showModal("Logs", entradas.length === 0
+            ? `<p class="logs-vazio">Nenhum log nesta sessão.</p>`
+            : `<div class="logs-lista" role="log"></div>`);
+
+        const lista = document.querySelector("#gameModalBody .logs-lista");
+        if (!lista) return;
+        // linhas montadas com textContent: mensagem de jogo nunca vira HTML
+        for (const entrada of entradas) {
+            const linha = document.createElement("div");
+            linha.className = "logs-linha";
+            const hora = document.createElement("span");
+            hora.className = "logs-hora";
+            hora.textContent = entrada.hora;
+            const texto = document.createElement("span");
+            texto.className = "logs-texto";
+            texto.textContent = entrada.texto;
+            linha.append(hora, texto);
+            lista.appendChild(linha);
+        }
     },
 
     showDamageNumber(target, damage, critical) {
@@ -2274,6 +2300,14 @@ function AtualizarTela() {
 function MostraInfo(msg) {
     UI.showInfo(msg);
 }
+
+// botão "Logs" (fim do menu de configuração): delegado no document para
+// não depender do momento em que o DOM da configuração é montado
+document.addEventListener("click", (e) => {
+    if (e.target instanceof Element && e.target.closest("#btnLogs")) {
+        UI.showLogs();
+    }
+});
 
 function MostraStatus() {
     UI.showStatus();

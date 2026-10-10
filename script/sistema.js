@@ -1849,10 +1849,6 @@ function PreCarregamento() {
 	intervalos.push(setInterval(GoldCompanheiros, 1000));
 	intervalos.push(setInterval(HabilidadeDano, 1000));
 
-	if (qtdSave == 0) {
-		intervalos.push(setInterval(() => MostraInfo(''), 25000));
-	}
-
 	if (!saveCarregado) Batalha();
 }
 

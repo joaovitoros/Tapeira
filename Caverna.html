@@ -11,6 +11,7 @@
 	<script src="script/gold.js"></script>
 	<script src="script/keymap.js"></script>
 	<script src="script/script.js"></script>
+	<script src="script/logs.js"></script>
 	<script src="script/ui.js"></script>
 	<script src="script/batalha.js"></script>
 	<script src="script/loja.js"></script>
@@ -130,11 +131,6 @@
 				</div>
 				<div id="missaoContagem"></div>
 			</div>
-		</div>
-
-		<div id="container-Infos">
-			<label id="lblInf">Infos:</label>
-			<textarea type="textarea" id="Infos" readonly="True" rows="5" cols="30"></textarea>
 		</div>
 
 		<img src="imagens/player.png" class="player">
@@ -349,6 +345,9 @@
 						<input type="checkbox" id="telaCheiaJogo" onchange="AtualizaConfiguracaoTela()" />
 					</label>
 					<div class="save-help" id="desktopDisplayStatus" role="status"></div>
+				</div>
+				<div id="divLogs">
+					<button type="button" id="btnLogs" class="btn-Padrao config-logs-button">Logs</button>
 				</div>
 			</div>
 
