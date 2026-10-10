@@ -109,9 +109,9 @@ const PREVIEWS_LOJA = {
 	},
 	CompraComp5() {
 		const n = Math.max(0, N(lvlComp5) | 0);
-		const ch = lv => 0.005 + 0.0005 * Math.max(0, lv - 1);
+		const ch = lv => 0.01 + 0.001 * Math.max(0, lv - 1);
 		return "Assassino: morte instantânea " + (n > 0 ? PctTexto(ch(n)) + " → " + PctTexto(ch(n + 1)) : PctTexto(ch(1)))
-			+ " (metade em automáticos)";
+			+ " (metade em automáticos) · veneno 1% (3% da vida)";
 	},
 	CompraComp6() {
 		const chance = PctTexto(ChanceExploradorNoNivel(lvlComp6));

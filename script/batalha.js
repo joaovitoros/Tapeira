@@ -100,6 +100,9 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	// nos automáticos e do companheiro — ChanceMorteAssassino().
 	const morteInstantaneaAssassino = lvlComp5 > 0
 		&& Math.random() < ChanceMorteAssassino(validaDano);
+	// Assassino: passiva de veneno — 1% dos golpes tiram 3% da vida máxima do andar
+	const venenoAssassino = lvlComp5 > 0 && Math.random() < CHANCE_VENENO_ASSASSINO;
+	const danoVeneno = venenoAssassino ? N(vidaAndar) * VENENO_ASSASSINO_PCT : 0;
 	// especialização Cadeia de Ataques: este golpe conta pro stack do alvo
 	// (16 acertos fecham o cap; os contadores zeram em cada onda nova)
 	if (especializacao === 5) ataquesCadeia[inimigo] = N(ataquesCadeia[inimigo]) + 1;
@@ -207,10 +210,20 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	ChamaSom(critico ? "audio8" : "audio3");
 	// Assassino: se a passiva acertou, o golpe mata na hora
 	// (dano = vida toda, o fluxo de abate roda normalmente)
-	if (morteInstantaneaAssassino || hitKillDebug) dano = vidaAnterior;
+	if (morteInstantaneaAssassino || hitKillDebug) {
+		dano = vidaAnterior;
+	} else if (venenoAssassino) {
+		dano += danoVeneno;
+	}
 	let vidaAtual = vidaAnterior - dano;
 	window["vidaInimigo" + inimigo] = vidaAtual;
 	UI.showDamageNumber(inimigoElement, dano, critico);
+	// Assassino: efeitos visuais do hit kill e do veneno
+	if (morteInstantaneaAssassino) {
+		animarHitKill(inimigoElement);
+	} else if (venenoAssassino) {
+		animarVeneno(inimigoElement, danoVeneno);
+	}
 
 	if (chainTargets.length > 0) {
 		// ramo Sobrecarga da árvore: +50% por nó no dano da cadeia
@@ -460,6 +473,45 @@ function animarImpacto(el, critico, eletrico = false) {
 	burst.style.top = `${rect.top + rect.height * 0.58}px`;
 	document.body.appendChild(burst);
 	burst.addEventListener("animationend", () => burst.remove(), { once: true });
+}
+
+// Assassino: golpe de morte instantânea — burst vermelho + "HIT KILL"
+function animarHitKill(el) {
+	if (!el) return;
+	disparaBurstAssassino(el, "enemy-impact-burst--hitkill");
+	flutuaSobreInimigo(el, "☠ HIT KILL", "hitkill-number");
+}
+
+// Assassino: passiva de veneno — burst verde + "veneno -N"
+function animarVeneno(el, dano) {
+	if (!el) return;
+	disparaBurstAssassino(el, "enemy-impact-burst--veneno");
+	flutuaSobreInimigo(el, "☠ veneno -" + FormatGold(dano), "poison-number");
+}
+
+function disparaBurstAssassino(el, modificador) {
+	const rect = el.getBoundingClientRect();
+	const burst = document.createElement("div");
+	burst.className = "enemy-impact-burst " + modificador;
+	burst.setAttribute("aria-hidden", "true");
+	burst.style.left = `${rect.left + rect.width / 2}px`;
+	burst.style.top = `${rect.top + rect.height * 0.5}px`;
+	document.body.appendChild(burst);
+	burst.addEventListener("animationend", () => burst.remove(), { once: true });
+}
+
+// Texto flutuante sobre o inimigo (reusa a animação floating-game-text)
+function flutuaSobreInimigo(el, texto, classe) {
+	const rect = el.getBoundingClientRect();
+	const stack = document.querySelectorAll(".floating-game-text").length;
+	const marker = document.createElement("div");
+	marker.className = "floating-game-text " + classe;
+	marker.setAttribute("aria-hidden", "true");
+	marker.textContent = texto;
+	marker.style.left = `${rect.left + rect.width / 2}px`;
+	marker.style.top = `${rect.top + rect.height * 0.18 - stack * 22}px`;
+	document.body.appendChild(marker);
+	setTimeout(() => marker.remove(), 1100);
 }
 
 function animarEfeitoEletrico(el) {

@@ -93,12 +93,17 @@ function IntervaloAlquimistaMs() {
 	return Math.max(10000, 20000 - 1000 * Math.max(0, Math.floor(Number(lvlComp4) || 0) - 1));
 }
 
-// Assassino: chance de morte instantânea — 0,5% no nv1, +0,05% por nível;
-// a metade (0,25% +0,025%) vale nos golpes automáticos e do companheiro
+// Assassino: chance de morte instantânea — 1% no nv1, +0,1% por nível;
+// a metade (0,5% +0,05%) vale nos golpes automáticos e do companheiro
 function ChanceMorteAssassino(manual) {
 	const n = Math.max(0, Math.floor(Number(lvlComp5) || 0) - 1);
-	return (manual ? 0.005 : 0.0025) + (manual ? 0.0005 : 0.00025) * n;
+	return (manual ? 0.01 : 0.005) + (manual ? 0.001 : 0.0005) * n;
 }
+
+// Assassino: passiva de veneno — 1% dos golpes tiram 3% da vida máxima do
+// andar (vidaAndar), em qualquer golpe (jogador, automático ou companheiro)
+const CHANCE_VENENO_ASSASSINO = 0.01;
+const VENENO_ASSASSINO_PCT = 0.03;
 
 // Mago do Relógio: enche uma fatia da barra de uma skill aleatória.
 // Considera só as skills desbloqueadas e que ainda não estão cheias.

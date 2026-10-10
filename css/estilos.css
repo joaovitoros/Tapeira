@@ -2282,6 +2282,31 @@ caption {
 	animation-duration: 460ms;
 }
 
+/* Assassino: hit kill (vermelho) e veneno (verde) */
+.enemy-impact-burst--hitkill {
+	width: 92px;
+	height: 92px;
+	background: repeating-conic-gradient(
+		from 8deg,
+		rgba(255, 96, 96, 1) 0deg 8deg,
+		rgba(176, 20, 40, 0.7) 8deg 13deg,
+		transparent 13deg 24deg
+	);
+	filter: drop-shadow(0 0 10px rgba(255, 60, 60, 0.95));
+	animation-duration: 470ms;
+}
+
+.enemy-impact-burst--veneno {
+	background: repeating-conic-gradient(
+		from 8deg,
+		rgba(150, 255, 140, 1) 0deg 8deg,
+		rgba(40, 170, 60, 0.7) 8deg 13deg,
+		transparent 13deg 24deg
+	);
+	filter: drop-shadow(0 0 8px rgba(90, 255, 110, 0.9));
+	animation-duration: 420ms;
+}
+
 .floating-game-text {
 	position: fixed;
 	z-index: 8;
@@ -2301,6 +2326,19 @@ caption {
 .damage-number--critical {
 	color: #ffe36b;
 	font-size: clamp(16px, 1.45vw, 25px);
+}
+
+.hitkill-number {
+	color: #ff5a5a;
+	font-size: clamp(16px, 1.5vw, 26px);
+	letter-spacing: 0.04em;
+	-webkit-text-stroke: 0.4px rgba(60, 0, 0, 0.9);
+}
+
+.poison-number {
+	color: #8dff86;
+	font-size: clamp(14px, 1.15vw, 20px);
+	-webkit-text-stroke: 0.35px rgba(10, 50, 15, 0.9);
 }
 
 .reward-number {
