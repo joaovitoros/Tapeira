@@ -161,7 +161,12 @@ function ValidarSave(save) {
 	if (perkGastos > 0) {
 		const picoRun = PicoRunDoSave(save);
 		const perkGanhos = picoRun >= 35 ? Math.floor((picoRun - 35) / 5) + 1 : 0;
-		if (perkGastos > perkGanhos) {
+		// tolera saves da época em que o perk do Toque Frenético não entrava no
+		// cálculo de pontos (bug corrigido em progressao.js): ele podia ser
+		// comprado sem gastar o pool, então o total pode exceder os ganhos em
+		// até perkFrenesi. Saves novos (que já contam o frenesi) cabem igual.
+		const frenesi = Number(save.perkFrenesi) || 0;
+		if (perkGastos > perkGanhos + frenesi) {
 			throw new TypeError("Os perks do save excedem os pontos do pico da run.");
 		}
 	}

@@ -118,6 +118,11 @@ navegador, Windows (Electron) e Android (Capacitor).
     (`loja-preview.js`) e a auto-compra seletiva (`automacao.js`) passaram a
     ler `data-compra` em vez do `onclick`; a auto-compra também foi ligada no
     `change` do checkbox.
+12. Bug de save reproduzido e corrigido: `PontosPerkDisponiveis`
+    (`progressao.js`) não somava `perkFrenesi`, então o Toque Frenético podia
+    ser comprado sem gastar o pool e o `ValidarSave` rejeitava saves legítimos.
+    Agora o frenesi conta nos pontos e o validador tolera o excedente histórico
+    (até `perkFrenesi`) — saves da época do bug continuam carregando.
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
@@ -129,13 +134,10 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
    navegação lateral, painel de status, habilidades de combate, inimigos e a
    loja inteira. Faltam: painel de reset (`#manterAndar`, `#btnAndar`), botão
    de pausa e o menu (`index.html`).
-2. **Investigar o bug de save relatado:** importar JSON e "Salvar e voltar ao
-   menu" foram testados e preservam o andar; o caso real ainda não foi
-   reproduzido — se voltar a acontecer, é preciso o JSON do save problemático.
-3. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
+2. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
    duas páginas; uma lista única (gerador ou bundler com esbuild) evita
    esquecimento.
-4. **Unificar a montagem do save:** `Salvar` (exportação) e `CriarObjetoSave`
+3. **Unificar a montagem do save:** `Salvar` (exportação) e `CriarObjetoSave`
    (auto save) repetem quase todo o mesmo objeto — a exportação apenas omite
    os campos offline. `Salvar` ainda define um `getRawGold` local sem uso.
    Unificar evita que um campo novo entre só num dos caminhos.
@@ -143,7 +145,7 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (34 testes)
+npm test                 # suíte principal (35 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android
@@ -158,5 +160,6 @@ Rode `npm run prepare:web` antes dos testes focados que abrem `www/`.
   num único commit — gera diff gigante sem benefício.
 - `script.js` ainda concentra o estado global e as variáveis da loja; mover
   variáveis exige conferir save, reset e validação em conjunto.
-- O save incompatível agora preserva o auto save local e mostra o motivo,
-  mas o caso original do usuário nunca foi reproduzido com o JSON real.
+- O save incompatível preserva o auto save local e mostra o motivo. O caso
+  relatado foi reproduzido: era o `perkFrenesi` fora do cálculo de pontos
+  (corrigido — ver item 12 de "O que foi feito").

@@ -478,7 +478,7 @@ function PontosPerkGanhos(){
 }
 
 function PontosPerkDisponiveis(){
-	const gastos = perkDano + perkEletrica + perkGold + perkFuga;
+	const gastos = perkDano + perkEletrica + perkGold + perkFuga + perkFrenesi;
 	return Math.max(0, PontosPerkGanhos() - gastos);
 }
 

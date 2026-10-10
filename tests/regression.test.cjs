@@ -277,6 +277,45 @@ test("painel de status (baú dourado e auto-coleta) usa listeners registrados", 
     }
 });
 
+test("pontos de perk contam o Toque Frenético e saves da época do bug continuam válidos", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.PontosPerkDisponiveis === "function");
+        const result = await page.evaluate(() => {
+            // o frenesi agora consome o pool (antes ficava de fora da soma)
+            andarMaxRun = 40; // ganhos = floor((40-35)/5)+1 = 2
+            andar = 40;
+            perkDano = 1; perkEletrica = 0; perkGold = 0; perkFuga = 0; perkFrenesi = 1;
+            const disponiveis = PontosPerkDisponiveis();
+
+            const saveAntigo = {
+                andar: 98, andarVolta: 105, gateDanoPago: 100, andarMaxRun: 98,
+                gold: { m: 0, e: 0 }, totalGold: { m: 0, e: 0 },
+                perkDano: 4, perkEletrica: 3, perkGold: 4, perkFuga: 2, perkFrenesi: 4
+            };
+            let aceitouAntigo = true;
+            try { ValidarSave(saveAntigo); } catch { aceitouAntigo = false; }
+
+            let rejeitouTrapaca = false;
+            try {
+                ValidarSave(Object.assign({}, saveAntigo, {
+                    andar: 35, andarMaxRun: 35, gateDanoPago: 35, andarVolta: 40,
+                    perkDano: 4, perkEletrica: 3, perkGold: 4, perkFuga: 5, perkFrenesi: 4
+                }));
+            } catch { rejeitouTrapaca = true; }
+
+            return { disponiveis, aceitouAntigo, rejeitouTrapaca };
+        });
+
+        assert.equal(result.disponiveis, 0, "o frenesi consome ponto de perk");
+        assert.equal(result.aceitouAntigo, true, "save legítimo da época do bug é aceito");
+        assert.equal(result.rejeitouTrapaca, true, "trapaça grosseira continua barrada");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("save antigo é migrado sem perder compatibilidade", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
