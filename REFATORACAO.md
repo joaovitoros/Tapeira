@@ -128,20 +128,22 @@ navegador, Windows (Electron) e Android (Capacitor).
     (`index.html`, em `sistema.js`). Os dois `onload` do `<body>` viraram um
     listener de `load` por página em `sistema.js`. Não sobrou handler inline
     vivo no HTML (resta só um `<input>` comentado e inerte).
+14. Handlers inline gerados por JS migrados: painel de evento e modais de
+    reset, info e tutorial do Comp1 usam `data-*` com delegação no `document`;
+    `gameModalClose`/`modal` (`ui.js`), o baú (`ui-baus.js`) e a habilidade
+    (`ui-combate.js`) viraram `addEventListener`. Não sobrou handler inline
+    vivo em JS (só `xhr.onload`/`reader.onload`, que não são de DOM, e um
+    trecho comentado).
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
 
 ## Próximos passos sugeridos (em ordem de valor)
 
-1. **Handlers inline gerados por JS:** o HTML está limpo, mas `eventos.js`,
-   `script.js` (modais de reset), `ui-telas.js`, `ui.js` e `ui-combate.js`
-   ainda montam markup com `onclick="…"`/`.onclick =`. Migrar para
-   `addEventListener`/delegação quando cada tela for tocada.
-2. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
+1. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
    duas páginas; uma lista única (gerador ou bundler com esbuild) evita
    esquecimento.
-3. **Unificar a montagem do save:** `Salvar` (exportação) e `CriarObjetoSave`
+2. **Unificar a montagem do save:** `Salvar` (exportação) e `CriarObjetoSave`
    (auto save) repetem quase todo o mesmo objeto — a exportação apenas omite
    os campos offline. `Salvar` ainda define um `getRawGold` local sem uso.
    Unificar evita que um campo novo entre só num dos caminhos.
@@ -149,7 +151,7 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (37 testes)
+npm test                 # suíte principal (38 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android

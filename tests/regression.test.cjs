@@ -1660,6 +1660,52 @@ test("menu usa listeners registrados (sem onclick/onload inline)", async () => {
     }
 });
 
+test("painéis dinâmicos (evento, reset e info) não usam onclick inline", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.MontaPainelEvento === "function" && typeof window.PedeReset === "function");
+        const result = await page.evaluate(() => {
+            const chamadas = [];
+            window.CompraEventoOferta = indice => chamadas.push("oferta:" + indice);
+            window.EncerraEvento = () => chamadas.push("fechar");
+            window.ConfirmaReset = () => chamadas.push("ConfirmaReset");
+            UI.closeModal = () => chamadas.push("closeModal");
+
+            // painel de evento (comércio) com markup dinâmico
+            eventoAtivo = "comercio";
+            eventoOfertas = [{ nome: "Esmeralda", desc: "+2", k: 30, comprada: false, comprar() {} }];
+            MontaPainelEvento();
+            const painel = document.getElementById("eventoPainel");
+            const painelInline = painel.querySelectorAll("[onclick]").length;
+            painel.querySelector("[data-evento-oferta]").click();
+            painel.querySelector("[data-evento-fechar]").click();
+
+            // modal de reset
+            andar = 25; andarVolta = 30; gateDanoPago = 25; maxAndar = 30;
+            PedeReset();
+            const modal = document.getElementById("gameModal");
+            const modalInline = modal ? modal.querySelectorAll("[onclick]").length : -1;
+            modal.querySelector("[data-reset-confirmar]").click();
+            modal.querySelector("[data-reset-cancelar]").click();
+
+            // modal de info (COMO JOGAR)
+            UI.toggleInfoModal();
+            const infoInline = document.querySelectorAll("#infoModal [onclick]").length;
+            UI.toggleInfoModal();
+
+            return { painelInline, modalInline, infoInline, chamadas };
+        });
+
+        assert.equal(result.painelInline, 0, "painel de evento sem onclick inline");
+        assert.equal(result.modalInline, 0, "modal de reset sem onclick inline");
+        assert.equal(result.infoInline, 0, "modal de info sem onclick inline");
+        assert.deepEqual(result.chamadas, ["oferta:0", "fechar", "ConfirmaReset", "closeModal"]);
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("inimigos usam listeners registrados (sem onclick inline)", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

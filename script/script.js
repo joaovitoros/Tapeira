@@ -619,8 +619,8 @@ function PedeReset() {
 		</div>
 
 		<div class="reset-confirm-acoes">
-			<button type="button" class="btn-Padrao btn-reset-confirmar" onclick="ConfirmaReset()">Confirmar reset</button>
-			<button type="button" class="btn-Padrao btn-reset-cancelar" onclick="UI.closeModal()">Cancelar</button>
+			<button type="button" class="btn-Padrao btn-reset-confirmar" data-reset-confirmar>Confirmar reset</button>
+			<button type="button" class="btn-Padrao btn-reset-cancelar" data-reset-cancelar>Cancelar</button>
 		</div>
 	`);
 }
@@ -650,4 +650,14 @@ document.addEventListener("DOMContentLoaded", () => {
 	if (manter) manter.addEventListener("change", () => AlternaManterAndar());
 	const voltar = document.getElementById("btnAndar");
 	if (voltar) voltar.addEventListener("click", () => PedeReset());
+});
+
+// Botões do modal de reset (markup dinâmico): delegados no document.
+document.addEventListener("click", (e) => {
+	if (!(e.target instanceof Element)) return;
+	if (e.target.closest("[data-reset-confirmar]")) {
+		ConfirmaReset();
+		return;
+	}
+	if (e.target.closest("[data-reset-cancelar]")) UI.closeModal();
 });

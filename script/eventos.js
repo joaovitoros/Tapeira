@@ -272,7 +272,7 @@ function MontaPainelEvento() {
 				</div>
 				<div class="evento-oferta__acoes">
 					<span class="evento-oferta__preco">${FormatGold(PrecoOfertaEvento(oferta.k))}</span>
-					<button type="button" onclick="CompraEventoOferta(${i})" ${oferta.comprada ? "disabled" : ""}>
+					<button type="button" data-evento-oferta="${i}" ${oferta.comprada ? "disabled" : ""}>
 						${oferta.comprada ? "Comprado" : "Comprar"}
 					</button>
 				</div>
@@ -299,7 +299,7 @@ function MontaPainelEvento() {
 				<span class="evento-painel__tempo" id="eventoPainelTempo">--</span>
 			</div>
 			<button type="button" class="evento-painel__fechar" aria-label="Encerrar evento"
-				onclick="EncerraEvento()">✕</button>
+				data-evento-fechar>✕</button>
 		</div>
 		<div class="evento-painel__corpo">${corpo}</div>`;
 
@@ -684,3 +684,14 @@ function VenceuEmboscada() {
 	ChamaSom("audio4");
 	AutoSaveLocal();
 }
+
+// Botões do painel de evento (markup dinâmico): delegados no document.
+document.addEventListener("click", (e) => {
+	if (!(e.target instanceof Element)) return;
+	const oferta = e.target.closest("[data-evento-oferta]");
+	if (oferta) {
+		CompraEventoOferta(Number(oferta.dataset.eventoOferta));
+		return;
+	}
+	if (e.target.closest("[data-evento-fechar]")) EncerraEvento();
+});

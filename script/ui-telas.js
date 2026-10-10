@@ -431,7 +431,7 @@ function MostraTutorialComp1() {
                 <span>Preço: <b>${preco} esmeralda${preco === 1 ? "" : "s"}</b></span>
             </div>
 
-            <button type="button" class="btn-Padrao btn-tutorial-comp1" onclick="CompraTutorialComp1()">
+            <button type="button" class="btn-Padrao btn-tutorial-comp1" data-tutorial-comp1>
                 Comprar Companheiro de Dano (${preco} esmeralda${preco === 1 ? "" : "s"})
             </button>
 
@@ -514,3 +514,10 @@ function MostraDecomposicaoDano() {
 function MostraInfos() {
     UI.toggleInfoModal();
 }
+
+// Botão do tutorial do Companheiro de Dano (modal dinâmico): delegado.
+document.addEventListener("click", (e) => {
+    if (e.target instanceof Element && e.target.closest("[data-tutorial-comp1]")) {
+        CompraTutorialComp1();
+    }
+});

@@ -567,7 +567,7 @@ const UI = {
         html += `
             <tr>
                 <td colspan="2" class="statusDetalhes">
-                    <button type="button" class="btn-Padrao btn-status-dano" onclick="MostraDecomposicaoDano()">
+                    <button type="button" class="btn-Padrao btn-status-dano" data-status-dano>
                         Decomposição do dano
                     </button>
                 </td>
@@ -669,7 +669,7 @@ const UI = {
 
             <button
                 class="btn-FecharModal"
-                onclick="UI.toggleInfoModal()">
+                data-info-fechar>
 
                 Fechar
 
@@ -720,17 +720,17 @@ const UI = {
 
             document.body.appendChild(modal);
 
-            document.getElementById("gameModalClose").onclick = () => {
+            document.getElementById("gameModalClose").addEventListener("click", () => {
                 this.closeModal();
-            };
+            });
 
             // fecha clicando fora
-            modal.onclick = (e) => {
+            modal.addEventListener("click", (e) => {
 
                 if (e.target.id === "gameModal") {
                     this.closeModal();
                 }
-            };
+            });
         }
 
         document.getElementById("gameModalTitle").innerHTML = titulo;
@@ -900,6 +900,14 @@ document.addEventListener("click", (e) => {
     }
     if (e.target.closest("#btnSkills")) {
         UI.toggleSkillUpgradePanel();
+    }
+    if (e.target.closest("[data-status-dano]")) {
+        MostraDecomposicaoDano();
+        return;
+    }
+    if (e.target.closest("[data-info-fechar]")) {
+        UI.toggleInfoModal();
+        return;
     }
 });
 

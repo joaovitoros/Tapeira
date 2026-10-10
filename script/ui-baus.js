@@ -157,7 +157,7 @@ Object.assign(UI, {
         bau.src = "imagens/bau-aventura.svg";
         bau.className = "bau";
         bau.id = "bau";
-        bau.onclick = ColetaBau;
+        bau.addEventListener("click", () => ColetaBau());
         bau.alt = "";
         bau.setAttribute("role", "button");
         bau.setAttribute("tabindex", "0");

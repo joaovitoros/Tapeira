@@ -304,7 +304,7 @@ Object.assign(UI, {
         habilidade.src = "imagens/espada-habilidade.svg";
         habilidade.className = "habilidade1";
         habilidade.id = "habilidade1";
-        habilidade.onclick = UsaHabilidadeDano;
+        habilidade.addEventListener("click", () => UsaHabilidadeDano());
 
         document.body.appendChild(habilidade);
 
