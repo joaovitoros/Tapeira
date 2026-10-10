@@ -1503,6 +1503,29 @@ test("baú de builds desbloqueia a cada 10 andares, acumula e consome por escolh
     }
 });
 
+test("habilidades de combate usam listeners registrados (sem onclick inline)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => document.getElementById("skill-electric"));
+        const result = await page.evaluate(() => {
+            const ids = ["skill-electric", "skill-gold", "skill-escape", "skill-frenzy"];
+            const inline = ids.filter(id => document.getElementById(id)?.hasAttribute("onclick"));
+
+            const chamadas = [];
+            window.AtivaHabilidadeCombate = tipo => chamadas.push(tipo);
+            for (const id of ids) document.getElementById(id).click();
+
+            return { inline, chamadas };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.deepEqual(result.chamadas, ["electric", "gold", "escape", "frenzy"]);
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("tela da build esconde a notificação de baú aberto (chest-opening)", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
