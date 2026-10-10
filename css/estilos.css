@@ -8082,9 +8082,10 @@ button.skill-ramo-no:focus-visible {
 
 /* com a tela de escolha/leitura da build aberta, os avisos do baú não
    ficam visíveis por cima do modal (fundo translúcido): ícone do baú,
-   selo "ITENS ×N" e o toast de milestone do marco */
+   selo "ITENS ×N", o toast de milestone do marco e a notificação de baú aberto (que tem z-index maior que o modal) */
 .itens-build-tela-aberta .bau-build,
 .itens-build-tela-aberta .bau-build-selo,
+.itens-build-tela-aberta .chest-opening,
 .itens-build-tela-aberta #gameMilestone {
 	visibility: hidden;
 }

@@ -1503,6 +1503,32 @@ test("baú de builds desbloqueia a cada 10 andares, acumula e consome por escolh
     }
 });
 
+test("tela da build esconde a notificação de baú aberto (chest-opening)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.ColetaBauDourado === "function");
+        const result = await page.evaluate(() => {
+            const notificacao = document.createElement("div");
+            notificacao.className = "chest-opening";
+            document.body.appendChild(notificacao);
+
+            const semTela = getComputedStyle(notificacao).visibility;
+            document.body.classList.add("itens-build-tela-aberta");
+            const comTela = getComputedStyle(notificacao).visibility;
+            document.body.classList.remove("itens-build-tela-aberta");
+            notificacao.remove();
+
+            return { semTela, comTela };
+        });
+
+        assert.equal(result.semTela, "visible", "sem a tela da build a notificação aparece");
+        assert.equal(result.comTela, "hidden", "com a tela da build a notificação não fica na frente");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("efeitos dos itens, limite de dez e troca descartando a pilha inteira", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

@@ -88,7 +88,7 @@ navegador, Windows (Electron) e Android (Capacitor).
 
 ## O que foi feito nesta reorganização
 
-1. Suíte de regressão com `npm test` (30 testes) cobrindo menu, saves,
+1. Suíte de regressão com `npm test` (31 testes) cobrindo menu, saves,
    importação de JSON, combate, missões, eventos, automação, companheiros,
    conquistas, progresso offline, builds e hit kill.
 2. Extração, nesta ordem: áudio; validação e persistência de saves;
@@ -133,7 +133,7 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (30 testes)
+npm test                 # suíte principal (31 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android
