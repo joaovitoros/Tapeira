@@ -30,6 +30,7 @@ Object.assign(UI, {
         const stack = document.querySelectorAll(".reward-number").length;
         marker.className = `floating-game-text reward-number reward-number--${type}`;
         marker.setAttribute("aria-hidden", "true");
+        if (type === "gold") PulsaElemento(document.getElementById("contGold"), "contador--pulso");
         if (type === "emerald") {
             const icon = document.createElement("img");
             icon.className = "reward-number__icon";
@@ -57,6 +58,7 @@ Object.assign(UI, {
         const stack = document.querySelectorAll(".reward-number").length;
         marker.className = "floating-game-text reward-number reward-number--xp";
         marker.setAttribute("aria-hidden", "true");
+        PulsaElemento(document.getElementById("skill-player-xp-fill"), "xp-fill--pulso");
         marker.textContent = `+${amount} XP`;
         marker.style.left = `${rect.left + rect.width / 2}px`;
         marker.style.top = `${rect.top + rect.height * 0.2 - stack * 24}px`;
@@ -343,5 +345,17 @@ function SurgeInimigo(el) {
 	document.body.appendChild(anel);
 	anel.getAnimations().forEach(anim =>
 		anim.finished.then(() => anel.remove()).catch(() => {})
+	);
+}
+
+// Pulsa um elemento (classe + fim da animação) — feedback rápido de ganho,
+// sem timer novo. Guarda contra elemento ausente (ex.: painel fechado).
+function PulsaElemento(el, classe) {
+	if (!el) return;
+	el.classList.remove(classe);
+	void el.offsetWidth;
+	el.classList.add(classe);
+	el.getAnimations().forEach(anim =>
+		anim.finished.then(() => el.classList.remove(classe)).catch(() => {})
 	);
 }

@@ -2414,6 +2414,27 @@ caption {
 	color: #a8d7ff;
 }
 
+/* Pulso rápido no contador de gold e na barra de XP ao ganhar
+   (script/ui-combate.js -> PulsaElemento). Só visual. */
+.contador--pulso {
+	animation: contador-pulso 320ms ease-out;
+}
+
+@keyframes contador-pulso {
+	0% { transform: scale(1); }
+	40% { transform: scale(1.16); }
+	100% { transform: scale(1); }
+}
+
+.xp-fill--pulso {
+	animation: xp-fill-pulso 360ms ease-out;
+}
+
+@keyframes xp-fill-pulso {
+	0%, 100% { filter: brightness(1); }
+	50% { filter: brightness(1.7); }
+}
+
 .reward-number--emerald {
 	display: inline-flex;
 	align-items: center;
@@ -2625,6 +2646,8 @@ html.crit-shake {
 	.enemy-electric-impact,
 	.inimigo--surgindo,
 	.inimigo-surgir-anel,
+	.contador--pulso,
+	.xp-fill--pulso,
 	.floor-transition--visible,
 	#contAndar.floor-counter--changed,
 	.floating-game-text {
