@@ -869,9 +869,10 @@ function MostraInfo(msg) {
     UI.showInfo(msg);
 }
 
-// botões "Logs" (fim do menu de configuração) e "Ver itens da build"
-// (painel Status): delegados no document para não depender do momento em
-// que o DOM desses painéis é montado
+// Ações de clique delegadas no document: "Logs" (fim do menu de
+// configuração), "Ver itens da build" (painel Status) e os botões de
+// navegação lateral (Status, Loja, Config, Formigas e Skills). Delegar
+// evita depender do momento em que cada painel é montado.
 document.addEventListener("click", (e) => {
     if (!(e.target instanceof Element)) return;
     if (e.target.closest("#btnLogs")) {
@@ -880,6 +881,25 @@ document.addEventListener("click", (e) => {
     }
     if (e.target.closest("#btnVerItensBuild")) {
         UI.showItensBuild();
+    }
+    if (e.target.closest("#btnStatus")) {
+        SobeStatus();
+        return;
+    }
+    if (e.target.closest("#btn-Loja")) {
+        AbreLoja(true);
+        return;
+    }
+    if (e.target.closest("#btn-Config")) {
+        AbreConfig();
+        return;
+    }
+    if (e.target.closest("#btn-Formigas")) {
+        UI.toggleAntCollection();
+        return;
+    }
+    if (e.target.closest("#btnSkills")) {
+        UI.toggleSkillUpgradePanel();
     }
 });
 

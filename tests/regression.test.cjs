@@ -187,6 +187,35 @@ test("painel de configuração registra controles por addEventListener (sem hand
     }
 });
 
+test("navegação lateral usa delegação registrada (sem onclick inline)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            document.getElementById("btn-Config") && typeof window.SobeStatus === "function");
+        const result = await page.evaluate(() => {
+            const ids = ["btnStatus", "btn-Loja", "btn-Config", "btn-Formigas", "btnSkills"];
+            const inline = ids.filter(id => document.getElementById(id)?.hasAttribute("onclick"));
+
+            const config = document.getElementById("container-SalvaCarrega");
+            document.getElementById("btn-Config").click();
+            const configAberta = config.style.visibility;
+
+            const status = document.getElementById("DivStatus");
+            document.getElementById("btnStatus").click();
+            const statusAberto = status.style.visibility;
+
+            return { inline, configAberta, statusAberto };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.equal(result.configAberta, "visible", "btn-Config abre o painel de configuração");
+        assert.equal(result.statusAberto, "visible", "btnStatus abre o painel de status");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("save antigo é migrado sem perder compatibilidade", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
