@@ -766,6 +766,8 @@ tr, td, th{
 
 #TabLoja td, #TabLojaEsm td, #TabLojaCM td{
 	padding: 0.3vw 0.4vw;
+	vertical-align: middle;
+	line-height: 1.25;
 }
 
 /* Item no nível máximo: substitui o preço na loja (o botão é escondido via JS) */
@@ -3192,26 +3194,38 @@ body.desktop-app img {
 	min-width: 78px;
 	min-height: 32px;
 	padding: 5px 10px;
-	background: linear-gradient(145deg, #36df88, #129b5a);
+	background: linear-gradient(to bottom, #3ee98f, #129b5a);
 	border: 1px solid rgba(137, 255, 193, 0.58);
 	border-radius: 6px;
-	box-shadow: 0 3px 0 #075c34;
+	box-shadow:
+		0 3px 0 #075c34,
+		0 6px 14px rgba(0, 0, 0, 0.35),
+		inset 0 1px rgba(255, 255, 255, 0.28);
 	color: #07190f;
 	font-size: 0.9em;
 	font-weight: 800;
 	cursor: pointer;
-	transition: filter 120ms ease, transform 120ms ease;
+	transition: filter 120ms ease, transform 140ms ease, box-shadow 140ms ease;
 }
 
 #TabLoja .Loja:hover,
 #TabLojaEsm .Loja:hover , #TabLojaCM .Loja:hover {
 	filter: brightness(1.12);
 	transform: translateY(-1px);
+	box-shadow:
+		0 4px 0 #075c34,
+		0 9px 20px rgba(0, 0, 0, 0.42),
+		0 0 16px rgba(60, 255, 150, 0.32),
+		inset 0 1px rgba(255, 255, 255, 0.32);
 }
 
 #TabLoja .Loja:active,
 #TabLojaEsm .Loja:active , #TabLojaCM .Loja:active {
 	transform: translateY(1px);
+	box-shadow:
+		0 1px 0 #075c34,
+		0 3px 8px rgba(0, 0, 0, 0.35),
+		inset 0 1px rgba(255, 255, 255, 0.2);
 }
 
 #container-Status {
