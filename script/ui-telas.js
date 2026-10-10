@@ -457,10 +457,16 @@ function MostraTutorialComp1() {
 function MostraDecomposicaoDano() {
     const multFormigas = MultiplicadorDanoFormigas();
     const multNivel = MultiplicadorDanoNivel();
-    const multTotal = multFormigas * multNivel;
+    // itens da build: Adaga (dano), Poção Rubra (crítico) e Colar (companheiro)
+    // entram como no Bater, para a decomposição bater com o dano real
+    const multItensDano = Tapeira.ItensBuild.multDano();
+    const multItensCrit = Tapeira.ItensBuild.multDanoCrit();
+    const multItensComp = Tapeira.ItensBuild.multDanoComp();
+    const copiasItem = id => Tapeira.ItensBuild.copias(id);
+    const multTotal = multFormigas * multNivel * multItensDano;
     const conjuntos = ConjuntosFormigas("vermelhas");
     const danoEfetivo = N(danoJogador) * multTotal;
-    const critEfetivo = N(danoCritJogador) * multTotal;
+    const critEfetivo = N(danoCritJogador) * multItensCrit * multTotal;
 
     const linha = (rotulo, valor) => `
         <div class="decomp-linha">
@@ -473,12 +479,14 @@ function MostraDecomposicaoDano() {
         ${linha("Dano base da loja (nível " + (N(lvlDano) | 0) + ")", N(danoJogador).toFixed(2))}
         ${linha("× Bônus de nível (nível " + (N(nivelJogador) | 0) + ")", "×" + multNivel.toFixed(2))}
         ${linha("× Formigas vermelhas (" + conjuntos + " conjunto" + (conjuntos === 1 ? "" : "s") + ")", "×" + multFormigas.toFixed(2))}
+        ${copiasItem("adaga") > 0 ? linha("× Adaga Sombria (" + copiasItem("adaga") + " cópia" + (copiasItem("adaga") === 1 ? "" : "s") + ")", "×" + multItensDano.toFixed(2)) : ""}
         <div class="decomp-linha decomp-linha--total">
             <span>= Dano efetivo por golpe</span>
             <span class="decomp-valor">${danoEfetivo.toFixed(2)}</span>
         </div>
 
         <div class="decomp-grupo">Crítico</div>
+        ${copiasItem("pocaoRubra") > 0 ? linha("× Poção Rubra (" + copiasItem("pocaoRubra") + " cópia" + (copiasItem("pocaoRubra") === 1 ? "" : "s") + ")", "×" + multItensCrit.toFixed(2)) : ""}
         ${linha("Dano crítico efetivo", critEfetivo.toFixed(2))}
         ${linha("Chance crítica", (N(chanceCrit) * 100).toFixed(2) + "%")}
         ${linha("Multiplicador crítico máximo", "×" + N(multiplicadorMaximoDanoCritico).toFixed(1))}
@@ -488,7 +496,10 @@ function MostraDecomposicaoDano() {
     `;
 
     if (N(lvlComp1) > 0) {
-        html += linha("Dano do companheiro (nível " + (N(lvlComp1) | 0) + ")", (N(danoComp) * multTotal).toFixed(2));
+        html += linha("Dano do companheiro (nível " + (N(lvlComp1) | 0) + ")", (N(danoComp) * multItensComp * multTotal).toFixed(2));
+        if (copiasItem("colarFormigas") > 0) {
+            html += linha("× Colar das Formigas (" + copiasItem("colarFormigas") + " cópia" + (copiasItem("colarFormigas") === 1 ? "" : "s") + ")", "×" + multItensComp.toFixed(2));
+        }
         html += linha("= " + (N(danoComp1) * 100).toFixed(0) + "% do seu dano", "×" + N(danoComp1).toFixed(2));
     } else {
         html += `<div class="decomp-nota">Ainda sem companheiro — compre na loja de esmeraldas após o 1º reset.</div>`;
