@@ -147,6 +147,9 @@ navegador, Windows (Electron) e Android (Capacitor).
     `imagens/imagens/` (−15,4 MB) e o `prepare-web.ps1` passou a limpar o
     destino antes de copiar, então o `www/` não acumula mais arquivos
     obsoletos (`www` de 61 → 37 MB).
+18. Otimização de assets: PNGs reencodados **sem perda** (lossless,
+    29,8 → 9,2 MB) e o mp3 de fundo de 320 → 128 kbps (6,6 → 2,6 MB). O `www`
+    caiu de 61 → ~13 MB.
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
@@ -159,12 +162,11 @@ carregamento e unificação do save) estão concluídos. Candidatos naturais ago
 1. **Bundle/minify do JS:** concatenar os scripts na ordem do
    `scripts/script-manifest.js` e minificar com esbuild — 36 requisições viram
    1 e o parse cai. É o passo seguinte direto da lista única.
-2. **Otimizar imagens (em andamento):** a duplicata `imagens/imagens/` já saiu
-   (−15,4 MB). Faltam: reencodar o mp3 de fundo (6,6 MB) e otimizar os PNGs de
-   runtime grandes (backgrounds, player, inimigo, sprites). Folhas de
-   arte-fonte (`Grade de Ícones`, `Fauna Fantastica`, `personagens.png`) podem
-   ficar fora do pacote.
-3. **Cachear `getElementById` e consolidar ticks** (1s/250ms) nos laços.
+2. **Cachear `getElementById` e consolidar ticks** (1s/250ms) nos laços.
+3. **Assets restantes:** tirar as folhas de arte-fonte do pacote
+   (`Grade de Ícones`, `Fauna Fantastica`, `personagens.png`) e otimizar os
+   sprites gerados pelo build — `prepare-animation-sprites.ps1` os recria sem
+   otimização (~711 KB).
 
 ## Como validar
 
