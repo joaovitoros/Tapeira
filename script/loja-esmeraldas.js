@@ -222,16 +222,18 @@ function CompraXP(){
 	}
 }
 
-// Item de 1 nível: duplica a quantidade de Conhecimento Mug ganha no reset
+// Item "CM em dobro": cada nível dobra o Conhecimento Mug ganho no reset
+// (×2/×4/×8/×16). Preço base 5, dobrando por nível.
 function CompraEsmCM(){
 	NormalizaPrecosLoja();
-	if(N(lvlEsmCM) >= 1){
+	if(N(lvlEsmCM) >= MAX_ESM_CM){
 		MostraInfo("Item no nível máximo!");
 		return;
 	}
 	if(N(esmeraldas) >= N(precoEsmCM)){
 		esmeraldas = N(esmeraldas) - N(precoEsmCM);
-		lvlEsmCM = 1;
+		lvlEsmCM = N(lvlEsmCM) + 1;
+		precoEsmCM = N(precoEsmCM) * 2;
 
 		ChamaSom('audio6');
 

@@ -303,8 +303,9 @@ var marcosNivel50 = 0;
 // permanente no MultiplicadorCM cada — acumulativo (1,05^N), não zera no Resetar
 var resetsCurtosCM = 0;
 
-var precoEsmCM = 10;
-var lvlEsmCM = 0; //0/1: item de 1 nível da loja de esmeraldas — duplica o CM ganho no reset
+var precoEsmCM = 5; //base do item "CM em dobro"; dobra por nível (5/10/20/40)
+const MAX_ESM_CM = 4; //níveis do "CM em dobro" (cada nível dobra o CM no reset)
+var lvlEsmCM = 0; //0..MAX_ESM_CM
 ////
 
 function CarregarStatus(){

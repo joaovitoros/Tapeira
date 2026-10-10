@@ -123,7 +123,7 @@ const PREVIEWS_LOJA = {
 		return "Bônus de XP: +" + BonusXPLoja(n) + " → +" + BonusXPLoja(n + 1) + " por abate";
 	},
 	CompraEsmCM() {
-		if (N(lvlEsmCM) >= 1) return "CM ganho: no nível máximo (×2 do item)";
+		if (N(lvlEsmCM) >= MAX_ESM_CM) return "CM ganho: no nível máximo (×" + Math.pow(2, MAX_ESM_CM) + " do item)";
 		// o item dobra só a parte dele (2^nível); os marcos de 50 níveis e o
 		// bônus de resets curtos multiplicam por fora e não dobram
 		const atual = MultiplicadorCM();
