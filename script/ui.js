@@ -491,8 +491,11 @@ const UI = {
     },
 
     showStatus() {
-        // dano real aplicado no inimigo = base × formigas × nível × especialização
-        const multDanoTotal = MultiplicadorDanoFormigas() * MultiplicadorDanoNivel();
+        // dano real aplicado no inimigo = base × formigas × nível × itens da
+        // build × especialização (os itens entram como no Bater: Adaga no dano,
+        // Poção Rubra no crítico, Colar no companheiro)
+        const multItensDano = Tapeira.ItensBuild.multDano();
+        const multDanoTotal = MultiplicadorDanoFormigas() * MultiplicadorDanoNivel() * multItensDano;
         const multEspNormal = MultiplicadorDanoEspecializacao(false);
         const multEspCritico = MultiplicadorDanoEspecializacao(true);
 
@@ -517,11 +520,11 @@ const UI = {
             ["Bonus avanço", FormatGold(BonusGoldAvanco())],
             ["Chance avanço", (avanco * 100).toFixed(2) + "%"],
             ["Qtd avanço", qtdAvanco],
-            ["Dano crítico", (danoCritJogador * multDanoTotal * multEspCritico).toFixed(2)],
+            ["Dano crítico", (danoCritJogador * Tapeira.ItensBuild.multDanoCrit() * multDanoTotal * multEspCritico).toFixed(2)],
             ["Chance crítica", (chanceCrit * 100).toFixed(2) + "%"],
             ["Especialização", especializacao > 0 ? ESPECIALIZACOES[especializacao].nome : "—"],
             // DPS de verdade: a Velocidade do Companheiro multiplica os hits/s
-            ["DPS companheiros", (danoComp * multDanoTotal * multEspNormal * N(velAtaqueComp)).toFixed(2)],
+            ["DPS companheiros", (danoComp * Tapeira.ItensBuild.multDanoComp() * multDanoTotal * multEspNormal * N(velAtaqueComp)).toFixed(2)],
             // Companheiros: nível + efeito vigente de cada um (loja de esmeraldas)
             ["Companheiro 1 — dano", N(lvlComp1) > 0 ? "nível " + (N(lvlComp1) | 0) + ": " + FormataPct(danoComp1, 0) + " do seu dano" : "não comprado"],
             ["Companheiro 2 — gold", N(lvlComp2) > 0 ? "nível " + (N(lvlComp2) | 0) + ": " + FormatGold(goldCompanheiro) + "/s (" + (25 + 10 * (N(lvlComp2) - 1)) + "% do gold de um inimigo)" : "não comprado"],
