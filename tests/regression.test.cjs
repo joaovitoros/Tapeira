@@ -1407,6 +1407,80 @@ test("companheiro de gold calcula renda e conquistas aplicam bônus por nível",
     }
 });
 
+test("conquista Milionário sobe pelos marcos 1M/1B/1T/Qa/Qi/Sx", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.ConquistasComportamentais === "function");
+        const result = await page.evaluate(() => {
+            UI.showInfo = () => {};
+            UI.showMilestone = () => {};
+            const antes = {
+                conquistasComp: conquistasComp.slice(),
+                melhorGoldRun,
+                totalGold,
+                comprasRun,
+                andar
+            };
+            comprasRun = 1; // evita disparar o Poupado por acidente
+            totalGold = new GoldNumber(0);
+            andar = 1;
+            const niveis = [];
+            for (const alvo of [5e5, 1e6, 1e8, 1e9, 1e12, 1e15, 1e18, 1e21]) {
+                conquistasComp = [0, 0, 0, 0, 0];
+                melhorGoldRun = new GoldNumber(alvo);
+                ConquistasComportamentais();
+                niveis.push(NivelConquistaComp(4));
+            }
+            // save antigo no nível 3 (100M de gold) mantém o nível — nunca regredir
+            conquistasComp = [0, 0, 0, 0, 3];
+            melhorGoldRun = new GoldNumber(1e8);
+            ConquistasComportamentais();
+            const nivelAntigoMantido = NivelConquistaComp(4);
+            const progressoNivel3 = ProgressoConquistaComp(4); // próximo marco: Qa
+            conquistasComp[4] = 6;
+            const xpNoNivel6 = MultiplicadorXPConquistaComp();
+            // round-trip JSON como no fluxo real (descarta campos undefined)
+            const novoSave = () => JSON.parse(JSON.stringify(CriarObjetoSave()));
+            let validouNivel6 = true;
+            try { ValidarSave({ ...novoSave(), conquistasComp: [0, 0, 0, 0, 6] }); }
+            catch (e) { validouNivel6 = e.message; }
+            let rejeitouNivel7 = false;
+            try { ValidarSave({ ...novoSave(), conquistasComp: [0, 0, 0, 0, 7] }); }
+            catch (e) { rejeitouNivel7 = true; }
+            conquistasComp = antes.conquistasComp;
+            melhorGoldRun = antes.melhorGoldRun;
+            totalGold = antes.totalGold;
+            comprasRun = antes.comprasRun;
+            andar = antes.andar;
+            return {
+                niveis,
+                max: CONQUISTAS_COMP[4].max,
+                marcos: CONQUISTAS_COMP[4].marcos,
+                desc: CONQUISTAS_COMP[4].desc,
+                nivelAntigoMantido,
+                progressoNivel3,
+                xpNoNivel6,
+                validouNivel6,
+                rejeitouNivel7
+            };
+        });
+
+        assert.deepEqual(result.niveis, [0, 1, 1, 2, 3, 4, 5, 6],
+            "1M→nível 1, 100M segue nível 1, 1B→2, 1T→3 ... 1 sextilhão→6");
+        assert.equal(result.max, 6);
+        assert.deepEqual(result.marcos, [1e6, 1e9, 1e12, 1e15, 1e18, 1e21]);
+        assert.ok(result.desc.includes("1M/1B/1T/Qa/Qi/Sx"));
+        assert.equal(result.nivelAntigoMantido, 3, "nível de save antigo nunca regredir");
+        assert.ok(result.progressoNivel3.includes("Qa"), "progresso aponta o próximo marco (quadrilhão)");
+        assert.equal(result.xpNoNivel6, 1.6, "recompensa continua +10% de XP por nível");
+        assert.equal(result.validouNivel6, true, "ValidarSave aceita o nível máximo novo");
+        assert.equal(result.rejeitouNivel7, true, "ValidarSave rejeita nível acima do máximo");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("simulação offline mantém vidas, conta mortes e reinicia onda completa", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
