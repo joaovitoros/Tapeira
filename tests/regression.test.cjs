@@ -351,6 +351,17 @@ test("Salvar e o auto save compartilham o mesmo objeto (só os campos offline di
     }
 });
 
+test("as páginas carregam exatamente os scripts da lista única (manifest)", () => {
+    const manifest = require("../scripts/script-manifest.js");
+    for (const [arquivo, esperado] of Object.entries(manifest)) {
+        const html = fs.readFileSync(path.join(projectRoot, arquivo), "utf8");
+        const bloco = html.match(/<!-- scripts:start[\s\S]*?<!-- scripts:end -->/);
+        assert.ok(bloco, arquivo + ": bloco de scripts com marcadores ausente");
+        const encontrados = [...bloco[0].matchAll(/<script src="([^"]+)"><\/script>/g)].map(m => m[1]);
+        assert.deepEqual(encontrados, esperado, arquivo + ": scripts fora do manifest (rode npm run sync:scripts)");
+    }
+});
+
 test("save antigo é migrado sem perder compatibilidade", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

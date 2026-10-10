@@ -138,20 +138,31 @@ navegador, Windows (Electron) e Android (Capacitor).
     `CriarObjetoSave(false)` (o auto save usa `CriarObjetoSave()`, com os
     campos offline). Some a duplicação do objeto de save e o `getRawGold`
     morto que estava em `Salvar`.
+16. Carregamento consolidado numa **lista única**: `scripts/script-manifest.js`
+    define a ordem dos scripts de cada página; `scripts/sync-scripts.js`
+    (`npm run sync:scripts`) gera o bloco entre os marcadores
+    `<!-- scripts:start/end -->` em `index.html` e `Caverna.html`; um teste
+    garante que o HTML não saiu de sincronia.
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
 
 ## Próximos passos sugeridos (em ordem de valor)
 
-1. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
-   duas páginas; uma lista única (gerador ou bundler com esbuild) evita
-   esquecimento.
+Os itens do plano original (handlers inline, bug de save, consolidação do
+carregamento e unificação do save) estão concluídos. Candidatos naturais agora:
+
+1. **Bundle/minify do JS:** concatenar os scripts na ordem do
+   `scripts/script-manifest.js` e minificar com esbuild — 36 requisições viram
+   1 e o parse cai. É o passo seguinte direto da lista única.
+2. **Otimizar imagens:** `imagens/` tem ~46 MB (texturas de vários MB);
+   converter para webp/redimensionar é o maior ganho de peso do jogo.
+3. **Cachear `getElementById` e consolidar ticks** (1s/250ms) nos laços.
 
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (40 testes)
+npm test                 # suíte principal (41 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android
