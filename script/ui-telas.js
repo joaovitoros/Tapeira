@@ -476,18 +476,18 @@ function MostraDecomposicaoDano() {
 
     let html = `
         <div class="decomp-grupo">Por golpe</div>
-        ${linha("Dano base da loja (nível " + (N(lvlDano) | 0) + ")", N(danoJogador).toFixed(2))}
+        ${linha("Dano base da loja (nível " + (N(lvlDano) | 0) + ")", FormatarGold(N(danoJogador)))}
         ${linha("× Bônus de nível (nível " + (N(nivelJogador) | 0) + ")", "×" + multNivel.toFixed(2))}
         ${linha("× Formigas vermelhas (" + conjuntos + " conjunto" + (conjuntos === 1 ? "" : "s") + ")", "×" + multFormigas.toFixed(2))}
         ${copiasItem("adaga") > 0 ? linha("× Adaga Sombria (" + copiasItem("adaga") + " cópia" + (copiasItem("adaga") === 1 ? "" : "s") + ")", "×" + multItensDano.toFixed(2)) : ""}
         <div class="decomp-linha decomp-linha--total">
             <span>= Dano efetivo por golpe</span>
-            <span class="decomp-valor">${danoEfetivo.toFixed(2)}</span>
+            <span class="decomp-valor">${FormatarGold(danoEfetivo)}</span>
         </div>
 
         <div class="decomp-grupo">Crítico</div>
         ${copiasItem("pocaoRubra") > 0 ? linha("× Poção Rubra (" + copiasItem("pocaoRubra") + " cópia" + (copiasItem("pocaoRubra") === 1 ? "" : "s") + ")", "×" + multItensCrit.toFixed(2)) : ""}
-        ${linha("Dano crítico efetivo", critEfetivo.toFixed(2))}
+        ${linha("Dano crítico efetivo", FormatarGold(critEfetivo))}
         ${linha("Chance crítica", (N(chanceCrit) * 100).toFixed(2) + "%")}
         ${linha("Multiplicador crítico máximo", "×" + N(multiplicadorMaximoDanoCritico).toFixed(1))}
         ${N(bonusCritConquista) > 0 ? linha("Bônus crítico das conquistas", "+" + N(bonusCritConquista).toFixed(2)) : ""}
@@ -496,7 +496,7 @@ function MostraDecomposicaoDano() {
     `;
 
     if (N(lvlComp1) > 0) {
-        html += linha("Dano do companheiro (nível " + (N(lvlComp1) | 0) + ")", (N(danoComp) * multItensComp * multTotal).toFixed(2));
+        html += linha("Dano do companheiro (nível " + (N(lvlComp1) | 0) + ")", FormatarGold(N(danoComp) * multItensComp * multTotal));
         if (copiasItem("colarFormigas") > 0) {
             html += linha("× Colar das Formigas (" + copiasItem("colarFormigas") + " cópia" + (copiasItem("colarFormigas") === 1 ? "" : "s") + ")", "×" + multItensComp.toFixed(2));
         }

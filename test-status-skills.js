@@ -36,17 +36,17 @@ const path = require('path');
             if (nome) linhas[nome] = valor;
         });
 
-        check("Status 'Dano' inclui a Adaga (×1,15): 100 → 115",
-            Math.abs(parseFloat(linhas["Dano"]) - 115) < 0.01, linhas["Dano"]);
-        check("Status 'Dano crítico' inclui Poção Rubra (×1,25) e Adaga: 200 → 287,5",
-            Math.abs(parseFloat(linhas["Dano crítico"]) - 200 * 1.25 * 1.15) < 0.01, linhas["Dano crítico"]);
+        check("Status 'Dano' inclui a Adaga (×1,25): 100 → 125",
+            Math.abs(parseFloat(linhas["Dano"]) - 125) < 0.01, linhas["Dano"]);
+        check("Status 'Dano crítico' inclui Poção Rubra (×1,25) e Adaga (×1,25): 200 → 312,5",
+            Math.abs(parseFloat(linhas["Dano crítico"]) - 200 * 1.25 * 1.25) < 0.01, linhas["Dano crítico"]);
 
         // ---------- Decomposição do dano: mesmos itens ----------
         MostraDecomposicaoDano();
         const decomp = document.getElementById("gameModal")?.textContent || "";
         check("Decomposição cita a Adaga Sombria", /Adaga Sombria/.test(decomp));
         check("Decomposição cita a Poção Rubra", /Poção Rubra/.test(decomp));
-        check("Decomposição: crítico efetivo 287,50", decomp.includes("287.50"));
+        check("Decomposição: crítico efetivo 312,50", decomp.includes("312.50"));
         UI.closeModal();
 
         // ---------- Habilidades: "máximo" exige skill E perk no máximo ----------

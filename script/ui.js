@@ -509,21 +509,21 @@ const UI = {
         const stats = [
             // Cadeia de Ataques: o valor "no cap" é o golpe cheio com o stack
             // de +400% fechado (base ×0,5 ×5 = ×2,5)
-            ["Dano", (danoJogador * multDanoTotal * multEspNormal).toFixed(2)
+            ["Dano", FormatarGold(danoJogador * multDanoTotal * multEspNormal)
                 + (especializacao === 5
-                    ? " → " + (danoJogador * multDanoTotal * 2.5).toFixed(2) + " no cap"
+                    ? " → " + FormatarGold(danoJogador * multDanoTotal * 2.5) + " no cap"
                     : "")],
-            ["Multiplicador Gold", mulGold.toFixed(2)],
+            ["Multiplicador Gold", FormatarGold(mulGold)],
             ["Gold por inimigo", FormatGold(andar * mulGold * MultiplicadorGoldConhecimento() * MultiplicadorGoldFormigas() * MultiplicadorGoldEspecializacao())],
             ["Gold total", FormatGold(totalGold)],
             ["Bonus avanço", FormatGold(BonusGoldAvanco())],
             ["Chance avanço", (avanco * 100).toFixed(2) + "%"],
             ["Qtd avanço", qtdAvanco],
-            ["Dano crítico", (danoCritJogador * Tapeira.ItensBuild.multDanoCrit() * multDanoTotal * multEspCritico).toFixed(2)],
+            ["Dano crítico", FormatarGold(danoCritJogador * Tapeira.ItensBuild.multDanoCrit() * multDanoTotal * multEspCritico)],
             ["Chance crítica", (chanceCrit * 100).toFixed(2) + "%"],
             ["Especialização", especializacao > 0 ? ESPECIALIZACOES[especializacao].nome : "—"],
             // DPS de verdade: a Velocidade do Companheiro multiplica os hits/s
-            ["DPS companheiros", (danoComp * Tapeira.ItensBuild.multDanoComp() * multDanoTotal * multEspNormal * N(velAtaqueComp)).toFixed(2)],
+            ["DPS companheiros", FormatarGold(danoComp * Tapeira.ItensBuild.multDanoComp() * multDanoTotal * multEspNormal * N(velAtaqueComp))],
             // Companheiros: nível + efeito vigente de cada um (loja de esmeraldas)
             ["Companheiro 1 — dano", N(lvlComp1) > 0 ? "nível " + (N(lvlComp1) | 0) + ": " + FormataPct(danoComp1, 0) + " do seu dano" : "não comprado"],
             ["Companheiro 2 — gold", N(lvlComp2) > 0 ? "nível " + (N(lvlComp2) | 0) + ": " + FormatGold(goldCompanheiro) + "/s (" + (25 + 10 * (N(lvlComp2) - 1)) + "% do gold de um inimigo)" : "não comprado"],
