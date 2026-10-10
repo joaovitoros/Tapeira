@@ -309,10 +309,10 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 
 			SobeUmAndar();
 
-			// Explorador do mapa (comp 6): chance de avançar mais um
-			// andar de uma vez — 5% no nível 1, +2% por nível (teto 50%)
+			// Explorador do mapa (comp 6): chance de avançar mais um andar
+			// de uma vez — cresce com o nível e com a distância do recorde
 			if (lvlComp6 > 0) {
-				const chanceExplorador = Math.min(0.5, 0.05 + 0.02 * (lvlComp6 - 1));
+				const chanceExplorador = ChanceExplorador();
 				if (Math.random() < chanceExplorador) {
 					SobeUmAndar();
 				}

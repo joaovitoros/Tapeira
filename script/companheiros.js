@@ -14,6 +14,20 @@
 // Companheiro 6 (Explorador do mapa): chance de avançar mais de um
 //   andar por vez (escala com o nível: 5% + 2% por nível).
 
+// Chance de o Explorador pular +1 andar no nível dado: base por nível
+// (5% + 2%/nível, teto 50%) × bônus de distância do recorde (×(1 + 2% por
+// andar abaixo de maxAndar)), com teto de 90%. Fonte única — usada pelo
+// combate (batalha.js), pelo Status (ui.js) e pelo preview da loja.
+function ChanceExploradorNoNivel(nivel) {
+	const base = Math.min(0.5, 0.05 + 0.02 * Math.max(0, N(nivel) - 1));
+	const distancia = Math.max(0, N(maxAndar) - N(andar));
+	return Math.min(0.9, base * (1 + 0.02 * distancia));
+}
+
+function ChanceExplorador() {
+	return ChanceExploradorNoNivel(lvlComp6);
+}
+
 // Buffs do Alquimista: tipo → multiplicador e nome amigável
 const BUFFS_ALQUIMISTA = [
 	{ tipo: "dano",     mult: 2,   nome: "Dano ×2" },

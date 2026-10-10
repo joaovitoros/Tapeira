@@ -114,9 +114,9 @@ const PREVIEWS_LOJA = {
 			+ " (metade em automáticos)";
 	},
 	CompraComp6() {
-		const chance = Math.min(50, 5 + 2 * Math.max(0, N(lvlComp6) - 1));
-		const prox = Math.min(50, 5 + 2 * N(lvlComp6));
-		return "Explorador: " + chance + "% → " + prox + "% de avançar +1 andar";
+		const chance = PctTexto(ChanceExploradorNoNivel(lvlComp6));
+		const prox = PctTexto(ChanceExploradorNoNivel(N(lvlComp6) + 1));
+		return "Explorador: " + chance + " → " + prox + " de avançar +1 andar";
 	},
 	CompraXP() {
 		const n = Math.max(0, N(lvlXP) | 0);
