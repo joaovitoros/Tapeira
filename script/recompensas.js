@@ -15,12 +15,15 @@ function FormigasDesbloqueadas() {
 	return Math.max(andar, maxAndar) >= 20;
 }
 
+// Formigas vermelhas (dano) e amarelas (gold): cada conjunto de 5 formigas
+// multiplica o efeito por 1,05 (composto) — cresce com a coleção, em vez do
+// +5% somado de antes
 function MultiplicadorDanoFormigas() {
-	return 1 + ConjuntosFormigas("vermelhas") * 0.05;
+	return Math.pow(1.05, ConjuntosFormigas("vermelhas"));
 }
 
 function MultiplicadorGoldFormigas() {
-	return 1 + ConjuntosFormigas("amarelas") * 0.05;
+	return Math.pow(1.05, ConjuntosFormigas("amarelas"));
 }
 
 function MultiplicadorGoldBauFormigas() {

@@ -644,7 +644,7 @@ test("combate aplica dano, item de build e respeita pausa", async () => {
 
         assert.equal(result.pausado, 1000, "ataque durante pausa não altera a vida");
         assert.ok(Math.abs(result.semItem - 990) < 1e-9);
-        assert.ok(Math.abs(result.comAdaga - 988.5) < 1e-9);
+        assert.ok(Math.abs(result.comAdaga - 987.5) < 1e-9);
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();
@@ -1979,7 +1979,7 @@ test("efeitos dos itens, limite de vinte e troca descartando a pilha inteira", a
         const result = await page.evaluate(() => {
             const build = Tapeira.ItensBuild;
             const efeitos = [
-                ["adaga", "multDano", 1.15],
+                ["adaga", "multDano", 1.25],
                 ["escudo", "multGuardiao", 1.30],
                 ["moedas", "multGold", 1.20],
                 ["mapa", "multEvento", 1.25],
@@ -2043,7 +2043,7 @@ test("efeitos dos itens, limite de vinte e troca descartando a pilha inteira", a
         });
 
         const esperados = {
-            adaga: 1.15, escudo: 1.30, moedas: 1.20, mapa: 1.25,
+            adaga: 1.25, escudo: 1.30, moedas: 1.20, mapa: 1.25,
             relogio: 1.10, grimorio: 1.20, pocaoVerde: 1.50,
             pocaoRubra: 1.25, lanterna: 1.20, colarFormigas: 1.20,
             bauPortatil: 1.15, esmeralda: 1.50
@@ -2053,7 +2053,7 @@ test("efeitos dos itens, limite de vinte e troca descartando a pilha inteira", a
             assert.ok(Math.abs(valor - esperados[id]) < 1e-10, `${id}: esperado ${esperados[id]}, recebido ${valor}`);
         }
         assert.equal(result.multiplicadorNeutro, 1);
-        assert.deepEqual(result.copiasAdaga, { contagem: 2, copias: 2, multiplicador: 1.15 ** 2 });
+        assert.deepEqual(result.copiasAdaga, { contagem: 2, copias: 2, multiplicador: 1.25 ** 2 });
         const cheia = ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas", "bauPortatil", "esmeralda", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde"];
         assert.deepEqual(result.listaSanitizada, cheia);
         assert.deepEqual(result.escolhaSemDescarte, { lista: cheia, pendente: true });

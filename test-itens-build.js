@@ -66,9 +66,9 @@ const fs = require('fs');
         todos.every(m => IB[m]() === 1));
       window.maxAndar = 100;
       IB.carrega({ itensBuild: ["adaga"], bauBuildPendente: false });
-      check("1 cópia de adaga: dano ×1,15", arredonda(IB.multDano()) === 1.15, arredonda(IB.multDano()));
+      check("1 cópia de adaga: dano ×1,25", arredonda(IB.multDano()) === 1.25, arredonda(IB.multDano()));
       IB.carrega({ itensBuild: ["adaga", "adaga"], bauBuildPendente: false });
-      check("2 cópias de adaga: dano ×1,3225", arredonda(IB.multDano()) === 1.3225, arredonda(IB.multDano()));
+      check("2 cópias de adaga: dano ×1,5625", arredonda(IB.multDano()) === 1.5625, arredonda(IB.multDano()));
       check("copias() conta por id", IB.copias("adaga") === 2 && IB.copias("moedas") === 0);
 
       // ---- baú: cadência a cada 5 andares (marcos acumulam) ----
@@ -268,7 +268,7 @@ const fs = require('fs');
         document.body.classList.contains("itens-build-tela-aberta"));
       check("tela mostra nome, efeito e resumo com cópias",
         !!tela && tela.textContent.includes("Adaga Sombria")
-        && tela.textContent.includes("+15% de dano")
+        && tela.textContent.includes("+25% de dano")
         && tela.textContent.includes("Adaga Sombria ×2"));
       tela.click(); // clique no fundo (fora do conteúdo) fecha
       check("clique fora fecha a tela",

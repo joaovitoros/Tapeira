@@ -29,7 +29,7 @@
 	// Todos positivos; o custo é o espaço limitado dos slots da build.
 	const POOL = [
 		{ id: "adaga", nome: "Adaga Sombria", icone: "imagens/itens/adaga.png",
-			efeito: "+15% de dano" },
+			efeito: "+25% de dano" },
 		{ id: "escudo", nome: "Escudo do Guardião", icone: "imagens/itens/escudo.png",
 			efeito: "+30% de dano contra guardiões (andares múltiplos de 10)" },
 		{ id: "moedas", nome: "Saco de Moedas", icone: "imagens/itens/moedas.png",
@@ -241,7 +241,7 @@
 		},
 
 		// ---- multiplicadores dos efeitos (hooks nos donos dos sistemas) ----
-		multDano: () => mult(1.15, "adaga"),
+		multDano: () => mult(1.25, "adaga"),
 		multGuardiao: () => mult(1.30, "escudo"),
 		multGold: () => mult(1.20, "moedas"),
 		multEvento: () => mult(1.25, "mapa"),
