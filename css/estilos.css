@@ -8057,6 +8057,12 @@ button.skill-ramo-no:focus-visible {
 	color: #ff9c9c;
 }
 
+.modal-itens-build .item-build-adiar {
+	display: block;
+	margin: 12px auto 0;
+	padding: 8px 16px;
+}
+
 /* ---- Logs (botão no fim do menu de configuração + tela de histórico) ---- */
 
 #divLogs {

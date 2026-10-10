@@ -2,9 +2,8 @@
 // Desbloqueio permanente ao chegar no andar 100 a primeira vez. Depois
 // disso, a cada 5 andares um baú de build aparece — inclusive em runs
 // novas, depois do reset (o andar 100 só destrava o sistema).
-// O baú é MANUAL e persistente: abre só no clique e não some sozinho
-// (nem na troca de andar, nem ao coletar baús comuns); se ficar pendente
-// e o jogador passar por outro múltiplo de 5, nenhum baú novo é criado.
+// Os baús são MANUAIS e persistentes: cada marco de 5 andares acumula um,
+// mesmo que os anteriores ainda não tenham sido abertos.
 // A escolha é 1 de 3 itens aleatórios; escolher um item já presente
 // acumula o efeito (uma entrada por cópia, teto de 5 escolhas).
 // Os itens são da run: zeram no Resetar (junto com perks/especialização).
@@ -51,7 +50,8 @@
 
 	// Uma entrada por cópia: cópias repetidas do mesmo item acumulam o efeito
 	let lista = [];
-	let pendente = false; // true enquanto o baú estiver em aberto
+	let bausPendentes = 0;
+	let opcoesBauAtual = null;
 
 	function item(id) {
 		return POOL.find(registro => registro.id === id) || null;
@@ -100,35 +100,46 @@
 		copias: copias,
 		contagem: () => lista.length,
 		pegaLista: () => lista.slice(),
-		pendente: () => pendente,
+		pendente: () => bausPendentes > 0,
+		quantidadeBausPendentes: () => bausPendentes,
 		desbloqueada: desbloqueada,
 		resumo: resumo,
 		sorteia: sorteia,
 
 		// ---- baú: chamado a cada subida de andar (batalha.js) ----
-		// um baú por vez: se ainda houver um em aberto, o próximo
-		// andar-marcador não gera outro
+		// Cada marco gera um baú, acumulado com os que continuam pendentes.
 		tentaBau() {
 			if (!desbloqueada()) return;
-			if (pendente) return;
 			if (window.andar % 5 !== 0) return;
-			pendente = true;
+			if (bausPendentes >= Number.MAX_SAFE_INTEGER) return;
+			bausPendentes++;
 			UI.spawnBauBuild();
 			AutoSalvar();
 		},
 
 		// chamado pelo clique no baú (ui.js)
 		abreEscolha() {
-			if (!pendente) return;
+			if (bausPendentes <= 0) return;
+			// Não re-sorteia ao apertar Espaço repetidamente nem enquanto o modal está aberto.
+			if (document.getElementById("modalItensBuild")) return;
+			if (!opcoesBauAtual) {
+				opcoesBauAtual = sorteia(3);
+				AutoSalvar();
+			}
 			ChamaSom("audio4");
-			UI.showEscolhaItensBuild(sorteia(3), null);
+			UI.showEscolhaItensBuild(opcoesBauAtual.slice(), null);
+		},
+
+		// Fecha o modal sem consumir o baú nem trocar as opções já sorteadas.
+		adiarEscolha() {
+			if (bausPendentes > 0) UI.fechaEscolhaItensBuild();
 		},
 
 		// escolha final (chamada pelo modal): id do item novo; slot = índice a
 		// substituir quando a build já está cheia (null no fluxo normal)
 		escolhe(id, slot) {
 			const registro = item(id);
-			if (!registro || !pendente) return;
+			if (!registro || bausPendentes <= 0 || !opcoesBauAtual?.includes(id)) return;
 			if (Number.isInteger(slot) && slot >= 0 && slot < lista.length) {
 				lista[slot] = id; // troca: a cópia escolhida sai
 			} else if (lista.length < LIMITE) {
@@ -136,8 +147,10 @@
 			} else {
 				return; // build cheia e sem slot definido: o modal precisa escolher
 			}
-			pendente = false;
-			UI.removeBauBuild();
+			bausPendentes--;
+			opcoesBauAtual = null;
+			if (bausPendentes > 0) UI.spawnBauBuild();
+			else UI.removeBauBuild();
 			UI.fechaEscolhaItensBuild();
 			UI.showInfo("Item escolhido: " + registro.nome + " · build: " + resumo());
 			AutoSalvar();
@@ -148,15 +161,30 @@
 			lista = Array.isArray(save.itensBuild)
 				? save.itensBuild.filter(id => item(id)).slice(0, LIMITE)
 				: [];
-			pendente = save.bauBuildPendente === true && lista.length <= LIMITE;
-			return pendente;
+			bausPendentes = Number.isSafeInteger(save.bausBuildPendentes) && save.bausBuildPendentes >= 0
+				? save.bausBuildPendentes
+				: (save.bauBuildPendente === true ? 1 : 0);
+			opcoesBauAtual = Array.isArray(save.opcoesBauBuild)
+				&& save.opcoesBauBuild.length === 3
+				&& new Set(save.opcoesBauBuild).size === 3
+				&& save.opcoesBauBuild.every(id => item(id))
+				&& bausPendentes > 0
+				? save.opcoesBauBuild.slice()
+				: null;
+			return bausPendentes > 0;
 		},
 		serializa() {
-			return { itensBuild: lista.slice(), bauBuildPendente: pendente };
+			return {
+				itensBuild: lista.slice(),
+				bausBuildPendentes: bausPendentes,
+				bauBuildPendente: bausPendentes > 0,
+				opcoesBauBuild: opcoesBauAtual ? opcoesBauAtual.slice() : null
+			};
 		},
 		limpa() {
 			lista = [];
-			pendente = false;
+			bausPendentes = 0;
+			opcoesBauAtual = null;
 		},
 
 		// ---- multiplicadores dos efeitos (hooks nos donos dos sistemas) ----

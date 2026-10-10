@@ -1,6 +1,12 @@
 (() => {
     if (new URLSearchParams(window.location.search).get("dev") !== "1") return;
 
+    let oneHitKillEnabled = false;
+    window.Tapeira = window.Tapeira || {};
+    window.Tapeira.DevTools = {
+        isOneHitKillEnabled: () => oneHitKillEnabled
+    };
+
     const panel = document.createElement("aside");
     panel.id = "game-dev-tools";
     panel.setAttribute("aria-label", "Ferramentas de desenvolvimento");
@@ -37,6 +43,10 @@
             <span data-evento-status>Evento: -</span>
         </div>
         <div class="game-dev-tools__section">Estado de teste</div>
+        <label class="game-dev-tools__repeat">
+            <input type="checkbox" data-one-hit-kill>
+            Hit kill (matar com um golpe)
+        </label>
         <div class="game-dev-tools__setting">
             <label for="dev-gold">Gold atual</label>
             <div class="game-dev-tools__input-row">
@@ -92,9 +102,17 @@
     const emeraldsInput = panel.querySelector("#dev-emeralds");
     const floorInput = panel.querySelector("#dev-floor");
     const cmInput = panel.querySelector("#dev-cm");
+    const oneHitKillInput = panel.querySelector("[data-one-hit-kill]");
     const eventoStatusReadout = panel.querySelector("[data-evento-status]");
     const gameStateReadout = panel.querySelector("[data-game-state]");
     let playing = false;
+
+    oneHitKillInput.addEventListener("change", () => {
+        oneHitKillEnabled = oneHitKillInput.checked;
+        reportGameState(oneHitKillEnabled
+            ? "Hit kill ativado (somente nesta sessão de debug)."
+            : "Hit kill desativado.");
+    });
 
     function reportGameState(message, isError = false) {
         gameStateReadout.textContent = message;

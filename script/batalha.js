@@ -94,6 +94,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	const ataqueCorrenteEletrica = ataquesCorrenteEletrica > 0;
 	const vidaAnterior = window["vidaInimigo" + inimigo];
 	if (vidaAnterior <= 0) return;
+	const hitKillDebug = window.Tapeira?.DevTools?.isOneHitKillEnabled?.() === true;
 	// Assassino (comp 5): passiva de morte instantânea.
 	// 0,5% no nv1 (+0,05% por nível) no ataque manual; metade disso
 	// nos automáticos e do companheiro — ChanceMorteAssassino().
@@ -206,16 +207,18 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	ChamaSom(critico ? "audio8" : "audio3");
 	// Assassino: se a passiva acertou, o golpe mata na hora
 	// (dano = vida toda, o fluxo de abate roda normalmente)
-	if (morteInstantaneaAssassino) dano = vidaAnterior;
+	if (morteInstantaneaAssassino || hitKillDebug) dano = vidaAnterior;
 	let vidaAtual = vidaAnterior - dano;
 	window["vidaInimigo" + inimigo] = vidaAtual;
 	UI.showDamageNumber(inimigoElement, dano, critico);
 
 	if (chainTargets.length > 0) {
 		// ramo Sobrecarga da árvore: +50% por nó no dano da cadeia
-		const chainDamage = danoBaseAtaque * ((25 + NivelDaSkill("electric") * 5) / 100)
-			* MultiplicadorRamoCorrente();
 		for (const alvo of chainTargets) {
+			const chainDamage = hitKillDebug
+				? window["vidaInimigo" + alvo.id]
+				: danoBaseAtaque * ((25 + NivelDaSkill("electric") * 5) / 100)
+					* MultiplicadorRamoCorrente();
 			const chainHealth = Math.max(0, window["vidaInimigo" + alvo.id] - chainDamage);
 			window["vidaInimigo" + alvo.id] = chainHealth;
 			UI.showDamageNumber(alvo.element, chainDamage, false);

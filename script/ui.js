@@ -1498,9 +1498,14 @@ const UI = {
             // o painel abre (base da loja/marcos × resets curtos)
             ["Multiplicador CM", "×" + FormataMultCM()],
             // itens da build: por run (zeram no reset); desbloqueio no andar 100
-            ["Itens da build", Tapeira.ItensBuild.desbloqueada()
-                ? (Tapeira.ItensBuild.contagem() > 0 ? Tapeira.ItensBuild.resumo() : "nenhum (baú de itens a cada 5 andares)")
-                : "desbloqueia no andar 100"],
+			["Itens da build", Tapeira.ItensBuild.desbloqueada()
+				? ((Tapeira.ItensBuild.contagem() > 0
+					? Tapeira.ItensBuild.resumo()
+					: "nenhum (baú de itens a cada 5 andares)")
+					+ (Tapeira.ItensBuild.quantidadeBausPendentes() > 0
+						? ` · ${Tapeira.ItensBuild.quantidadeBausPendentes()} baú(s) pendente(s)`
+						: ""))
+				: "desbloqueia no andar 100"],
             ["Bônus XP", "+" + BonusXPLoja()],
             ["XP por inimigo", (XPPorInimigo() * BonusXPConhecimento()).toFixed(2)],
             // total do bônus do CM: +2% por nível (dobro do +1% original)
@@ -1942,9 +1947,10 @@ const UI = {
     // 5 andares depois do desbloqueio (andar 100) e some só quando o
     // jogador escolhe um item — não é removido na troca de andar nem pela
     // coleta de baús comuns (RemoveBau mexe apenas no id "bau").
-    spawnBauBuild() {
-        this.removeBauBuild();
-        const bau = document.createElement("img");
+	spawnBauBuild() {
+		this.removeBauBuild();
+		const quantidade = Tapeira.ItensBuild.quantidadeBausPendentes();
+		const bau = document.createElement("img");
 
         bau.src = "imagens/bau-aventura.svg";
         bau.className = "bau bau-build";
@@ -1952,14 +1958,19 @@ const UI = {
         bau.alt = "";
         bau.setAttribute("role", "button");
         bau.setAttribute("tabindex", "0");
-        bau.setAttribute("aria-label", "Abrir baú de itens da build");
-        bau.title = "Baú de itens da build: escolha 1 de 3";
+		bau.setAttribute("aria-label", quantidade === 1
+			? "Abrir baú de itens da build"
+			: `Abrir ${quantidade} baús de itens da build`);
+		bau.title = quantidade === 1
+			? "Baú de itens da build: escolha 1 de 3"
+			: `${quantidade} baús de itens da build pendentes: escolha 1 de 3 por baú`;
         bau.addEventListener("click", () => Tapeira.ItensBuild.abreEscolha());
-        bau.addEventListener("keydown", event => {
-            if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                Tapeira.ItensBuild.abreEscolha();
-            }
+		bau.addEventListener("keydown", event => {
+			if (event.key === "Enter" || event.key === " ") {
+				event.preventDefault();
+				if (event.repeat) return;
+				Tapeira.ItensBuild.abreEscolha();
+			}
         });
 
         document.body.appendChild(bau);
@@ -1968,7 +1979,7 @@ const UI = {
         selo.id = "bauBuild-selo";
         selo.className = "bau-build-selo";
         selo.setAttribute("aria-hidden", "true");
-        selo.textContent = "ITENS";
+		selo.textContent = quantidade > 1 ? `ITENS ×${quantidade}` : "ITENS";
         document.body.appendChild(selo);
 
         const posicionaSelo = () => {
@@ -2154,6 +2165,9 @@ const UI = {
                     <span class="itens-build-subtitulo">${subtitulo}</span>
                 </div>
                 ${corpo}
+                <button type="button" class="btn-Padrao item-build-adiar" data-item-build-skip>
+                    Não escolher nenhum item
+                </button>
             </div>`;
         // fecha clicando fora (o baú continua pendente: pode reabrir)
         modal.addEventListener("click", (e) => {
@@ -2174,6 +2188,8 @@ const UI = {
             botao.addEventListener("click", () =>
                 Tapeira.ItensBuild.escolhe(escolhendo, Number(botao.getAttribute("data-slot"))));
         });
+        modal.querySelector("[data-item-build-skip]").addEventListener("click", () =>
+            Tapeira.ItensBuild.adiarEscolha());
 
         document.body.appendChild(modal);
     },
