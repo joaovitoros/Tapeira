@@ -88,7 +88,7 @@ navegador, Windows (Electron) e Android (Capacitor).
 
 ## O que foi feito nesta reorganização
 
-1. Suíte de regressão com `npm test` (32 testes) cobrindo menu, saves,
+1. Suíte de regressão com `npm test` (33 testes) cobrindo menu, saves,
    importação de JSON, combate, missões, eventos, automação, companheiros,
    conquistas, progresso offline, builds e hit kill.
 2. Extração, nesta ordem: áudio; validação e persistência de saves;
@@ -110,6 +110,8 @@ navegador, Windows (Electron) e Android (Capacitor).
    auto-coleta em `automacao.js`, ligados no `DOMContentLoaded`.
 9. Habilidades de combate migradas: os 4 botões (`skill-electric`, `skill-gold`,
    `skill-escape`, `skill-frenzy`) registrados em `progressao.js`.
+10. Inimigos migrados: os 4 cliques (`inimigo1..4` → `Bater(id, true)`)
+    registrados em `batalha.js`.
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
@@ -118,9 +120,9 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 
 1. **Reduzir handlers `onclick` restantes no HTML:** migrar para
    `addEventListener`, um painel por vez. Já feitos: painel de configuração,
-   navegação lateral, painel de status e habilidades de combate. Faltam:
-   inventários da loja (`Compra*`), cartões de especialização, inimigos
-   (`Bater`), `#autoCompraToggle` (loja) e o menu (`index.html`).
+   navegação lateral, painel de status, habilidades de combate e inimigos.
+   Faltam: inventários da loja (`Compra*`), cartões de especialização,
+   `#autoCompraToggle` (loja) e o menu (`index.html`).
 2. **Investigar o bug de save relatado:** importar JSON e "Salvar e voltar ao
    menu" foram testados e preservam o andar; o caso real ainda não foi
    reproduzido — se voltar a acontecer, é preciso o JSON do save problemático.
@@ -135,7 +137,7 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (32 testes)
+npm test                 # suíte principal (33 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android

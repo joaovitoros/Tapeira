@@ -1503,6 +1503,31 @@ test("baú de builds desbloqueia a cada 10 andares, acumula e consome por escolh
     }
 });
 
+test("inimigos usam listeners registrados (sem onclick inline)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => document.getElementById("inimigo1"));
+        const result = await page.evaluate(() => {
+            const inline = [];
+            for (let id = 1; id <= 4; id++) {
+                if (document.getElementById("inimigo" + id)?.hasAttribute("onclick")) inline.push(id);
+            }
+
+            const chamadas = [];
+            window.Bater = (id, validaDano) => chamadas.push([id, validaDano]);
+            for (let id = 1; id <= 4; id++) document.getElementById("inimigo" + id).click();
+
+            return { inline, chamadas };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.deepEqual(result.chamadas, [[1, true], [2, true], [3, true], [4, true]]);
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("habilidades de combate usam listeners registrados (sem onclick inline)", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
