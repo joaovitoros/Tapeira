@@ -1304,7 +1304,9 @@ body {
 	mix-blend-mode: screen;
 	opacity: 0.32;
 	pointer-events: none;
-	animation: cave-atmosphere-drift 28s ease-in-out infinite alternate;
+	animation:
+		cave-atmosphere-drift 28s ease-in-out infinite alternate,
+		cave-atmosphere-twinkle 7s ease-in-out infinite;
 }
 
 #menu-container {
@@ -2177,16 +2179,6 @@ caption {
 		opacity: 0.62;
 	}
 
-	@keyframes cave-atmosphere-drift {
-		from {
-			transform: translate3d(-0.5%, 0.7%, 0);
-		}
-
-		to {
-			transform: translate3d(0.7%, -0.8%, 0);
-		}
-	}
-
 	50% {
 		transform: translate(1%, -1%) scale(1.045);
 		opacity: 0.9;
@@ -2196,6 +2188,23 @@ caption {
 		transform: translate(0.5%, 1%) scale(1.015);
 		opacity: 0.7;
 	}
+}
+
+/* Estava aninhado dentro de cave-ambient-light (CSS inválido): a poeira/
+   atmosfera da arena nunca se movia. Agora é um keyframe próprio. */
+@keyframes cave-atmosphere-drift {
+	from {
+		transform: translate3d(-0.5%, 0.7%, 0);
+	}
+
+	to {
+		transform: translate3d(0.7%, -0.8%, 0);
+	}
+}
+
+@keyframes cave-atmosphere-twinkle {
+	0%, 100% { opacity: 0.26; }
+	50% { opacity: 0.42; }
 }
 
 .enemy-hit-eyes {
