@@ -784,6 +784,47 @@ tr, td, th{
 	white-space: nowrap;
 }
 
+/* Transição de abrir/fechar dos painéis (Status, Config e as 3 lojas). Eles são
+   ligados por visibility inline no JS, então a regra casa pelo atributo style.
+   Ao abrir, opacity/transform animam; ao fechar, o visibility só aplica depois
+   (transition-delay) pra o fade-out aparecer. */
+#DivStatus,
+#container-SalvaCarrega,
+#Loja,
+#LojaEsm,
+#LojaCM {
+	opacity: 0;
+	transform: translateY(6px) scale(0.985);
+	transition:
+		opacity 160ms ease,
+		transform 160ms ease,
+		visibility 0s linear 160ms;
+}
+
+#DivStatus[style*="visible"],
+#container-SalvaCarrega[style*="visible"],
+#Loja[style*="visible"],
+#LojaEsm[style*="visible"],
+#LojaCM[style*="visible"] {
+	opacity: 1;
+	transform: none;
+	transition:
+		opacity 160ms ease,
+		transform 160ms ease,
+		visibility 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#DivStatus,
+	#container-SalvaCarrega,
+	#Loja,
+	#LojaEsm,
+	#LojaCM {
+		transition: none;
+		transform: none;
+	}
+}
+
 /* Coluna de preço: valor em destaque na cor da moeda da loja (valor vs informação) */
 #TabLoja td:nth-child(2) {
 	color: #ffd84a;
@@ -5822,6 +5863,33 @@ input:focus-visible {
 	box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), 0 0 24px rgba(0, 150, 255, 0.16);
 	color: #e6edf3;
 	font: 15px/1.45 "Segoe UI", sans-serif;
+}
+
+/* Entrada dos painéis Formigas/Skills (criados no runtime: a animação roda
+   sozinha quando o elemento nasce) */
+.ant-collection-overlay {
+	animation: painel-overlay-abre 160ms ease-out;
+}
+
+.ant-collection-panel {
+	animation: painel-conteudo-abre 220ms ease-out;
+}
+
+@keyframes painel-overlay-abre {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes painel-conteudo-abre {
+	from { opacity: 0; transform: translateY(10px) scale(0.98); }
+	to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ant-collection-overlay,
+	.ant-collection-panel {
+		animation: none;
+	}
 }
 
 .ant-collection-header {
