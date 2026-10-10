@@ -88,7 +88,7 @@ navegador, Windows (Electron) e Android (Capacitor).
 
 ## O que foi feito nesta reorganização
 
-1. Suíte de regressão com `npm test` (27 testes) cobrindo menu, saves,
+1. Suíte de regressão com `npm test` (28 testes) cobrindo menu, saves,
    importação de JSON, combate, missões, eventos, automação, companheiros,
    conquistas, progresso offline, builds e hit kill.
 2. Extração, nesta ordem: áudio; validação e persistência de saves;
@@ -101,14 +101,20 @@ navegador, Windows (Electron) e Android (Capacitor).
 5. Cobertura dos seis eventos restantes em `tests/regression.test.cjs`:
    chuva de meteoros, névoa, veia, inseto, fissura e emboscada (o comércio já
    tinha teste).
+6. Painel de configuração migrado para `addEventListener` (`RegistraEventosConfig`
+   em `sistema.js`, ligado no `DOMContentLoaded`): salvar/carregar, apagar save,
+   zerar, importar JSON, volumes e tela — sem handlers inline no HTML.
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
 
 ## Próximos passos sugeridos (em ordem de valor)
 
-1. **Reduzir handlers `onclick` no HTML:** migrar para `addEventListener`
-   registrado no JavaScript, um painel por vez.
+1. **Reduzir handlers `onclick` restantes no HTML:** migrar para
+   `addEventListener`, um painel por vez. Já feito: painel de configuração.
+   Faltam: navegação lateral, Status (auto-coleta/baú dourado), inventários da
+   loja (`Compra*`), cartões de especialização, habilidades de combate,
+   inimigos (`Bater`) e o menu (`index.html`).
 2. **Investigar o bug de save relatado:** importar JSON e "Salvar e voltar ao
    menu" foram testados e preservam o andar; o caso real ainda não foi
    reproduzido — se voltar a acontecer, é preciso o JSON do save problemático.
@@ -123,7 +129,7 @@ Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (27 testes)
+npm test                 # suíte principal (28 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android

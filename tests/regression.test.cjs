@@ -141,6 +141,52 @@ test("módulo de áudio mantém controles e volumes persistidos", async () => {
     }
 });
 
+test("painel de configuração registra controles por addEventListener (sem handlers inline)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.RegistraEventosConfig === "function");
+        const result = await page.evaluate(() => {
+            const ids = [
+                "btnSalvarJogo", "btnSalvarVoltarMenu", "btnApagarSave", "btnZerarJogo",
+                "txtfiletoread", "volumeControle", "volumeAmbienteControle",
+                "resolucaoJogo", "telaCheiaJogo"
+            ];
+            const inline = [];
+            for (const id of ids) {
+                const el = document.getElementById(id);
+                if (!el) { inline.push(id + ":ausente"); continue; }
+                for (const attr of ["onclick", "onchange", "oninput"]) {
+                    if (el.hasAttribute(attr)) inline.push(id + ":" + attr);
+                }
+            }
+
+            // o input do volume passa a ser ligado por addEventListener
+            const slider = document.getElementById("volumeControle");
+            slider.value = "42";
+            slider.dispatchEvent(new Event("input", { bubbles: true }));
+
+            // o clique do "Apagar Auto Save" limpa o auto save via listener
+            localStorage.setItem("autoSaveCaverna", "{}");
+            document.getElementById("btnApagarSave").click();
+
+            return {
+                inline,
+                volumeSalvo: localStorage.getItem("volumeJogo"),
+                volumeTexto: document.getElementById("volumeValor").value,
+                autoSave: localStorage.getItem("autoSaveCaverna")
+            };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.equal(result.volumeSalvo, "42");
+        assert.equal(result.volumeTexto, "42%");
+        assert.equal(result.autoSave, null, "btnApagarSave limpa o auto save pelo listener");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("save antigo é migrado sem perder compatibilidade", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

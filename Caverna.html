@@ -313,19 +313,17 @@
 					<div class="tituloConfig">Salvar Jogo</div>
 					<div class="save-help">Exporte uma cópia JSON antes de atualizar ou para levar seu progresso a outro dispositivo.</div>
 
-					<input type="button" value="Salvar Arquivo" id="btnSalvarJogo" onclick="Salvar()" />
-					<input type="button" value="Salvar e voltar ao menu" id="btnSalvarVoltarMenu"
-						onclick="SalvarEVoltarMenu()" />
-					<input type="button" value="Apagar Auto Save" id="btnApagarSave" onclick="LimparAutoSave()" />
+					<input type="button" value="Salvar Arquivo" id="btnSalvarJogo" />
+					<input type="button" value="Salvar e voltar ao menu" id="btnSalvarVoltarMenu" />
+					<input type="button" value="Apagar Auto Save" id="btnApagarSave" />
 					<input type="button" value="Apagar todos os saves" id="btnZerarJogo"
-						onclick="ZerarTodosSaves()"
 						aria-label="Apagar todos os saves e zerar o jogo" />
 				</div>
 
 				<div id="divCarregar">
 					<div class="tituloConfig">Carregar Save</div>
 					<div class="save-help">Selecione um arquivo JSON exportado pelo TAPeira. Saves antigos continuam compatíveis.</div>
-					<input type="file" id="txtfiletoread" accept=".json,application/json" onchange="CarregarArquivo(this)" aria-label="Importar save JSON" />
+					<input type="file" id="txtfiletoread" accept=".json,application/json" aria-label="Importar save JSON" />
 					<div id="filecontents"> </div>
 				</div>
 				<div id="divVolume">
@@ -340,7 +338,7 @@
 							<output id="volumeValor" for="volumeControle">5%</output>
 						</div>
 						<input type="range" id="volumeControle" min="0" max="100" step="1" value="5"
-							aria-label="Volume geral do jogo" oninput="AtualizaVolume(this.value)" />
+							aria-label="Volume geral do jogo" />
 					</div>
 					<div id="divAmbienteBotoes" class="audio-setting">
 						<div class="audio-setting__label">
@@ -348,14 +346,14 @@
 							<output id="volumeAmbienteValor" for="volumeAmbienteControle">30%</output>
 						</div>
 						<input type="range" id="volumeAmbienteControle" min="0" max="100" step="1" value="30"
-							aria-label="Volume do ambiente da caverna" oninput="AtualizaVolumeAmbiente(this.value)" />
+							aria-label="Volume do ambiente da caverna" />
 					</div>
 				</div>
 				<div id="divDesktopDisplay" hidden>
 					<div class="tituloConfig">Tela (PC)</div>
 					<label class="desktop-setting-row" for="resolucaoJogo">
 						<span>Resolução da janela</span>
-						<select id="resolucaoJogo" onchange="AtualizaConfiguracaoTela()">
+						<select id="resolucaoJogo">
 							<option value="1024x768">1024 × 768</option>
 							<option value="1280x800">1280 × 800</option>
 							<option value="1366x768">1366 × 768</option>
@@ -365,7 +363,7 @@
 					</label>
 					<label class="desktop-setting-row desktop-fullscreen-row" for="telaCheiaJogo">
 						<span>Tela cheia</span>
-						<input type="checkbox" id="telaCheiaJogo" onchange="AtualizaConfiguracaoTela()" />
+						<input type="checkbox" id="telaCheiaJogo" />
 					</label>
 					<div class="save-help" id="desktopDisplayStatus" role="status"></div>
 				</div>

@@ -29,6 +29,42 @@ window.addEventListener("resize", () => {
 	}
 });
 
+// =========================
+// EVENTOS DO PAINEL DE CONFIG
+// =========================
+// Liga os controles do painel de configuração (salvar/carregar, volume e
+// tela) por addEventListener, sem handlers inline no HTML. Elementos
+// ausentes (ex.: página do menu) são ignorados com segurança.
+function RegistraEventosConfig() {
+	const aoClicar = (id, acao) => {
+		const el = document.getElementById(id);
+		if (el) el.addEventListener("click", acao);
+	};
+	const aoMudar = (id, acao) => {
+		const el = document.getElementById(id);
+		if (el) el.addEventListener("change", acao);
+	};
+	const aoDigitar = (id, acao) => {
+		const el = document.getElementById(id);
+		if (el) el.addEventListener("input", acao);
+	};
+
+	aoClicar("btnSalvarJogo", () => Salvar());
+	aoClicar("btnSalvarVoltarMenu", () => SalvarEVoltarMenu());
+	aoClicar("btnApagarSave", () => LimparAutoSave());
+	aoClicar("btnZerarJogo", () => ZerarTodosSaves());
+
+	aoMudar("txtfiletoread", (event) => CarregarArquivo(event.target));
+
+	aoDigitar("volumeControle", (event) => AtualizaVolume(event.target.value));
+	aoDigitar("volumeAmbienteControle", (event) => AtualizaVolumeAmbiente(event.target.value));
+
+	aoMudar("resolucaoJogo", () => AtualizaConfiguracaoTela());
+	aoMudar("telaCheiaJogo", () => AtualizaConfiguracaoTela());
+}
+
+document.addEventListener("DOMContentLoaded", RegistraEventosConfig);
+
 function AutoSalvar() {
 	if (saveAnd == andar) {
 		saveAnd += 10;
