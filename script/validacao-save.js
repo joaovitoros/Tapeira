@@ -363,9 +363,16 @@ function ValidarSave(save) {
 			|| save.especializacaoTrocas > TROCA_ESPECIALIZACAO_MAX)) {
 		throw new TypeError("A contagem de trocas de especialização no save é inválida.");
 	}
+	// espaços extras comprados na loja de esmeraldas (permanentes)
+	if (save.slotsExtrasBuild !== undefined
+		&& (!Number.isSafeInteger(save.slotsExtrasBuild)
+			|| save.slotsExtrasBuild < 0
+			|| save.slotsExtrasBuild > Tapeira.ItensBuild.LIMITE_EXTRAS)) {
+		throw new TypeError("A contagem de espaços extras da build no save é inválida.");
+	}
 	if (save.itensBuild !== undefined
 		&& (!Array.isArray(save.itensBuild)
-			|| save.itensBuild.length > Tapeira.ItensBuild.LIMITE
+			|| save.itensBuild.length > Tapeira.ItensBuild.limiteDoSave(save)
 			|| save.itensBuild.some(id => !Tapeira.ItensBuild.item(id)))) {
 		throw new TypeError("Os itens da build no save são inválidos.");
 	}

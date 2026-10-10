@@ -1,6 +1,7 @@
 // Teste focado: itens de build (desbloqueio no andar 100, baú a cada 10
 // andares com acúmulo de marcos, 10 slots com cópias em slots próprios,
-// troca descartando a pilha inteira, "não escolher" que consome o baú,
+// espaços extras comprados na loja de esmeraldas, troca descartando a
+// pilha inteira, "não escolher" que consome o baú,
 // tela de leitura no Status, save/reset e API encapsulada em
 // window.Tapeira.ItensBuild). Segue o
 // padrão dos testes existentes: Playwright abrindo o jogo preparado
@@ -298,6 +299,56 @@ const fs = require('fs');
         IB.contagem() === 0 && IB.quantidadeBausPendentes() === 0
         && IB.serializa().opcoesBauBuild === null
         && !document.getElementById("bauBuild") && !document.getElementById("bauBuild-selo"));
+
+      // ---- espaço extra comprado na loja de esmeraldas (permanente) ----
+      const esmeraldasOriginais = window.esmeraldas;
+      const maxAndarSecao = window.maxAndar;
+      IB.limpa();
+      check("sem extras o limite continua 10 e o preço começa em 10",
+        IB.slotsExtras() === 0 && IB.limiteAtual() === 10 && IB.precoSlotExtra() === 10);
+      window.maxAndar = 99;
+      window.esmeraldas = 1000;
+      CompraEsmSlotBuild();
+      check("compra bloqueada antes do andar 100", IB.slotsExtras() === 0);
+      window.maxAndar = 100;
+      window.esmeraldas = 9;
+      CompraEsmSlotBuild();
+      check("compra bloqueada sem esmeraldas suficientes",
+        IB.slotsExtras() === 0 && N(window.esmeraldas) === 9);
+      window.esmeraldas = 10;
+      CompraEsmSlotBuild();
+      check("comprar 1º espaço: -10 esmeraldas, nível 1, limite 11",
+        IB.slotsExtras() === 1 && IB.limiteAtual() === 11
+        && N(window.esmeraldas) === 0 && IB.precoSlotExtra() === 20);
+      window.esmeraldas = 100;
+      CompraEsmSlotBuild(); // custa 20
+      CompraEsmSlotBuild(); // custa 40
+      check("preço dobra por nível (10→20→40) e o limite sobe junto",
+        IB.slotsExtras() === 3 && IB.limiteAtual() === 13
+        && N(window.esmeraldas) === 40 && IB.precoSlotExtra() === 80);
+      const onze = ["adaga", "escudo", "moedas", "mapa", "relogio", "grimorio",
+        "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas", "bauPortatil"];
+      IB.carrega({ ...IB.serializa(), itensBuild: onze });
+      check("save grava os extras e o carrega permite 11 itens",
+        IB.serializa().slotsExtrasBuild === 3 && IB.contagem() === 11);
+      IB.limpa();
+      check("reset (limpa) preserva o espaço comprado e zera os itens",
+        IB.slotsExtras() === 3 && IB.limiteAtual() === 13 && IB.contagem() === 0);
+      let aceitouComExtras = true;
+      try { ValidarSave({ ...saveValido, slotsExtrasBuild: 1, itensBuild: onze }); }
+      catch (e) { aceitouComExtras = false; }
+      check("ValidarSave aceita 11 itens com 1 espaço extra", aceitouComExtras);
+      let rejeitouExtraNegativo = false;
+      try { ValidarSave({ ...saveValido, slotsExtrasBuild: -1 }); }
+      catch (e) { rejeitouExtraNegativo = true; }
+      check("ValidarSave rejeita espaços extras negativos", rejeitouExtraNegativo);
+      let rejeitouExtraAcima = false;
+      try { ValidarSave({ ...saveValido, slotsExtrasBuild: 31 }); }
+      catch (e) { rejeitouExtraAcima = true; }
+      check("ValidarSave rejeita espaços extras acima do teto", rejeitouExtraAcima);
+      window.esmeraldas = esmeraldasOriginais;
+      window.maxAndar = maxAndarSecao;
+      IB.limpa();
     } catch (e) {
       check("exceção no teste", false, e && e.stack || e);
     }
