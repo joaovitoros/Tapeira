@@ -1948,7 +1948,11 @@ test("habilidades de combate usam listeners registrados (sem onclick inline)", a
 
             const chamadas = [];
             window.AtivaHabilidadeCombate = tipo => chamadas.push(tipo);
-            for (const id of ids) document.getElementById(id).click();
+            for (const id of ids) {
+                const botao = document.getElementById(id);
+                botao.disabled = false; // o teste é do listener, não do estado travado
+                botao.click();
+            }
 
             return { inline, chamadas };
         });
