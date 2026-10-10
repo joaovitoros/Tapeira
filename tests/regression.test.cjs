@@ -653,6 +653,323 @@ test("eventos respeitam elegibilidade e oferta do comerciante cobra uma vez", as
     }
 });
 
+test("eventos restantes aplicam o bônus do próprio tipo e encerram corretamente", async t => {
+    await t.test("chuva de meteoros bate nos inimigos vivos e solta fragmentos coletáveis", async () => {
+        const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+        try {
+            await page.waitForFunction(() => typeof window.Meteora === "function");
+            const result = await page.evaluate(() => {
+                const randomOriginal = Math.random;
+                Math.random = () => 0; // garante o fragmento de esmeralda junto do gold
+
+                const batidas = [];
+                const goldCreditado = [];
+                let bausRepostos = 0;
+                window.Bater = (id, gratis, custa) => batidas.push({ id, gratis, custa });
+                window.ChamaSom = () => {};
+                window.AutoSaveLocal = () => true;
+                window.AddGold = valor => { goldCreditado.push(valor); return valor; };
+                window.AddTotalGold = () => {};
+                UI.showCurrencyReward = () => {};
+                UI.spawnChest = () => { bausRepostos++; };
+
+                andar = 10;
+                mulGold = 0.2;
+                eventoAtivo = "meteoro";
+                for (let id = 1; id <= 4; id++) {
+                    document.getElementById("inimigo" + id).style.visibility = "visible";
+                    window["vidaInimigo" + id] = 10;
+                }
+
+                Meteora();
+                const container = document.getElementById("eventoFragmentos");
+                const qtdGold = container.querySelectorAll(".evento-fragmento--gold").length;
+                const qtdEsmeralda = container.querySelectorAll(".evento-fragmento--esmeralda").length;
+
+                esmeraldas = 0;
+                ColetaFragmento("gold", container.querySelector(".evento-fragmento--gold"));
+                const bonusFragmento = goldCreditado[goldCreditado.length - 1];
+                ColetaFragmento("esmeralda", container.querySelector(".evento-fragmento--esmeralda"));
+
+                quantidadeBausDisponiveis = 1;
+                EncerraEvento();
+                Math.random = randomOriginal;
+
+                return {
+                    alvos: batidas.map(batida => batida.id),
+                    todasGratis: batidas.every(batida => batida.gratis === true && batida.custa === false),
+                    qtdGold,
+                    qtdEsmeralda,
+                    bonusFragmento,
+                    esmeraldas,
+                    bausRepostos,
+                    eventoAtivo
+                };
+            });
+
+            assert.deepEqual(result.alvos, [1, 2, 3, 4]);
+            assert.equal(result.todasGratis, true);
+            assert.equal(result.qtdGold, 1);
+            assert.equal(result.qtdEsmeralda, 1);
+            assert.equal(result.bonusFragmento, 10 * 0.2 * 10 + 5);
+            assert.equal(result.esmeraldas, 1);
+            assert.equal(result.bausRepostos, 1, "o baú sai da arena na chuva e volta no fim");
+            assert.equal(result.eventoAtivo, null);
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    });
+
+    await t.test("névoa do conhecimento concede CM só durante o evento e dobra pelo item", async () => {
+        const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+        try {
+            await page.waitForFunction(() => typeof window.EventoAbateCM === "function");
+            const result = await page.evaluate(() => {
+                window.FloatCM = () => {};
+                conhecimentoMug = 0;
+                eventoCM = 0;
+                lvlEsmCM = 0;
+                marcosNivel50 = 0;
+                resetsCurtosCM = 0;
+
+                EventoAbateCM(3); // fora do evento: nada acontece
+                const fora = { conhecimentoMug, eventoCM };
+
+                eventoAtivo = "nevoa";
+                EventoAbateCM(3);
+                const normal = { conhecimentoMug, eventoCM };
+
+                lvlEsmCM = 1; // item "CM em dobro" (×2)
+                EventoAbateCM(3);
+                const dobrado = { conhecimentoMug, eventoCM };
+
+                eventoAtivo = null;
+                return { fora, normal, dobrado };
+            });
+
+            assert.deepEqual(result.fora, { conhecimentoMug: 0, eventoCM: 0 });
+            assert.deepEqual(result.normal, { conhecimentoMug: 3, eventoCM: 3 });
+            assert.deepEqual(result.dobrado, { conhecimentoMug: 9, eventoCM: 9 });
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    });
+
+    await t.test("veia de esmeralda solta esmeraldas por abate só durante o evento", async () => {
+        const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+        try {
+            await page.waitForFunction(() => typeof window.EventoAbateVeia === "function");
+            const result = await page.evaluate(() => {
+                const randomOriginal = Math.random;
+                UI.showCurrencyReward = () => {};
+                esmeraldas = 0;
+                eventoVeiaQtd = 0;
+
+                eventoAtivo = "veia";
+                Math.random = () => 0.04; // dentro da chance (5%): todo abate solta
+                EventoAbateVeia(4);
+                const comChance = { esmeraldas, eventoVeiaQtd };
+
+                Math.random = () => 0.9; // fora da chance: nenhum
+                EventoAbateVeia(4);
+                const semChance = { esmeraldas, eventoVeiaQtd };
+
+                eventoAtivo = null;
+                Math.random = () => 0.04;
+                EventoAbateVeia(4);
+                const foraDoEvento = { esmeraldas, eventoVeiaQtd };
+
+                Math.random = randomOriginal;
+                return { comChance, semChance, foraDoEvento };
+            });
+
+            assert.deepEqual(result.comChance, { esmeraldas: 4, eventoVeiaQtd: 4 });
+            assert.deepEqual(result.semChance, { esmeraldas: 4, eventoVeiaQtd: 4 });
+            assert.deepEqual(result.foraDoEvento, { esmeraldas: 4, eventoVeiaQtd: 4 });
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    });
+
+    await t.test("inseto premia no clique e escapa sem prêmio quando o tempo acaba", async () => {
+        const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+        try {
+            await page.waitForFunction(() => typeof window.CriaInseto === "function");
+            const result = await page.evaluate(() => {
+                const goldCreditado = [];
+                const avisos = [];
+                window.ChamaSom = () => {};
+                window.AutoSaveLocal = () => true;
+                window.AddGold = valor => { goldCreditado.push(valor); return valor; };
+                window.AddTotalGold = () => {};
+                UI.showCurrencyReward = () => {};
+                UI.showMilestone = () => {};
+                UI.showInfo = mensagem => avisos.push(mensagem);
+                UI.spawnChest = () => {};
+                andar = 10;
+                mulGold = 0.2;
+                jogoPausado = false;
+                eventoPausaDesde = 0;
+
+                eventoAtivo = "inseto";
+                CriaInseto();
+                const criado = !!document.getElementById("eventoInseto");
+                PremioInseto(document.getElementById("eventoInseto"));
+                const premiado = {
+                    bonus: goldCreditado[goldCreditado.length - 1],
+                    eventoAtivo,
+                    removido: !document.getElementById("eventoInseto")
+                };
+
+                // segundo inseto: sem clique, o tempo acaba e ele escapa
+                goldCreditado.length = 0;
+                eventoAtivo = "inseto";
+                CriaInseto();
+                eventoFimMs = Date.now() - 1;
+                EventoTick();
+
+                return {
+                    criado,
+                    premiado,
+                    escapou: { eventoAtivo, avisos, premios: goldCreditado.length }
+                };
+            });
+
+            assert.equal(result.criado, true);
+            assert.equal(result.premiado.bonus, 10 * 0.2 * 10 + 5);
+            assert.equal(result.premiado.eventoAtivo, null);
+            assert.equal(result.premiado.removido, true);
+            assert.equal(result.escapou.eventoAtivo, null);
+            assert.ok(result.escapou.avisos.includes("O inseto escapou sem prêmio."));
+            assert.equal(result.escapou.premios, 0);
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    });
+
+    await t.test("fissura temporal congela o cronômetro de fuga", async () => {
+        const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+        try {
+            await page.waitForFunction(() => typeof window.TempoCompanheiros === "function");
+            const result = await page.evaluate(() => {
+                window.AtualizaRelogioHabilidade = () => false;
+                UI.showInfo = () => {};
+                jogoPausado = false;
+                fugaEmAndamento = false;
+
+                tempoAvancoInimigos = 100;
+                eventoAtivo = "fissura";
+                AvancoInimigos();
+                const avancoComFissura = tempoAvancoInimigos;
+
+                eventoAtivo = null;
+                tempoEsperaCompanheiro = 5;
+                TempoCompanheiros();
+                const companheiroSemFissura = tempoAvancoInimigos;
+
+                tempoAvancoInimigos = 100;
+                eventoAtivo = "fissura";
+                TempoCompanheiros();
+                const companheiroComFissura = tempoAvancoInimigos;
+
+                eventoAtivo = null;
+                return { avancoComFissura, companheiroSemFissura, companheiroComFissura };
+            });
+
+            assert.equal(result.avancoComFissura, 100, "AvancoInimigos não consome o cronômetro na fissura");
+            assert.equal(result.companheiroSemFissura, 105, "fora da fissura o companheiro repõe o tempo");
+            assert.equal(result.companheiroComFissura, 100, "TempoCompanheiros congelado na fissura");
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    });
+
+    await t.test("emboscada reforça a vida, paga ouro em dobro ao vencer e desfaz se perder", async () => {
+        const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+        try {
+            await page.waitForFunction(() => typeof window.PreparaEmboscada === "function");
+            const result = await page.evaluate(() => {
+                const randomOriginal = Math.random;
+                const goldCreditado = [];
+                let baus = 0;
+                window.ChamaSom = () => {};
+                window.AutoSaveLocal = () => true;
+                window.AddGold = valor => { goldCreditado.push(valor); return valor; };
+                window.AddTotalGold = () => {};
+                UI.showCurrencyReward = () => {};
+                UI.showMilestone = () => {};
+                UI.spawnChest = () => { baus++; };
+
+                andar = 10;
+                window.ondaAtual = 7;
+                for (let id = 1; id <= 4; id++) window["vidaInimigo" + id] = id <= 2 ? 100 : 0;
+
+                eventoAtivo = "emboscada";
+                const preparou = PreparaEmboscada();
+                const vidaReforcada = [window.vidaInimigo1, window.vidaInimigo2];
+                const alvos = eventoEmboscadaAlvos.slice();
+
+                window.vidaInimigo1 = 80; // dano parcial no alvo 1
+                EventoAbateEmboscada(1, 10);
+                const restantes = eventoEmboscadaAlvos.slice();
+
+                Math.random = () => 0.1; // < 0.4 → baú
+                EventoAbateEmboscada(2, 20);
+                Math.random = randomOriginal;
+                const vitoria = {
+                    bonus: goldCreditado[goldCreditado.length - 1],
+                    baus,
+                    eventoAtivo,
+                    vidaAlvo1: window.vidaInimigo1
+                };
+
+                // perde ao trocar de andar no meio: desfaz o reforço e não paga
+                goldCreditado.length = 0;
+                baus = 0;
+                window.ondaAtual = 8;
+                for (let id = 1; id <= 4; id++) window["vidaInimigo" + id] = id === 1 ? 100 : 0;
+                eventoAtivo = "emboscada";
+                PreparaEmboscada();
+                const reforcadoAntesDaFuga = window.vidaInimigo1;
+                andar = 11;
+                EventoAbateEmboscada(1, 50);
+                const derrota = {
+                    reforcadoAntesDaFuga,
+                    vidaAlvo1: window.vidaInimigo1,
+                    eventoAtivo,
+                    premios: goldCreditado.length,
+                    baus
+                };
+
+                andar = 10;
+                return { preparou, vidaReforcada, alvos, restantes, vitoria, derrota };
+            });
+
+            assert.equal(result.preparou, true);
+            assert.deepEqual(result.vidaReforcada, [150, 150], "+50% de vida na onda da emboscada");
+            assert.deepEqual(result.alvos, [1, 2]);
+            assert.deepEqual(result.restantes, [2]);
+            assert.equal(result.vitoria.bonus, 30, "ouro em dobro: soma exata do que a onda pagou");
+            assert.equal(result.vitoria.baus, 1);
+            assert.equal(result.vitoria.eventoAtivo, null);
+            assert.equal(result.vitoria.vidaAlvo1, 80, "desfazer não cura o dano já causado");
+            assert.equal(result.derrota.reforcadoAntesDaFuga, 150);
+            assert.equal(result.derrota.vidaAlvo1, 100, "perder restaura a vida original");
+            assert.equal(result.derrota.eventoAtivo, null);
+            assert.equal(result.derrota.premios, 0, "fugir da emboscada não paga nada");
+            assert.equal(result.derrota.baus, 0);
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    });
+});
+
 test("automação respeita desbloqueios, compra mais barato e gasta pontos elegíveis", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
