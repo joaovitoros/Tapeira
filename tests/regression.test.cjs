@@ -1367,7 +1367,7 @@ test("baú de builds desbloqueia a cada 10 andares, acumula e consome por escolh
     }
 });
 
-test("efeitos dos itens, limite de seis e troca descartando a pilha inteira", async () => {
+test("efeitos dos itens, limite de dez e troca descartando a pilha inteira", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
         await page.waitForFunction(() => typeof Tapeira?.ItensBuild?.carrega === "function");
@@ -1401,9 +1401,9 @@ test("efeitos dos itens, limite de seis e troca descartando a pilha inteira", as
                 multiplicador: build.multDano()
             };
 
-            // Dados desconhecidos são ignorados e a lista nunca ultrapassa o limite (6).
+            // Dados desconhecidos são ignorados e a lista nunca ultrapassa o limite (10).
             build.carrega({
-                itensBuild: ["adaga", "desconhecido", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio"],
+                itensBuild: ["adaga", "desconhecido", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas"],
 				bausBuildPendentes: 1,
 				bauBuildPendente: true,
 				opcoesBauBuild: ["grimorio", "lanterna", "esmeralda"]
@@ -1449,19 +1449,19 @@ test("efeitos dos itens, limite de seis e troca descartando a pilha inteira", as
         }
         assert.equal(result.multiplicadorNeutro, 1);
         assert.deepEqual(result.copiasAdaga, { contagem: 2, copias: 2, multiplicador: 1.15 ** 2 });
-        assert.deepEqual(result.listaSanitizada, ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio"]);
+        assert.deepEqual(result.listaSanitizada, ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna"]);
         assert.deepEqual(result.escolhaSemDescarte, {
-            lista: ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio"],
+            lista: ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna"],
             pendente: true
         });
-        assert.equal(result.limite, 6);
-        assert.equal(result.opcoesDeTroca, 5, "um cartão por item único na etapa de descarte");
+        assert.equal(result.limite, 10);
+        assert.equal(result.opcoesDeTroca, 9, "um cartão por item único na etapa de descarte");
         assert.equal(result.descarteEscolhido, "adaga");
         assert.equal(result.copiasAdagaAposDescarte, 0, "descartar some a pilha inteira");
-        assert.equal(result.listaFinal.length, 5, "pilha de 2 saiu e o item novo entrou com 1 cópia");
-        assert.deepEqual(result.listaFinal, ["moedas", "escudo", "mapa", "grimorio", "grimorio"]);
+        assert.equal(result.listaFinal.length, 9, "pilha de 2 saiu e o item novo entrou com 1 cópia");
+        assert.deepEqual(result.listaFinal, ["moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna", "grimorio"]);
         assert.equal(result.pendente, false);
-        assert.match(result.resumo, /5\/6/);
+        assert.match(result.resumo, /9\/10/);
         assert.match(result.resumo, /Grimório Estelar ×2/, "cópia repetida empilha no resumo");
         assert.deepEqual(pageErrors, []);
     } finally {

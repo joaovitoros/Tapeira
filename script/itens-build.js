@@ -6,7 +6,7 @@
 // mesmo que os anteriores ainda não tenham sido abertos. Ignorar o baú
 // ("não escolher nenhum item") consome esse baú — ele some da tela.
 // A escolha é 1 de 3 itens aleatórios; cada cópia ocupa um slot próprio
-// e acumula o bônus (teto de 6 slots). Na build cheia, descartar um item
+// e acumula o bônus (teto de 10 slots). Na build cheia, descartar um item
 // remove a pilha INTEIRA dele — todas as cópias e o bônus delas somem.
 // Os itens são da run: zeram no Resetar (junto com perks/especialização).
 //
@@ -19,10 +19,10 @@
 
 	window.Tapeira = window.Tapeira || {};
 
-	const LIMITE = 6;
+	const LIMITE = 10;
 
 	// Pool de itens (ícones recortados da "Grade de Ícones Fantásticos de RPG").
-	// Todos positivos; o custo é o espaço limitado dos 5 slots da build.
+	// Todos positivos; o custo é o espaço limitado dos 10 slots da build.
 	const POOL = [
 		{ id: "adaga", nome: "Adaga Sombria", icone: "imagens/itens/adaga.png",
 			efeito: "+15% de dano" },

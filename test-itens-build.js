@@ -1,5 +1,5 @@
 // Teste focado: itens de build (desbloqueio no andar 100, baú a cada 10
-// andares com acúmulo de marcos, 6 slots com cópias em slots próprios,
+// andares com acúmulo de marcos, 10 slots com cópias em slots próprios,
 // troca descartando a pilha inteira, "não escolher" que consome o baú,
 // tela de leitura no Status, save/reset e API encapsulada em
 // window.Tapeira.ItensBuild). Segue o
@@ -173,36 +173,36 @@ const fs = require('fs');
         IB.quantidadeBausPendentes() === 0
         && !document.getElementById("bauBuild") && !document.getElementById("bauBuild-selo"));
 
-      // ---- build cheia: limite 6 e troca descartando a pilha inteira ----
+      // ---- build cheia: limite 10 e troca descartando a pilha inteira ----
       IB.carrega({
-        itensBuild: ["adaga", "adaga", "moedas", "mapa", "relogio", "grimorio"],
+        itensBuild: ["adaga", "adaga", "moedas", "mapa", "relogio", "grimorio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas"],
         bausBuildPendentes: 1,
         bauBuildPendente: true,
         opcoesBauBuild: ["esmeralda", "escudo", "lanterna"]
       });
       UI.spawnBauBuild();
-      check("build cheia com 6", IB.contagem() === 6 && IB.LIMITE === 6);
+      check("build cheia com 10", IB.contagem() === 10 && IB.LIMITE === 10);
       IB.escolhe("moedas", null); // id fora das opções atuais: não pode entrar
       check("id fora das opções não entra (build intacta)",
-        IB.contagem() === 6 && IB.quantidadeBausPendentes() === 1
-        && IB.pegaLista().join(",") === "adaga,adaga,moedas,mapa,relogio,grimorio");
+        IB.contagem() === 10 && IB.quantidadeBausPendentes() === 1
+        && IB.pegaLista().join(",") === "adaga,adaga,moedas,mapa,relogio,grimorio,pocaoVerde,pocaoRubra,lanterna,colarFormigas");
       IB.escolhe("esmeralda", null); // build cheia sem descarte: o modal precisa escolher
       check("build cheia sem descarte não entra nem consome o baú",
-        IB.contagem() === 6 && IB.quantidadeBausPendentes() === 1
-        && IB.pegaLista().join(",") === "adaga,adaga,moedas,mapa,relogio,grimorio");
+        IB.contagem() === 10 && IB.quantidadeBausPendentes() === 1
+        && IB.pegaLista().join(",") === "adaga,adaga,moedas,mapa,relogio,grimorio,pocaoVerde,pocaoRubra,lanterna,colarFormigas");
       IB.abreEscolha();
       document.querySelector("#modalItensBuild [data-item='esmeralda']").click(); // passo 2: qual sai
       const cartoesDescarte = [...document.querySelectorAll("#modalItensBuild [data-descartar]")];
-      check("etapa de troca mostra um cartão por item único (5)",
-        cartoesDescarte.length === 5
+      check("etapa de troca mostra um cartão por item único (9)",
+        cartoesDescarte.length === 9
         && cartoesDescarte[0].getAttribute("data-descartar") === "adaga");
       check("pilha de 2 cópias avisa que sai tudo",
         cartoesDescarte[0].textContent.includes("pilha ×2 — sai tudo"));
       cartoesDescarte[0].click(); // descarta a pilha inteira de adaga
       check("descartar um item some a pilha inteira dele",
-        IB.copias("adaga") === 0 && IB.contagem() === 5 && IB.pendente() === false
-        && IB.pegaLista().join(",") === "moedas,mapa,relogio,grimorio,esmeralda");
-      check("resumo mostra (5/6) após descartar a pilha", IB.resumo().includes("(5/6)"));
+        IB.copias("adaga") === 0 && IB.contagem() === 9 && IB.pendente() === false
+        && IB.pegaLista().join(",") === "moedas,mapa,relogio,grimorio,pocaoVerde,pocaoRubra,lanterna,colarFormigas,esmeralda");
+      check("resumo mostra (9/10) após descartar a pilha", IB.resumo().includes("(9/10)"));
 
       // ---- save: round-trip e save antigo ----
       IB.carrega({ itensBuild: ["moedas", "moedas"], bauBuildPendente: true });
@@ -218,10 +218,10 @@ const fs = require('fs');
       check("id desconhecido é ignorado no load",
         IB.pegaLista().join(",") === "adaga,moedas" && IB.pendente() === true);
       IB.carrega({
-        itensBuild: ["adaga", "escudo", "moedas", "mapa", "relogio", "grimorio", "pocaoVerde"],
+        itensBuild: ["adaga", "escudo", "moedas", "mapa", "relogio", "grimorio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas", "bauPortatil"],
         bauBuildPendente: false
       });
-      check("load com 7 ids é cortado no limite de 6", IB.contagem() === 6);
+      check("load com 11 ids é cortado no limite de 10", IB.contagem() === 10);
       IB.carrega({ bausBuildPendentes: 2, bauBuildPendente: true, opcoesBauBuild: ["adaga", "moedas"] });
       check("opções inválidas no save são descartadas",
         IB.quantidadeBausPendentes() === 2 && IB.serializa().opcoesBauBuild === null);
@@ -239,7 +239,7 @@ const fs = require('fs');
       catch (e) { rejeitouInvalido = true; }
       check("ValidarSave rejeita id de item inválido", rejeitouInvalido);
       let rejeitouExcesso = false;
-      try { ValidarSave({ ...saveValido, itensBuild: ["adaga", "escudo", "moedas", "mapa", "relogio", "grimorio", "pocaoVerde"] }); }
+      try { ValidarSave({ ...saveValido, itensBuild: ["adaga", "escudo", "moedas", "mapa", "relogio", "grimorio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas", "bauPortatil"] }); }
       catch (e) { rejeitouExcesso = true; }
       check("ValidarSave rejeita build acima do limite", rejeitouExcesso);
 
