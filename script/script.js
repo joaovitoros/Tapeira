@@ -106,14 +106,14 @@ function PrecoLojaCM(nivel) {
 	return Math.round(10 * Math.pow(1.4, Math.max(0, Number(nivel) || 0)));
 }
 
-// +2% de gold por nível — aplicado em todo ganho de gold (AddGold)
+// +5% de gold por nível — aplicado em todo ganho de gold (AddGold)
 function MultiplicadorGoldConhecimento() {
-	return 1 + cmNivelGold * 0.02;
+	return 1 + cmNivelGold * 0.05;
 }
 
-// +2% de XP por nível — aplicado em toda XP ganha (GanhaXP)
+// +5% de XP por nível — aplicado em toda XP ganha (GanhaXP)
 function BonusXPConhecimento() {
-	return 1 + cmNivelXp * 0.02;
+	return 1 + cmNivelXp * 0.05;
 }
 
 // Tempo máximo do cronômetro de fuga: base 120 + 2 s por nível da loja. O

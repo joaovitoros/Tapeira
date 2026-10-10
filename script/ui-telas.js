@@ -508,6 +508,27 @@ function MostraDecomposicaoDano() {
         `;
     }
 
+    // Loja do Conhecimento: fatores embutidos no dano/crítico/companheiro —
+    // sem estas linhas o jogador não vê de onde sai o bônus do CM
+    if (N(cmNivelDano) > 0 || N(cmNivelCrit) > 0 || N(cmNivelComp) > 0) {
+        html += `
+        <div class="decomp-grupo">Conhecimento Mug (permanente — já embutido)</div>
+        `;
+        if (N(cmNivelDano) > 0) {
+            const n = N(cmNivelDano);
+            html += linha("Dano: " + n + " " + (n === 1 ? "nível" : "níveis"), "×" + Math.pow(1.05, n).toFixed(2));
+        }
+        if (N(cmNivelCrit) > 0) {
+            const n = N(cmNivelCrit);
+            html += linha("Crítico: " + n + " " + (n === 1 ? "nível" : "níveis") + " (+0,2 no teto cada)",
+                "×" + Math.pow(1.02, n).toFixed(2));
+        }
+        if (N(cmNivelComp) > 0) {
+            const n = N(cmNivelComp);
+            html += linha("Companheiro: " + n + " " + (n === 1 ? "nível" : "níveis"), "×" + Math.pow(1.02, n).toFixed(2));
+        }
+    }
+
     UI.showModal("Decomposição do dano", html);
 }
 

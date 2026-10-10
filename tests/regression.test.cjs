@@ -1492,6 +1492,78 @@ test("conquista Milionário sobe pelos marcos 1M/1B/1T/Qa/Qi/Sx", async () => {
     }
 });
 
+test("loja do Conhecimento aplica +5% de dano/gold/XP por nível", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.CompraCM === "function");
+        const result = await page.evaluate(() => {
+            UI.showInfo = () => {};
+            const antes = {
+                dano: cmNivelDano, gold: cmNivelGold, xp: cmNivelXp,
+                danoJogador, conhecimentoMug
+            };
+            // efeitos por nível: gold/XP lineares, com Status e rótulos da loja
+            cmNivelGold = 3;
+            cmNivelXp = 2;
+            UI.showStatus();
+            const linhas = [...document.querySelectorAll("#StatusBody tr")];
+            const linhaGold = linhas.find(tr => tr.cells[0]?.textContent.includes("Conhecimento gold"))?.textContent || "";
+            const linhaXp = linhas.find(tr => tr.cells[0]?.textContent.includes("Conhecimento XP"))?.textContent || "";
+            const rotulos = [...document.querySelectorAll("#TabLojaCM td:first-child")].map(td => td.textContent.trim());
+            const multGold = MultiplicadorGoldConhecimento();
+            const multXp = BonusXPConhecimento();
+            // compra de dano aplica ×1,05 na hora e compõe por nível
+            cmNivelDano = 0;
+            danoJogador = 100;
+            conhecimentoMug = 1000;
+            CompraCM("dano");
+            const danoApos1 = danoJogador;
+            CompraCM("dano");
+            const danoApos2 = danoJogador;
+            const niveisDano = cmNivelDano;
+            // a decomposição do dano lista o bônus do Conhecimento (embutido)
+            MostraDecomposicaoDano();
+            const modalDecomp = document.getElementById("gameModal");
+            const textoDecomp = modalDecomp ? modalDecomp.textContent : "";
+            const temLinhaDanoCm = !!modalDecomp && [...modalDecomp.querySelectorAll(".decomp-linha")]
+                .some(l => l.textContent.includes("Dano: 2 níveis") && l.textContent.includes("×1.10"));
+            // o reset remonta o dano com o mesmo ×1,05 por nível
+            cmNivelDano = 0;
+            Resetar();
+            const danoBase = danoJogador;
+            cmNivelDano = 4;
+            Resetar();
+            const fatorReset = danoBase > 0 ? danoJogador / danoBase : 0;
+            cmNivelDano = antes.dano; cmNivelGold = antes.gold; cmNivelXp = antes.xp;
+            danoJogador = antes.danoJogador; conhecimentoMug = antes.conhecimentoMug;
+            return {
+                multGold, multXp, linhaGold, linhaXp,
+                danoApos1, danoApos2, niveisDano, fatorReset,
+                textoDecomp, temLinhaDanoCm,
+                temRotuloDano5: rotulos.includes("+5% de dano"),
+                temRotuloGold5: rotulos.includes("+5% de gold"),
+                temRotuloXp5: rotulos.includes("+5% de XP")
+            };
+        });
+
+        assert.ok(Math.abs(result.multGold - 1.15) < 1e-12, "3 níveis de gold = +15%");
+        assert.ok(Math.abs(result.multXp - 1.1) < 1e-12, "2 níveis de XP = +10%");
+        assert.ok(result.linhaGold.includes("+15%"), "Status mostra o total novo de gold");
+        assert.ok(result.linhaXp.includes("+10%"), "Status mostra o total novo de XP");
+        assert.ok(Math.abs(result.danoApos1 - 105) < 1e-9, "compra aplica ×1,05 imediato");
+        assert.ok(Math.abs(result.danoApos2 - 110.25) < 1e-9, "segunda compra compõe (×1,05²)");
+        assert.equal(result.niveisDano, 2);
+        assert.ok(result.temLinhaDanoCm, "decomposição mostra a linha do Conhecimento (×1,10 com 2 níveis)");
+        assert.ok(result.textoDecomp.includes("Conhecimento Mug"), "grupo do Conhecimento na decomposição");
+        assert.ok(Math.abs(result.fatorReset - Math.pow(1.05, 4)) < 1e-9, "reset aplica ×1,05 por nível");
+        assert.ok(result.temRotuloDano5 && result.temRotuloGold5 && result.temRotuloXp5,
+            "rótulos da loja mostram +5%");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("simulação offline mantém vidas, conta mortes e reinicia onda completa", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
