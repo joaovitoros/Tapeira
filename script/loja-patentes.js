@@ -166,6 +166,10 @@ function GanhoProximaPatenteTexto(id) {
 	if (cfg.taxas) {
 		texto += " · passo " + FormataTaxa(cfg.taxas[atual]) + " → " + FormataTaxa(cfg.taxas[atual + 1]);
 	}
+	// Dano: cada patente dá um bônus único de +25% no ganho por nível
+	if (id === "dano") {
+		texto += " · +25% no ganho por nível";
+	}
 	return texto;
 }
 
@@ -188,6 +192,11 @@ function CompraPatenteLoja(id) {
 
 	PagaLoja(preco);
 	window[cfg.patenteVar] = PatenteAtual(id) + 1;
+	// Dano: cada patente ★ dá um bônus único de +25% no ganho por nível
+	// (mulDano é o que CompraDano soma a danoJogador a cada compra)
+	if (id === "dano") {
+		mulDano = N(mulDano) * 1.25;
+	}
 
 	ChamaSom('audio6');
 	document.getElementById("contGold").innerHTML = FormatGold(gold);
