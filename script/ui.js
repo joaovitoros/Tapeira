@@ -543,9 +543,9 @@ const UI = {
 				: "desbloqueia no andar 100"],
             ["Bônus XP", "+" + BonusXPLoja()],
             ["XP por inimigo", (XPPorInimigo() * BonusXPConhecimento()).toFixed(2)],
-            // total do bônus do CM: +2% por nível (dobro do +1% original)
-            ["Conhecimento gold", "+" + (cmNivelGold * 2) + "%"],
-            ["Conhecimento XP", "+" + (cmNivelXp * 2) + "%"],
+            // total do bônus do CM: +5% por nível
+            ["Conhecimento gold", "+" + (cmNivelGold * 5) + "%"],
+            ["Conhecimento XP", "+" + (cmNivelXp * 5) + "%"],
             ["Vida Mug", (subVidaInimigo * 100).toFixed(2) + "%"],
             ["Chance baú", (chanceBau * 100).toFixed(2) + "%"],
             ["Chance esmeralda", (chanceEsmeraldaBau * 100).toFixed(2) + "%"]

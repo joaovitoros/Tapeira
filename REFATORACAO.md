@@ -143,6 +143,10 @@ navegador, Windows (Electron) e Android (Capacitor).
     (`npm run sync:scripts`) gera o bloco entre os marcadores
     `<!-- scripts:start/end -->` em `index.html` e `Caverna.html`; um teste
     garante que o HTML não saiu de sincronia.
+17. Limpeza de assets: removida a duplicata **não referenciada**
+    `imagens/imagens/` (−15,4 MB) e o `prepare-web.ps1` passou a limpar o
+    destino antes de copiar, então o `www/` não acumula mais arquivos
+    obsoletos (`www` de 61 → 37 MB).
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
@@ -155,8 +159,11 @@ carregamento e unificação do save) estão concluídos. Candidatos naturais ago
 1. **Bundle/minify do JS:** concatenar os scripts na ordem do
    `scripts/script-manifest.js` e minificar com esbuild — 36 requisições viram
    1 e o parse cai. É o passo seguinte direto da lista única.
-2. **Otimizar imagens:** `imagens/` tem ~46 MB (texturas de vários MB);
-   converter para webp/redimensionar é o maior ganho de peso do jogo.
+2. **Otimizar imagens (em andamento):** a duplicata `imagens/imagens/` já saiu
+   (−15,4 MB). Faltam: reencodar o mp3 de fundo (6,6 MB) e otimizar os PNGs de
+   runtime grandes (backgrounds, player, inimigo, sprites). Folhas de
+   arte-fonte (`Grade de Ícones`, `Fauna Fantastica`, `personagens.png`) podem
+   ficar fora do pacote.
 3. **Cachear `getElementById` e consolidar ticks** (1s/250ms) nos laços.
 
 ## Como validar

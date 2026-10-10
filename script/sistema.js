@@ -515,9 +515,9 @@ function Resetar() {
 		LimitaDanoCritico();
 	}
 
-	// Loja do Conhecimento: +2% de dano permanente por nível
+	// Loja do Conhecimento: +5% de dano permanente por nível
 	if (cmNivelDano > 0 && isFinite(cmNivelDano)) {
-		danoJogador = danoJogador * Math.pow(1.02, cmNivelDano);
+		danoJogador = danoJogador * Math.pow(1.05, cmNivelDano);
 		LimitaDanoCritico();
 	}
 

@@ -181,7 +181,7 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 		: abates >= Math.ceil(limiteXP / xpPorAbate)
 			? limiteXP
 			: abates * xpPorAbate;
-	// +2% de XP por nível da Loja do Conhecimento e +10% da conquista
+	// +5% de XP por nível da Loja do Conhecimento e +10% da conquista
 	// Milionário (arredonda pra baixo e respeita o teto de XP restante)
 	// Grimório Estelar (itens da build): +20% por cópia no XP por abate
 	const xpBase = Math.min(limiteXP, Math.floor(xpCalculado * BonusXPConhecimento() * MultiplicadorXPConquistaComp() * Tapeira.ItensBuild.multXP()));

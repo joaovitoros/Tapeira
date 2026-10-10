@@ -298,8 +298,8 @@ function CompraCM(tipo) {
 	conhecimentoMug = conhecimentoMug - preco;
 	if (tipo === "dano") {
 		cmNivelDano++;
-		// efeito imediato; no reset o Resetar remonta tudo com ×1.02 por nível
-		danoJogador = danoJogador * 1.02;
+		// efeito imediato; no reset o Resetar remonta tudo com ×1.05 por nível
+		danoJogador = danoJogador * 1.05;
 		LimitaDanoCritico();
 		if (danoComp1 > 0) danoComp = danoJogador * danoComp1;
 	} else if (tipo === "gold") {
