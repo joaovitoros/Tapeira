@@ -37,11 +37,13 @@
 	<script src="script/ramos.js"></script>
 	<script src="script/itens-build.js"></script>
 	<script src="script/validacao-save.js"></script>
+	<script src="script/persistencia-carregar.js"></script>
+	<script src="script/persistencia-autosave.js"></script>
 	<script src="script/persistencia.js"></script>
 	<script src="script/progresso-offline.js"></script>
 </head>
 
-<body class="Batalha" onload="PreCarregamento()">
+<body class="Batalha">
 	<!-- Camadas de fundo da caverna: se cruzam a cada andar vencido (script.js) -->
 	<div id="fundoA" class="fundo-camada" aria-hidden="true"></div>
 	<div id="fundoB" class="fundo-camada" aria-hidden="true"></div>
@@ -71,11 +73,11 @@
 					<span class="manter-label-desktop">Manter no andar:</span>
 					<span class="manter-label-mobile" aria-hidden="true">Manter</span>
 				</label>
-				<input type="checkbox" id="manterAndar" aria-label="Manter no andar" onclick="AlternaManterAndar()">
+				<input type="checkbox" id="manterAndar" aria-label="Manter no andar">
 			</div>
 
 			<div id="container-VoltarAndar">
-				<button type="button" id="btnAndar" class="btn-Padrao" onclick="PedeReset()">
+				<button type="button" id="btnAndar" class="btn-Padrao">
 					<span class="voltar-label-desktop">Voltar andar</span>
 					<span class="voltar-label-mobile" aria-hidden="true">Voltar</span>
 					<span class="voltar-seta" aria-hidden="true">
@@ -95,7 +97,7 @@
 			</div>
 			<div class="contTempo" id="contTempo" role="timer" aria-label="Tempo restante para a fuga dos inimigos"></div>
 			<button type="button" id="btnPause" class="pause-button" aria-label="Pausar jogo"
-				title="Pausar jogo" onclick="AlternaPausa()">
+				title="Pausar jogo">
 				<span class="pause-button-icon" aria-hidden="true">Ⅱ</span>
 				<span class="pause-button-label">Pausar</span>
 			</button>
@@ -152,10 +154,10 @@
 		</div>
 
 		<img src="imagens/player.png" class="player">
-		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo1" id="inimigo1" onclick="Bater(1, true)">
-		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo2" id="inimigo2" onclick="Bater(2, true)">
-		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo3" id="inimigo3" onclick="Bater(3, true)">
-		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo4" id="inimigo4" onclick="Bater(4, true)">
+		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo1" id="inimigo1">
+		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo2" id="inimigo2">
+		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo3" id="inimigo3">
+		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo4" id="inimigo4">
 		<img style="visibility:hidden" src="imagens/comerciante.png" class="comerciante" id="comerciante" alt="">
 
 		<div id="container-Habilidades">
@@ -166,7 +168,7 @@
 			</div>
 			<div id="skill-unlock-panel" class="skill-unlock-panel" hidden aria-label="Habilidades desbloqueadas">
 				<button type="button" id="skill-electric" class="combat-skill" hidden aria-label="Corrente elétrica"
-					title="Corrente elétrica" onclick="AtivaHabilidadeCombate('electric')">
+					title="Corrente elétrica">
 					<img class="combat-skill__icon" src="imagens/espada-eletrica.svg" alt="">
 					<span id="skill-electric-progress" class="sr-only"></span>
 					<span class="combat-skill__meter" role="progressbar" aria-label="Carga da corrente elétrica"
@@ -175,7 +177,7 @@
 					</span>
 				</button>
 				<button type="button" id="skill-gold" class="combat-skill" hidden aria-label="Bônus de Gold"
-					title="Bônus de Gold" onclick="AtivaHabilidadeCombate('gold')">
+					title="Bônus de Gold">
 					<svg class="combat-skill__icon combat-skill__icon--gold" viewBox="0 0 32 32" aria-hidden="true">
 						<circle cx="16" cy="16" r="13" />
 						<path d="M20.5 10.5c-1-.9-2.3-1.3-4.1-1.3-2.7 0-4.5 1.4-4.5 3.5 0 2 1.4 3 4.2 3.6l1.5.3c1.4.3 2 .7 2 1.4 0 .9-1 1.5-2.8 1.5-1.7 0-3.1-.6-4.2-1.7l-2 2c1.3 1.4 3.3 2.3 5.8 2.4v2h2.2v-2.1c3-.4 4.8-2 4.8-4.2 0-2.1-1.4-3.1-4.5-3.8l-1.5-.3c-1.3-.3-1.8-.6-1.8-1.2 0-.7.8-1.2 2.3-1.2 1.3 0 2.4.4 3.3 1.2z" />
@@ -187,7 +189,7 @@
 					</span>
 				</button>
 				<button type="button" id="skill-escape" class="combat-skill" hidden aria-label="Parar fuga"
-					title="Parar fuga" onclick="AtivaHabilidadeCombate('escape')">
+					title="Parar fuga">
 					<svg class="combat-skill__icon combat-skill__icon--escape" viewBox="0 0 32 32" aria-hidden="true">
 						<circle cx="16" cy="16" r="12.5" />
 						<path d="M16 8.5v8l5 3" />
@@ -200,7 +202,7 @@
 					</span>
 				</button>
 				<button type="button" id="skill-frenzy" class="combat-skill" hidden aria-label="Toque Frenético"
-					title="Toque Frenético" onclick="AtivaHabilidadeCombate('frenzy')">
+					title="Toque Frenético">
 					<svg class="combat-skill__icon combat-skill__icon--frenzy" viewBox="0 0 32 32" aria-hidden="true">
 						<circle cx="16" cy="16" r="12.5" />
 						<path d="M17.8 6.2 10.4 17.4h4.9L13.9 25.8 21.6 14.6h-4.9z" />
@@ -216,8 +218,7 @@
 
 		<div id="container-opcoes">
 			<section id="golden-chest-tracker" aria-label="Baú dourado">
-				<button type="button" id="golden-chest-claim" class="golden-chest-tracker__main"
-					onclick="ColetaBauDourado()" disabled>
+				<button type="button" id="golden-chest-claim" class="golden-chest-tracker__main" disabled>
 					<img src="imagens/bau-dourado.svg" alt="" class="golden-chest-tracker__icon">
 					<span id="golden-chest-progress-text">20:00</span>
 				</button>
@@ -225,8 +226,7 @@
 				<div class="golden-chest-tracker__bottom">
 					<button type="button" id="golden-chest-info" class="golden-chest-tracker__info"
 						aria-expanded="false" aria-controls="golden-chest-desc"
-						aria-label="Sobre o baú dourado" title="Sobre o baú dourado"
-						onclick="UI.toggleGoldenChestInfo()">
+						aria-label="Sobre o baú dourado" title="Sobre o baú dourado">
 						<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
 							<circle cx="12" cy="12" r="9.4" />
 							<path d="M12 11.2v5.2" />
@@ -238,7 +238,6 @@
 						<label class="auto-toggle" id="autoColetaWrap">
 							<span class="golden-chest-tracker__auto-label">auto</span>
 							<input type="checkbox" id="autoColetaToggle"
-								onchange="AlternaAutoColeta(this.checked)"
 								aria-label="Auto-coleta de baús" />
 						</label>
 					</div>
@@ -254,27 +253,27 @@
 
 			<div id="container-Botoes">
 				<button type="button" id="btnStatus" class="btn-Padrao screen-nav-button screen-nav-button--status"
-					aria-controls="DivStatus" aria-expanded="false" onclick="SobeStatus()">
+					aria-controls="DivStatus" aria-expanded="false">
 					<span class="screen-nav-icon screen-nav-icon--status" aria-hidden="true"></span>
 					<span>Status</span>
 				</button>
 				<button type="button" id="btn-Loja" class="btn-Padrao screen-nav-button screen-nav-button--shop"
-					aria-controls="container-Loja" aria-expanded="false" onclick="AbreLoja(true)">
+					aria-controls="container-Loja" aria-expanded="false">
 					<span class="screen-nav-icon screen-nav-icon--shop" aria-hidden="true"></span>
 					<span>Loja</span>
 				</button>
 				<button type="button" id="btn-Config" class="btn-Padrao screen-nav-button screen-nav-button--config"
-					aria-controls="container-SalvaCarrega" aria-expanded="false" onclick="AbreConfig()">
+					aria-controls="container-SalvaCarrega" aria-expanded="false">
 					<span class="screen-nav-icon screen-nav-icon--config" aria-hidden="true"></span>
 					<span>Config</span>
 				</button>
 				<button type="button" id="btn-Formigas" class="btn-Padrao screen-nav-button screen-nav-button--ants"
-					aria-expanded="false" onclick="UI.toggleAntCollection()">
+					aria-expanded="false">
 					<span class="screen-nav-icon screen-nav-icon--ants" aria-hidden="true">✦</span>
 					<span>Formigas</span>
 				</button>
 				<button type="button" id="btnSkills" class="btn-Padrao screen-nav-button screen-nav-button--skills"
-					aria-expanded="false" onclick="UI.toggleSkillUpgradePanel()">
+					aria-expanded="false">
 					<span class="screen-nav-icon screen-nav-icon--skills" aria-hidden="true">
 						<svg viewBox="0 0 24 24" focusable="false">
 							<path d="m12 2 1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9L12 2Zm7 12 .9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14ZM5 15l.8 1.7L7.5 17.5l-1.7.8L5 20l-.8-1.7-1.7-.8 1.7-.8L5 15Z"/>
@@ -311,19 +310,17 @@
 					<div class="tituloConfig">Salvar Jogo</div>
 					<div class="save-help">Exporte uma cópia JSON antes de atualizar ou para levar seu progresso a outro dispositivo.</div>
 
-					<input type="button" value="Salvar Arquivo" id="btnSalvarJogo" onclick="Salvar()" />
-					<input type="button" value="Salvar e voltar ao menu" id="btnSalvarVoltarMenu"
-						onclick="SalvarEVoltarMenu()" />
-					<input type="button" value="Apagar Auto Save" id="btnApagarSave" onclick="LimparAutoSave()" />
+					<input type="button" value="Salvar Arquivo" id="btnSalvarJogo" />
+					<input type="button" value="Salvar e voltar ao menu" id="btnSalvarVoltarMenu" />
+					<input type="button" value="Apagar Auto Save" id="btnApagarSave" />
 					<input type="button" value="Apagar todos os saves" id="btnZerarJogo"
-						onclick="ZerarTodosSaves()"
 						aria-label="Apagar todos os saves e zerar o jogo" />
 				</div>
 
 				<div id="divCarregar">
 					<div class="tituloConfig">Carregar Save</div>
 					<div class="save-help">Selecione um arquivo JSON exportado pelo TAPeira. Saves antigos continuam compatíveis.</div>
-					<input type="file" id="txtfiletoread" accept=".json,application/json" onchange="CarregarArquivo(this)" aria-label="Importar save JSON" />
+					<input type="file" id="txtfiletoread" accept=".json,application/json" aria-label="Importar save JSON" />
 					<div id="filecontents"> </div>
 				</div>
 				<div id="divVolume">
@@ -338,7 +335,7 @@
 							<output id="volumeValor" for="volumeControle">5%</output>
 						</div>
 						<input type="range" id="volumeControle" min="0" max="100" step="1" value="5"
-							aria-label="Volume geral do jogo" oninput="AtualizaVolume(this.value)" />
+							aria-label="Volume geral do jogo" />
 					</div>
 					<div id="divAmbienteBotoes" class="audio-setting">
 						<div class="audio-setting__label">
@@ -346,14 +343,14 @@
 							<output id="volumeAmbienteValor" for="volumeAmbienteControle">30%</output>
 						</div>
 						<input type="range" id="volumeAmbienteControle" min="0" max="100" step="1" value="30"
-							aria-label="Volume do ambiente da caverna" oninput="AtualizaVolumeAmbiente(this.value)" />
+							aria-label="Volume do ambiente da caverna" />
 					</div>
 				</div>
 				<div id="divDesktopDisplay" hidden>
 					<div class="tituloConfig">Tela (PC)</div>
 					<label class="desktop-setting-row" for="resolucaoJogo">
 						<span>Resolução da janela</span>
-						<select id="resolucaoJogo" onchange="AtualizaConfiguracaoTela()">
+						<select id="resolucaoJogo">
 							<option value="1024x768">1024 × 768</option>
 							<option value="1280x800">1280 × 800</option>
 							<option value="1366x768">1366 × 768</option>
@@ -363,7 +360,7 @@
 					</label>
 					<label class="desktop-setting-row desktop-fullscreen-row" for="telaCheiaJogo">
 						<span>Tela cheia</span>
-						<input type="checkbox" id="telaCheiaJogo" onchange="AtualizaConfiguracaoTela()" />
+						<input type="checkbox" id="telaCheiaJogo" />
 					</label>
 					<div class="save-help" id="desktopDisplayStatus" role="status"></div>
 				</div>
@@ -379,10 +376,9 @@
 				<div class="preview-compra" hidden></div>
 				<table id="TabLoja">
 					<caption>Loja<label class="auto-toggle auto-toggle--loja" id="autoCompraWrap"><input
-								type="checkbox" id="autoCompraToggle"
-								onchange="AlternaAutoCompra(this.checked)" aria-label="Auto-compra da loja" /><span>Auto-compra</span></label><button
+								type="checkbox" id="autoCompraToggle" aria-label="Auto-compra da loja" /><span>Auto-compra</span></label><button
 							type="button" class="btnLojaE btnLojaFechar"
-							onclick="FechaLoja()" aria-label="Fechar loja">×</button></caption>
+							data-loja="fechar" aria-label="Fechar loja">×</button></caption>
 					<thead>
 						<tr>
 							<th>Item</th>
@@ -390,7 +386,7 @@
 							<th>Nivel</th>
 							<th>Comprar</th>
 							<th>
-								<button type="button" class="btnLojaE" onclick="LojaEsmeralda()">&gt;</button>
+								<button type="button" class="btnLojaE" data-loja="esmeralda">&gt;</button>
 							</th>
 						</tr>
 					</thead>
@@ -403,7 +399,7 @@
 							<div id="lvlDano"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraDano()"></td>
+								data-compra="dano"></td>
 					</tr>
 
 					<tr>
@@ -415,7 +411,7 @@
 							<div id="lvlBau"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraBau()"></td>
+								data-compra="bau"></td>
 					</tr>
 
 					<tr>
@@ -427,7 +423,7 @@
 							<div id="lvlEsmBau"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraEsmBau()"></td>
+								data-compra="esmbau"></td>
 					</tr>
 
 					<tr>
@@ -439,7 +435,7 @@
 							<div id="lvlBEspaco"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraBEspaco()"></td>
+								data-compra="bespaco"></td>
 					</tr>
 
 					<tr>
@@ -451,7 +447,7 @@
 							<div id="lvlGold"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraGold()"></td>
+								data-compra="gold"></td>
 					</tr>
 
 					<tr>
@@ -463,7 +459,7 @@
 							<div id="lvlAvan"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraAvanco()"></td>
+								data-compra="avanco"></td>
 					</tr>
 
 					<tr>
@@ -475,7 +471,7 @@
 							<div id="lvlDCrit"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraDCrit()"></td>
+								data-compra="dcrit"></td>
 					</tr>
 
 					<tr>
@@ -487,7 +483,7 @@
 							<div id="lvlSubVida"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraSubVida()"></td>
+								data-compra="subvida"></td>
 					</tr>
 
 					<tr>
@@ -499,7 +495,7 @@
 							<div id="lvlCCrit"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCCrit()"></td>
+								data-compra="ccrit"></td>
 					</tr>
 
 					<tr>
@@ -511,7 +507,7 @@
 							<div id="lvlQTDAvan"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraQTDAvanco()"></td>
+								data-compra="qtdavanco"></td>
 					</tr>
 
 					<tr>
@@ -523,7 +519,7 @@
 							<div id="lvlVelComp"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraVelComp()"></td>
+								data-compra="velcomp"></td>
 					</tr>
 
 				</table>
@@ -534,25 +530,25 @@
 						<span class="especializacao__status" id="espStatus">Nenhuma</span>
 					</div>
 					<div class="especializacao__cartoes">
-						<button type="button" class="esp-cartao" data-esp="1" onclick="EscolheEspecializacao(1)">
+						<button type="button" class="esp-cartao" data-esp="1">
 							<span class="esp-cartao__nome">Força Bruta</span>
 							<span class="esp-cartao__efeito">+40% dano · −25% gold</span>
 						</button>
-						<button type="button" class="esp-cartao" data-esp="2" onclick="EscolheEspecializacao(2)">
+						<button type="button" class="esp-cartao" data-esp="2">
 							<span class="esp-cartao__nome">Toque de Midas</span>
 							<span class="esp-cartao__efeito">+40% gold · −25% dano</span>
 						</button>
-						<button type="button" class="esp-cartao" data-esp="3" onclick="EscolheEspecializacao(3)">
+						<button type="button" class="esp-cartao" data-esp="3">
 							<span class="esp-cartao__nome">Olho de Águia</span>
 							<span class="esp-cartao__efeito">Crítico ×1,8 · −10% dano · −15% gold</span>
 							<span class="esp-cartao__lock" hidden>Desbloqueia no andar 60</span>
 						</button>
-						<button type="button" class="esp-cartao" data-esp="4" onclick="EscolheEspecializacao(4)">
+						<button type="button" class="esp-cartao" data-esp="4">
 							<span class="esp-cartao__nome">Canhão de Vidro</span>
 							<span class="esp-cartao__efeito">+80% dano · −50% tempo de fuga</span>
 							<span class="esp-cartao__lock" hidden>Desbloqueia no andar 70</span>
 						</button>
-						<button type="button" class="esp-cartao" data-esp="5" onclick="EscolheEspecializacao(5)">
+						<button type="button" class="esp-cartao" data-esp="5">
 							<span class="esp-cartao__nome">Cadeia de Ataques</span>
 							<span class="esp-cartao__efeito">−50% dano · +25% por ataque no mesmo alvo (até +400%)</span>
 							<span class="esp-cartao__lock" hidden>Desbloqueia no andar 80</span>
@@ -569,7 +565,7 @@
 				<div class="preview-compra" hidden></div>
 				<table id="TabLojaEsm">
 					<caption>Loja de Esmeralda<button type="button" class="btnLojaE btnLojaFechar"
-							onclick="FechaLoja()" aria-label="Fechar loja">×</button></caption>
+							data-loja="fechar" aria-label="Fechar loja">×</button></caption>
 					<thead>
 						<tr>
 							<th>Bonus</th>
@@ -577,8 +573,8 @@
 							<th>Nivel</th>
 							<th>Comprar</th>
 							<th>
-								<button type="button" class="btnLojaE" onclick="LojaEsmeralda()" aria-label="Loja de gold">&lt;</button>
-								<button type="button" class="btnLojaE" onclick="LojaConhecimento()" aria-label="Loja do Conhecimento">&gt;</button>
+								<button type="button" class="btnLojaE" data-loja="esmeralda" aria-label="Loja de gold">&lt;</button>
+								<button type="button" class="btnLojaE" data-loja="conhecimento" aria-label="Loja do Conhecimento">&gt;</button>
 							</th>
 						</tr>
 					</thead>
@@ -591,7 +587,7 @@
 							<div id="lvlComp1"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraComp1()"></td>
+								data-compra="comp1"></td>
 					</tr>
 
 					<tr>
@@ -603,7 +599,7 @@
 							<div id="lvlAvGold"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraAvGold()"></td>
+								data-compra="avgold"></td>
 					</tr>
 
 					<tr>
@@ -615,7 +611,7 @@
 							<div id="lvlComp2"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraComp2()"></td>
+								data-compra="comp2"></td>
 					</tr>
 
 					<tr>
@@ -627,7 +623,7 @@
 							<div id="lvlComp3"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraComp3()"></td>
+								data-compra="comp3"></td>
 					</tr>
 
 					<tr>
@@ -639,7 +635,7 @@
 							<div id="lvlComp4"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraComp4()"></td>
+								data-compra="comp4"></td>
 					</tr>
 
 					<tr>
@@ -651,7 +647,7 @@
 							<div id="lvlComp5"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraComp5()"></td>
+								data-compra="comp5"></td>
 					</tr>
 
 					<tr>
@@ -663,7 +659,7 @@
 							<div id="lvlComp6"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraComp6()"></td>
+								data-compra="comp6"></td>
 					</tr>
 
 					<tr>
@@ -675,7 +671,7 @@
 							<div id="lvlXP"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraXP()"></td>
+								data-compra="xp"></td>
 					</tr>
 
 					<tr>
@@ -687,7 +683,18 @@
 							<div id="lvlEsmCM"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraEsmCM()"></td>
+								data-compra="esmcm"></td>
+					</tr>
+					<tr id="linhaEsmSlotBuild" hidden>
+						<td>Espaço extra de build (+1 por nível)</td>
+						<td align="center">
+							<div id="precoEsmSlotBuild"></div>
+						</td>
+						<td align="center">
+							<div id="lvlEsmSlotBuild"></div>
+						</td>
+						<td align="center"><input type="button" id="btnEsmSlotBuild" value="Evoluir" class="Loja"
+								data-compra-slot-build aria-label="Comprar espaço extra de build"></td>
 					</tr>
 				</table>
 			</div>
@@ -695,7 +702,7 @@
 				<div class="preview-compra" hidden></div>
 				<table id="TabLojaCM">
 					<caption>Loja do Conhecimento · <span id="lojaCMsaldo">0</span> CM<button type="button"
-							class="btnLojaE btnLojaFechar" onclick="FechaLoja()" aria-label="Fechar loja">×</button></caption>
+							class="btnLojaE btnLojaFechar" data-loja="fechar" aria-label="Fechar loja">×</button></caption>
 					<thead>
 						<tr>
 							<th>Bonus permanente</th>
@@ -703,7 +710,7 @@
 							<th>Nivel</th>
 							<th>Comprar</th>
 							<th>
-								<button type="button" class="btnLojaE" onclick="FechaLojaCM()" aria-label="Voltar à loja de esmeraldas">&lt;</button>
+								<button type="button" class="btnLojaE" data-loja="fechar-cm" aria-label="Voltar à loja de esmeraldas">&lt;</button>
 							</th>
 						</tr>
 					</thead>
@@ -716,7 +723,7 @@
 							<div id="lvlCMDano"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('dano')"></td>
+								data-compra-cm="dano"></td>
 					</tr>
 					<tr>
 						<td>+2% de gold</td>
@@ -727,7 +734,7 @@
 							<div id="lvlCMGold"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('gold')"></td>
+								data-compra-cm="gold"></td>
 					</tr>
 					<tr>
 						<td>+2% de XP</td>
@@ -738,7 +745,7 @@
 							<div id="lvlCMXp"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('xp')"></td>
+								data-compra-cm="xp"></td>
 					</tr>
 					<tr>
 						<td>+2 no tempo de fuga</td>
@@ -749,7 +756,7 @@
 							<div id="lvlCMFuga"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('fuga')"></td>
+								data-compra-cm="fuga"></td>
 					</tr>
 					<tr>
 						<td>+2% de dano crítico e +0,2 no teto</td>
@@ -760,7 +767,7 @@
 							<div id="lvlCMCrit"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('crit')"></td>
+								data-compra-cm="crit"></td>
 					</tr>
 					<tr>
 						<td>+0,5% de chance de formiga aleatória (máx 25%)</td>
@@ -771,7 +778,7 @@
 							<div id="lvlCMFormiga"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('formiga')"></td>
+								data-compra-cm="formiga"></td>
 					</tr>
 					<tr>
 						<td>+1% de chance de vir 2 formigas (máx 100)</td>
@@ -782,7 +789,7 @@
 							<div id="lvlCMDuas"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('duasformigas')"></td>
+								data-compra-cm="duasformigas"></td>
 					</tr>
 					<tr>
 						<td>+2% de dano de companheiro</td>
@@ -793,7 +800,7 @@
 							<div id="lvlCMComp"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('comp')"></td>
+								data-compra-cm="comp"></td>
 					</tr>
 					<tr>
 						<td>+2% de gold do companheiro 2</td>
@@ -804,7 +811,7 @@
 							<div id="lvlCMGoldComp2"></div>
 						</td>
 						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								onclick="CompraCM('goldcomp2')"></td>
+								data-compra-cm="goldcomp2"></td>
 					</tr>
 				</table>
 			</div>

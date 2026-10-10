@@ -161,7 +161,12 @@ function ValidarSave(save) {
 	if (perkGastos > 0) {
 		const picoRun = PicoRunDoSave(save);
 		const perkGanhos = picoRun >= 35 ? Math.floor((picoRun - 35) / 5) + 1 : 0;
-		if (perkGastos > perkGanhos) {
+		// tolera saves da época em que o perk do Toque Frenético não entrava no
+		// cálculo de pontos (bug corrigido em progressao.js): ele podia ser
+		// comprado sem gastar o pool, então o total pode exceder os ganhos em
+		// até perkFrenesi. Saves novos (que já contam o frenesi) cabem igual.
+		const frenesi = Number(save.perkFrenesi) || 0;
+		if (perkGastos > perkGanhos + frenesi) {
 			throw new TypeError("Os perks do save excedem os pontos do pico da run.");
 		}
 	}
@@ -363,9 +368,16 @@ function ValidarSave(save) {
 			|| save.especializacaoTrocas > TROCA_ESPECIALIZACAO_MAX)) {
 		throw new TypeError("A contagem de trocas de especialização no save é inválida.");
 	}
+	// espaços extras comprados na loja de esmeraldas (permanentes)
+	if (save.slotsExtrasBuild !== undefined
+		&& (!Number.isSafeInteger(save.slotsExtrasBuild)
+			|| save.slotsExtrasBuild < 0
+			|| save.slotsExtrasBuild > Tapeira.ItensBuild.LIMITE_EXTRAS)) {
+		throw new TypeError("A contagem de espaços extras da build no save é inválida.");
+	}
 	if (save.itensBuild !== undefined
 		&& (!Array.isArray(save.itensBuild)
-			|| save.itensBuild.length > Tapeira.ItensBuild.LIMITE
+			|| save.itensBuild.length > Tapeira.ItensBuild.limiteDoSave(save)
 			|| save.itensBuild.some(id => !Tapeira.ItensBuild.item(id)))) {
 		throw new TypeError("Os itens da build no save são inválidos.");
 	}

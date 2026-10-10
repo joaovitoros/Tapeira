@@ -35,6 +35,8 @@ function LojaEsmeralda(){
 		document.getElementById("precoEsmCM").innerHTML=precoEsmCM;
 		document.getElementById("lvlEsmCM").innerHTML=lvlEsmCM;
 
+		AtualizaLojaEsmSlotBuild();
+
 	}else{
 		document.getElementById("LojaEsm").style.visibility="hidden";
 		document.getElementById("Loja").style.visibility="visible";
@@ -242,3 +244,54 @@ function CompraEsmCM(){
 		MostraInfo("Voce não tem esmeraldas o suficiente para essa compra!");
 	}
 }
+
+// Espaço extra de build: +1 slot por nível, preço dobra a cada compra.
+// Só aparece depois do andar 100 (mesmo destrave do sistema de build) e a
+// compra é permanente — só os itens da build zeram no reset, o espaço não.
+function AtualizaLojaEsmSlotBuild(){
+	const IB = window.Tapeira && window.Tapeira.ItensBuild;
+	const linha = document.getElementById("linhaEsmSlotBuild");
+	if(!IB || !linha) return;
+	linha.hidden = !IB.desbloqueada();
+	document.getElementById("precoEsmSlotBuild").innerHTML=IB.precoSlotExtra();
+	document.getElementById("lvlEsmSlotBuild").innerHTML=IB.slotsExtras();
+}
+
+function CompraEsmSlotBuild(){
+	const IB = window.Tapeira && window.Tapeira.ItensBuild;
+	if(!IB) return;
+	NormalizaPrecosLoja();
+	if(!IB.desbloqueada()){
+		MostraInfo("Espaço extra de build só pode ser comprado depois do andar 100!");
+		return;
+	}
+	if(IB.slotsExtras() >= IB.LIMITE_EXTRAS){
+		MostraInfo("Item no nível máximo!");
+		return;
+	}
+	const preco = IB.precoSlotExtra();
+	if(N(esmeraldas) >= preco){
+		esmeraldas = N(esmeraldas) - preco;
+		IB.compraSlotExtra();
+
+		ChamaSom('audio6');
+
+		document.getElementById("contEmeraldas").innerHTML=N(esmeraldas);
+		AtualizaLojaEsmSlotBuild();
+
+		MostraStatus();
+		AutoSalvar();
+	}else{
+		MostraInfo("Voce não tem esmeraldas o suficiente para essa compra!");
+	}
+}
+
+// Sem handler inline (AGENTS.md): o botão da linha usa data-compra-slot-build
+// e o clique é delegado no document, independente da ordem dos scripts.
+document.addEventListener("click", (evento) => {
+	const alvo = evento.target && evento.target.closest
+		? evento.target.closest("[data-compra-slot-build]")
+		: null;
+	if(!alvo) return;
+	CompraEsmSlotBuild();
+});

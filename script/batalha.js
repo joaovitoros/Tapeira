@@ -567,3 +567,12 @@ function animarMorte(el) {
 	const limite = setTimeout(limpa, 1200);
 	efeitosMorteAtivos.set(morte, { intervalo, limite });
 }
+
+// Inimigos: o clique na imagem chama Bater com o id correspondente
+// (sem onclick inline no HTML).
+document.addEventListener("DOMContentLoaded", () => {
+	for (let id = 1; id <= 4; id++) {
+		const inimigo = document.getElementById("inimigo" + id);
+		if (inimigo) inimigo.addEventListener("click", () => Bater(id, true));
+	}
+});

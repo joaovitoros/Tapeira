@@ -6,9 +6,11 @@
 // mesmo que os anteriores ainda não tenham sido abertos. Ignorar o baú
 // ("não escolher nenhum item") consome esse baú — ele some da tela.
 // A escolha é 1 de 3 itens aleatórios; cada cópia ocupa um slot próprio
-// e acumula o bônus (teto de 6 slots). Na build cheia, descartar um item
-// remove a pilha INTEIRA dele — todas as cópias e o bônus delas somem.
-// Os itens são da run: zeram no Resetar (junto com perks/especialização).
+// e acumula o bônus (teto de LIMITE slots + espaços extras comprados na
+// loja de esmeraldas). Na build cheia, descartar um item remove a pilha
+// INTEIRA dele — todas as cópias e o bônus delas somem.
+// Os itens são da run: zeram no Resetar (junto com perks/especialização);
+// os espaços extras são compra PERMANENTE da loja e não zera no reset.
 //
 // Domínio encapsulado: API pequena em window.Tapeira.ItensBuild (AGENTS.md),
 // sem novas variáveis globais. A interface (UI.spawnBauBuild e o modal em
@@ -19,10 +21,12 @@
 
 	window.Tapeira = window.Tapeira || {};
 
-	const LIMITE = 6;
+	// slots base; cada nível do item da loja de esmeraldas soma +1 (teto LIMITE_EXTRAS)
+	const LIMITE = 10;
+	const LIMITE_EXTRAS = 30;
 
 	// Pool de itens (ícones recortados da "Grade de Ícones Fantásticos de RPG").
-	// Todos positivos; o custo é o espaço limitado dos 5 slots da build.
+	// Todos positivos; o custo é o espaço limitado dos slots da build.
 	const POOL = [
 		{ id: "adaga", nome: "Adaga Sombria", icone: "imagens/itens/adaga.png",
 			efeito: "+15% de dano" },
@@ -54,6 +58,9 @@
 	let lista = [];
 	let bausPendentes = 0;
 	let opcoesBauAtual = null;
+	// espaços extras comprados na loja de esmeraldas: permanentes (não zeram
+	// no Resetar), cada nível dá +1 slot e o preço dobra por nível
+	let slotsExtras = 0;
 
 	function item(id) {
 		return POOL.find(registro => registro.id === id) || null;
@@ -83,18 +90,37 @@
 		return ids.slice(0, qtd);
 	}
 
+	// limite efetivo: slots base + espaços extras comprados na loja
+	function limiteAtual() {
+		return LIMITE + slotsExtras;
+	}
+
+	// espaços extras vêm do save; valor inválido conta como 0
+	function slotsExtrasDoSave(save) {
+		const valor = save ? save.slotsExtrasBuild : undefined;
+		return Number.isSafeInteger(valor) && valor >= 0
+			? Math.min(valor, LIMITE_EXTRAS)
+			: 0;
+	}
+
+	// preço do próximo espaço: 10 esmeraldas e dobra por nível comprado
+	function precoSlotExtra() {
+		return 10 * Math.pow(2, slotsExtras);
+	}
+
 	function resumo() {
-		if (lista.length === 0) return "nenhum (0/" + LIMITE + ")";
+		if (lista.length === 0) return "nenhum (0/" + limiteAtual() + ")";
 		const partes = [];
 		for (const registro of POOL) {
 			const n = copias(registro.id);
 			if (n > 0) partes.push(registro.nome + (n > 1 ? " ×" + n : ""));
 		}
-		return partes.join(", ") + " (" + lista.length + "/" + LIMITE + ")";
+		return partes.join(", ") + " (" + lista.length + "/" + limiteAtual() + ")";
 	}
 
 	window.Tapeira.ItensBuild = {
 		LIMITE: LIMITE,
+		LIMITE_EXTRAS: LIMITE_EXTRAS,
 		POOL: POOL,
 
 		// ---- leitura ----
@@ -105,6 +131,17 @@
 		pendente: () => bausPendentes > 0,
 		quantidadeBausPendentes: () => bausPendentes,
 		desbloqueada: desbloqueada,
+		limiteAtual: limiteAtual,
+		slotsExtras: () => slotsExtras,
+		precoSlotExtra: precoSlotExtra,
+		// limite da lista gravada num save (validacao-save.js)
+		limiteDoSave: save => LIMITE + slotsExtrasDoSave(save),
+		// item da loja de esmeraldas: +1 espaço permanente (loja-esmeraldas.js)
+		compraSlotExtra() {
+			if (slotsExtras >= LIMITE_EXTRAS) return false;
+			slotsExtras++;
+			return true;
+		},
 		resumo: resumo,
 		sorteia: sorteia,
 
@@ -153,7 +190,7 @@
 		escolhe(id, descarta) {
 			const registro = item(id);
 			if (!registro || bausPendentes <= 0 || !opcoesBauAtual?.includes(id)) return;
-			if (lista.length >= LIMITE) {
+			if (lista.length >= limiteAtual()) {
 				// build cheia: sem um item para descartar não pode entrar
 				if (!descarta || copias(descarta) === 0) return;
 				lista = lista.filter(idItem => idItem !== descarta);
@@ -170,8 +207,10 @@
 
 		// ---- save (regras do save em sistema.js) ----
 		carrega(save) {
+			// extras antes da lista: o slice respeita o limite efetivo do save
+			slotsExtras = slotsExtrasDoSave(save);
 			lista = Array.isArray(save.itensBuild)
-				? save.itensBuild.filter(id => item(id)).slice(0, LIMITE)
+				? save.itensBuild.filter(id => item(id)).slice(0, limiteAtual())
 				: [];
 			bausPendentes = Number.isSafeInteger(save.bausBuildPendentes) && save.bausBuildPendentes >= 0
 				? save.bausBuildPendentes
@@ -187,6 +226,7 @@
 		},
 		serializa() {
 			return {
+				slotsExtrasBuild: slotsExtras,
 				itensBuild: lista.slice(),
 				bausBuildPendentes: bausPendentes,
 				bauBuildPendente: bausPendentes > 0,
@@ -197,6 +237,7 @@
 			lista = [];
 			bausPendentes = 0;
 			opcoesBauAtual = null;
+			// slotsExtras NÃO zera: espaço extra é compra permanente da loja
 		},
 
 		// ---- multiplicadores dos efeitos (hooks nos donos dos sistemas) ----

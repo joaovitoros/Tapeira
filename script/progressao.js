@@ -478,6 +478,21 @@ function PontosPerkGanhos(){
 }
 
 function PontosPerkDisponiveis(){
-	const gastos = perkDano + perkEletrica + perkGold + perkFuga;
+	const gastos = perkDano + perkEletrica + perkGold + perkFuga + perkFrenesi;
 	return Math.max(0, PontosPerkGanhos() - gastos);
 }
+
+// Habilidades de combate: cada botão ativa a sua habilidade por
+// addEventListener (sem onclick inline no HTML).
+document.addEventListener("DOMContentLoaded", () => {
+	const habilidades = {
+		"skill-electric": "electric",
+		"skill-gold": "gold",
+		"skill-escape": "escape",
+		"skill-frenzy": "frenzy"
+	};
+	for (const [id, tipo] of Object.entries(habilidades)) {
+		const botao = document.getElementById(id);
+		if (botao) botao.addEventListener("click", () => AtivaHabilidadeCombate(tipo));
+	}
+});

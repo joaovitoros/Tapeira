@@ -88,15 +88,14 @@ function MarcaAutoItemLoja(indice, marcado) {
 
 // Monta os checkboxes "auto" ao lado do nome de cada item elegível da loja
 // de gold (uma única vez — o HTML da loja é estático). O índice do checkbox
-// é o índice na ITENS_AUTO_COMPRA (o nome da função acha a linha sozinho),
+// é o índice na ITENS_AUTO_COMPRA (o id do item acha a linha sozinho),
 // então item novo na automação ganha checkbox sem mexer no HTML.
 var checkboxesAutoLojaMontados = false;
 function MontaCheckboxesAutoLoja() {
 	if (checkboxesAutoLojaMontados) return;
 	checkboxesAutoLojaMontados = true;
 	for (let idx = 0; idx < ITENS_AUTO_COMPRA.length; idx++) {
-		const nomeFn = ITENS_AUTO_COMPRA[idx].fn.name;
-		const botao = document.querySelector('#TabLoja [onclick*="' + nomeFn + '()"]');
+		const botao = document.querySelector('#TabLoja [data-compra="' + ITENS_AUTO_COMPRA[idx].id + '"]');
 		if (!botao) continue;
 		const linha = botao.closest("tr");
 		const celula = linha ? linha.querySelector("td") : null;
@@ -201,17 +200,17 @@ function SyncTogglesAutomacao() {
 // próxima patente, e só ficam de fora na patente máxima. Quem efetiva a
 // compra continua sendo a Compra*.
 const ITENS_AUTO_COMPRA = [
-	{ fn: CompraDano, preco: "precoDano", teto: "dano" },
-	{ fn: CompraBau, preco: "precoBau", teto: "bau" },
-	{ fn: CompraBEspaco, preco: "precoBEspaco", teto: "espaco" },
-	{ fn: CompraGold, preco: "precoGold" },
-	{ fn: CompraAvanco, preco: "precoAvan", teto: "avan" },
-	{ fn: CompraDCrit, preco: "precoDCrit", teto: "dcrit" },
-	{ fn: CompraSubVida, preco: "precoVidaInimigo", teto: "subvida" },
-	{ fn: CompraCCrit, preco: "precoCCrit", teto: "ccrit" },
-	{ fn: CompraQTDAvanco, preco: "precoQTDAvanco", teto: "qtdavan" },
-	{ fn: CompraEsmBau, preco: "precoEsmBau", teto: "esmbau" },
-	{ fn: CompraVelComp, preco: "precoVelComp", teto: "velcomp" }
+	{ id: "dano", fn: CompraDano, preco: "precoDano", teto: "dano" },
+	{ id: "bau", fn: CompraBau, preco: "precoBau", teto: "bau" },
+	{ id: "bespaco", fn: CompraBEspaco, preco: "precoBEspaco", teto: "espaco" },
+	{ id: "gold", fn: CompraGold, preco: "precoGold" },
+	{ id: "avanco", fn: CompraAvanco, preco: "precoAvan", teto: "avan" },
+	{ id: "dcrit", fn: CompraDCrit, preco: "precoDCrit", teto: "dcrit" },
+	{ id: "subvida", fn: CompraSubVida, preco: "precoVidaInimigo", teto: "subvida" },
+	{ id: "ccrit", fn: CompraCCrit, preco: "precoCCrit", teto: "ccrit" },
+	{ id: "qtdavanco", fn: CompraQTDAvanco, preco: "precoQTDAvanco", teto: "qtdavan" },
+	{ id: "esmbau", fn: CompraEsmBau, preco: "precoEsmBau", teto: "esmbau" },
+	{ id: "velcomp", fn: CompraVelComp, preco: "precoVelComp", teto: "velcomp" }
 ];
 
 // Uma compra por tick, sempre no item mais barato que couber no gold (o
@@ -315,3 +314,12 @@ function VerificaDesbloqueioAutomacao(anterior, novo) {
 	}
 	SyncTogglesAutomacao();
 }
+
+// Auto-coleta e auto-compra: alternam pelos próprios checkboxes (sem
+// onchange inline no HTML).
+document.addEventListener("DOMContentLoaded", () => {
+	const autoColetaToggle = document.getElementById("autoColetaToggle");
+	if (autoColetaToggle) autoColetaToggle.addEventListener("change", () => AlternaAutoColeta(autoColetaToggle.checked));
+	const autoCompraToggle = document.getElementById("autoCompraToggle");
+	if (autoCompraToggle) autoCompraToggle.addEventListener("change", () => AlternaAutoCompra(autoCompraToggle.checked));
+});

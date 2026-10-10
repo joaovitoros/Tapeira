@@ -156,6 +156,40 @@ function FechaLoja(){
 	UI.syncScreenButtons();
 }
 
+// =========================
+// COMPRAS E NAVEGAÇÃO DA LOJA (SEM onclick INLINE)
+// =========================
+// O HTML marca cada botão de compra com data-compra (loja de gold e de
+// esmeralda), data-compra-cm (loja do Conhecimento) ou data-loja (navegação
+// e fechar). O clique é ligado por addEventListener no DOMContentLoaded.
+function CompraLojaFuncao(id) {
+	const acoes = {
+		dano: CompraDano, bau: CompraBau, esmbau: CompraEsmBau, bespaco: CompraBEspaco,
+		gold: CompraGold, avanco: CompraAvanco, dcrit: CompraDCrit, subvida: CompraSubVida,
+		ccrit: CompraCCrit, qtdavanco: CompraQTDAvanco, velcomp: CompraVelComp,
+		comp1: CompraComp1, avgold: CompraAvGold, comp2: CompraComp2, comp3: CompraComp3,
+		comp4: CompraComp4, comp5: CompraComp5, comp6: CompraComp6, xp: CompraXP,
+		esmcm: CompraEsmCM
+	};
+	return acoes[id] || null;
+}
+
+function CompraLojaItem(id) {
+	const acao = CompraLojaFuncao(id);
+	if (acao) acao();
+}
+
+function ExecutaLojaNavegacao(acao) {
+	const acoes = {
+		fechar: FechaLoja,
+		esmeralda: LojaEsmeralda,
+		conhecimento: LojaConhecimento,
+		"fechar-cm": FechaLojaCM
+	};
+	const fn = acoes[acao];
+	if (fn) fn();
+}
+
 // Mantém o × de fechar fixo no topo do painel mesmo quando a loja rola
 document.addEventListener("DOMContentLoaded", () => {
 	["Loja", "LojaEsm", "LojaCM"].forEach(id => {
@@ -165,6 +199,24 @@ document.addEventListener("DOMContentLoaded", () => {
 			const btn = painel.querySelector(".btnLojaFechar");
 			if (btn) btn.style.top = (painel.scrollTop + 5) + "px";
 		}, { passive: true });
+	});
+});
+
+// Liga os botões da loja por addEventListener. Roda antes do DOMContentLoaded
+// de loja-preview.js (este arquivo carrega primeiro), então a compra dispara
+// antes de o preview atualizar no mesmo clique.
+document.addEventListener("DOMContentLoaded", () => {
+	document.querySelectorAll("[data-compra]").forEach(botao => {
+		botao.addEventListener("click", () => CompraLojaItem(botao.dataset.compra));
+	});
+	document.querySelectorAll("[data-compra-cm]").forEach(botao => {
+		botao.addEventListener("click", () => CompraCM(botao.dataset.compraCm));
+	});
+	document.querySelectorAll("[data-loja]").forEach(botao => {
+		botao.addEventListener("click", () => ExecutaLojaNavegacao(botao.dataset.loja));
+	});
+	document.querySelectorAll("[data-esp]").forEach(botao => {
+		botao.addEventListener("click", () => EscolheEspecializacao(Number(botao.dataset.esp)));
 	});
 });
 

@@ -32,7 +32,9 @@ navegador, Windows (Electron) e Android (Capacitor).
 | --- | ---: | --- |
 | `sistema.js` | 473 | Menu, configurações, desktop, baú dourado (tick), inicialização e `Resetar` |
 | `script.js` | 579 | Estado global, Conhecimento Mug, loja (variáveis), fundo da caverna, avanço de inimigos, portões e `VoltaAndar` |
-| `persistencia.js` | 798 | Exportar/importar JSON, `Carregar`, auto save local |
+| `persistencia.js` | 320 | Exportar/importar o save em arquivo JSON (`Salvar`, `CarregarArquivo`) |
+| `persistencia-carregar.js` | 336 | `Carregar`: montagem do estado a partir de um save |
+| `persistencia-autosave.js` | 293 | Auto save local (`CriarObjetoSave`, `AutoSaveLocal`, `CarregarAutoSave`, `LimparAutoSave`) |
 | `validacao-save.js` | 392 | `ValidarSave` e migração/compatibilidade de saves |
 | `progresso-offline.js` | 259 | Simulação e entrega do progresso offline |
 | `audio.js` | 217 | Sons, ambiente sintetizado e volumes |
@@ -86,37 +88,68 @@ navegador, Windows (Electron) e Android (Capacitor).
 
 ## O que foi feito nesta reorganização
 
-1. Suíte de regressão com `npm test` (20 testes) cobrindo menu, saves,
+1. Suíte de regressão com `npm test` (34 testes) cobrindo menu, saves,
    importação de JSON, combate, missões, eventos, automação, companheiros,
    conquistas, progresso offline, builds e hit kill.
 2. Extração, nesta ordem: áudio; validação e persistência de saves;
    progresso offline; missões; progressão (XP/skills/perks); conquistas;
    companheiros; recompensas; interface (`ui.js`); loja (`loja.js`).
 3. `AGENTS.md` passou a descrever os limites de cada módulo.
+4. `persistencia.js` dividido em três: exportação/importação de arquivo
+   (`Salvar`, `CarregarArquivo`), montagem do estado (`persistencia-carregar.js`)
+   e auto save local (`persistencia-autosave.js`).
+5. Cobertura dos seis eventos restantes em `tests/regression.test.cjs`:
+   chuva de meteoros, névoa, veia, inseto, fissura e emboscada (o comércio já
+   tinha teste).
+6. Painel de configuração migrado para `addEventListener` (`RegistraEventosConfig`
+   em `sistema.js`, ligado no `DOMContentLoaded`): salvar/carregar, apagar save,
+   zerar, importar JSON, volumes e tela — sem handlers inline no HTML.
+7. Navegação lateral migrada para a delegação de clique já existente em
+   `ui.js` (Status, Loja, Config, Formigas e Skills).
+8. Painel de status migrado: baú dourado (coleta e info) em `ui-baus.js` e
+   auto-coleta em `automacao.js`, ligados no `DOMContentLoaded`.
+9. Habilidades de combate migradas: os 4 botões (`skill-electric`, `skill-gold`,
+   `skill-escape`, `skill-frenzy`) registrados em `progressao.js`.
+10. Inimigos migrados: os 4 cliques (`inimigo1..4` → `Bater(id, true)`)
+    registrados em `batalha.js`.
+11. Loja migrada para `data-*` + `addEventListener`: compras (`data-compra`,
+    `data-compra-cm`), navegação/fechar (`data-loja`) e cartões de
+    especialização (`data-esp`) em `loja.js`; o preview e o hold-to-buy
+    (`loja-preview.js`) e a auto-compra seletiva (`automacao.js`) passaram a
+    ler `data-compra` em vez do `onclick`; a auto-compra também foi ligada no
+    `change` do checkbox.
+12. Bug de save reproduzido e corrigido: `PontosPerkDisponiveis`
+    (`progressao.js`) não somava `perkFrenesi`, então o Toque Frenético podia
+    ser comprado sem gastar o pool e o `ValidarSave` rejeitava saves legítimos.
+    Agora o frenesi conta nos pontos e o validador tolera o excedente histórico
+    (até `perkFrenesi`) — saves da época do bug continuam carregando.
+13. Handlers inline restantes migrados: painel de reset (`#manterAndar` e
+    `#btnAndar` em `script.js`), botão de pausa (`keymap.js`) e menu
+    (`index.html`, em `sistema.js`). Os dois `onload` do `<body>` viraram um
+    listener de `load` por página em `sistema.js`. Não sobrou handler inline
+    vivo no HTML (resta só um `<input>` comentado e inerte).
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
 
 ## Próximos passos sugeridos (em ordem de valor)
 
-1. **Reduzir `persistencia.js` (798):** separar `Carregar` (montagem do
-   estado) do auto save/exportação; é a área mais sensível a regressões,
-   então exige cuidado e testes antes.
-2. **Cobrir `eventos.js` (615):** faltam testes para chuva de meteoros,
-   névoa, veia, inseto, fissura e emboscada (só o comércio está coberto).
-3. **Reduzir handlers `onclick` no HTML:** migrar para `addEventListener`
-   registrado no JavaScript, um painel por vez.
-4. **Investigar o bug de save relatado:** importar JSON e "Salvar e voltar ao
-   menu" foram testados e preservam o andar; o caso real ainda não foi
-   reproduzido — se voltar a acontecer, é preciso o JSON do save problemático.
-5. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
+1. **Handlers inline gerados por JS:** o HTML está limpo, mas `eventos.js`,
+   `script.js` (modais de reset), `ui-telas.js`, `ui.js` e `ui-combate.js`
+   ainda montam markup com `onclick="…"`/`.onclick =`. Migrar para
+   `addEventListener`/delegação quando cada tela for tocada.
+2. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
    duas páginas; uma lista única (gerador ou bundler com esbuild) evita
    esquecimento.
+3. **Unificar a montagem do save:** `Salvar` (exportação) e `CriarObjetoSave`
+   (auto save) repetem quase todo o mesmo objeto — a exportação apenas omite
+   os campos offline. `Salvar` ainda define um `getRawGold` local sem uso.
+   Unificar evita que um campo novo entre só num dos caminhos.
 
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (20 testes)
+npm test                 # suíte principal (37 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android
@@ -131,5 +164,6 @@ Rode `npm run prepare:web` antes dos testes focados que abrem `www/`.
   num único commit — gera diff gigante sem benefício.
 - `script.js` ainda concentra o estado global e as variáveis da loja; mover
   variáveis exige conferir save, reset e validação em conjunto.
-- O save incompatível agora preserva o auto save local e mostra o motivo,
-  mas o caso original do usuário nunca foi reproduzido com o JSON real.
+- O save incompatível preserva o auto save local e mostra o motivo. O caso
+  relatado foi reproduzido: era o `perkFrenesi` fora do cálculo de pontos
+  (corrigido — ver item 12 de "O que foi feito").

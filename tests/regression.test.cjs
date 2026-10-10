@@ -141,6 +141,181 @@ test("módulo de áudio mantém controles e volumes persistidos", async () => {
     }
 });
 
+test("painel de configuração registra controles por addEventListener (sem handlers inline)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.RegistraEventosConfig === "function");
+        const result = await page.evaluate(() => {
+            const ids = [
+                "btnSalvarJogo", "btnSalvarVoltarMenu", "btnApagarSave", "btnZerarJogo",
+                "txtfiletoread", "volumeControle", "volumeAmbienteControle",
+                "resolucaoJogo", "telaCheiaJogo"
+            ];
+            const inline = [];
+            for (const id of ids) {
+                const el = document.getElementById(id);
+                if (!el) { inline.push(id + ":ausente"); continue; }
+                for (const attr of ["onclick", "onchange", "oninput"]) {
+                    if (el.hasAttribute(attr)) inline.push(id + ":" + attr);
+                }
+            }
+
+            // o input do volume passa a ser ligado por addEventListener
+            const slider = document.getElementById("volumeControle");
+            slider.value = "42";
+            slider.dispatchEvent(new Event("input", { bubbles: true }));
+
+            // o clique do "Apagar Auto Save" limpa o auto save via listener
+            localStorage.setItem("autoSaveCaverna", "{}");
+            document.getElementById("btnApagarSave").click();
+
+            return {
+                inline,
+                volumeSalvo: localStorage.getItem("volumeJogo"),
+                volumeTexto: document.getElementById("volumeValor").value,
+                autoSave: localStorage.getItem("autoSaveCaverna")
+            };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.equal(result.volumeSalvo, "42");
+        assert.equal(result.volumeTexto, "42%");
+        assert.equal(result.autoSave, null, "btnApagarSave limpa o auto save pelo listener");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("navegação lateral usa delegação registrada (sem onclick inline)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            document.getElementById("btn-Config") && typeof window.SobeStatus === "function");
+        const result = await page.evaluate(() => {
+            const ids = ["btnStatus", "btn-Loja", "btn-Config", "btn-Formigas", "btnSkills"];
+            const inline = ids.filter(id => document.getElementById(id)?.hasAttribute("onclick"));
+
+            const config = document.getElementById("container-SalvaCarrega");
+            document.getElementById("btn-Config").click();
+            const configAberta = config.style.visibility;
+
+            const status = document.getElementById("DivStatus");
+            document.getElementById("btnStatus").click();
+            const statusAberto = status.style.visibility;
+
+            return { inline, configAberta, statusAberto };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.equal(result.configAberta, "visible", "btn-Config abre o painel de configuração");
+        assert.equal(result.statusAberto, "visible", "btnStatus abre o painel de status");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("painel de status (baú dourado e auto-coleta) usa listeners registrados", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            document.getElementById("autoColetaToggle") && typeof window.ColetaBauDourado === "function");
+        const result = await page.evaluate(() => {
+            const ids = ["golden-chest-claim", "golden-chest-info", "autoColetaToggle"];
+            const inline = [];
+            for (const id of ids) {
+                const el = document.getElementById(id);
+                if (!el) { inline.push(id + ":ausente"); continue; }
+                for (const attr of ["onclick", "onchange", "oninput"]) {
+                    if (el.hasAttribute(attr)) inline.push(id + ":" + attr);
+                }
+            }
+
+            // info do baú: o clique alterna a descrição
+            const desc = document.getElementById("golden-chest-desc");
+            document.getElementById("golden-chest-info").click();
+            const infoAberta = !desc.hidden;
+            document.getElementById("golden-chest-info").click();
+            const infoFechada = desc.hidden;
+
+            // auto-coleta: o change liga/desliga o estado
+            const toggle = document.getElementById("autoColetaToggle");
+            toggle.checked = true;
+            toggle.dispatchEvent(new Event("change", { bubbles: true }));
+            const ligada = autoColeta;
+            toggle.checked = false;
+            toggle.dispatchEvent(new Event("change", { bubbles: true }));
+            const desligada = autoColeta;
+
+            // coleta do baú: com o baú pendente, o clique entrega a recompensa
+            window.ChamaSom = () => {};
+            UI.showChestOpening = () => {};
+            UI.showCurrencyReward = () => {};
+            UI.showInfo = () => {};
+            const randomOriginal = Math.random;
+            Math.random = () => 0; // cai no ramo do gold
+            bauDouradoPendente = 1;
+            const claim = document.getElementById("golden-chest-claim");
+            claim.disabled = false;
+            claim.click();
+            const pendenteAposColeta = bauDouradoPendente;
+            Math.random = randomOriginal;
+
+            return { inline, infoAberta, infoFechada, ligada, desligada, pendenteAposColeta };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.equal(result.infoAberta, true, "golden-chest-info abre a descrição");
+        assert.equal(result.infoFechada, true, "segundo clique fecha a descrição");
+        assert.equal(result.ligada, 1);
+        assert.equal(result.desligada, 0);
+        assert.equal(result.pendenteAposColeta, 0, "o clique no baú pronto consome a recompensa");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("pontos de perk contam o Toque Frenético e saves da época do bug continuam válidos", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.PontosPerkDisponiveis === "function");
+        const result = await page.evaluate(() => {
+            // o frenesi agora consome o pool (antes ficava de fora da soma)
+            andarMaxRun = 40; // ganhos = floor((40-35)/5)+1 = 2
+            andar = 40;
+            perkDano = 1; perkEletrica = 0; perkGold = 0; perkFuga = 0; perkFrenesi = 1;
+            const disponiveis = PontosPerkDisponiveis();
+
+            const saveAntigo = {
+                andar: 98, andarVolta: 105, gateDanoPago: 100, andarMaxRun: 98,
+                gold: { m: 0, e: 0 }, totalGold: { m: 0, e: 0 },
+                perkDano: 4, perkEletrica: 3, perkGold: 4, perkFuga: 2, perkFrenesi: 4
+            };
+            let aceitouAntigo = true;
+            try { ValidarSave(saveAntigo); } catch { aceitouAntigo = false; }
+
+            let rejeitouTrapaca = false;
+            try {
+                ValidarSave(Object.assign({}, saveAntigo, {
+                    andar: 35, andarMaxRun: 35, gateDanoPago: 35, andarVolta: 40,
+                    perkDano: 4, perkEletrica: 3, perkGold: 4, perkFuga: 5, perkFrenesi: 4
+                }));
+            } catch { rejeitouTrapaca = true; }
+
+            return { disponiveis, aceitouAntigo, rejeitouTrapaca };
+        });
+
+        assert.equal(result.disponiveis, 0, "o frenesi consome ponto de perk");
+        assert.equal(result.aceitouAntigo, true, "save legítimo da época do bug é aceito");
+        assert.equal(result.rejeitouTrapaca, true, "trapaça grosseira continua barrada");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("save antigo é migrado sem perder compatibilidade", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
@@ -653,6 +828,323 @@ test("eventos respeitam elegibilidade e oferta do comerciante cobra uma vez", as
     }
 });
 
+test("eventos restantes aplicam o bônus do próprio tipo e encerram corretamente", async t => {
+    await t.test("chuva de meteoros bate nos inimigos vivos e solta fragmentos coletáveis", async () => {
+        const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+        try {
+            await page.waitForFunction(() => typeof window.Meteora === "function");
+            const result = await page.evaluate(() => {
+                const randomOriginal = Math.random;
+                Math.random = () => 0; // garante o fragmento de esmeralda junto do gold
+
+                const batidas = [];
+                const goldCreditado = [];
+                let bausRepostos = 0;
+                window.Bater = (id, gratis, custa) => batidas.push({ id, gratis, custa });
+                window.ChamaSom = () => {};
+                window.AutoSaveLocal = () => true;
+                window.AddGold = valor => { goldCreditado.push(valor); return valor; };
+                window.AddTotalGold = () => {};
+                UI.showCurrencyReward = () => {};
+                UI.spawnChest = () => { bausRepostos++; };
+
+                andar = 10;
+                mulGold = 0.2;
+                eventoAtivo = "meteoro";
+                for (let id = 1; id <= 4; id++) {
+                    document.getElementById("inimigo" + id).style.visibility = "visible";
+                    window["vidaInimigo" + id] = 10;
+                }
+
+                Meteora();
+                const container = document.getElementById("eventoFragmentos");
+                const qtdGold = container.querySelectorAll(".evento-fragmento--gold").length;
+                const qtdEsmeralda = container.querySelectorAll(".evento-fragmento--esmeralda").length;
+
+                esmeraldas = 0;
+                ColetaFragmento("gold", container.querySelector(".evento-fragmento--gold"));
+                const bonusFragmento = goldCreditado[goldCreditado.length - 1];
+                ColetaFragmento("esmeralda", container.querySelector(".evento-fragmento--esmeralda"));
+
+                quantidadeBausDisponiveis = 1;
+                EncerraEvento();
+                Math.random = randomOriginal;
+
+                return {
+                    alvos: batidas.map(batida => batida.id),
+                    todasGratis: batidas.every(batida => batida.gratis === true && batida.custa === false),
+                    qtdGold,
+                    qtdEsmeralda,
+                    bonusFragmento,
+                    esmeraldas,
+                    bausRepostos,
+                    eventoAtivo
+                };
+            });
+
+            assert.deepEqual(result.alvos, [1, 2, 3, 4]);
+            assert.equal(result.todasGratis, true);
+            assert.equal(result.qtdGold, 1);
+            assert.equal(result.qtdEsmeralda, 1);
+            assert.equal(result.bonusFragmento, 10 * 0.2 * 10 + 5);
+            assert.equal(result.esmeraldas, 1);
+            assert.equal(result.bausRepostos, 1, "o baú sai da arena na chuva e volta no fim");
+            assert.equal(result.eventoAtivo, null);
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    });
+
+    await t.test("névoa do conhecimento concede CM só durante o evento e dobra pelo item", async () => {
+        const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+        try {
+            await page.waitForFunction(() => typeof window.EventoAbateCM === "function");
+            const result = await page.evaluate(() => {
+                window.FloatCM = () => {};
+                conhecimentoMug = 0;
+                eventoCM = 0;
+                lvlEsmCM = 0;
+                marcosNivel50 = 0;
+                resetsCurtosCM = 0;
+
+                EventoAbateCM(3); // fora do evento: nada acontece
+                const fora = { conhecimentoMug, eventoCM };
+
+                eventoAtivo = "nevoa";
+                EventoAbateCM(3);
+                const normal = { conhecimentoMug, eventoCM };
+
+                lvlEsmCM = 1; // item "CM em dobro" (×2)
+                EventoAbateCM(3);
+                const dobrado = { conhecimentoMug, eventoCM };
+
+                eventoAtivo = null;
+                return { fora, normal, dobrado };
+            });
+
+            assert.deepEqual(result.fora, { conhecimentoMug: 0, eventoCM: 0 });
+            assert.deepEqual(result.normal, { conhecimentoMug: 3, eventoCM: 3 });
+            assert.deepEqual(result.dobrado, { conhecimentoMug: 9, eventoCM: 9 });
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    });
+
+    await t.test("veia de esmeralda solta esmeraldas por abate só durante o evento", async () => {
+        const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+        try {
+            await page.waitForFunction(() => typeof window.EventoAbateVeia === "function");
+            const result = await page.evaluate(() => {
+                const randomOriginal = Math.random;
+                UI.showCurrencyReward = () => {};
+                esmeraldas = 0;
+                eventoVeiaQtd = 0;
+
+                eventoAtivo = "veia";
+                Math.random = () => 0.04; // dentro da chance (5%): todo abate solta
+                EventoAbateVeia(4);
+                const comChance = { esmeraldas, eventoVeiaQtd };
+
+                Math.random = () => 0.9; // fora da chance: nenhum
+                EventoAbateVeia(4);
+                const semChance = { esmeraldas, eventoVeiaQtd };
+
+                eventoAtivo = null;
+                Math.random = () => 0.04;
+                EventoAbateVeia(4);
+                const foraDoEvento = { esmeraldas, eventoVeiaQtd };
+
+                Math.random = randomOriginal;
+                return { comChance, semChance, foraDoEvento };
+            });
+
+            assert.deepEqual(result.comChance, { esmeraldas: 4, eventoVeiaQtd: 4 });
+            assert.deepEqual(result.semChance, { esmeraldas: 4, eventoVeiaQtd: 4 });
+            assert.deepEqual(result.foraDoEvento, { esmeraldas: 4, eventoVeiaQtd: 4 });
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    });
+
+    await t.test("inseto premia no clique e escapa sem prêmio quando o tempo acaba", async () => {
+        const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+        try {
+            await page.waitForFunction(() => typeof window.CriaInseto === "function");
+            const result = await page.evaluate(() => {
+                const goldCreditado = [];
+                const avisos = [];
+                window.ChamaSom = () => {};
+                window.AutoSaveLocal = () => true;
+                window.AddGold = valor => { goldCreditado.push(valor); return valor; };
+                window.AddTotalGold = () => {};
+                UI.showCurrencyReward = () => {};
+                UI.showMilestone = () => {};
+                UI.showInfo = mensagem => avisos.push(mensagem);
+                UI.spawnChest = () => {};
+                andar = 10;
+                mulGold = 0.2;
+                jogoPausado = false;
+                eventoPausaDesde = 0;
+
+                eventoAtivo = "inseto";
+                CriaInseto();
+                const criado = !!document.getElementById("eventoInseto");
+                PremioInseto(document.getElementById("eventoInseto"));
+                const premiado = {
+                    bonus: goldCreditado[goldCreditado.length - 1],
+                    eventoAtivo,
+                    removido: !document.getElementById("eventoInseto")
+                };
+
+                // segundo inseto: sem clique, o tempo acaba e ele escapa
+                goldCreditado.length = 0;
+                eventoAtivo = "inseto";
+                CriaInseto();
+                eventoFimMs = Date.now() - 1;
+                EventoTick();
+
+                return {
+                    criado,
+                    premiado,
+                    escapou: { eventoAtivo, avisos, premios: goldCreditado.length }
+                };
+            });
+
+            assert.equal(result.criado, true);
+            assert.equal(result.premiado.bonus, 10 * 0.2 * 10 + 5);
+            assert.equal(result.premiado.eventoAtivo, null);
+            assert.equal(result.premiado.removido, true);
+            assert.equal(result.escapou.eventoAtivo, null);
+            assert.ok(result.escapou.avisos.includes("O inseto escapou sem prêmio."));
+            assert.equal(result.escapou.premios, 0);
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    });
+
+    await t.test("fissura temporal congela o cronômetro de fuga", async () => {
+        const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+        try {
+            await page.waitForFunction(() => typeof window.TempoCompanheiros === "function");
+            const result = await page.evaluate(() => {
+                window.AtualizaRelogioHabilidade = () => false;
+                UI.showInfo = () => {};
+                jogoPausado = false;
+                fugaEmAndamento = false;
+
+                tempoAvancoInimigos = 100;
+                eventoAtivo = "fissura";
+                AvancoInimigos();
+                const avancoComFissura = tempoAvancoInimigos;
+
+                eventoAtivo = null;
+                tempoEsperaCompanheiro = 5;
+                TempoCompanheiros();
+                const companheiroSemFissura = tempoAvancoInimigos;
+
+                tempoAvancoInimigos = 100;
+                eventoAtivo = "fissura";
+                TempoCompanheiros();
+                const companheiroComFissura = tempoAvancoInimigos;
+
+                eventoAtivo = null;
+                return { avancoComFissura, companheiroSemFissura, companheiroComFissura };
+            });
+
+            assert.equal(result.avancoComFissura, 100, "AvancoInimigos não consome o cronômetro na fissura");
+            assert.equal(result.companheiroSemFissura, 105, "fora da fissura o companheiro repõe o tempo");
+            assert.equal(result.companheiroComFissura, 100, "TempoCompanheiros congelado na fissura");
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    });
+
+    await t.test("emboscada reforça a vida, paga ouro em dobro ao vencer e desfaz se perder", async () => {
+        const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+        try {
+            await page.waitForFunction(() => typeof window.PreparaEmboscada === "function");
+            const result = await page.evaluate(() => {
+                const randomOriginal = Math.random;
+                const goldCreditado = [];
+                let baus = 0;
+                window.ChamaSom = () => {};
+                window.AutoSaveLocal = () => true;
+                window.AddGold = valor => { goldCreditado.push(valor); return valor; };
+                window.AddTotalGold = () => {};
+                UI.showCurrencyReward = () => {};
+                UI.showMilestone = () => {};
+                UI.spawnChest = () => { baus++; };
+
+                andar = 10;
+                window.ondaAtual = 7;
+                for (let id = 1; id <= 4; id++) window["vidaInimigo" + id] = id <= 2 ? 100 : 0;
+
+                eventoAtivo = "emboscada";
+                const preparou = PreparaEmboscada();
+                const vidaReforcada = [window.vidaInimigo1, window.vidaInimigo2];
+                const alvos = eventoEmboscadaAlvos.slice();
+
+                window.vidaInimigo1 = 80; // dano parcial no alvo 1
+                EventoAbateEmboscada(1, 10);
+                const restantes = eventoEmboscadaAlvos.slice();
+
+                Math.random = () => 0.1; // < 0.4 → baú
+                EventoAbateEmboscada(2, 20);
+                Math.random = randomOriginal;
+                const vitoria = {
+                    bonus: goldCreditado[goldCreditado.length - 1],
+                    baus,
+                    eventoAtivo,
+                    vidaAlvo1: window.vidaInimigo1
+                };
+
+                // perde ao trocar de andar no meio: desfaz o reforço e não paga
+                goldCreditado.length = 0;
+                baus = 0;
+                window.ondaAtual = 8;
+                for (let id = 1; id <= 4; id++) window["vidaInimigo" + id] = id === 1 ? 100 : 0;
+                eventoAtivo = "emboscada";
+                PreparaEmboscada();
+                const reforcadoAntesDaFuga = window.vidaInimigo1;
+                andar = 11;
+                EventoAbateEmboscada(1, 50);
+                const derrota = {
+                    reforcadoAntesDaFuga,
+                    vidaAlvo1: window.vidaInimigo1,
+                    eventoAtivo,
+                    premios: goldCreditado.length,
+                    baus
+                };
+
+                andar = 10;
+                return { preparou, vidaReforcada, alvos, restantes, vitoria, derrota };
+            });
+
+            assert.equal(result.preparou, true);
+            assert.deepEqual(result.vidaReforcada, [150, 150], "+50% de vida na onda da emboscada");
+            assert.deepEqual(result.alvos, [1, 2]);
+            assert.deepEqual(result.restantes, [2]);
+            assert.equal(result.vitoria.bonus, 30, "ouro em dobro: soma exata do que a onda pagou");
+            assert.equal(result.vitoria.baus, 1);
+            assert.equal(result.vitoria.eventoAtivo, null);
+            assert.equal(result.vitoria.vidaAlvo1, 80, "desfazer não cura o dano já causado");
+            assert.equal(result.derrota.reforcadoAntesDaFuga, 150);
+            assert.equal(result.derrota.vidaAlvo1, 100, "perder restaura a vida original");
+            assert.equal(result.derrota.eventoAtivo, null);
+            assert.equal(result.derrota.premios, 0, "fugir da emboscada não paga nada");
+            assert.equal(result.derrota.baus, 0);
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    });
+});
+
 test("automação respeita desbloqueios, compra mais barato e gasta pontos elegíveis", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
@@ -1050,7 +1542,199 @@ test("baú de builds desbloqueia a cada 10 andares, acumula e consome por escolh
     }
 });
 
-test("efeitos dos itens, limite de seis e troca descartando a pilha inteira", async () => {
+test("loja usa data-* e listeners registrados (compra, navegação, especialização)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.CompraLojaItem === "function" && document.querySelector('[data-compra="dano"]'));
+        const result = await page.evaluate(() => {
+            const controles = [...document.querySelectorAll("[data-compra],[data-compra-cm],[data-loja],[data-esp]")];
+            const inline = controles.filter(el =>
+                el.hasAttribute("onclick") || el.hasAttribute("onchange") || el.hasAttribute("oninput")).length;
+
+            // identidade do despacho antes de stubbá-lo
+            const identidade = {
+                dano: CompraLojaFuncao("dano") === CompraDano,
+                gold: CompraLojaFuncao("gold") === CompraGold,
+                desconhecido: CompraLojaFuncao("naoexiste") === null
+            };
+            const btnDano = document.querySelector('[data-compra="dano"]');
+            const nomePreview = NomeFuncaoCompra(btnDano);
+
+            const chamadas = [];
+            window.CompraDano = () => chamadas.push("CompraDano");
+            window.CompraCM = tipo => chamadas.push("CompraCM:" + tipo);
+            window.FechaLoja = () => chamadas.push("FechaLoja");
+            window.LojaEsmeralda = () => chamadas.push("LojaEsmeralda");
+            window.EscolheEspecializacao = id => chamadas.push("Esp:" + id);
+
+            btnDano.click();
+            document.querySelector('[data-compra-cm="crit"]').click();
+            document.querySelector('[data-loja="fechar"]').click();
+            document.querySelector('[data-esp="3"]').click();
+            document.querySelector('[data-loja="esmeralda"]').click();
+            const chamadasClique = chamadas.slice();
+
+            // hold-to-buy: pointerdown no botão inicia o hold pelo data-compra
+            const antesHold = chamadas.length;
+            btnDano.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "mouse" }));
+            const holdIniciado = holdCompraBotao === btnDano;
+            const holdComprou = chamadas.length > antesHold;
+            HoldCompraPara();
+
+            // auto-compra seletiva: um checkbox por item, achado pelo data-compra
+            MontaCheckboxesAutoLoja();
+            const checkboxes = ITENS_AUTO_COMPRA.map((_, i) => !!document.getElementById("autoItemLoja-" + i));
+
+            return { inline, identidade, nomePreview, chamadasClique, holdIniciado, holdComprou, checkboxes };
+        });
+
+        assert.equal(result.inline, 0, "nenhum controle da loja com handler inline");
+        assert.deepEqual(result.identidade, { dano: true, gold: true, desconhecido: true });
+        assert.equal(result.nomePreview, "CompraDano", "preview deriva do data-compra");
+        assert.deepEqual(result.chamadasClique, ["CompraDano", "CompraCM:crit", "FechaLoja", "Esp:3", "LojaEsmeralda"]);
+        assert.equal(result.holdIniciado, true, "pointerdown inicia o hold pelo data-compra");
+        assert.equal(result.holdComprou, true, "o hold compra pelo data-compra");
+        assert.ok(result.checkboxes.every(Boolean), "um checkbox de auto-compra por item");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("reset e pausa usam listeners registrados (sem onclick/onload inline)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => document.getElementById("btnPause") && typeof window.PedeReset === "function");
+        const result = await page.evaluate(() => {
+            const ids = ["manterAndar", "btnAndar", "btnPause"];
+            const inline = ids.filter(id => document.getElementById(id)?.hasAttribute("onclick"));
+            const bodyOnload = document.body.hasAttribute("onload");
+
+            const chamadas = [];
+            window.AlternaManterAndar = () => chamadas.push("AlternaManterAndar");
+            window.PedeReset = () => chamadas.push("PedeReset");
+            window.AlternaPausa = () => chamadas.push("AlternaPausa");
+
+            const manter = document.getElementById("manterAndar");
+            manter.checked = true;
+            manter.dispatchEvent(new Event("change", { bubbles: true }));
+            document.getElementById("btnAndar").click();
+            document.getElementById("btnPause").click();
+
+            return { inline, bodyOnload, chamadas };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.equal(result.bodyOnload, false, "o <body> não tem mais onload inline");
+        assert.deepEqual(result.chamadas, ["AlternaManterAndar", "PedeReset", "AlternaPausa"]);
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("menu usa listeners registrados (sem onclick/onload inline)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("index.html");
+    try {
+        await page.waitForFunction(() => document.getElementById("btn-Jogar") && typeof window.PrepararMenu === "function");
+        const result = await page.evaluate(() => {
+            const inline = ["btn-Jogar", "btn-SairJogo"].filter(id => document.getElementById(id)?.hasAttribute("onclick"));
+            const bodyOnload = document.body.hasAttribute("onload");
+
+            const chamadas = [];
+            window.Menu = () => chamadas.push("Menu");
+            window.SairDoJogo = () => chamadas.push("SairDoJogo");
+
+            document.getElementById("btn-Jogar").click();
+            document.getElementById("btn-SairJogo").click();
+
+            return { inline, bodyOnload, chamadas };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.equal(result.bodyOnload, false, "o <body> não tem mais onload inline");
+        assert.deepEqual(result.chamadas, ["Menu", "SairDoJogo"]);
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("inimigos usam listeners registrados (sem onclick inline)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => document.getElementById("inimigo1"));
+        const result = await page.evaluate(() => {
+            const inline = [];
+            for (let id = 1; id <= 4; id++) {
+                if (document.getElementById("inimigo" + id)?.hasAttribute("onclick")) inline.push(id);
+            }
+
+            const chamadas = [];
+            window.Bater = (id, validaDano) => chamadas.push([id, validaDano]);
+            for (let id = 1; id <= 4; id++) document.getElementById("inimigo" + id).click();
+
+            return { inline, chamadas };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.deepEqual(result.chamadas, [[1, true], [2, true], [3, true], [4, true]]);
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("habilidades de combate usam listeners registrados (sem onclick inline)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => document.getElementById("skill-electric"));
+        const result = await page.evaluate(() => {
+            const ids = ["skill-electric", "skill-gold", "skill-escape", "skill-frenzy"];
+            const inline = ids.filter(id => document.getElementById(id)?.hasAttribute("onclick"));
+
+            const chamadas = [];
+            window.AtivaHabilidadeCombate = tipo => chamadas.push(tipo);
+            for (const id of ids) document.getElementById(id).click();
+
+            return { inline, chamadas };
+        });
+
+        assert.deepEqual(result.inline, []);
+        assert.deepEqual(result.chamadas, ["electric", "gold", "escape", "frenzy"]);
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("tela da build esconde a notificação de baú aberto (chest-opening)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.ColetaBauDourado === "function");
+        const result = await page.evaluate(() => {
+            const notificacao = document.createElement("div");
+            notificacao.className = "chest-opening";
+            document.body.appendChild(notificacao);
+
+            const semTela = getComputedStyle(notificacao).visibility;
+            document.body.classList.add("itens-build-tela-aberta");
+            const comTela = getComputedStyle(notificacao).visibility;
+            document.body.classList.remove("itens-build-tela-aberta");
+            notificacao.remove();
+
+            return { semTela, comTela };
+        });
+
+        assert.equal(result.semTela, "visible", "sem a tela da build a notificação aparece");
+        assert.equal(result.comTela, "hidden", "com a tela da build a notificação não fica na frente");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("efeitos dos itens, limite de dez e troca descartando a pilha inteira", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
         await page.waitForFunction(() => typeof Tapeira?.ItensBuild?.carrega === "function");
@@ -1084,9 +1768,9 @@ test("efeitos dos itens, limite de seis e troca descartando a pilha inteira", as
                 multiplicador: build.multDano()
             };
 
-            // Dados desconhecidos são ignorados e a lista nunca ultrapassa o limite (6).
+            // Dados desconhecidos são ignorados e a lista nunca ultrapassa o limite (10).
             build.carrega({
-                itensBuild: ["adaga", "desconhecido", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio"],
+                itensBuild: ["adaga", "desconhecido", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas"],
 				bausBuildPendentes: 1,
 				bauBuildPendente: true,
 				opcoesBauBuild: ["grimorio", "lanterna", "esmeralda"]
@@ -1132,19 +1816,19 @@ test("efeitos dos itens, limite de seis e troca descartando a pilha inteira", as
         }
         assert.equal(result.multiplicadorNeutro, 1);
         assert.deepEqual(result.copiasAdaga, { contagem: 2, copias: 2, multiplicador: 1.15 ** 2 });
-        assert.deepEqual(result.listaSanitizada, ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio"]);
+        assert.deepEqual(result.listaSanitizada, ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna"]);
         assert.deepEqual(result.escolhaSemDescarte, {
-            lista: ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio"],
+            lista: ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna"],
             pendente: true
         });
-        assert.equal(result.limite, 6);
-        assert.equal(result.opcoesDeTroca, 5, "um cartão por item único na etapa de descarte");
+        assert.equal(result.limite, 10);
+        assert.equal(result.opcoesDeTroca, 9, "um cartão por item único na etapa de descarte");
         assert.equal(result.descarteEscolhido, "adaga");
         assert.equal(result.copiasAdagaAposDescarte, 0, "descartar some a pilha inteira");
-        assert.equal(result.listaFinal.length, 5, "pilha de 2 saiu e o item novo entrou com 1 cópia");
-        assert.deepEqual(result.listaFinal, ["moedas", "escudo", "mapa", "grimorio", "grimorio"]);
+        assert.equal(result.listaFinal.length, 9, "pilha de 2 saiu e o item novo entrou com 1 cópia");
+        assert.deepEqual(result.listaFinal, ["moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna", "grimorio"]);
         assert.equal(result.pendente, false);
-        assert.match(result.resumo, /5\/6/);
+        assert.match(result.resumo, /9\/10/);
         assert.match(result.resumo, /Grimório Estelar ×2/, "cópia repetida empilha no resumo");
         assert.deepEqual(pageErrors, []);
     } finally {
