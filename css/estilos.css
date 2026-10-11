@@ -1076,6 +1076,19 @@ tr, td, th{
 	overflow: hidden;
 }
 
+/* Opção "Registros transparentes" (Ajustes): o histórico de logs abre
+   translúcido, deixando a caverna visível atrás dele. A marcadora
+   gameModal--logs entra só no modal de Logs (ui.js). */
+html.config-logs-transparente #gameModal.gameModal--logs {
+	background: rgba(0, 0, 0, 0.25);
+}
+
+html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
+	background: linear-gradient(145deg, rgba(26, 34, 48, 0.72), rgba(16, 22, 31, 0.72));
+	backdrop-filter: blur(3px);
+	-webkit-backdrop-filter: blur(3px);
+}
+
 #gameModalHeader{
 
 	display: flex;
@@ -9753,13 +9766,15 @@ img.ramos-tree-no__tile {
 	pointer-events: none;
 }
 
+/* A fonte fica no MEIO da profundidade (como na arte-base: o cristal está no
+   centro da praça, na frente da Casa e atrás da Fábrica/Fazenda). */
 .cidade-fonte {
 	position: absolute;
 	left: 50%;
-	top: 54%;
+	top: 55%;
 	width: 13%;
 	transform: translate(-50%, -50%);
-	z-index: 2;
+	z-index: 3;
 	pointer-events: none;
 }
 
@@ -9878,10 +9893,12 @@ img.ramos-tree-no__tile {
 	.cidade-fonte img { animation: none; }
 }
 
-/* Prédios: posicionados em volta da praça (2.5D), com banner-placa acima */
+/* Prédios: posicionados em volta da praça (2.5D), com banner-placa acima.
+   Profundidade: os de cima (z-index 2) ficam ATRÁS da fonte (3); os de baixo
+   (z-index 4) ficam NA FRENTE — como na arte-base. */
 .cidade-predio {
 	position: absolute;
-	z-index: 3;
+	z-index: 2;
 	display: block;
 	padding: 0;
 	border: 0;
@@ -9897,8 +9914,8 @@ img.ramos-tree-no__tile {
 .cidade-predio--casa     { left: 50%; top: 24%; --largura: 24%; --escala: 1; }
 .cidade-predio--mercado  { left: 18%; top: 38%; --largura: 23%; --escala: 0.96; }
 .cidade-predio--pesquisa { left: 82%; top: 38%; --largura: 23%; --escala: 0.96; }
-.cidade-predio--fabrica  { left: 19%; top: 80%; --largura: 25%; --escala: 1.05; }
-.cidade-predio--fazenda  { left: 81%; top: 80%; --largura: 25%; --escala: 1.05; }
+.cidade-predio--fabrica  { left: 19%; top: 80%; --largura: 25%; --escala: 1.05; z-index: 4; }
+.cidade-predio--fazenda  { left: 81%; top: 80%; --largura: 25%; --escala: 1.05; z-index: 4; }
 
 .cidade-predio__img {
 	display: block;
