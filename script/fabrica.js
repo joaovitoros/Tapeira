@@ -19,8 +19,8 @@ function CustoFabricaNivel(nivel) {
 }
 
 // Linha de montagem: auto-compras por segundo (1 base + 1 por nível)
-function LinhasMontagem() {
-	return 1 + FabricaNivelValido();
+function LinhasMontagem(nivel = fabricaNivel) {
+	return 1 + FabricaNivelValido(nivel);
 }
 
 function CompraFabricaNivel() {

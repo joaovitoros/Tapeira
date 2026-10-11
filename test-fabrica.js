@@ -31,6 +31,7 @@ const path = require('path');
         res.custo0 = CustoFabricaNivel(0);
         fabricaNivel = 0; res.linhas0 = LinhasMontagem();
         fabricaNivel = 3; res.linhas3 = LinhasMontagem();
+        res.linhasProx = LinhasMontagem(4); // 5
 
         // ---- compra ----
         fabricaNivel = 0;
@@ -96,6 +97,7 @@ const path = require('path');
     check("custo do nível 0 = 20000 CM", r.custo0 === 20000, r.custo0);
     check("linha nível 0 = 1 auto-compra/s", r.linhas0 === 1, r.linhas0);
     check("linha nível 3 = 4 auto-compras/s", r.linhas3 === 4, r.linhas3);
+    check("linha nível 4 = 5 auto-compras/s", r.linhasProx === 5, r.linhasProx);
     check("compra sem CM falha", r.semCM === false);
     check("compra com CM funciona", r.ok === true && r.nivel === 1, r.nivel);
     check("linha no máximo falha", r.noMax === false);
