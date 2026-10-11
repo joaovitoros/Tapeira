@@ -35,7 +35,12 @@ function ChanceBauExtraFormigas() {
 }
 
 function LimiteTempoOffline(quantidadePretas = QuantidadeFormigas("pretas")) {
-	return maxTempoProgressoOffline + Math.floor(quantidadePretas / 5) * 2 * 60 * 1000;
+	// +2 min por conjunto de formigas pretas + o bônus de conforto da Casa
+	// (guard: recompensas.js também carrega no menu, onde a Casa não existe)
+	const bonusCasa = (typeof CasaBonusTempoOfflineMs === "function")
+		? CasaBonusTempoOfflineMs(casaNivel)
+		: 0;
+	return maxTempoProgressoOffline + Math.floor(quantidadePretas / 5) * 2 * 60 * 1000 + bonusCasa;
 }
 
 function LimiteBausOffline(quantidadeCinzas = QuantidadeFormigas("cinzas")) {

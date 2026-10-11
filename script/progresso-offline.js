@@ -160,8 +160,10 @@ function CalculaProgressoOffline(ultimaDataSalva) {
 	const goldPorAbate = (andar * mulGold) + 1;
 	const goldPassivo = Number(goldCompanheiro) * (tempoMs / 1000);
 	const goldDosBaus = baus.reduce((total, bau) => total + bau.gold, 0);
-	const goldOffline = (goldPassivo + simulacao.abates * goldPorAbate)
-		* multiplicadorProgressoOffline * MultiplicadorGoldFormigas() + goldDosBaus;
+	// conforto da Casa (Cidade): +% em toda a recompensa offline
+	const goldOffline = ((goldPassivo + simulacao.abates * goldPorAbate)
+		* multiplicadorProgressoOffline * MultiplicadorGoldFormigas() + goldDosBaus)
+		* MultiplicadorOfflineCasa();
 	if (!Number.isFinite(goldOffline) || goldOffline < 0) {
 		console.error("Não foi possível calcular o Gold offline com os valores atuais.");
 		UI.showInfo("Não foi possível calcular o Gold offline. Verifique os bônus dos companheiros.");

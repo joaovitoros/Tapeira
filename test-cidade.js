@@ -39,7 +39,7 @@ const path = require('path');
                 const el = document.getElementById(id);
                 if (el) el.style.visibility = "hidden";
             });
-            ["ramosTreeModal", "antCollectionModal", "modalItensBuildView", "feitosModal", "skillUpgradeModal"].forEach(id => {
+            ["ramosTreeModal", "antCollectionModal", "modalItensBuildView", "feitosModal", "skillUpgradeModal", "casaModal"].forEach(id => {
                 document.getElementById(id)?.remove();
             });
         };
@@ -49,6 +49,7 @@ const path = require('path');
             document.querySelector('[data-cidade="' + id + '"]').click();
             return {
                 cidadeFechada: document.getElementById("container-Cidade").hidden,
+                casa: !!document.getElementById("casaModal"),
                 status: document.getElementById("DivStatus")?.style.visibility === "visible",
                 loja: ["Loja", "LojaEsm", "LojaCM"].some(x => document.getElementById(x)?.style.visibility === "visible"),
                 ramos: !!document.getElementById("ramosTreeModal"),
@@ -113,7 +114,7 @@ const path = require('path');
     check("aba escondida antes do andar 80", r.escondidaAntes === true);
     check("aba aparece no andar 80", r.visivelDepois === true);
     check("abre a Cidade", r.aberta === true);
-    check("Casa abre o Status", r.casa.status && r.casa.cidadeFechada, JSON.stringify(r.casa));
+    check("Casa abre o painel da Casa", r.casa.casa && r.casa.cidadeFechada, JSON.stringify(r.casa));
     check("Mercado abre a Loja", r.mercado.loja && r.mercado.cidadeFechada, JSON.stringify(r.mercado));
     check("Pesquisa abre Ramos", r.pesquisa.ramos && r.pesquisa.cidadeFechada, JSON.stringify(r.pesquisa));
     check("Fazenda abre as Formigas", r.fazenda.formigas && r.fazenda.cidadeFechada, JSON.stringify(r.fazenda));

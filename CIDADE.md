@@ -84,10 +84,16 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
 - [x] Teste: gates batem com a tabela (84/90/100/110) + trancado não abre.
 
 ### Fase 3 — 🏠 Casa
-- [ ] Níveis de conforto (upgrades) aplicados no `progresso-offline.js` (ponto único).
-- [ ] Sala de Troféus (bônus por conquista).
-- [ ] **Save** (5 passos): `casaNivel`, `trofeusExibidos`.
-- [ ] Teste: offline com/sem conforto; troféu aplica e persiste.
+- [x] **Níveis de conforto** (10 níveis, pagos em CM): +6% de recompensa offline e
+      +20 min de limite por nível. Aplicado num ponto único em `progresso-offline.js`
+      (`MultiplicadorOfflineCasa`) e em `LimiteTempoOffline` (`CasaBonusTempoOfflineMs`,
+      também refletido no limite que o `ValidarSave` aceita).
+- [x] **Sala de Troféus**: exibe as conquistas comportamentais (`CONQUISTAS_COMP`);
+      cada troféu exibido dá +2% de gold (ponto único em `AddGold`).
+- [x] **Save** (5 passos): `casaNivel` + `trofeusExibidos` (bitmask). Permanentes —
+      **não zeram no `Resetar`**.
+- [x] Painel próprio (`script/casa.js` + `#casaModal`), aberto pelo prédio Casa.
+- [x] Teste `test-casa.js`: multiplicadores, compra, troféus, gold, save/validação e reset.
 
 ### Fase 4 — 🐜 Fazenda de Formigas
 - [ ] Timer de produção (reusa o drop de formiga de `recompensas.js`) + **Rainha**.

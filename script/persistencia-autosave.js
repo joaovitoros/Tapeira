@@ -113,6 +113,8 @@ function CriarObjetoSave(incluirOffline = true) {
 		bonusCritConquista,
 
 		conquistasComp,
+		casaNivel,
+		trofeusExibidos,
 		missoesCompletas,
 		desafiosVencidos,
 		melhorGoldRun: {

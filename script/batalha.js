@@ -128,6 +128,9 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	if (ataqueJogador && segundosPausaFuga > 0) {
 		dano *= MultiplicadorDanoDurantePausaFuga();
 	}
+	// Companheiro de dano + Toque Frenético: a janela é capturada ANTES do
+	// toque consumi-la — o último golpe da janela ainda conta no acumulado
+	const janelaFrenesiAtiva = ataquesFrenesi > 0;
 	// Toque Frenético: o toque do jogador vale ×N durante a janela (multiplicador
 	// lido ANTES do toque ser consumido); o mesmo toque carrega/consome a janela
 	if (ataqueJogador) {
@@ -217,6 +220,9 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	}
 	let vidaAtual = vidaAnterior - dano;
 	window["vidaInimigo" + inimigo] = vidaAtual;
+	// Companheiro de dano + Frenesi: acumula o dano real de cada hit da
+	// janela (teto na vida anterior — excedente não é dano causado)
+	if (janelaFrenesiAtiva) RegistraDanoFrenesiComp(Math.min(dano, vidaAnterior), true);
 	UI.showDamageNumber(inimigoElement, dano, critico);
 	if (critico) FeedbackCritico();
 	// Assassino: efeitos visuais do hit kill e do veneno
@@ -256,6 +262,13 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	if (vidaAtual <= 0) derrotados.push(inimigo);
 	for (const alvo of chainTargets) {
 		if (window["vidaInimigo" + alvo.id] <= 0) derrotados.push(alvo.id);
+	}
+
+	// Companheiro de dano + Frenesi: o alvo marcado morreu → 25% do dano
+	// acumulado na janela explode em todos os inimigos vivos; os abates da
+	// explosão entram em derrotados e seguem o mesmo fluxo de recompensas
+	if (alvoFrenesiComp > 0 && derrotados.includes(alvoFrenesiComp)) {
+		for (const id of SplashFrenesiComp()) derrotados.push(id);
 	}
 
 	let formigaObtida = false;
@@ -323,14 +336,9 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 
 			SobeUmAndar();
 
-			// Explorador do mapa (comp 6): chance de avançar mais um andar
-			// de uma vez — cresce com o nível e com a distância do recorde
-			if (lvlComp6 > 0) {
-				const chanceExplorador = ChanceExplorador();
-				if (Math.random() < chanceExplorador) {
-					SobeUmAndar();
-				}
-			}
+			// Explorador do mapa (comp 6): uma chance (só da distância) de
+			// pular mais N andares — N é o nível comprado do companheiro
+			TentaPuloExplorador();
 		}
 
 		// O cronometro continua ativo no proximo andar. Cancela-lo aqui fazia

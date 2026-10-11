@@ -12,7 +12,7 @@
 
     // prédio -> painel existente que ele abre
     const PREDIOS = {
-        casa: () => UI.toggleStatus(),
+        casa: () => Tapeira.Casa.abrir(),
         mercado: () => AbreLoja(false),
         pesquisa: () => UI.showRamosTreePanel(),
         fazenda: () => UI.showAntCollection(),

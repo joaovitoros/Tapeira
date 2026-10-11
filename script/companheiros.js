@@ -11,21 +11,103 @@
 // Companheiro 4 (Alquimista): a cada 20s sorteia um buff por 10s.
 // Companheiro 5 (Assassino): passiva — ataque tem chance de matar
 //   instantaneamente (0,5% manual; metade em automáticos/companheiro).
-// Companheiro 6 (Explorador do mapa): chance de avançar mais de um
-//   andar por vez (escala com o nível: 5% + 2% por nível).
+// Companheiro 6 (Explorador do mapa): chance de pular vários andares
+//   por vez — a chance vem SÓ da distância e o nível comprado é a
+//   QUANTIDADE de andares pulados (nv 1 = +1 andar, nv 5 = +5 andares).
 
-// Chance de o Explorador pular +1 andar no nível dado: base por nível
-// (5% + 2%/nível, teto 50%) × bônus de distância do recorde (×(1 + 2% por
-// andar abaixo de maxAndar)), com teto de 90%. Fonte única — usada pelo
-// combate (batalha.js), pelo Status (ui.js) e pelo preview da loja.
-function ChanceExploradorNoNivel(nivel) {
-	const base = Math.min(0.5, 0.05 + 0.02 * Math.max(0, N(nivel) - 1));
+// Chance do Explorador pular andares: independe do nível (base fixa de
+// 5% × bônus de distância do recorde — ×(1 + 2% por andar abaixo de
+// maxAndar)), com teto de 90%. Fonte única — usada pelo combate
+// (batalha.js), pelo Status (ui.js) e pelo preview da loja.
+function ChanceExplorador() {
 	const distancia = Math.max(0, N(maxAndar) - N(andar));
-	return Math.min(0.9, base * (1 + 0.02 * distancia));
+	return Math.min(0.9, 0.05 * (1 + 0.02 * distancia));
 }
 
-function ChanceExplorador() {
-	return ChanceExploradorNoNivel(lvlComp6);
+// Quantidade de andares pulados por ativação = nível comprado. A trava
+// de 50 protege contra save corrompido: o preço dobra por nível, então o
+// teto real de uma compra legítima fica muito abaixo disso.
+function AndaresPuladosExplorador() {
+	return Math.min(50, Math.max(0, Math.floor(N(lvlComp6) || 0)));
+}
+
+// "+1 andar" / "+5 andares" — rótulo compartilhado pelo Status e pelo
+// preview da loja
+function TextoAndaresExplorador(qtd) {
+	const q = Math.max(1, Math.floor(N(qtd) || 0));
+	return "+" + q + (q === 1 ? " andar" : " andares");
+}
+
+// Tenta o pulo do Explorador logo após vencer um andar: uma rolagem por
+// andar vencido e, no sucesso, pula N andares (N = nível comprado).
+// Retorna quantos andares pulou (0 = sem pulo).
+function TentaPuloExplorador() {
+	if (N(lvlComp6) <= 0) return 0;
+	if (Math.random() >= ChanceExplorador()) return 0;
+	const pular = AndaresPuladosExplorador();
+	for (let i = 0; i < pular; i++) SobeUmAndar();
+	return pular;
+}
+
+// ============================================================
+// COMPANHEIRO 1 (dano) + TOQUE FRENÉTICO
+// ============================================================
+// Quando a janela do Frenesi ativa, o companheiro de dano marca um inimigo
+// aleatório (1 ou 2, só os vivos) e cada hit DURANTE a janela acumula dano
+// real. Se o marcado morrer — a qualquer momento — 25% do acumulado
+// explode em todos os inimigos vivos. Estado de janela: não é salvo;
+// zera no reset e a cada nova ativação (uma explosão por marca).
+var alvoFrenesiComp = 0;       // id do inimigo marcado (0 = sem marca)
+var danoJanelaFrenesiComp = 0; // dano acumulado durante a janela ativa
+
+// Sorteia o alvo entre os inimigos 1 e 2 vivos. Retorna o id marcado (0 =
+// sem companheiro de dano comprado ou ninguém elegível na tela).
+function MarcaAlvoFrenesiComp() {
+	alvoFrenesiComp = 0;
+	danoJanelaFrenesiComp = 0;
+	if (N(lvlComp1) <= 0) return 0;
+	const elegiveis = [1, 2].filter(id => N(window["vidaInimigo" + id]) > 0);
+	if (elegiveis.length === 0) return 0;
+	alvoFrenesiComp = elegiveis[Math.floor(Math.random() * elegiveis.length)];
+	return alvoFrenesiComp;
+}
+
+// Acumula o dano causado por um hit enquanto a janela do Frenesi está
+// ativa. O chamador deve capturar a janela ANTES do toque consumi-la
+// (batalha.js) e passar em naJanela — o default cobre chamadas soltas.
+function RegistraDanoFrenesiComp(dano, naJanela = ataquesFrenesi > 0) {
+	if (naJanela && alvoFrenesiComp > 0) {
+		danoJanelaFrenesiComp += Math.max(0, N(dano));
+	}
+}
+
+// Explode 25% do acumulado contra todos os inimigos vivos quando o alvo
+// marcado morre. Limpa a marca (uma explosão por marca) e retorna os ids
+// abatidos pela explosão — o chamador os insere no mesmo fluxo de
+// recompensas do abate normal (batalha.js).
+function SplashFrenesiComp() {
+	if (alvoFrenesiComp <= 0) return [];
+	const marca = alvoFrenesiComp;
+	alvoFrenesiComp = 0;
+	const dano = Math.max(0, N(danoJanelaFrenesiComp)) * 0.25;
+	danoJanelaFrenesiComp = 0;
+	if (dano <= 0) return [];
+	const mortos = [];
+	for (let id = 1; id <= 4; id++) {
+		if (id === marca) continue;
+		const vida = N(window["vidaInimigo" + id]);
+		if (vida <= 0) continue;
+		const restante = Math.max(0, vida - dano);
+		window["vidaInimigo" + id] = restante;
+		const el = document.getElementById("inimigo" + id);
+		if (el) {
+			UI.showDamageNumber(el, Math.min(dano, vida), false);
+			if (restante <= 0) animarMorte(el); else animarImpacto(el, false);
+		}
+		DesceVida(id);
+		if (restante <= 0) mortos.push(id);
+	}
+	return mortos;
 }
 
 // Buffs do Alquimista: tipo → multiplicador e nome amigável

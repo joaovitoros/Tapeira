@@ -557,7 +557,7 @@ const UI = {
             ["Companheiro 3 — Mago do Relógio", N(lvlComp3) > 0 ? "nível " + (N(lvlComp3) | 0) + ": +" + (PctCargaMago() * 100).toFixed(0) + "% de uma skill a cada 5s · ao encher a Pausa da fuga, ela liga sozinha (+50%)" : "não comprado"],
             ["Companheiro 4 — Alquimista", N(lvlComp4) > 0 ? "nível " + (N(lvlComp4) | 0) + ": " + buffAlqTxt : "não comprado"],
             ["Companheiro 5 — Assassino", N(lvlComp5) > 0 ? "nível " + (N(lvlComp5) | 0) + ": " + PctTexto(ChanceMorteAssassino(true)) + " de morte instantânea (" + PctTexto(ChanceMorteAssassino(false)) + " em automáticos) · veneno: " + PctTexto(CHANCE_VENENO_ASSASSINO) + " de tirar " + PctTexto(VENENO_ASSASSINO_PCT) + " da vida" : "não comprado"],
-            ["Companheiro 6 — Explorador", N(lvlComp6) > 0 ? "nível " + (N(lvlComp6) | 0) + ": " + PctTexto(ChanceExplorador()) + " de avançar +1 andar" : "não comprado"],
+            ["Companheiro 6 — Explorador", N(lvlComp6) > 0 ? "nível " + (N(lvlComp6) | 0) + ": " + PctTexto(ChanceExplorador()) + " de avançar " + TextoAndaresExplorador(lvlComp6) : "não comprado"],
             // Conhecimento Mug que vale no reset — recalculado na hora em que
             // o painel abre (base da loja/marcos × resets curtos)
             ["Multiplicador CM", "×" + FormataMultCM()],

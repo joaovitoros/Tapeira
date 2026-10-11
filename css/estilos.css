@@ -9947,3 +9947,179 @@ img.ramos-tree-no__tile {
 		display: none;
 	}
 }
+
+/* ===================== CASA (painel da Cidade) =====================
+   Reusa .ant-collection-overlay/.ant-collection-panel (mesmo modal dos
+   painéis Feitos/Formigas); aqui vai só o conteúdo. */
+.casa-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.casa-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid rgba(229, 183, 96, 0.35);
+}
+
+.casa-header h2 {
+	flex: 1 1 auto;
+	margin: 0;
+	color: #ffe2a0;
+	font-size: clamp(20px, 2.2vw, 28px);
+	font-weight: 800;
+	letter-spacing: 0.03em;
+}
+
+.casa-fechar {
+	flex: 0 0 auto;
+	width: 36px;
+	height: 36px;
+	border: 1px solid rgba(229, 183, 96, 0.55);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #3c4658, #252c39);
+	color: #ffe0a0;
+	font-size: 20px;
+	font-weight: 800;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.casa-fechar:hover {
+	filter: brightness(1.15);
+	border-color: rgba(255, 224, 160, 0.8);
+}
+
+.casa-corpo {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.casa-secao {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.casa-secao__titulo {
+	margin: 0;
+	color: #ffe2a0;
+	font-size: clamp(16px, 1.6vw, 20px);
+	font-weight: 800;
+}
+
+.casa-secao__desc {
+	margin: 0;
+	color: #aeb9cc;
+	font-size: clamp(12px, 1.05vw, 14px);
+	line-height: 1.45;
+}
+
+.casa-conforto__status {
+	margin: 0;
+	color: #e6edf3;
+	font-weight: 700;
+}
+
+.casa-conforto__max {
+	margin: 0;
+	color: #7ee0a0;
+	font-weight: 800;
+}
+
+.casa-conforto__compra {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.casa-conforto__prox {
+	color: #b9c8da;
+	font-size: clamp(12px, 1.05vw, 14px);
+}
+
+.casa-comprar {
+	flex: 0 0 auto;
+	padding: 9px 16px;
+	border: 1px solid rgba(229, 183, 96, 0.6);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #d99a12, #a06a0d);
+	color: #1b1206;
+	font: inherit;
+	font-weight: 800;
+	cursor: pointer;
+}
+
+.casa-comprar:hover {
+	filter: brightness(1.1);
+}
+
+.casa-comprar:disabled {
+	filter: saturate(0.4) brightness(0.7);
+	cursor: not-allowed;
+}
+
+.casa-trofeus {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 8px;
+}
+
+.casa-trofeu {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 10px 12px;
+	border: 1px solid rgba(137, 177, 255, 0.35);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #1c2635, #131a25);
+	color: #e6edf3;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.casa-trofeu__nome {
+	font-weight: 700;
+}
+
+.casa-trofeu__estado {
+	flex: 0 0 auto;
+	color: #9aa7bd;
+	font-size: 12px;
+	white-space: nowrap;
+}
+
+.casa-trofeu.is-exibido {
+	border-color: rgba(229, 183, 96, 0.8);
+	background: linear-gradient(145deg, #2a2416, #1a150c);
+}
+
+.casa-trofeu.is-exibido .casa-trofeu__estado {
+	color: #ffe0a0;
+}
+
+.casa-trofeu.is-bloqueado {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.casa-trofeus__total {
+	margin: 0;
+	color: #ffe2a0;
+	font-weight: 800;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.casa-overlay,
+	.casa-panel {
+		animation: none;
+	}
+}

@@ -62,6 +62,11 @@ var fugaEmAndamento = false;
 var maxTempoProgressoOffline = 5 * 60 * 60 * 1000;
 var multiplicadorProgressoOffline = 0.25;
 var maxBausOffline = 2;
+// Casa (hub da Cidade): conforto melhora o progresso offline; troféus são as
+// conquistas comportamentais exibidas (bitmask). Permanentes: NÃO zeram no
+// Resetar (só no ZerarTodosSaves), como o Conhecimento Mug.
+var casaNivel = 0;
+var trofeusExibidos = 0;
 const TEMPO_BAU_DOURADO_JOGO = 20 * 60 * 1000;
 const TEMPO_BAU_DOURADO_OFFLINE = 40 * 60 * 1000;
 var progressoBauDourado = 0;
