@@ -9699,11 +9699,17 @@ img.ramos-tree-no__tile {
 }
 
 .cidade-topo {
+	/* fica fixo no topo enquanto a cena rola (não sai pro lado ao arrastar) */
+	position: sticky;
+	top: 0;
+	left: 0;
+	z-index: 6;
 	display: flex;
 	align-items: center;
 	gap: 12px;
 	padding-bottom: 12px;
 	border-bottom: 1px solid rgba(229, 183, 96, 0.35);
+	background: linear-gradient(160deg, rgba(14, 18, 27, 0.98), rgba(7, 10, 16, 0.99));
 }
 
 .cidade-titulo {
