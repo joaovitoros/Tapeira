@@ -272,6 +272,12 @@ function ValidarSave(save) {
 	};
 	validaMapaPesquisa(save.pesquisaItens, idsItens, pesquisaItemMax);
 	validaMapaPesquisa(save.pesquisaInimigos, idsInimigos, pesquisaInimigoMax);
+	// Mercado (Cidade): reputação (desconto nas lojas) dentro do teto
+	const reputacaoMax = (typeof REPUTACAO_MAX === "number") ? REPUTACAO_MAX : 10;
+	if (save.reputacao !== undefined
+		&& (!Number.isSafeInteger(save.reputacao) || save.reputacao < 0 || save.reputacao > reputacaoMax)) {
+		throw new TypeError("A reputação do Mercado no save é inválida.");
+	}
 	if (save.missoesCompletas !== undefined
 		&& (!Number.isSafeInteger(save.missoesCompletas) || save.missoesCompletas < 0 || save.missoesCompletas > 1000000)) {
 		throw new TypeError("O contador de missões do save é inválido.");

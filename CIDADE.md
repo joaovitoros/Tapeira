@@ -120,9 +120,14 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
 - [x] Teste `test-pesquisa.js`: bônus, custos, compras, save/validação e reset.
 
 ### Fase 6 — 🛒 Mercado
-- [ ] Vender duplicatas (itens/formigas → gold/CM) + Reputação (desconto nas lojas).
-- [ ] **Save**: `reputacao`, `ofertasDia`.
-- [ ] Teste: venda credita certo; desconto aplica.
+- [x] **Reputação**: nível (pago em CM) que dá -2% no preço da **Loja do Conhecimento**
+      por nível (ponto único em `PrecoLojaCM`). **Save**: `reputacao` (permanente).
+- [x] **Vender excedentes**: cópias extras dos itens da build (mantém 1 de cada) +
+      formigas fora dos conjuntos de 5 → **gold** (escala com o andar).
+- [x] Painel próprio (`script/mercado.js` + `#mercadoModal`), aberto pelo prédio Mercado.
+- [x] Teste `test-mercado.js`: desconto aplica; venda credita e sobra só os conjuntos;
+      save/validação e reset.
+- [ ] (adiado) **Ofertas rotativas** (`ofertasDia`) — não entrou nesta rodada.
 
 ### Fase 7 — ⚙️ Fábrica
 - [ ] Forja (2 iguais → 1 melhorado) + Linha de montagem (automação).

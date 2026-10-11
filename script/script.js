@@ -76,6 +76,8 @@ var intervaloFazenda = null; // handle do timer de produção da Fazenda
 // Permanentes (não zeram no reset). Objetos { id: nível }.
 var pesquisaItens = {};
 var pesquisaInimigos = {};
+// Mercado (Cidade): reputação = desconto nas lojas. Permanente.
+var reputacao = 0;
 const TEMPO_BAU_DOURADO_JOGO = 20 * 60 * 1000;
 const TEMPO_BAU_DOURADO_OFFLINE = 40 * 60 * 1000;
 var progressoBauDourado = 0;
@@ -117,7 +119,10 @@ var danoBonus = 0; //variavel para armazenar os danos bonus
 // Preço dos itens da loja: base 10 CM, escalonado ×1.4 por nível
 // (10, 14, 20, 27, 38...). Era ×1.5 e o crescimento ficava grande rápido.
 function PrecoLojaCM(nivel) {
-	return Math.round(10 * Math.pow(1.4, Math.max(0, Number(nivel) || 0)));
+	const base = 10 * Math.pow(1.4, Math.max(0, Number(nivel) || 0));
+	// Mercado (Cidade): a reputação dá desconto na Loja do Conhecimento
+	const preco = (typeof PrecoComReputacao === "function") ? PrecoComReputacao(base) : base;
+	return Math.round(preco);
 }
 
 // +5% de gold por nível — aplicado em todo ganho de gold (AddGold)

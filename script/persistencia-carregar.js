@@ -246,6 +246,8 @@ function Carregar(saveData, calculaOffline = false) {
 		? Object.assign({}, save.pesquisaItens) : {};
 	pesquisaInimigos = (save.pesquisaInimigos && typeof save.pesquisaInimigos === "object" && !Array.isArray(save.pesquisaInimigos))
 		? Object.assign({}, save.pesquisaInimigos) : {};
+	// Mercado (Cidade): reputação (desconto nas lojas) — permanente
+	reputacao = save.reputacao ?? 0;
 	missoesCompletas = save.missoesCompletas ?? 0;
 	desafiosVencidos = save.desafiosVencidos ?? 0;
 	melhorGoldRun = GoldNumber.fromMantissaExponent(save.melhorGoldRun?.m ?? 0, save.melhorGoldRun?.e ?? 0);

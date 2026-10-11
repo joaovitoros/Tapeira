@@ -209,6 +209,21 @@
 			AutoSalvar();
 		},
 
+		// Mercado (Cidade): vende as cópias EXTRAS (mantém 1 de cada item) e
+		// devolve quantas saíram — o valor em gold é calculado pelo Mercado.
+		vendeDuplicatas() {
+			const vistas = new Set();
+			const mantidas = [];
+			let vendidas = 0;
+			for (const id of lista) {
+				if (vistas.has(id)) { vendidas++; continue; }
+				vistas.add(id);
+				mantidas.push(id);
+			}
+			lista = mantidas;
+			return vendidas;
+		},
+
 		// ---- save (regras do save em sistema.js) ----
 		carrega(save) {
 			// extras antes da lista: o slice respeita o limite efetivo do save

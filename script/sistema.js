@@ -350,6 +350,7 @@ function Resetar() {
 	// aqui (só no ZerarTodosSaves), como o Conhecimento Mug e seus níveis.
 	// Fazenda de Formigas (Cidade): fazendaNivel e fazendaRainha idem.
 	// Centro de Pesquisa (Cidade): pesquisaItens e pesquisaInimigos idem.
+	// Mercado (Cidade): reputacao idem.
 	recompensasOfflinePendentes = null;
 	ultimaDataSaveOffline = Date.now();
 	numInimigosTela = 1; //usada para validar quantos inimigos e
