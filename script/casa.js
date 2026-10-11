@@ -137,7 +137,92 @@ function AbrirCasa() {
 function RenderCasaPainel() {
 	const corpo = document.getElementById("casaCorpo");
 	if (!corpo) return;
-	corpo.replaceChildren(CasaSecaoConforto(), CasaSecaoTrofeus());
+	corpo.replaceChildren(CasaSecaoConforto(), CasaSecaoCompanheiros(), CasaSecaoTrofeus());
+}
+
+// ---- Companheiros: foto + o que faz + a passiva ----
+function CasaCompanheirosInfo() {
+	return [
+		{
+			img: "imagens/companheiro1.png", nome: "Companheiro 1 — Dano", nivel: N(lvlComp1) | 0,
+			desc: "Ataca os inimigos junto com você: cada golpe dá " + FormataPct(danoComp1, 0) + " do seu dano.",
+			passiva: "No Toque Frenético, marca um inimigo; se ele morrer, 25% do dano acumulado na janela explode em todos os inimigos vivos."
+		},
+		{
+			img: "imagens/companheiro2.png", nome: "Companheiro 2 — Gold", nivel: N(lvlComp2) | 0,
+			desc: "Gera gold passivo por segundo (" + (25 + 10 * (Math.max(1, N(lvlComp2)) - 1)) + "% do gold de um inimigo por nível).",
+			passiva: "Sem passiva especial — o ganho por segundo cresce com o nível."
+		},
+		{
+			img: "imagens/companheiro3.png", nome: "Companheiro 3 — Mago do Relógio", nivel: N(lvlComp3) | 0,
+			desc: "A cada 5 s enche " + (PctCargaMago() * 100).toFixed(0) + "% de uma skill aleatória que ainda não está cheia.",
+			passiva: "Ao encher a Pausa da fuga, ela liga sozinha e dura +50%. É a única skill que ele ainda pode escolher mesmo cheia."
+		},
+		{
+			img: "imagens/companheiro4.png", nome: "Companheiro 4 — Alquimista", nivel: N(lvlComp4) | 0,
+			desc: "A cada 20 s sorteia um buff por 10 s: Dano ×2, Gold ×2, Velocidade ×2 ou Baú ×3.",
+			passiva: "Os buffs valem no momento do ganho/golpe (não mudam os números base)."
+		},
+		{
+			img: "imagens/companheiro5.png", nome: "Companheiro 5 — Assassino", nivel: N(lvlComp5) | 0,
+			desc: "Chance de morte instantânea: " + PctTexto(ChanceMorteAssassino(true)) + " no ataque manual (" + PctTexto(ChanceMorteAssassino(false)) + " em automáticos).",
+			passiva: "Veneno: " + PctTexto(CHANCE_VENENO_ASSASSINO) + " dos golpes tiram " + PctTexto(VENENO_ASSASSINO_PCT) + " da vida máxima do andar, em qualquer golpe."
+		},
+		{
+			img: "imagens/companheiro6.png", nome: "Companheiro 6 — Explorador", nivel: N(lvlComp6) | 0,
+			desc: "Ao vencer um andar, tem " + PctTexto(ChanceExplorador()) + " de pular andares de uma vez.",
+			passiva: "A chance vem só da distância do recorde; o nível comprado é a QUANTIDADE de andares pulados (nível 5 = " + TextoAndaresExplorador(5) + ")."
+		},
+		{
+			img: "imagens/companheiroXP.png", nome: "Companheiro XP", nivel: N(lvlXP) | 0,
+			desc: "Bônus de XP (item da loja de esmeraldas).",
+			passiva: "Aumenta o XP ganho por abate — ajuda a subir de nível mais rápido."
+		}
+	];
+}
+
+function CasaSecaoCompanheiros() {
+	const secao = document.createElement("section");
+	secao.className = "casa-secao";
+
+	const titulo = document.createElement("h3");
+	titulo.className = "casa-secao__titulo";
+	titulo.textContent = "Companheiros";
+
+	const desc = document.createElement("p");
+	desc.className = "casa-secao__desc";
+	desc.textContent = "Seus ajudantes e o que cada um faz — com destaque pras passivas.";
+
+	const lista = document.createElement("div");
+	lista.className = "casa-companheiros";
+	for (const c of CasaCompanheirosInfo()) {
+		const card = document.createElement("article");
+		card.className = "casa-companheiro" + (c.nivel > 0 ? "" : " is-bloqueado");
+
+		const foto = document.createElement("img");
+		foto.className = "casa-companheiro__foto";
+		foto.src = c.img;
+		foto.alt = "";
+
+		const info = document.createElement("div");
+		info.className = "casa-companheiro__info";
+		const nome = document.createElement("strong");
+		nome.className = "casa-companheiro__nome";
+		nome.textContent = c.nome + (c.nivel > 0 ? " · nível " + c.nivel : " · não comprado");
+		const det = document.createElement("span");
+		det.className = "casa-companheiro__desc";
+		det.textContent = c.desc;
+		const passiva = document.createElement("span");
+		passiva.className = "casa-companheiro__passiva";
+		passiva.textContent = "Passiva: " + c.passiva;
+		info.append(nome, det, passiva);
+
+		card.append(foto, info);
+		lista.appendChild(card);
+	}
+
+	secao.append(titulo, desc, lista);
+	return secao;
 }
 
 function CasaSecaoConforto() {

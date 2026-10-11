@@ -94,7 +94,8 @@
         }
         const acao = PREDIOS[id];
         if (!acao) return;
-        fechar();
+        // Abre o painel POR CIMA da Cidade (ela continua aberta atrás) — assim,
+        // ao fechar o painel, o jogador volta pra Cidade, não pra caverna.
         acao();
     }
 

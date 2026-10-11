@@ -10328,6 +10328,59 @@ img.ramos-tree-no__tile {
 	font-weight: 800;
 }
 
+/* Companheiros (Casa): cards com foto + o que faz + a passiva */
+.casa-companheiros {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.casa-companheiro {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 10px 12px;
+	border: 1px solid rgba(137, 177, 255, 0.28);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #1a2230, #121822);
+}
+
+.casa-companheiro.is-bloqueado {
+	opacity: 0.6;
+}
+
+.casa-companheiro__foto {
+	flex: 0 0 auto;
+	width: clamp(40px, 5vw, 60px);
+	height: clamp(40px, 5vw, 60px);
+	object-fit: contain;
+	filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+}
+
+.casa-companheiro__info {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	min-width: 0;
+}
+
+.casa-companheiro__nome {
+	color: #ffe2a0;
+	font-size: clamp(13px, 1.1vw, 15px);
+}
+
+.casa-companheiro__desc {
+	color: #c3ccda;
+	font-size: clamp(11px, 0.95vw, 13px);
+	line-height: 1.4;
+}
+
+.casa-companheiro__passiva {
+	color: #9fd0ff;
+	font-size: clamp(11px, 0.95vw, 13px);
+	line-height: 1.4;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.casa-overlay,
 	.casa-panel {

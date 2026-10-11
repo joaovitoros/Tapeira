@@ -48,7 +48,7 @@ const path = require('path');
             window.Tapeira.Cidade.abrir();
             document.querySelector('[data-cidade="' + id + '"]').click();
             return {
-                cidadeFechada: document.getElementById("container-Cidade").hidden,
+                cidadeAberta: document.getElementById("container-Cidade").hidden === false,
                 casa: !!document.getElementById("casaModal"),
                 status: document.getElementById("DivStatus")?.style.visibility === "visible",
                 loja: ["Loja", "LojaEsm", "LojaCM"].some(x => document.getElementById(x)?.style.visibility === "visible"),
@@ -140,11 +140,11 @@ const path = require('path');
     check("aba escondida antes do andar 80", r.escondidaAntes === true);
     check("aba aparece no andar 80", r.visivelDepois === true);
     check("abre a Cidade", r.aberta === true);
-    check("Casa abre o painel da Casa", r.casa.casa && r.casa.cidadeFechada, JSON.stringify(r.casa));
-    check("Mercado abre o painel do Mercado", r.mercado.mercado && r.mercado.cidadeFechada, JSON.stringify(r.mercado));
-    check("Pesquisa abre o Centro de Pesquisa", r.pesquisa.pesquisa && r.pesquisa.cidadeFechada, JSON.stringify(r.pesquisa));
-    check("Fazenda abre o painel da Fazenda", r.fazenda.fazenda && r.fazenda.cidadeFechada, JSON.stringify(r.fazenda));
-    check("Fábrica abre os itens da build", r.fabrica.itens && r.fabrica.cidadeFechada, JSON.stringify(r.fabrica));
+    check("Casa abre o painel da Casa", r.casa.casa && r.casa.cidadeAberta, JSON.stringify(r.casa));
+    check("Mercado abre o painel do Mercado", r.mercado.mercado && r.mercado.cidadeAberta, JSON.stringify(r.mercado));
+    check("Pesquisa abre o Centro de Pesquisa", r.pesquisa.pesquisa && r.pesquisa.cidadeAberta, JSON.stringify(r.pesquisa));
+    check("Fazenda abre o painel da Fazenda", r.fazenda.fazenda && r.fazenda.cidadeAberta, JSON.stringify(r.fazenda));
+    check("Fábrica abre os itens da build", r.fabrica.itens && r.fabrica.cidadeAberta, JSON.stringify(r.fabrica));
     check("fecha pelo ×", r.fechouPeloX === true);
     check("cena usa a imagem da cidade (cena.png)", r.cenaFundo === true);
     check("cena tem bichinhos animados", r.decorTotal >= 8, r.decorTotal);
