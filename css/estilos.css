@@ -1722,6 +1722,12 @@ body {
 	position: relative;
 }
 
+/* o contador de pontos de habilidade agora vive no botão "Ramos" (a 1.3.0
+   tinha no botão "Skills"); `position` para ancorar a bolinha */
+#btnRamos {
+	position: relative;
+}
+
 .skill-point-badge {
 	position: absolute;
 	top: -7px;
@@ -8710,6 +8716,20 @@ button.skill-ramo-no:focus-visible {
 	overflow-wrap: anywhere;
 }
 
+/* resumo do jogador no topo do painel Ramos (nível, pontos, XP, auto-gasto e
+   bônus) — compartilhado por todas as skills, por isso fica FORA da seção e
+   entre o título e a trilha. Reusa as classes .skill-player-* e
+   .skill-auto-gasto já existentes. */
+.ramos-tree-resumo {
+	flex: 0 0 auto;
+	display: grid;
+	gap: 8px;
+	padding: 10px 12px;
+	border: 1px solid rgba(255, 211, 107, 0.35);
+	border-radius: 11px;
+	background: rgba(255, 211, 107, 0.06);
+}
+
 .ramos-tree-corpo {
 	display: flex;
 	flex: 1 1 auto;
@@ -9179,4 +9199,273 @@ img.ramos-tree-no__tile {
 	filter: none;
 	font-size: 18px;
 	line-height: 1;
+}
+
+/* ======================================================================
+   HUD v3 — layout proposto em esbocos/esboco-hud.html
+   Topo alinhado (Andar/Manter/Voltar · Pausar · Gold/Esmeraldas), fuga
+   contextual fina logo abaixo do topo, baú dourado no vão à esquerda do
+   card de Objetivo/Missão, Objetivo+Missão num só card (missão como segunda
+   seção). "Total Abatidos" saiu do HUD e virou linha do painel Status.
+   Estas regras ficam no FIM do arquivo: vencem as media queries antigas
+   com a mesma especificidade por ordem de origem.
+   ====================================================================== */
+
+/* (1) TOPO: três conjuntos na mesma faixa, mesma altura */
+#container-HudTopo {
+	position: absolute;
+	top: 1rem;
+	left: 1rem;
+	right: 1rem;
+	z-index: 5;
+	box-sizing: border-box;
+	display: flex;
+	align-items: stretch;
+	justify-content: space-between;
+	gap: 8px;
+	pointer-events: none;
+}
+#container-HudTopo > * {
+	pointer-events: auto;
+}
+#container-HudTopo > #container-AndarManter,
+#container-HudTopo > #container-GoldEsmeraldas,
+#container-HudTopo > #btnPause {
+	position: static;
+	top: auto;
+	left: auto;
+	right: auto;
+	float: none;
+	width: auto;
+	margin: 0;
+	transform: none;
+}
+#container-HudTopo > #container-AndarManter {
+	flex: 0 1 auto;
+	min-width: 0;
+	max-width: min(34vw, 460px);
+	justify-content: space-between;
+}
+#container-HudTopo > #container-GoldEsmeraldas {
+	flex: 0 0 auto;
+	width: 33.333vw;
+	height: auto;
+	min-height: 44px;
+}
+#container-HudTopo > #btnPause {
+	flex: 0 0 auto;
+	align-self: stretch;
+	height: auto;
+	min-height: 44px;
+}
+
+/* (3) FUGA contextual: barra-pílula fina logo abaixo do topo */
+#container-Fugir {
+	top: 4.4rem;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 0;
+	padding: 4px 12px;
+	background: linear-gradient(145deg, rgba(40, 22, 14, 0.92), rgba(24, 18, 16, 0.92));
+	border: 1px solid rgba(255, 150, 90, 0.45);
+	border-radius: 999px;
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+/* (2)+(4) MEIO: baú dourado (esquerda) + Objetivo/Missão (direita), mesma faixa */
+#container-Metas {
+	top: 7rem;
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+}
+#container-Metas.has-mission {
+	display: flex;
+}
+#container-Metas:not(.has-mission) > #container-Objetivo,
+#container-Metas.has-mission > #container-Objetivo {
+	width: auto;
+	min-width: 0;
+	flex: 1 1 auto;
+	justify-self: auto;
+}
+
+#container-Metas > #golden-chest-tracker {
+	position: relative; /* flex item; relativo para o balão de info ancorar no card */
+	top: auto;
+	left: auto;
+	right: auto;
+	flex: 0 0 auto;
+	width: 92px;
+	aspect-ratio: 1;
+	align-self: flex-start;
+	pointer-events: auto;
+}
+
+/* Missão vira a segunda seção do card de Objetivo (divisor no topo) */
+#container-Objetivo > #container-Missao {
+	width: 100%;
+	box-sizing: border-box;
+	margin: 6px 0 0;
+	padding: 6px 0 0;
+	border: 0;
+	border-top: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+}
+
+/* ---- Faixa desktop média (1000–1500 × 780–950, landscape) ---- */
+@media (min-width: 1000px) and (max-width: 1500px) and (min-height: 780px) and (max-height: 950px) and (orientation: landscape) {
+	#container-HudTopo {
+		top: 12px;
+		left: 12px;
+		right: 12px;
+	}
+	#container-Fugir {
+		top: 72px;
+	}
+	#container-Metas {
+		top: 116px;
+	}
+}
+
+/* ---- Faixa desktop 701–1250 (janela comum) ---- */
+@media (min-width: 701px) and (max-width: 1250px) and (min-height: 521px) {
+	#container-HudTopo {
+		top: 12px;
+		left: 12px;
+		right: 12px;
+	}
+	#container-Fugir {
+		top: 72px;
+	}
+	#container-Metas {
+		top: 116px;
+	}
+}
+
+/* ---- Monitores (≥1000px): baú e Objetivo/Missão cada um no seu canto ----
+   O baú dourado fica no canto ESQUERDO e o card de Objetivo/Missão no canto
+   DIREITO (justify-content: space-between). Regra isolada em media query de
+   largura mínima para não tocar no Android (<1000px). */
+@media (min-width: 1000px) {
+	#container-Metas {
+		top: 7rem;
+		left: 1rem;
+		right: 1rem;
+		width: auto;
+		transform: none;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 16px;
+	}
+	#container-Metas > #golden-chest-tracker {
+		flex: 0 0 auto;
+	}
+	#container-Metas.has-mission > #container-Objetivo {
+		width: auto;
+		min-width: 0;
+		flex: 0.2 0.2 auto;
+		justify-self: auto;
+		max-width: min(420px, 32vw);
+	}
+	#container-Metas:not(.has-mission) > #container-Objetivo {
+		width: auto;
+		min-width: 0;
+		flex: 0 1 min(420px, 32vw);
+		justify-self: auto;
+	}
+}
+
+/* ---- Landscape baixo (H ≤ 520) ---- */
+@media (max-width: 900px) and (max-height: 520px) and (orientation: landscape) {
+	#container-HudTopo {
+		top: 6px;
+		left: 8px;
+		right: 8px;
+	}
+	#container-HudTopo > #container-AndarManter,
+	#container-HudTopo > #container-GoldEsmeraldas,
+	#container-HudTopo > #btnPause {
+		min-height: 36px;
+	}
+	#container-Fugir {
+		top: 52px;
+	}
+	#container-Metas {
+		top: 90px;
+	}
+}
+
+/* ---- Tablet retrato (701–900) ---- */
+@media (min-width: 701px) and (max-width: 900px) and (orientation: portrait) {
+	#container-HudTopo {
+		top: 12px;
+		left: 12px;
+		right: 12px;
+	}
+	#container-Fugir {
+		top: 76px;
+	}
+	#container-Metas {
+		top: calc(118px + env(safe-area-inset-top));
+		right: 12px;
+		left: auto;
+		transform: none;
+		width: min(62vw, 540px);
+	}
+}
+
+/* ---- Celular ---- */
+@media (max-width: 700px) {
+	#container-HudTopo {
+		top: max(8px, env(safe-area-inset-top));
+		left: 8px;
+		right: 8px;
+		gap: 6px;
+	}
+	#container-HudTopo > #container-AndarManter {
+		flex: 1 1 0;
+		width: auto;
+		max-width: none;
+		min-height: 42px;
+	}
+	#container-HudTopo > #container-GoldEsmeraldas {
+		width: 33.333vw;
+		min-height: 42px;
+	}
+	#container-HudTopo > #btnPause {
+		min-height: 42px;
+	}
+	#container-Fugir {
+		top: calc(56px + env(safe-area-inset-top));
+		padding: 3px 8px;
+	}
+	#container-Metas {
+		top: calc(96px + env(safe-area-inset-top));
+		left: 8px;
+		right: auto;
+		width: calc(100vw - 16px);
+		transform: none;
+		gap: 5px;
+	}
+	#container-Metas > #golden-chest-tracker {
+		width: 84px;
+	}
+}
+
+/* Balão de info do baú: em telas onde o card fica no topo (mobile retrato e
+   landscape baixo) abrir para CIMA estoura a tela — abre para BAIXO. */
+@media (max-width: 700px), (max-width: 900px) and (max-height: 520px) and (orientation: landscape) {
+	#container-Metas > #golden-chest-tracker .golden-chest-tracker__desc {
+		top: calc(100% + 6px);
+		bottom: auto;
+		left: 0;
+	}
 }

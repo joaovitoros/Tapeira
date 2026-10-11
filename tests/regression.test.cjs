@@ -2202,6 +2202,7 @@ test("árvore de ramos: 2º botão, trilha de skills e seções com descrições
             if (!secao) return null;
             const descs = [...secao.querySelectorAll(".ramos-tree-no__txt span, .ramos-tree-perk__txt span")]
                 .filter(el => getComputedStyle(el).display !== "none").length;
+            const badgeRamos = document.querySelector("#btnRamos #skill-point-badge");
             return {
                 trilha,
                 pips: secao.querySelectorAll(".ramos-tree-niv").length,
@@ -2209,7 +2210,23 @@ test("árvore de ramos: 2º botão, trilha de skills e seções com descrições
                 efeito: secao.querySelector(".ramos-tree-efeito")?.textContent || "",
                 ramos: secao.querySelectorAll(".ramos-tree-ramo").length,
                 descsVisiveis: descs,
-                temSeloNivel: !!secao.querySelector(".ramos-tree-topo__selo")
+                temSeloNivel: !!secao.querySelector(".ramos-tree-topo__selo"),
+                // bloco compartilhado do jogador (nível, pontos, XP, auto-gasto, bônus)
+                resumoJogador: [
+                    "skill-player-level", "skill-player-points", "skill-player-xp",
+                    "skill-player-xp-fill", "skill-player-xp-label",
+                    "autoGastoWrap", "autoGastoToggle", "skill-player-bonus"
+                ].every(id => !!document.getElementById(id)),
+                resumoForaDaSecao: !!document.querySelector("#ramosTreeModal .ramos-tree-resumo")
+                    && !document.querySelector("#ramosTreeModal .ramos-tree-secao .ramos-tree-resumo"),
+                // contador no botão "Ramos" (a bolinha que a 1.3.0 tinha no "Skills")
+                badgeRamos: badgeRamos
+                    ? { texto: badgeRamos.textContent, hidden: badgeRamos.hidden, visivel: getComputedStyle(badgeRamos).display !== "none" }
+                    : null,
+                // descrições restauradas da 1.3.0
+                perkDano: secao.querySelector(".ramos-tree-perk__txt span")?.textContent || "",
+                ramoCanhao: [...secao.querySelectorAll(".ramos-tree-no__txt span")]
+                    .map(el => el.textContent).find(t => t.includes("no hit automático")) || ""
             };
         });
         assert.ok(resumo, "uma seção abre ao clicar");
@@ -2220,6 +2237,13 @@ test("árvore de ramos: 2º botão, trilha de skills e seções com descrições
         assert.ok(resumo.ramos >= 2, "ramos lado a lado na seção");
         assert.ok(resumo.descsVisiveis > 0, "descrições sempre visíveis");
         assert.ok(resumo.temSeloNivel, "selo de nível no topo");
+        assert.ok(resumo.resumoJogador, "bloco compartilhado do jogador presente no painel");
+        assert.ok(resumo.resumoForaDaSecao, "bloco fica entre o título e a trilha (não muda por skill)");
+        assert.deepEqual(resumo.badgeRamos, { texto: "5", hidden: false, visivel: true },
+            "bolinha de pontos no botão Ramos reflete os pontos disponíveis");
+        assert.match(resumo.perkDano, /no nível máximo a skill ativa sozinha/,
+            "descrição do perk restaurada (texto da 1.3.0)");
+        assert.ok(resumo.ramoCanhao, "descrição do ramo restaurada (texto da 1.3.0)");
 
         // a pílula "próximo" compra o nível usando a regra existente
         const compra = await page.evaluate(() => {
@@ -2232,7 +2256,7 @@ test("árvore de ramos: 2º botão, trilha de skills e seções com descrições
         assert.deepEqual(compra, { antes: 0, depois: 1, painel: true },
             "clique na pílula usa EvoluiSkill e re-renderiza");
 
-        // trocar de skill pela trilha abre outra seção
+        // trocar de skill pela trilha abre outra seção (e o resumo continua igual)
         const trocada = await page.evaluate(() => {
             const alvo = [...document.querySelectorAll("#ramosTreeModal .ramos-tree-trilha__btn")]
                 .find(b => b.getAttribute("aria-label") === "Corrente elétrica");
@@ -2241,11 +2265,12 @@ test("árvore de ramos: 2º botão, trilha de skills e seções com descrições
             const secao = document.querySelector("#ramosTreeModal .ramos-tree-secao");
             return {
                 titulo: secao?.querySelector(".ramos-tree-topo__titulo b")?.textContent || "",
-                ativo: document.querySelectorAll("#ramosTreeModal .ramos-tree-trilha__btn--ativo").length
+                ativo: document.querySelectorAll("#ramosTreeModal .ramos-tree-trilha__btn--ativo").length,
+                resumoPersiste: !!document.querySelector("#ramosTreeModal .ramos-tree-resumo #skill-player-level")
             };
         });
-        assert.deepEqual(trocada, { titulo: "Corrente elétrica", ativo: 1 },
-            "clicar na trilha abre a seção da skill");
+        assert.deepEqual(trocada, { titulo: "Corrente elétrica", ativo: 1, resumoPersiste: true },
+            "clicar na trilha abre a seção da skill e o bloco compartilhado não muda");
 
         // fechar pelo × devolve o foco ao 2º botão
         await page.evaluate(() => document.querySelector("#ramosTreeModal .ant-collection-close").click());

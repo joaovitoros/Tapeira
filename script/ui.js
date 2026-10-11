@@ -27,7 +27,8 @@ const UI = {
             caveRoot.classList.toggle("cave-floor--guardian", andar % 10 === 0);
         }
         document.getElementById("titulo").innerHTML = "Caverna (Andar: " + andar + ")";
-        document.getElementById("contDerrotados").innerHTML = totalDerrotados;
+        const elTotalAbatidos = document.getElementById("contDerrotados");
+        if (elTotalAbatidos) elTotalAbatidos.innerHTML = totalDerrotados;
         document.getElementById("contAndar").innerHTML = andar;
         document.getElementById("contGold").innerHTML = FormatGold(gold);
         document.getElementById("contEmeraldas").innerHTML = esmeraldas;
@@ -288,7 +289,7 @@ const UI = {
         const points = document.getElementById("skill-player-points");
         const progress = document.getElementById("skill-player-xp");
         const fill = document.getElementById("skill-player-xp-fill");
-        const button = document.getElementById("btnSkills");
+        const button = document.getElementById("btnRamos");
         const badge = document.getElementById("skill-point-badge");
         const nextLevelXP = XPNecessarioProximoNivel();
         const percent = Math.max(0, Math.min(100, xpAtual * 100 / nextLevelXP));
@@ -316,7 +317,7 @@ const UI = {
             const texto = `+${niveis * DANO_POR_NIVEL_PCT}% dano · ${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} a menos · ${pontosPerk} ${pontosPerk === 1 ? "ponto" : "pontos"} de perk`;
             if (resumoProgresso.textContent !== texto) resumoProgresso.textContent = texto;
         }
-        if (button) button.setAttribute("aria-label", `Skills, nível ${nivelJogador}, ${pontosHabilidade} pontos disponíveis`);
+        if (button) button.setAttribute("aria-label", `Ramos, nível ${nivelJogador}, ${pontosHabilidade} pontos disponíveis`);
         if (badge) {
             badge.textContent = String(pontosHabilidade);
             badge.hidden = pontosHabilidade === 0;
@@ -519,6 +520,8 @@ const UI = {
                 + (especializacao === 5
                     ? " → " + FormatarGold(danoJogador * multDanoTotal * 2.5) + " no cap"
                     : "")],
+            // Total abatidos: saiu da faixa de HUD e mora no painel Status
+            ["Total abatidos", totalDerrotados],
             ["Multiplicador Gold", FormatarGold(mulGold)],
             ["Gold por inimigo", FormatGold(andar * mulGold * MultiplicadorGoldConhecimento() * MultiplicadorGoldFormigas() * MultiplicadorGoldEspecializacao())],
             ["Gold total", FormatGold(totalGold)],
