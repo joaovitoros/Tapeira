@@ -78,6 +78,8 @@ var pesquisaItens = {};
 var pesquisaInimigos = {};
 // Mercado (Cidade): reputação = desconto nas lojas. Permanente.
 var reputacao = 0;
+// Fábrica (Cidade): nível da linha de montagem (auto-compra por segundo). Permanente.
+var fabricaNivel = 0;
 const TEMPO_BAU_DOURADO_JOGO = 20 * 60 * 1000;
 const TEMPO_BAU_DOURADO_OFFLINE = 40 * 60 * 1000;
 var progressoBauDourado = 0;

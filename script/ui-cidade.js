@@ -16,7 +16,7 @@
         mercado: () => Tapeira.Mercado.abrir(),
         pesquisa: () => Tapeira.Pesquisa.abrir(),
         fazenda: () => Tapeira.Fazenda.abrir(),
-        fabrica: () => UI.showItensBuild()
+        fabrica: () => Tapeira.Fabrica.abrir()
     };
 
     // Andar máximo para destravar cada prédio (derivado, sem campo no save).

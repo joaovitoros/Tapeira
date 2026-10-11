@@ -130,9 +130,13 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
 - [ ] (adiado) **Ofertas rotativas** (`ofertasDia`) — não entrou nesta rodada.
 
 ### Fase 7 — ⚙️ Fábrica
-- [ ] Forja (2 iguais → 1 melhorado) + Linha de montagem (automação).
-- [ ] **Save**: `fabricaNivel`, estado da forja.
-- [ ] Teste: forja combina e melhora; automação acelera.
+- [x] **Forja**: junta 2 cópias iguais em 1 "melhorada" (mesmo efeito, 1 slot a menos).
+      O estado é da run (zera com a build). Save: `forja` (objeto `{itemId: nível}`; whitelist).
+- [x] **Linha de montagem** (`fabricaNivel`, 0..10, pago em CM): +1 auto-compra por
+      segundo cada nível (ponto único no `TickAutomacao`). Permanente.
+- [x] Painel próprio (`script/fabrica.js` + `#fabricaModal`), aberto pelo prédio Fábrica.
+- [x] Teste `test-fabrica.js`: forja preserva o efeito e libera slot; linha acelera;
+      save/validação e reset.
 
 ### Fase 8 — 💎 Cristal
 - [ ] Ligação com a profundidade do reset.

@@ -278,6 +278,23 @@ function ValidarSave(save) {
 		&& (!Number.isSafeInteger(save.reputacao) || save.reputacao < 0 || save.reputacao > reputacaoMax)) {
 		throw new TypeError("A reputação do Mercado no save é inválida.");
 	}
+	// Fábrica (Cidade): nível da linha de montagem dentro do teto
+	const fabricaMax = (typeof FABRICA_MAX_NIVEL === "number") ? FABRICA_MAX_NIVEL : 10;
+	if (save.fabricaNivel !== undefined
+		&& (!Number.isSafeInteger(save.fabricaNivel) || save.fabricaNivel < 0 || save.fabricaNivel > fabricaMax)) {
+		throw new TypeError("O nível da Fábrica no save é inválido.");
+	}
+	// Forja (Cidade): objeto { itemId: nível } com ids conhecidos e níveis no teto
+	if (save.forja !== undefined) {
+		if (!save.forja || typeof save.forja !== "object" || Array.isArray(save.forja)) {
+			throw new TypeError("Os dados da forja do save são inválidos.");
+		}
+		for (const [chave, nivel] of Object.entries(save.forja)) {
+			if (!idsItens.includes(chave) || !Number.isSafeInteger(nivel) || nivel < 0 || nivel > 50) {
+				throw new TypeError("Os dados da forja do save são inválidos.");
+			}
+		}
+	}
 	if (save.missoesCompletas !== undefined
 		&& (!Number.isSafeInteger(save.missoesCompletas) || save.missoesCompletas < 0 || save.missoesCompletas > 1000000)) {
 		throw new TypeError("O contador de missões do save é inválido.");
@@ -475,7 +492,7 @@ function ValidarSave(save) {
 		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards",
 			"conquistasComp", "melhorGoldRun", "autoItensLoja",
 			"itensBuild", "bauBuildPendente", "opcoesBauBuild",
-			"pesquisaItens", "pesquisaInimigos"].includes(key)) continue;
+			"pesquisaItens", "pesquisaInimigos", "forja"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");
 		}

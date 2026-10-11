@@ -120,6 +120,7 @@ function CriarObjetoSave(incluirOffline = true) {
 		pesquisaItens,
 		pesquisaInimigos,
 		reputacao,
+		fabricaNivel,
 		missoesCompletas,
 		desafiosVencidos,
 		melhorGoldRun: {
