@@ -110,6 +110,13 @@ function EscolheEspecializacao(id) {
 	especializacao = id;
 	especializacaoTrocas++;
 
+	// Troca de build em TEMPO REAL: o cronômetro do andar atual já reflete o
+	// novo tempo máximo (o Canhão de Vidro corta na hora, sem esperar a troca
+	// de andar). Clampa no máximo novo pra não dar "refill" de graça ao voltar
+	// pra uma build sem debuff.
+	tempoAvancoInimigos = Math.min(tempoAvancoInimigos, TempoFugaMax());
+	UI.render();
+
 	ChamaSom('audio6');
 	SyncSecaoEspecializacao();
 	AutoSaveLocal();

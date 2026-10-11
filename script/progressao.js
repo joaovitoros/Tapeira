@@ -444,7 +444,7 @@ function RegistraToqueFrenesi() {
 	AtualizaHabilidadesCombate();
 }
 
-function AtivaHabilidadeCombate(id) {
+function AtivaHabilidadeCombate(id, opcoes = {}) {
 	const skill = habilidadesCombate.find(item => item.id === id);
 	if (!skill || maxAndar < skill.unlockFloor) return;
 
@@ -464,9 +464,13 @@ function AtivaHabilidadeCombate(id) {
 	} else if (id === "escape" && abatesPausaFuga >= skill.killsRequired && segundosPausaFuga === 0 && !fugaEmAndamento) {
 		habilidadeAtivada = true;
 		abatesPausaFuga = 0;
-		segundosPausaFuga = DuracaoPausaFuga();
+		// Passiva do Mago do Relógio: a ativação automática dele dura 50% a mais
+		const bonusFuga = Math.max(1, Number(opcoes.bonusFuga) || 1);
+		segundosPausaFuga = Math.round(DuracaoPausaFuga() * bonusFuga);
 		ChamaSom("audio7");
-		UI.showInfo(`Relógio de fuga pausado por ${segundosPausaFuga} segundos!`);
+		UI.showInfo(bonusFuga > 1
+			? `Mago do Relógio: fuga pausada por ${segundosPausaFuga} segundos (+50%)!`
+			: `Relógio de fuga pausado por ${segundosPausaFuga} segundos!`);
 	} else if (id === "frenzy" && abatesFrenesi >= skill.killsRequired && ataquesFrenesi === 0) {
 		habilidadeAtivada = true;
 		abatesFrenesi = 0;

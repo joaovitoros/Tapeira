@@ -99,7 +99,7 @@ const PREVIEWS_LOJA = {
 		const n = Math.max(0, N(lvlComp3) | 0);
 		const pct = lv => Math.min(50, 10 + 2 * Math.max(0, lv - 1));
 		return "Mago do Relógio: enche " + (n > 0 ? pct(n) + "% → " + pct(n + 1) : pct(1))
-			+ "% de uma skill a cada 5s (teto 50%)";
+			+ "% de uma skill a cada 5s (teto 50%) · ao encher a Pausa da fuga, ela liga sozinha (+50%)";
 	},
 	CompraComp4() {
 		const n = Math.max(0, N(lvlComp4) | 0);

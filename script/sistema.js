@@ -314,6 +314,9 @@ function PreCarregamento() {
 	// seção de especialização da loja: estado refletido a cada 1s (leitura
 	// barata de DOM, como os toggles — load, reset e zerada se refletem sozinhos)
 	intervalos.push(setInterval(SyncSecaoEspecializacao, 1000));
+	// Cidade: a aba só aparece no andar 80 (gate derivado do maxAndar, que muda
+	// no avanço) — reflete a cada 1s, como a seção da loja.
+	intervalos.push(setInterval(() => window.Tapeira?.Cidade?.sincroniza?.(), 1000));
 
 	// tick do companheiro com intervalo dinâmico (Velocidade do Companheiro):
 	// o handle gerenciado é limpo aqui (o intervalos[] não o contém) e recriado

@@ -275,7 +275,8 @@ const UI = {
                 document.getElementById(id)?.style.visibility === "visible"
             )],
             ["btnSkills", !!document.getElementById("feitosModal")],
-            ["btnRamos", !!document.getElementById("ramosTreeModal")]
+            ["btnRamos", !!document.getElementById("ramosTreeModal")],
+            ["btnCidade", document.getElementById("container-Cidade")?.hidden === false]
         ];
 
         states.forEach(([id, isOpen]) => {
@@ -541,7 +542,7 @@ const UI = {
             // Companheiros: nível + efeito vigente de cada um (loja de esmeraldas)
             ["Companheiro 1 — dano", N(lvlComp1) > 0 ? "nível " + (N(lvlComp1) | 0) + ": " + FormataPct(danoComp1, 0) + " do seu dano" : "não comprado"],
             ["Companheiro 2 — gold", N(lvlComp2) > 0 ? "nível " + (N(lvlComp2) | 0) + ": " + FormatGold(goldCompanheiro) + "/s (" + (25 + 10 * (N(lvlComp2) - 1)) + "% do gold de um inimigo)" : "não comprado"],
-            ["Companheiro 3 — Mago do Relógio", N(lvlComp3) > 0 ? "nível " + (N(lvlComp3) | 0) + ": +" + (PctCargaMago() * 100).toFixed(0) + "% de uma skill a cada 5s" : "não comprado"],
+            ["Companheiro 3 — Mago do Relógio", N(lvlComp3) > 0 ? "nível " + (N(lvlComp3) | 0) + ": +" + (PctCargaMago() * 100).toFixed(0) + "% de uma skill a cada 5s · ao encher a Pausa da fuga, ela liga sozinha (+50%)" : "não comprado"],
             ["Companheiro 4 — Alquimista", N(lvlComp4) > 0 ? "nível " + (N(lvlComp4) | 0) + ": " + buffAlqTxt : "não comprado"],
             ["Companheiro 5 — Assassino", N(lvlComp5) > 0 ? "nível " + (N(lvlComp5) | 0) + ": " + PctTexto(ChanceMorteAssassino(true)) + " de morte instantânea (" + PctTexto(ChanceMorteAssassino(false)) + " em automáticos) · veneno: " + PctTexto(CHANCE_VENENO_ASSASSINO) + " de tirar " + PctTexto(VENENO_ASSASSINO_PCT) + " da vida" : "não comprado"],
             ["Companheiro 6 — Explorador", N(lvlComp6) > 0 ? "nível " + (N(lvlComp6) | 0) + ": " + PctTexto(ChanceExplorador()) + " de avançar +1 andar" : "não comprado"],

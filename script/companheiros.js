@@ -106,7 +106,9 @@ const CHANCE_VENENO_ASSASSINO = 0.01;
 const VENENO_ASSASSINO_PCT = 0.03;
 
 // Mago do Relógio: enche uma fatia da barra de uma skill aleatória.
-// Considera só as skills desbloqueadas e que ainda não estão cheias.
+// Considera só as skills desbloqueadas e que ainda não estão cheias. Se TODAS
+// estiverem cheias, ele prefere a Pausa da fuga — pra ligar a passiva dele
+// (a skill ativa sozinha e dura 50% a mais).
 function CarregaSkillAleatoriaMago() {
 	if (jogoPausado || fugaEmAndamento) return;
 	if (lvlComp3 <= 0) return;
@@ -119,6 +121,14 @@ function CarregaSkillAleatoriaMago() {
 		const atual = ContagemSkill(skill.id);
 		if (atual < skill.killsRequired) candidatas.push(skill.id);
 	});
+
+	// Tudo cheio: mira na Pausa da fuga (só se ela puder ativar agora).
+	if (candidatas.length === 0) {
+		const escape = habilidadesCombate.find(s => s.id === "escape");
+		if (escape && maxAndar >= escape.unlockFloor && segundosPausaFuga === 0 && !fugaEmAndamento) {
+			candidatas.push("escape");
+		}
+	}
 	if (candidatas.length === 0) return;
 
 	const escolhida = candidatas[Math.floor(Math.random() * candidatas.length)];
@@ -154,6 +164,11 @@ function AdicionaCargaSkill(id, quanto) {
 		abatesBonusGoldAtaque = Math.min(teto, abatesBonusGoldAtaque + quanto);
 	} else if (id === "escape") {
 		abatesPausaFuga = Math.min(teto, abatesPausaFuga + quanto);
+		// Passiva do Mago do Relógio: encher a Pausa da fuga ativa a skill
+		// sozinha (e a ativação dele dura 50% a mais).
+		if (teto > 0 && abatesPausaFuga >= teto) {
+			AtivaHabilidadeCombate("escape", { bonusFuga: 1.5 });
+		}
 	} else if (id === "frenzy") {
 		abatesFrenesi = Math.min(teto, abatesFrenesi + quanto);
 	}

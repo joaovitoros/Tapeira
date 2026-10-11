@@ -422,10 +422,70 @@ test("progressão: Canhão de Vidro corta 80% do tempo de fuga", async () => {
             const base = TempoFugaMax();
             especializacao = 4; // Canhão de Vidro
             const vidro = TempoFugaMax();
-            return { base, vidro };
+
+            // Troca em TEMPO REAL: escolher o Canhão corta o cronômetro do andar
+            // atual na hora (não espera a troca de andar).
+            gold = new GoldNumber(1e9);
+            andarVolta = 20; maxAndar = 90; // destrava as builds
+            especializacao = 0;
+            tempoAvancoInimigos = TempoFugaMax(); // 90
+            const antesTroca = tempoAvancoInimigos;
+            EscolheEspecializacao(4); // paga e troca pra Canhão de Vidro
+            const depoisTroca = tempoAvancoInimigos;
+
+            return { base, vidro, antesTroca, depoisTroca };
         });
         assert.equal(r.base, 90);
         assert.equal(r.vidro, 18, "90 s com −80% = 18 s");
+        assert.equal(r.antesTroca, 90);
+        assert.equal(r.depoisTroca, 18, "a troca de build corta o cronômetro na hora");
+        assert.deepEqual(pageErrors, []);
+    } finally { await context.close(); }
+});
+
+test("progressão: Mago do Relógio ativa a Pausa da fuga (+50%) ao encher", async () => {
+    const { context, page, pageErrors } = await openPage();
+    try {
+        const r = await page.evaluate(() => {
+            maxAndar = 50; // destrava todas as skills de combate
+            nivelSkillFuga = 5; // duração base 20s (10 + 2/nível)
+            ramoSkillFuga = 0;
+            lvlComp3 = 1; // Mago do Relógio
+            missaoAtual = 0;
+            jogoPausado = false;
+            fugaEmAndamento = false;
+            segundosPausaFuga = 0;
+
+            const duracao = DuracaoPausaFuga();
+
+            // o mago enche a Pausa da fuga de uma vez: ela ativa sozinha, +50%
+            abatesPausaFuga = 0;
+            AdicionaCargaSkill("escape", TetoSkill("escape"));
+            const mago = { segundos: segundosPausaFuga, carga: abatesPausaFuga };
+
+            // a ativação MANUAL (botão) não leva o bônus
+            segundosPausaFuga = 0;
+            abatesPausaFuga = TetoSkill("escape");
+            AtivaHabilidadeCombate("escape");
+            const manual = segundosPausaFuga;
+
+            // tudo cheio: o mago prefere a Pausa da fuga pra ligar a passiva
+            abateshabilidadeDano = 10; qtdCarregaHabilidade = 10;
+            abatesCorrenteEletrica = TetoSkill("electric");
+            abatesBonusGoldAtaque = TetoSkill("gold");
+            abatesFrenesi = TetoSkill("frenzy");
+            abatesPausaFuga = TetoSkill("escape"); // cheia
+            segundosPausaFuga = 0;
+            CarregaSkillAleatoriaMago();
+            const tudoCheio = segundosPausaFuga;
+
+            return { duracao, mago, manual, tudoCheio };
+        });
+        assert.equal(r.duracao, 20, "duração base 20s no nível 5");
+        assert.equal(r.mago.segundos, 30, "mago: +50% (20 -> 30)");
+        assert.equal(r.mago.carga, 0, "a carga zera ao ativar");
+        assert.equal(r.manual, 20, "ativação manual não tem o bônus");
+        assert.equal(r.tudoCheio, 30, "tudo cheio: o mago liga a Pausa da fuga (+50%)");
         assert.deepEqual(pageErrors, []);
     } finally { await context.close(); }
 });

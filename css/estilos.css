@@ -9610,3 +9610,116 @@ img.ramos-tree-no__tile {
 		left: 0;
 	}
 }
+
+/* ===================== CIDADE (hub) — FASE 1: esqueleto ====================
+   Tela cheia e neutra por enquanto (a arte dos prédios entra depois). A run
+   continua rodando por baixo — a Cidade NÃO pausa o jogo. Plano em CIDADE.md. */
+#container-Cidade {
+	position: fixed;
+	inset: 0;
+	z-index: 60;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding: clamp(14px, 3vw, 32px);
+	background: linear-gradient(160deg, rgba(14, 18, 27, 0.98), rgba(7, 10, 16, 0.99));
+	overflow-y: auto;
+}
+
+#container-Cidade[hidden] {
+	display: none;
+}
+
+/* A Cidade vive dentro de #container-opcoes (z-index 3, cria stacking context).
+   Enquanto aberta, sobe o contexto pra ela cobrir o HUD (z-index 5) — sem
+   mexer no HTML. */
+.cidade-aberta #container-opcoes {
+	z-index: 61;
+}
+
+.cidade-topo {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid rgba(229, 183, 96, 0.35);
+}
+
+.cidade-titulo {
+	color: #ffe2a0;
+	font-size: clamp(20px, 2.4vw, 30px);
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	text-shadow: 0 0 14px rgba(255, 190, 73, 0.28);
+}
+
+.cidade-hud {
+	flex: 1 1 auto;
+	color: #b9c8da;
+	font-size: clamp(12px, 1.1vw, 16px);
+	font-variant-numeric: tabular-nums;
+}
+
+.cidade-fechar {
+	flex: 0 0 auto;
+	width: 40px;
+	height: 40px;
+	border: 1px solid rgba(229, 183, 96, 0.55);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #3c4658, #252c39);
+	color: #ffe0a0;
+	font-size: 22px;
+	font-weight: 800;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.cidade-fechar:hover {
+	filter: brightness(1.15);
+	border-color: rgba(255, 224, 160, 0.8);
+}
+
+.cidade-grade {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 12px;
+	align-content: start;
+}
+
+.cidade-predio {
+	display: grid;
+	justify-items: center;
+	gap: 6px;
+	padding: 18px 12px;
+	border: 1px solid rgba(229, 183, 96, 0.4);
+	border-radius: 12px;
+	background: linear-gradient(145deg, rgba(22, 27, 37, 0.95), rgba(10, 13, 20, 0.95));
+	color: #eaf1fc;
+	font: inherit;
+	cursor: pointer;
+	transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.cidade-predio:hover {
+	transform: translateY(-2px);
+	border-color: rgba(255, 224, 160, 0.85);
+	box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 190, 73, 0.22);
+}
+
+.cidade-predio__icone {
+	font-size: clamp(30px, 3.4vw, 44px);
+	line-height: 1;
+}
+
+.cidade-predio__nome {
+	color: #ffe2a0;
+	font-size: clamp(14px, 1.3vw, 18px);
+	font-weight: 800;
+	text-align: center;
+}
+
+.cidade-predio__abre {
+	color: #9aa7bd;
+	font-size: clamp(11px, 0.9vw, 13px);
+}
