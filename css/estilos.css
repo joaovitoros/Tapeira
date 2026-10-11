@@ -9749,7 +9749,7 @@ img.ramos-tree-no__tile {
 	border: 1px solid rgba(255, 255, 255, 0.06);
 	border-radius: 14px;
 	background:
-		url("../imagens/cidade/cidade background.png") center / cover no-repeat,
+		url("../imagens/cidade/cidade background.png") center / contain no-repeat,
 		#070a10;
 }
 
@@ -9908,10 +9908,10 @@ img.ramos-tree-no__tile {
 }
 
 .cidade-predio--casa     { left: 50%; top: 26%; --largura: 21%; --escala: 1; }
-.cidade-predio--mercado  { left: 22%; top: 40%; --largura: 20%; --escala: 0.96; }
+.cidade-predio--mercado  { left: 23%; top: 37%; --largura: 20%; --escala: 0.96; }
 .cidade-predio--pesquisa { left: 78%; top: 40%; --largura: 20%; --escala: 0.96; }
 .cidade-predio--fabrica  { left: 23%; top: 79%; --largura: 22%; --escala: 1.05; z-index: 4; }
-.cidade-predio--fazenda  { left: 77%; top: 79%; --largura: 22%; --escala: 1.05; z-index: 4; }
+.cidade-predio--fazenda  { left: 76%; top: 75%; --largura: 22%; --escala: 1.05; z-index: 4; }
 
 .cidade-predio__img {
 	display: block;
