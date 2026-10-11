@@ -35,6 +35,25 @@ Object.assign(UI, {
         close.addEventListener("click", fechar);
         header.append(title, close);
 
+        panel.append(header, this.criaConteudoFormigas());
+        overlay.appendChild(panel);
+        overlay.addEventListener("click", event => {
+            if (event.target === overlay) {
+                fechar();
+            }
+        });
+        overlay.addEventListener("keydown", event => {
+            if (event.key === "Escape") fechar();
+        });
+        document.body.appendChild(overlay);
+        this.syncScreenButtons();
+        close.focus();
+    },
+
+    // Conteúdo da coleção (intro + cartões) — reusado no modal e na aba
+    // "Formigas" do painel Feitos. Devolve um fragmento pronto pra inserir.
+    criaConteudoFormigas() {
+        const fragmento = document.createDocumentFragment();
         const intro = document.createElement("p");
         intro.className = "ant-collection-intro";
         intro.textContent = FormigasDesbloqueadas()
@@ -80,20 +99,8 @@ Object.assign(UI, {
             card.append(marker, details);
             list.appendChild(card);
         }
-
-        panel.append(header, intro, list);
-        overlay.appendChild(panel);
-        overlay.addEventListener("click", event => {
-            if (event.target === overlay) {
-                fechar();
-            }
-        });
-        overlay.addEventListener("keydown", event => {
-            if (event.key === "Escape") fechar();
-        });
-        document.body.appendChild(overlay);
-        this.syncScreenButtons();
-        close.focus();
+        fragmento.append(intro, list);
+        return fragmento;
     },
 
     antBonusDescription(id, sets) {

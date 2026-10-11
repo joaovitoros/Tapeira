@@ -31,7 +31,10 @@ var eventoPausaDesde = 0; // início da pausa atual (congela a contagem do event
 var EVENTO_COOLDOWN_MS = 3 * 60 * 1000;
 var EVENTO_CHANCE = 0.15; // por subida de andar
 var EVENTO_ATRASO_MS = 1600; // transição de andar dura 1450ms
-var EVENTO_VEIA_CHANCE = 0.05; // chance de esmeralda por abate na Veia (metade — balanceamento)
+var EVENTO_VEIA_CHANCE = 0.025; // chance de esmeralda por abate na Veia (metade de novo — balanceamento)
+// Peso de cada evento no sorteio: a Veia tem metade do peso dos outros, então
+// aparece ~2× menos que os demais.
+var EVENTO_PESOS = { comercio: 2, meteoro: 2, nevoa: 2, veia: 1, inseto: 2, fissura: 2, emboscada: 2 };
 var EVENTO_DURACAO_MS = { comercio: 45000, meteoro: 30000, nevoa: 45000, veia: 60000, inseto: 5500, fissura: 30000, emboscada: 45000 };
 var EVENTO_INFO = {
 	comercio: { icone: "🪙", titulo: "Comerciante itinerante", dica: "Ofertas especiais enquanto durar o evento!" },
@@ -99,7 +102,13 @@ function TentaEventoAndar() {
 
 	const elegiveis = ["comercio", "meteoro", "nevoa", "veia", "inseto", "fissura", "emboscada"].filter(ElegivelEvento);
 	if (elegiveis.length === 0) return;
-	const nome = elegiveis[Math.floor(Math.random() * elegiveis.length)];
+	// sorteio ponderado: cada nome entra no pool pelo seu EVENTO_PESOS
+	const pool = [];
+	for (const candidato of elegiveis) {
+		const peso = EVENTO_PESOS[candidato] || 1;
+		for (let i = 0; i < peso; i++) pool.push(candidato);
+	}
+	const nome = pool[Math.floor(Math.random() * pool.length)];
 
 	eventoPendente = setTimeout(() => {
 		eventoPendente = null;

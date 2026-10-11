@@ -271,9 +271,7 @@ const UI = {
             ["btn-Loja", ["Loja", "LojaEsm", "LojaCM"].some(id =>
                 document.getElementById(id)?.style.visibility === "visible"
             )],
-            ["btn-Config", document.getElementById("container-SalvaCarrega")?.style.visibility === "visible"],
-            ["btn-Formigas", !!document.getElementById("antCollectionModal")],
-            ["btnSkills", !!document.getElementById("skillUpgradeModal")],
+            ["btnSkills", !!document.getElementById("feitosModal")],
             ["btnRamos", !!document.getElementById("ramosTreeModal")]
         ];
 
@@ -900,16 +898,9 @@ document.addEventListener("click", (e) => {
         AbreLoja(true);
         return;
     }
-    if (e.target.closest("#btn-Config")) {
-        AbreConfig();
-        return;
-    }
-    if (e.target.closest("#btn-Formigas")) {
-        UI.toggleAntCollection();
-        return;
-    }
     if (e.target.closest("#btnSkills")) {
-        UI.toggleSkillUpgradePanel();
+        UI.toggleFeitosPanel();
+        return;
     }
     if (e.target.closest("#btnRamos")) {
         UI.toggleRamosTreePanel();

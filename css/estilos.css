@@ -520,6 +520,21 @@ tr, td, th{
 	z-index: 9999;
 }
 
+/* Dentro do menu de pause (ESC/P) o Config vira conteúdo normal do painel:
+   ele era fixed na tela, aqui entra no fluxo. */
+.pause-panel #container-SalvaCarrega {
+	position: static;
+	right: auto;
+	bottom: auto;
+	width: 100%;
+	min-width: 0;
+	padding: 0;
+	background: transparent;
+	border: 0;
+	box-shadow: none;
+	z-index: auto;
+}
+
 /* TITULOS */
 #container-SalvaCarrega .tituloConfig{
 	font-size: 1vw;
@@ -5989,6 +6004,54 @@ input:focus-visible {
 .sem-entrada,
 .sem-entrada .ant-collection-panel {
 	animation: none;
+}
+
+/* Painel "Feitos": Conquistas/Missões/Marcos embutidos (abas internas).
+   Reusa .ant-collection-overlay/.ant-collection-panel; aqui vai só a
+   estrutura do painel (cabeçalho + abas + corpo rolável). */
+.feitos-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	overflow: hidden;
+}
+
+.feitos-abas {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.feitos-aba {
+	flex: 1 1 auto;
+	min-width: 92px;
+	padding: 8px 12px;
+	border: 1px solid rgba(120, 160, 255, 0.35);
+	border-radius: 9px;
+	background: linear-gradient(to bottom, #232c3c, #161c27);
+	color: #cfd9ee;
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+	transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.feitos-aba:hover {
+	border-color: #7f8fbf;
+	color: #ffffff;
+}
+
+.feitos-aba--ativa {
+	border-color: #4da6ff;
+	background: linear-gradient(to bottom, #2f6fb3, #1d4a7d);
+	color: #ffffff;
+	box-shadow: 0 0 12px rgba(77, 166, 255, 0.3);
+}
+
+.feitos-corpo {
+	flex: 1 1 auto;
+	overflow: auto;
+	padding-right: 4px;
 }
 
 @media (prefers-reduced-motion: reduce) {
