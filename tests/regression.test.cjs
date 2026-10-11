@@ -1960,26 +1960,22 @@ test("habilidades de combate usam listeners registrados (sem onclick inline)", a
     }
 });
 
-test("tela da build esconde a notificação de baú aberto (chest-opening)", async () => {
+test("tela da build esconde o log de avisos", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
         await page.waitForFunction(() => typeof window.ColetaBauDourado === "function");
         const result = await page.evaluate(() => {
-            const notificacao = document.createElement("div");
-            notificacao.className = "chest-opening";
-            document.body.appendChild(notificacao);
-
-            const semTela = getComputedStyle(notificacao).visibility;
+            const log = document.getElementById("logAvisos");
+            const semTela = getComputedStyle(log).visibility;
             document.body.classList.add("itens-build-tela-aberta");
-            const comTela = getComputedStyle(notificacao).visibility;
+            const comTela = getComputedStyle(log).visibility;
             document.body.classList.remove("itens-build-tela-aberta");
-            notificacao.remove();
 
             return { semTela, comTela };
         });
 
-        assert.equal(result.semTela, "visible", "sem a tela da build a notificação aparece");
-        assert.equal(result.comTela, "hidden", "com a tela da build a notificação não fica na frente");
+        assert.equal(result.semTela, "visible", "sem a tela da build o log aparece");
+        assert.equal(result.comTela, "hidden", "com a tela da build o log não fica na frente");
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();

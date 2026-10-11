@@ -109,11 +109,11 @@ const fs = require('fs');
         && [...modal.querySelectorAll("[data-item]")].map(b => b.getAttribute("data-item")).join(",")
           === "adaga,moedas,mapa");
       UI.showMilestone("Aviso de teste", "não deve ficar visível sobre o modal");
-      check("baú, selo e milestone ficam escondidos atrás da tela",
+      check("baú, selo e log ficam escondidos atrás da tela",
         document.body.classList.contains("itens-build-tela-aberta")
         && getComputedStyle(document.getElementById("bauBuild")).visibility === "hidden"
         && getComputedStyle(document.getElementById("bauBuild-selo")).visibility === "hidden"
-        && getComputedStyle(document.getElementById("gameMilestone")).visibility === "hidden");
+        && getComputedStyle(document.getElementById("logAvisos")).visibility === "hidden");
       const imgsCartao = modal ? [...modal.querySelectorAll(".item-build-cartao img")] : [];
       await Promise.all(imgsCartao.map(i => i.decode().catch(() => {})));
       check("ícones dos cartões carregam",
@@ -134,10 +134,10 @@ const fs = require('fs');
         !document.getElementById("modalItensBuild")
         && !!document.getElementById("bauBuild")
         && document.getElementById("bauBuild-selo")?.textContent === "ITENS");
-      check("fechar a escolha devolve baú, selo e milestone à tela",
+      check("fechar a escolha devolve baú, selo e log à tela",
         !document.body.classList.contains("itens-build-tela-aberta")
         && getComputedStyle(document.getElementById("bauBuild")).visibility === "visible"
-        && getComputedStyle(document.getElementById("gameMilestone")).visibility === "visible");
+        && getComputedStyle(document.getElementById("logAvisos")).visibility === "visible");
       IB.carrega({
         itensBuild: ["adaga"],
         bausBuildPendentes: 1,

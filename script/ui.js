@@ -99,43 +99,55 @@ const UI = {
     },
 
     showMilestone(title, message) {
-        // preferência "Anúncios de marco" desligada suprime os banners
+        // preferência "Anúncios de marco" desligada suprime os avisos
         if (window.Tapeira?.Config && !window.Tapeira.Config.ativo("anunciosMarco")) return;
-        this.milestoneQueue.push({ title, message });
-        if (!this.milestoneTimeout) this.displayNextMilestone();
+        const texto = message ? `${title} — ${message}` : title;
+        this.logAviso("marco", texto);
     },
 
-    displayNextMilestone() {
-        const next = this.milestoneQueue.shift();
-        if (!next) {
-            this.milestoneTimeout = null;
-            return;
-        }
+    // Escreve uma linha no log de avisos (#logAvisos, canto inferior esquerdo)
+    // e no histórico (Tapeira.Logs, que alimenta a tela "Logs"). O `tipo` define
+    // a cor: marco | bau | gold | skills | info. Não é chat — só leitura.
+    logAviso(tipo, texto) {
+        const limpo = typeof texto === "string" ? texto.trim() : "";
+        if (!limpo) return;
+        window.Tapeira?.Logs?.adiciona?.(limpo);
 
-        let notice = document.getElementById("gameMilestone");
-        if (!notice) {
-            notice = document.createElement("div");
-            notice.id = "gameMilestone";
-            notice.setAttribute("role", "status");
-            notice.setAttribute("aria-live", "polite");
-            notice.innerHTML = `
-                <div id="gameMilestoneTitle"></div>
-                <div id="gameMilestoneMessage"></div>
-            `;
-            document.body.appendChild(notice);
-        }
+        const log = document.getElementById("logAvisos");
+        const corpo = document.getElementById("logAvisosCorpo");
+        if (!log || !corpo) return; // menu não tem o log
 
-        document.getElementById("gameMilestoneTitle").textContent = next.title;
-        document.getElementById("gameMilestoneMessage").textContent = next.message;
-        notice.classList.add("game-milestone--visible");
+        const linha = document.createElement("div");
+        linha.className = "log-avisos__linha log-avisos__linha--" + (tipo || "info");
+        const hora = document.createElement("span");
+        hora.className = "log-avisos__hora";
+        hora.textContent = new Date().toTimeString().slice(0, 5);
+        const txt = document.createElement("span");
+        txt.className = "log-avisos__txt";
+        txt.textContent = limpo;
+        linha.append(hora, txt);
+        corpo.appendChild(linha);
 
-        this.milestoneTimeout = setTimeout(() => {
-            notice.classList.remove("game-milestone--visible");
-            this.milestoneTimeout = setTimeout(() => {
-                this.milestoneTimeout = null;
-                this.displayNextMilestone();
-            }, 200);
-        }, 2600);
+        // mantém só as últimas linhas (o topo some no fade da máscara)
+        const LIMITE = 8;
+        while (corpo.children.length > LIMITE) corpo.removeChild(corpo.firstElementChild);
+
+        log.hidden = false;
+        corpo.scrollTop = corpo.scrollHeight;
+    },
+
+    limpaLogAvisos() {
+        const log = document.getElementById("logAvisos");
+        const corpo = document.getElementById("logAvisosCorpo");
+        if (corpo) corpo.replaceChildren();
+        if (log) log.hidden = true;
+    },
+
+    toggleLogAvisos() {
+        const log = document.getElementById("logAvisos");
+        if (!log) return;
+        const recolhido = log.classList.toggle("log-avisos--recolhido");
+        document.getElementById("logAvisosCabeca")?.setAttribute("aria-expanded", String(!recolhido));
     },
 
     floorTransitionTimeout: null,

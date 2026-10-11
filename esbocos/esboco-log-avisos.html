@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<!--
+  ESBOÇO (mockup estático, descartável) — NÃO faz parte do jogo.
+
+  NOVA ESTRATÉGIA (substitui o esboço A anterior, que empurrava o
+  Objetivo/Missão): marco de andar e "baú encontrado" deixam de ser cartões que
+  empurram a linha do topo. Viram um **log** estilo chat do World of Warcraft:
+  um painel semi-transparente num canto, com linhas coloridas por tipo, mais
+  novas embaixo, rolando sozinho. SEM nada de chat: sem input, sem canais, sem
+  comandos, sem abas — é só leitura (um feed).
+
+  O card de Objetivo/Missão fica INTACTO no topo (nada empurra, nada perde
+  altura). O log é overlay de HUD no canto, como o chat do WoW.
+
+  Medidas reais do HUD (390×780, pós-1.4.0):
+    topo 8–55 · fuga 56–86 · metas 96–182 (baú 8–92, objetivo 97–382)
+    skills ~634–712 (à direita) · nav 726–772
+  => o rodapé é 100% ocupado; por isso o log é overlay no canto esquerdo.
+
+  Cores por tipo (linha): MARCO dourado · BAÚ verde-água · GOLD dourado-claro ·
+  BUFF azul · XP verde · INFO cinza-azulado.
+-->
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Esboço — log de avisos (estilo chat do WoW)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --hud-bg: linear-gradient(145deg, rgba(14,18,27,.94), rgba(22,25,31,.86));
+    --hud-border: 1px solid rgba(229,183,96,.42);
+    --gold: #ffd36b; --muted: #b9c3d3; --font: "Segoe UI", "Roboto", sans-serif;
+  }
+  body {
+    min-height: 100vh; padding: 26px 16px 70px;
+    background: radial-gradient(ellipse at 50% 0%, #1b212e, #0a0d12 70%);
+    color: #e6edf3; font-family: var(--font);
+  }
+  .doc-head { max-width: 1180px; margin: 0 auto 22px; }
+  .doc-head h1 { font-size: clamp(19px,2.4vw,28px); color: var(--gold); margin-bottom: 6px; }
+  .doc-head p { max-width: 980px; color: #b9c3d3; font-size: 14px; line-height: 1.55; margin: 5px 0; }
+  .doc-head b { color: #f2e5ca; }
+  .doc-head code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 4px; font-size: .92em; }
+  .ref { margin-top: 10px; padding: 10px 13px; max-width: 980px; border-radius: 9px;
+         background: rgba(120,200,255,.06); border: 1px solid rgba(120,200,255,.28);
+         color: #cfe6ff; font-size: 13px; line-height: 1.5; }
+
+  .layout { display: flex; flex-wrap: wrap; gap: 30px; align-items: flex-start; justify-content: center; max-width: 1500px; margin: 0 auto; }
+  .col { flex: 0 0 auto; display: grid; gap: 12px; }
+  .col h2 { font-size: 15px; color: #9ccfff; }
+  .col h2 span { color: var(--gold); }
+
+  .phone { position: relative; width: 390px; height: 780px;
+           border: 10px solid #05070b; border-radius: 42px; overflow: hidden;
+           box-shadow: 0 26px 70px rgba(0,0,0,.7), 0 0 0 2px rgba(229,183,96,.18); background: #0a0d12; }
+  .frame-wide { position: relative; width: 780px; height: 460px;
+                border: 10px solid #05070b; border-radius: 20px; overflow: hidden;
+                box-shadow: 0 26px 70px rgba(0,0,0,.7), 0 0 0 2px rgba(229,183,96,.18); background: #0a0d12; }
+
+  .scene { position: absolute; inset: 0;
+           background-image: linear-gradient(rgba(0,0,0,.30), rgba(0,0,0,.52)), url("../imagens/background cristal.png");
+           background-size: cover; background-position: center; }
+  .sprite { position: absolute; object-fit: contain; user-select: none; }
+  .player { left: 50%; top: 48%; width: 112px; transform: translateX(-50%); filter: drop-shadow(0 7px 5px rgba(0,0,0,.4)); }
+  .inimigo { width: 78px; filter: drop-shadow(0 6px 4px rgba(0,0,0,.4)); }
+  .i1 { left: 16%; top: 38%; } .i2 { left: 12%; top: 60%; }
+  .i3 { right: 14%; top: 38%; } .i4 { right: 10%; top: 60%; }
+  .frame-wide .player { top: 54%; width: 116px; }
+  .frame-wide .i1 { left: 30%; top: 44%; } .frame-wide .i2 { left: 26%; top: 70%; }
+  .frame-wide .i3 { right: 26%; top: 44%; } .frame-wide .i4 { right: 21%; top: 70%; }
+
+  .guide { position: absolute; left: 0; right: 0; z-index: 8; height: 0;
+           border-top: 1px dashed rgba(120,200,255,.42); pointer-events: none; }
+  .guide__label { position: absolute; right: 3px; top: 0; transform: translateY(-50%);
+                  padding: 1px 5px; border-radius: 4px; background: rgba(6,12,20,.85);
+                  color: #8fd0ff; font-size: 8.5px; font-weight: 700; border: 1px solid rgba(120,200,255,.45); }
+  .pin { position: absolute; z-index: 9; display: grid; place-items: center; width: 21px; height: 21px;
+         border-radius: 999px; background: #d94c32; border: 2px solid #ffe6c4; color: #fff;
+         font-size: 12px; font-weight: 900; box-shadow: 0 3px 10px rgba(0,0,0,.6); }
+
+  /* ---------- TOPO (inalterado) ---------- */
+  .toprow { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 5;
+            display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 46px; }
+  .hud-floor { display: flex; align-items: center; gap: 6px; height: 100%; padding: 0 7px;
+               background: var(--hud-bg); border: var(--hud-border); border-radius: 9px; backdrop-filter: blur(6px); }
+  .hud-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .hud-lbl { font-size: 9px; line-height: 1; letter-spacing: .03em; text-transform: uppercase; color: var(--muted); }
+  .floor-val { font-size: 15px; font-weight: 800; line-height: 1; color: var(--gold); }
+  .hud-sep { width: 1px; height: 26px; margin: 0 5px; background: rgba(255,255,255,.12); }
+  .hud-item input[type="checkbox"] { width: 14px; height: 14px; accent-color: #f0b64a; }
+  .btn-voltar { display: grid; place-items: center; height: 28px; padding: 0 6px; margin-left: 3px; border-radius: 7px;
+                background: linear-gradient(to bottom,#e44d6e 5%,#ec9c9c 100%); border: 1px solid #d14931; color: #fff;
+                font-size: 10px; font-weight: 800; text-transform: uppercase; box-shadow: 0 3px 0 #8c2137; }
+  .pause { display: flex; align-items: center; gap: 4px; height: 100%; padding: 0 9px; border: 1px solid #ffe4a0;
+           border-radius: 10px; background: linear-gradient(145deg,#ffd66f,#e79432 58%,#b85d25); color: #26170a;
+           font-weight: 800; font-size: 13px; box-shadow: 0 3px 0 #75401b; }
+  .hud-res { display: flex; flex-direction: column; gap: 2px; height: 100%; padding: 3px 4px;
+             background: var(--hud-bg); border: var(--hud-border); border-radius: 9px; backdrop-filter: blur(6px); }
+  .res { flex: 1 1 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 0 7px;
+         background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.07); border-radius: 6px;
+         font-weight: 800; font-variant-numeric: tabular-nums; font-size: 13px; }
+  .res img { width: 15px; height: 15px; }
+  .res--gold { color: #ffd84a; } .res--gem { color: #4dff88; }
+
+  .escape { position: absolute; top: 56px; left: 50%; transform: translateX(-50%); z-index: 4;
+            display: flex; align-items: center; gap: 6px; width: 200px; height: 20px; padding: 0 9px;
+            background: linear-gradient(145deg, rgba(40,22,14,.92), rgba(24,18,16,.92));
+            border: 1px solid rgba(255,150,90,.5); border-radius: 999px; font-size: 10px; color: #ffd9b8; }
+  .escape b { color: #ff9a5a; } .escape .bar { flex: 1 1 auto; }
+  .bar { height: 6px; border-radius: 999px; overflow: hidden; background: rgba(5,8,14,.85); border: 1px solid rgba(255,255,255,.1); }
+  .bar > i { display: block; height: 100%; } .escape .bar > i { width: 62%; background: linear-gradient(90deg,#ff7a4a,#ffb066); }
+
+  /* baú dourado + objetivo/missão — INTACTOS (nada empurra) */
+  .golden-chest { position: absolute; left: 8px; top: 96px; width: 84px; height: 86px; z-index: 3;
+                  display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 6px;
+                  border: 1px solid rgba(255,204,77,.62); border-radius: 12px;
+                  background: linear-gradient(145deg, rgba(49,39,19,.97), rgba(19,20,24,.97)); color: #fff4d5; font-size: 11px; }
+  .golden-chest__main { display: flex; align-items: center; justify-content: space-between; gap: 3px; }
+  .golden-chest__icon { width: 34px; height: 29px; filter: drop-shadow(0 0 6px rgba(255,196,52,.62)); }
+  .golden-chest__time { font-size: 13px; font-weight: 800; }
+  .golden-chest__bottom { display: flex; align-items: flex-end; justify-content: space-between; gap: 4px; }
+  .golden-chest__info { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
+                        border: 1px solid rgba(255,224,138,.55); background: rgba(0,0,0,.5); color: #ffe08a; font-size: 10px; font-weight: 800; }
+  .golden-chest__auto { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: 9px; text-transform: uppercase; color: #d8cba9; }
+  .golden-chest__auto input { width: 14px; height: 14px; accent-color: #72e7c1; }
+
+  .aim { position: absolute; left: 97px; right: 8px; top: 96px; z-index: 3; padding: 6px 11px; display: grid; gap: 3px;
+         background: var(--hud-bg); border: var(--hud-border); border-radius: 9px; backdrop-filter: blur(6px); }
+  .aim__eyebrow { font-size: 8.5px; letter-spacing: .12em; text-transform: uppercase; }
+  .aim__eyebrow--gold { color: #e5c47e; } .aim__eyebrow--blue { color: #9bc8e5; }
+  .aim__row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .aim__desc { font-weight: 700; font-size: 12.5px; }
+  .aim__count { font-size: 10px; color: #c6cfdd; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .aim__bar { height: 7px; border-radius: 999px; overflow: hidden; background: rgba(5,8,14,.85); border: 1px solid rgba(255,255,255,.12); }
+  .aim__bar > i { display: block; height: 100%; }
+  .fill--gold { width: 46%; background: linear-gradient(90deg,#d89537,#ffd36b); }
+  .fill--blue { width: 15%; background: linear-gradient(90deg,#4983ae,#9ed8ff); }
+  .aim__div { height: 1px; margin: 2px 0; background: linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent); }
+
+  /* ---------- RODAPÉ (inalterado): skills à direita + nav ---------- */
+  .habilidades { position: absolute; right: 108px; bottom: 68px; z-index: 5; display: flex; align-items: flex-end; gap: 5px; }
+  .frame-wide .habilidades { left: 352px; right: auto; bottom: 84px; }
+  .frame-wide .log { bottom: 84px; width: 33%; max-height: 60px; }
+  .hab-icon { width: 40px; height: 40px; border-radius: 9px; background: linear-gradient(145deg,#2a3b57,#16243a);
+              border: 1px solid rgba(137,177,255,.5); display: grid; place-items: center; color: #bcd8ff; font-size: 16px; }
+  .hab-bar { width: 18px; height: 72px; border-radius: 6px; padding: 1px; overflow: hidden; display: flex; align-items: flex-end;
+             background: linear-gradient(180deg, rgba(15,21,35,.96), rgba(5,9,18,.96)); border: 1px solid rgba(137,177,255,.58); }
+  .hab-bar > i { width: 100%; border-radius: 0 0 4px 4px; background: linear-gradient(180deg,#77c7ff,#3578ff 55%,#1946c2); }
+  .h40 { height: 40% } .h70 { height: 70% } .h25 { height: 25% } .h88 { height: 88% } .h55 { height: 55% }
+
+  .bottomnav { position: absolute; left: 8px; right: 8px; bottom: 10px; z-index: 5; display: flex; gap: 6px; padding: 6px;
+               background: var(--hud-bg); border: var(--hud-border); border-radius: 9px; backdrop-filter: blur(6px); }
+  .nav-btn { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+             height: 44px; border-radius: 8px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07);
+             color: #e9dcc0; font-size: 8.5px; font-weight: 700; }
+  .nav-btn img { width: 17px; height: 17px; filter: invert(82%) sepia(31%) saturate(694%) hue-rotate(354deg) brightness(103%) contrast(92%); }
+
+  /* ============================ O LOG (novo) ============================
+     Painel translúcido estilo chat do WoW: linhas com hora + ícone + texto
+     colorido por tipo; mais nova embaixo; a máscara escurece as antigas.
+     Sem input, sem abas, sem comandos. */
+  .log {
+    position: absolute; left: 8px; bottom: 156px; z-index: 6;
+    /* Android: ~290px (≈74% da tela, dentro dos 60–80%) e no máx. 60px de altura */
+    width: min(290px, 80vw); max-height: 60px;
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 5px 8px 6px;
+    background: linear-gradient(180deg, rgba(4,6,10,.10), rgba(4,6,10,.52) 42%, rgba(4,6,10,.72));
+    border-radius: 6px;
+    box-shadow: 0 6px 22px rgba(0,0,0,.35);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16px, #000 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 16px, #000 100%);
+    overflow: hidden;
+    font: 600 11.5px/1.30 var(--font);
+    color: #e9eef5; text-shadow: 0 1px 2px #000, 0 0 3px rgba(0,0,0,.9);
+  }
+  .log__cabeca { display: flex; align-items: center; gap: 6px; margin-bottom: 1px;
+                 color: #9fb2c9; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+  .log__cabeca .bolha { display: grid; place-items: center; width: 15px; height: 13px; border-radius: 4px;
+                        background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25); font-size: 9px; }
+  .log__cabeca .recolher { margin-left: auto; opacity: .8; }
+  .log__linha { display: grid; grid-template-columns: 16px auto 1fr; column-gap: 6px; align-items: baseline; }
+  .log__ico { font-size: 11px; line-height: 1; text-align: center; }
+  .log__hora { color: #93a1b3; font-size: 10px; font-variant-numeric: tabular-nums; }
+  .log__txt { min-width: 0; word-break: break-word; }
+  .log__txt b { color: #fff; }
+  .t-marco { color: #ffd36b; } .t-bau { color: #72e7c1; } .t-gold { color: #ffd84a; }
+  .t-buff { color: #8fd0ff; } .t-xp { color: #9fe6b8; } .t-info { color: #c3d2e2; }
+  .log--recollido .log__corpo { display: none; }
+
+  .ticker { position: absolute; left: 8px; right: 8px; z-index: 6; padding: 6px 10px;
+            background: linear-gradient(90deg, rgba(4,6,10,.58), rgba(4,6,10,.30)); border-radius: 6px;
+            font: 600 11.5px/1.3 var(--font); color: #e9eef5; text-shadow: 0 1px 2px #000; }
+
+  /* legendas */
+  .legend { flex: 1 1 520px; max-width: 660px; display: grid; gap: 12px; align-content: start; }
+  .legend h2 { font-size: 15px; color: var(--gold); }
+  .legend ol { list-style: none; display: grid; gap: 8px; }
+  .legend li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; padding: 10px 12px;
+               background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 9px;
+               font-size: 13px; line-height: 1.5; color: #dbe3ee; }
+  .legend .num { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: #d94c32; color: #fff; font-size: 12px; font-weight: 900; }
+  .legend .card { padding: 12px 14px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px;
+                  background: rgba(255,255,255,.03); font-size: 13px; line-height: 1.5; color: #dbe3ee; }
+  .legend .card b { color: #fff; }
+  .legend .k { color: var(--gold); font-weight: 800; } .legend .v { color: #c79bff; font-weight: 800; }
+  .legend .ok { color: #9ff5c0; } .legend .nao { color: #ffb4b4; }
+  .legend code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 4px; font-size: .92em; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 12.5px; }
+  .swatches span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatches i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+</style>
+</head>
+
+<body>
+  <div class="doc-head">
+    <h1>Esboço — log de avisos (estilo chat do WoW)</h1>
+    <p><b>Nova estratégia:</b> o <b>marco de andar</b> e o <b>“baú encontrado”</b> saem da linha do topo e
+       deixam de <b>empurrar</b> o card de Objetivo/Missão. Eles viram um <b>log</b> — um painel
+       translúcido num canto, com uma linha por aviso (hora + ícone + texto colorido por tipo), mais
+       novas embaixo e as antigas sumindo no fade. O <b>Objetivo/Missão fica intacto</b>.</p>
+    <p><b>Não é chat:</b> não tem campo de digitação, abas, canais nem comandos — é só um feed de leitura.</p>
+    <div class="ref">
+      <b>Referência:</b> o chat do World of Warcraft — caixa semi-transparente no canto, texto com contorno
+      para ler sobre o cenário, linhas coloridas por canal/tipo, a mais recente embaixo. Aqui as “cores de
+      canal” são os tipos de aviso do jogo.
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- ===================== A: canto inferior esquerdo ===================== -->
+    <div class="col" style="width:390px">
+      <h2>A — log no <span>canto inferior esquerdo</span> (WoW)</h2>
+      <div class="phone">
+        <div class="scene">
+          <img class="sprite inimigo i1" src="../imagens/inimigo.png" alt="">
+          <img class="sprite inimigo i2" src="../imagens/inimigo.png" alt="">
+          <img class="sprite inimigo i3" src="../imagens/inimigo.png" alt="">
+          <img class="sprite inimigo i4" src="../imagens/inimigo.png" alt="">
+          <img class="sprite player" src="../imagens/player.png" alt="">
+        </div>
+
+        <div class="toprow">
+          <div class="hud-floor">
+            <div class="hud-item"><span class="hud-lbl">Andar</span><span class="floor-val">110</span></div>
+            <span class="hud-sep"></span>
+            <div class="hud-item"><span class="hud-lbl">Manter</span><input type="checkbox"></div>
+            <button type="button" class="btn-voltar">Voltar</button>
+          </div>
+          <span class="pause">Ⅱ Pausar</span>
+          <div class="hud-res">
+            <div class="res res--gold"><img src="../imagens/gold.png" alt=""><span>287.10T</span></div>
+            <div class="res res--gem"><img src="../imagens/gem.png" alt=""><span>37</span></div>
+          </div>
+        </div>
+
+        <div class="escape"><span>Fuga <b>121s</b></span><span class="bar"><i></i></span></div>
+
+        <section class="golden-chest">
+          <div class="golden-chest__main"><img class="golden-chest__icon" src="../imagens/bau-dourado.svg" alt=""><span class="golden-chest__time">9:18</span></div>
+          <div class="golden-chest__bottom"><span class="golden-chest__info">i</span><label class="golden-chest__auto">auto<input type="checkbox" checked></label></div>
+        </section>
+        <div class="aim">
+          <span class="aim__eyebrow aim__eyebrow--gold">Objetivo do andar</span>
+          <div class="aim__row"><span class="aim__desc">Limpe a caverna</span><span class="aim__count">4 / 196 inimigos</span></div>
+          <span class="aim__bar"><i class="fill--gold"></i></span>
+          <span class="aim__div"></span>
+          <span class="aim__eyebrow aim__eyebrow--blue">Missão atual</span>
+          <div class="aim__row"><span class="aim__desc">Tempo</span><span class="aim__count">73 / 600 seg</span></div>
+          <span class="aim__bar"><i class="fill--blue"></i></span>
+        </div>
+
+        <!-- O LOG -->
+        <div class="log">
+          <div class="log__cabeca"><span class="bolha">💬</span> Registro <span class="recolher">⌄</span></div>
+          <div class="log__corpo">
+            <div class="log__linha"><span class="log__ico t-marco">🏆</span><span class="log__hora">12:04</span><span class="log__txt t-marco">Marco do andar 110 — +10% de gold nesta run</span></div>
+            <div class="log__linha"><span class="log__ico t-bau">📦</span><span class="log__hora">12:04</span><span class="log__txt t-bau">Baú encontrado: <b>+107.31T Gold</b></span></div>
+            <div class="log__linha"><span class="log__ico t-buff">⚗️</span><span class="log__hora">12:05</span><span class="log__txt t-buff">Alquimista: Gold ×2 por 10s</span></div>
+          </div>
+        </div>
+
+        <div class="habilidades">
+          <span class="hab-icon">🗡</span>
+          <span class="hab-bar"><i class="h70"></i></span>
+          <span class="hab-bar"><i class="h40"></i></span>
+          <span class="hab-bar"><i class="h25"></i></span>
+          <span class="hab-bar"><i class="h88"></i></span>
+        </div>
+
+        <nav class="bottomnav">
+          <span class="nav-btn"><img src="../imagens/account_circle-24px.svg" alt="">Status</span>
+          <span class="nav-btn"><img src="../imagens/store-24px.svg" alt="">Loja</span>
+          <span class="nav-btn">✷ Feitos</span>
+          <span class="nav-btn">🌿 Ramos</span>
+          <span class="nav-btn"><img src="../imagens/settings-black-18dp.svg" alt="">Config</span>
+        </nav>
+
+        <span class="guide" style="top:182px"><span class="guide__label">metas intactas (nada empurra)</span></span>
+        <span class="guide" style="top:634px"><span class="guide__label">skills</span></span>
+        <span class="guide" style="top:726px"><span class="guide__label">nav</span></span>
+
+        <span class="pin" style="top:520px; left:6px;">1</span>
+      </div>
+    </div>
+
+    <!-- ===================== B: canto inferior direito ===================== -->
+    <div class="col" style="width:390px">
+      <h2>B — log no <span>canto inferior direito</span></h2>
+      <div class="phone">
+        <div class="scene">
+          <img class="sprite inimigo i1" src="../imagens/inimigo.png" alt="">
+          <img class="sprite inimigo i2" src="../imagens/inimigo.png" alt="">
+          <img class="sprite inimigo i3" src="../imagens/inimigo.png" alt="">
+          <img class="sprite inimigo i4" src="../imagens/inimigo.png" alt="">
+          <img class="sprite player" src="../imagens/player.png" alt="">
+        </div>
+
+        <div class="toprow">
+          <div class="hud-floor">
+            <div class="hud-item"><span class="hud-lbl">Andar</span><span class="floor-val">110</span></div>
+            <span class="hud-sep"></span>
+            <div class="hud-item"><span class="hud-lbl">Manter</span><input type="checkbox"></div>
+            <button type="button" class="btn-voltar">Voltar</button>
+          </div>
+          <span class="pause">Ⅱ Pausar</span>
+          <div class="hud-res">
+            <div class="res res--gold"><img src="../imagens/gold.png" alt=""><span>287.10T</span></div>
+            <div class="res res--gem"><img src="../imagens/gem.png" alt=""><span>37</span></div>
+          </div>
+        </div>
+
+        <div class="escape"><span>Fuga <b>121s</b></span><span class="bar"><i></i></span></div>
+
+        <section class="golden-chest">
+          <div class="golden-chest__main"><img class="golden-chest__icon" src="../imagens/bau-dourado.svg" alt=""><span class="golden-chest__time">9:18</span></div>
+          <div class="golden-chest__bottom"><span class="golden-chest__info">i</span><label class="golden-chest__auto">auto<input type="checkbox" checked></label></div>
+        </section>
+        <div class="aim">
+          <span class="aim__eyebrow aim__eyebrow--gold">Objetivo do andar</span>
+          <div class="aim__row"><span class="aim__desc">Limpe a caverna</span><span class="aim__count">4 / 196 inimigos</span></div>
+          <span class="aim__bar"><i class="fill--gold"></i></span>
+          <span class="aim__div"></span>
+          <span class="aim__eyebrow aim__eyebrow--blue">Missão atual</span>
+          <div class="aim__row"><span class="aim__desc">Tempo</span><span class="aim__count">73 / 600 seg</span></div>
+          <span class="aim__bar"><i class="fill--blue"></i></span>
+        </div>
+
+        <!-- O LOG (direita) -->
+        <div class="log" style="left:auto; right:8px;">
+          <div class="log__cabeca"><span class="bolha">💬</span> Registro <span class="recolher">⌄</span></div>
+          <div class="log__corpo">
+            <div class="log__linha"><span class="log__ico t-marco">🏆</span><span class="log__hora">12:04</span><span class="log__txt t-marco">Marco do andar 110 — +10% de gold nesta run</span></div>
+            <div class="log__linha"><span class="log__ico t-bau">📦</span><span class="log__hora">12:04</span><span class="log__txt t-bau">Baú encontrado: <b>+107.31T Gold</b></span></div>
+            <div class="log__linha"><span class="log__ico t-gold">🪙</span><span class="log__hora">12:05</span><span class="log__txt t-gold">Bônus de gold: ×2 ativo</span></div>
+          </div>
+        </div>
+
+        <div class="habilidades">
+          <span class="hab-icon">🗡</span>
+          <span class="hab-bar"><i class="h70"></i></span>
+          <span class="hab-bar"><i class="h40"></i></span>
+          <span class="hab-bar"><i class="h25"></i></span>
+          <span class="hab-bar"><i class="h88"></i></span>
+        </div>
+
+        <nav class="bottomnav">
+          <span class="nav-btn"><img src="../imagens/account_circle-24px.svg" alt="">Status</span>
+          <span class="nav-btn"><img src="../imagens/store-24px.svg" alt="">Loja</span>
+          <span class="nav-btn">✷ Feitos</span>
+          <span class="nav-btn">🌿 Ramos</span>
+          <span class="nav-btn"><img src="../imagens/settings-black-18dp.svg" alt="">Config</span>
+        </nav>
+
+        <span class="guide" style="top:520px"><span class="guide__label">fade do log (antigas somem)</span></span>
+        <span class="pin" style="top:520px; right:6px;">1</span>
+      </div>
+    </div>
+
+    <!-- ===================== C: tela maior ===================== -->
+    <div class="col" style="width:780px">
+      <h2>C — tela maior (PC): log no canto inferior esquerdo</h2>
+      <div class="frame-wide">
+        <div class="scene">
+          <img class="sprite inimigo i1" src="../imagens/inimigo.png" alt="">
+          <img class="sprite inimigo i2" src="../imagens/inimigo.png" alt="">
+          <img class="sprite inimigo i3" src="../imagens/inimigo.png" alt="">
+          <img class="sprite inimigo i4" src="../imagens/inimigo.png" alt="">
+          <img class="sprite player" src="../imagens/player.png" alt="">
+        </div>
+
+        <div class="toprow">
+          <div class="hud-floor">
+            <div class="hud-item"><span class="hud-lbl">Andar</span><span class="floor-val">110</span></div>
+            <span class="hud-sep"></span>
+            <div class="hud-item"><span class="hud-lbl">Manter no andar</span><input type="checkbox"></div>
+            <button type="button" class="btn-voltar">Voltar andar</button>
+          </div>
+          <span class="pause">Ⅱ Pausar</span>
+          <div class="hud-res">
+            <div class="res res--gold"><img src="../imagens/gold.png" alt=""><span>287.10T</span></div>
+            <div class="res res--gem"><img src="../imagens/gem.png" alt=""><span>37</span></div>
+          </div>
+        </div>
+
+        <div class="escape"><span>Fuga <b>121s</b></span><span class="bar"><i></i></span></div>
+
+        <section class="golden-chest">
+          <div class="golden-chest__main"><img class="golden-chest__icon" src="../imagens/bau-dourado.svg" alt=""><span class="golden-chest__time">9:18</span></div>
+          <div class="golden-chest__bottom"><span class="golden-chest__info">i</span><label class="golden-chest__auto">auto<input type="checkbox" checked></label></div>
+        </section>
+        <div class="aim" style="right:8px;">
+          <span class="aim__eyebrow aim__eyebrow--gold">Objetivo do andar</span>
+          <div class="aim__row"><span class="aim__desc">Limpe a caverna</span><span class="aim__count">4 / 196 inimigos</span></div>
+          <span class="aim__bar"><i class="fill--gold"></i></span>
+          <span class="aim__div"></span>
+          <span class="aim__eyebrow aim__eyebrow--blue">Missão atual</span>
+          <div class="aim__row"><span class="aim__desc">Coleta de Gold</span><span class="aim__count">77.08 / 500.00</span></div>
+          <span class="aim__bar"><i class="fill--blue"></i></span>
+        </div>
+
+        <div class="log">
+          <div class="log__cabeca"><span class="bolha">💬</span> Registro <span class="recolher">⌄</span></div>
+          <div class="log__corpo">
+            <div class="log__linha"><span class="log__ico t-marco">🏆</span><span class="log__hora">12:04</span><span class="log__txt t-marco">Marco do andar 110 — +10% de gold nesta run</span></div>
+            <div class="log__linha"><span class="log__ico t-bau">📦</span><span class="log__hora">12:04</span><span class="log__txt t-bau">Baú encontrado: <b>+107.31T Gold</b></span></div>
+            <div class="log__linha"><span class="log__ico t-buff">⚗️</span><span class="log__hora">12:05</span><span class="log__txt t-buff">Alquimista: Gold ×2 por 10s</span></div>
+            <div class="log__linha"><span class="log__ico t-info">ℹ️</span><span class="log__hora">12:06</span><span class="log__txt t-info">Save automático no andar 110</span></div>
+          </div>
+        </div>
+
+        <div class="habilidades">
+          <span class="hab-icon">🗡</span>
+          <span class="hab-bar"><i class="h70"></i></span>
+          <span class="hab-bar"><i class="h40"></i></span>
+          <span class="hab-bar"><i class="h25"></i></span>
+        </div>
+        <nav class="bottomnav" style="right:auto; width:540px;">
+          <span class="nav-btn"><img src="../imagens/account_circle-24px.svg" alt="">Status</span>
+          <span class="nav-btn"><img src="../imagens/store-24px.svg" alt="">Loja</span>
+          <span class="nav-btn">✷ Feitos</span>
+          <span class="nav-btn">🌿 Ramos</span>
+          <span class="nav-btn"><img src="../imagens/settings-black-18dp.svg" alt="">Config</span>
+        </nav>
+      </div>
+    </div>
+
+    <!-- ===================== LEGENDA ===================== -->
+    <aside class="legend">
+      <h2>Como o log funciona</h2>
+      <ol>
+        <li><span class="num">1</span><span><b>Overlay de canto, sem empurrar nada.</b> O card de Objetivo/Missão fica parado no topo. O log flutua por cima do canto (como o chat do WoW) e some no fade quando não há novidade.</span></li>
+        <li><span class="num">2</span><span><b>Uma linha por aviso</b>, mais novas embaixo, rolando sozinho. As antigas escurecem numa máscara de gradiente. Sem input/canais/comandos.</span></li>
+        <li><span class="num">3</span><span><b>Cor por tipo</b> (o “canal”): marco, baú, gold, buff, XP, info — assim dá pra ler de relance.</span></li>
+        <li><span class="num">4</span><span><b>Recolhível</b>: um clique no cabeçalho esconde o corpo (fica só a barra fina), pra liberar a tela quando quiser.</span></li>
+      </ol>
+
+      <div class="card">
+        <b>Cores das linhas</b>
+        <div class="swatches" style="margin-top:8px;">
+          <span><i style="background:#ffd36b"></i>marco</span>
+          <span><i style="background:#72e7c1"></i>baú</span>
+          <span><i style="background:#ffd84a"></i>gold</span>
+          <span><i style="background:#8fd0ff"></i>buff</span>
+          <span><i style="background:#9fe6b8"></i>xp</span>
+          <span><i style="background:#c3d2e2"></i>info</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <b>Onde encaixa (medidas reais 390×780)</b><br>
+        O rodapé está cheio: <code>nav</code> em 726–772 e a fileira de <code>skills</code> em ~634–712.
+        Por isso o log fica <b>acima</b> desse rodapé, no canto (A: esquerda · B: direita). Tamanhos:
+        <b>Android</b> — <code>width: min(290px, 80vw)</code> (≈74% da tela, dentro dos 60–80%) e
+        <code>max-height: 60px</code> (~2–3 linhas); <b>telas maiores</b> — <code>width: 33%</code>
+        (1/3 da tela). A máscara no topo faz as linhas antigas sumirem no fade.
+        <div class="ok" style="margin-top:6px;">✔ Objetivo/Missão nunca é empurrado nem coberto.</div>
+        <div class="ok">✔ Sem cartão no centro da tela; sem escurecer o cenário.</div>
+        <div class="nao">✘ Cobre uma faixa do canto inferior (inerente a um overlay estilo chat).</div>
+      </div>
+
+      <div class="card">
+        <b>Implementação (quando aprovar)</b><br>
+        · Já existe o buffer <code>window.Tapeira.Logs</code> (<code>logs.js</code>) com hora + texto e o
+        visual <code>.logs-linha/.logs-hora/.logs-texto</code> — dá pra reaproveitar e só criar o painel
+        fixo.<br>
+        · <span class="v">Marco</span> (<code>UI.showMilestone</code>) e <span class="v">baú</span>
+        (<code>UI.showChestOpening</code>) passam a <b>escrever no log</b> em vez de criar banner/cartão.
+        O <code>showInfo</code> também pode logar (XP, buff do Alquimista, etc.).<br>
+        · Auto-scroll = manter as últimas N linhas; fade via <code>mask-image</code>. Sem timers novos
+        (o log só reage a eventos).<br>
+        · O esboço antigo (<code>esboco-hud-avisos.html</code>) fica obsoleto e pode ser removido.
+      </div>
+    </aside>
+  </div>
+</body>
+</html>
