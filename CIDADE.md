@@ -60,8 +60,11 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
 ### Fase 0 — Decisões (fechada)
 - [x] Gates: **andar 80** para a Cidade; prédios em 85/90/100/110/120 (ver tabela acima).
 - [x] Pesquisa de itens: **por item**.
-- [x] Arte/UX do mapa: **cena** com os 5 prédios recortados + **decoração** (props de
-      natureza/luz/estruturas e ursinhos passeando) + **hotspots** por prédio — responsivo.
+- [x] Arte/UX do mapa: **cena em vila 2.5D** (perto da arte-base) — prédios em volta de uma
+      **praça com fonte de cristal** (Casa no topo-centro; Mercado/Pesquisa nas laterais de
+      cima; Fábrica/Fazenda embaixo), **banner-placa** com ícone acima de cada prédio,
+      decoração (props de natureza/luz/estruturas, cristais e ursinhos passeando) e
+      **hotspots** por prédio — responsivo (desktop e celular).
 
 ### Fase 1 — A aba "Cidade" + o mapa (sem mecânica nova)
 - [x] `Caverna.html`: `#btnCidade` na `#container-Botoes` (ícone 🏘️) + `#container-Cidade`.
