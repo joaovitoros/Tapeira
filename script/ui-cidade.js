@@ -114,6 +114,47 @@
         });
     }
 
+    // Arrastar a cena pra explorar a cidade (tipo um mapa): move o scroll do
+    // container. Um arrasto não dispara o clique do prédio (engole o clique
+    // que viria logo depois do arrasto).
+    function habilitaArrastarCena() {
+        const cena = document.querySelector(".cidade-cena");
+        const container = painel();
+        if (!cena || !container) return;
+        let arrastando = false, moveu = false, iniX = 0, iniY = 0, sTop = 0, sLeft = 0;
+
+        cena.addEventListener("pointerdown", e => {
+            if (e.button !== 0) return;
+            arrastando = true;
+            moveu = false;
+            iniX = e.clientX; iniY = e.clientY;
+            sTop = container.scrollTop; sLeft = container.scrollLeft;
+            try { cena.setPointerCapture(e.pointerId); } catch (erro) { /* ignora */ }
+        });
+
+        cena.addEventListener("pointermove", e => {
+            if (!arrastando) return;
+            const dx = e.clientX - iniX;
+            const dy = e.clientY - iniY;
+            if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moveu = true;
+            container.scrollTop = sTop - dy;
+            container.scrollLeft = sLeft - dx;
+        });
+
+        const solta = () => { arrastando = false; };
+        cena.addEventListener("pointerup", solta);
+        cena.addEventListener("pointercancel", solta);
+        cena.addEventListener("lostpointercapture", solta);
+
+        cena.addEventListener("click", e => {
+            if (moveu) {
+                e.preventDefault();
+                e.stopPropagation();
+                moveu = false;
+            }
+        }, true);
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         const botao = document.getElementById("btnCidade");
         if (botao) botao.addEventListener("click", alternar);
@@ -132,6 +173,7 @@
                 b.addEventListener("click", () => abrePredio(id));
             });
         }
+        habilitaArrastarCena();
         sincroniza();
     });
 

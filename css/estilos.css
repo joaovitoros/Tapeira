@@ -9742,7 +9742,12 @@ img.ramos-tree-no__tile {
 .cidade-cena {
 	position: relative;
 	z-index: 0;
-	flex: 1 1 auto;
+	/* A cena fica na proporção da imagem (3:2): a imagem inteira cabe e, em
+	   telas mais largas que 3:2, a cena passa da altura da tela — o container
+	   rola e o jogador arrasta pra ver o resto da cidade. */
+	flex: 0 0 auto;
+	width: 100%;
+	aspect-ratio: 3 / 2;
 	min-height: 0;
 	overflow: hidden;
 	padding: 0;
@@ -9751,6 +9756,13 @@ img.ramos-tree-no__tile {
 	background:
 		url("../imagens/cidade/cidade background.png") center / cover no-repeat,
 		#070a10;
+	cursor: grab;
+	touch-action: none;
+	user-select: none;
+}
+
+.cidade-cena:active {
+	cursor: grabbing;
 }
 
 /* Vinheta por cima do chão: escurece as bordas pra casar a imagem clara com a
@@ -10037,7 +10049,8 @@ img.ramos-tree-no__tile {
 	.cidade-predio__icone { font-size: 12px; }
 
 	.cidade-fonte { width: 22%; top: 57%; }
-	.cidade-cena { background-position: center 42%; }
+	/* no celular (retrato) a cena preenche a tela (sem rolagem) */
+	.cidade-cena { aspect-ratio: auto; flex: 1 1 auto; background-position: center 42%; }
 
 	.cidade-decor--moita-esq  { left: 50%; top: 48%; height: 44px; }
 	.cidade-decor--pedras-esq { left: 14%; top: 58%; height: 26px; }
