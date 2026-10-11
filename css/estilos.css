@@ -10353,3 +10353,14 @@ img.ramos-tree-no__tile {
 		animation: none;
 	}
 }
+
+/* ===== TEMPORÁRIO — mostrar só a imagem de fundo da Cidade (REMOVER DEPOIS) =====
+   Esconde prédios/decoração/fonte/vinheta; o fundo fica em cover (preenche sem
+   distorcer, definido na regra .cidade-cena). */
+.cidade-predio,
+.cidade-decor,
+.cidade-fonte,
+.cidade-fundo,
+.cidade-chao {
+	display: none !important;
+}
