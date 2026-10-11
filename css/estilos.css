@@ -9919,9 +9919,9 @@ img.ramos-tree-no__tile {
 .cidade-predio--fabrica  { left: 17%; top: 69%; --largura: 27%; --altura: 26%; }
 .cidade-predio--fazenda  { left: 76%; top: 67%; --largura: 24%; --altura: 24%; }
 
+/* realce do hover: brilho suave (sem moldura quadrada) */
 .cidade-predio:hover {
-	background: rgba(255, 224, 160, 0.08);
-	box-shadow: 0 0 0 2px rgba(255, 224, 160, 0.45) inset, 0 0 24px rgba(255, 200, 90, 0.25);
+	background: radial-gradient(62% 62% at 50% 58%, rgba(255, 224, 160, 0.16), transparent 72%);
 }
 
 .cidade-predio:focus-visible {
@@ -9973,8 +9973,7 @@ img.ramos-tree-no__tile {
 }
 
 .cidade-predio.is-travado:hover {
-	background: rgba(0, 0, 0, 0.16);
-	box-shadow: 0 0 0 2px rgba(130, 140, 160, 0.45) inset;
+	background: radial-gradient(62% 62% at 50% 58%, rgba(0, 0, 0, 0.3), transparent 72%);
 }
 
 .cidade-predio__lock {
