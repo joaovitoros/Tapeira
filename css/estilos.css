@@ -1710,8 +1710,6 @@ body {
 
 #btnStatus,
 #btn-Loja,
-#btn-Config,
-#btn-Formigas,
 #btnSkills,
 #btnRamos {
 	height: clamp(38px, 3.5vw, 50px);
@@ -3717,19 +3715,6 @@ input:focus-visible {
 
 .screen-nav-icon--shop {
 	background-image: url("../imagens/store-24px.svg");
-}
-
-.screen-nav-icon--config {
-	background-image: url("../imagens/settings-black-18dp.svg");
-}
-
-.screen-nav-icon--ants {
-	display: grid;
-	place-items: center;
-	filter: none;
-	color: #ffd36b;
-	font-size: 22px;
-	line-height: 1;
 }
 
 .screen-nav-icon--skills svg {
