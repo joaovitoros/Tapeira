@@ -158,60 +158,52 @@ Object.assign(UI, {
 	spawnBauBuild() {
 		this.removeBauBuild();
 		const quantidade = Tapeira.ItensBuild.quantidadeBausPendentes();
-		const bau = document.createElement("img");
+		// O baú de itens da build agora é um CHIP na coluna esquerda do HUD
+		// (#container-Metas > .coluna-rail), ao lado do Objetivo/Missão —
+		// substitui o antigo baú solto na arena. Sem a coluna (ex.: menu) não
+		// há onde mostrar.
+		const rail = document.querySelector("#container-Metas > .coluna-rail");
+		if (!rail) return;
 
-        bau.src = "imagens/bau-aventura.svg";
-        bau.className = "bau bau-build";
-        bau.id = "bauBuild";
-        bau.alt = "";
-        bau.setAttribute("role", "button");
-        bau.setAttribute("tabindex", "0");
-		bau.setAttribute("aria-label", quantidade === 1
+		const chip = document.createElement("button");
+		chip.type = "button";
+		chip.id = "bauBuild";
+		chip.className = "itens-chip";
+		chip.setAttribute("aria-label", quantidade === 1
 			? "Abrir baú de itens da build"
 			: `Abrir ${quantidade} baús de itens da build`);
-		bau.title = quantidade === 1
+		chip.title = quantidade === 1
 			? "Baú de itens da build: escolha 1 de 3"
 			: `${quantidade} baús de itens da build pendentes: escolha 1 de 3 por baú`;
-        bau.addEventListener("click", () => Tapeira.ItensBuild.abreEscolha());
-		bau.addEventListener("keydown", event => {
+
+		const icone = document.createElement("img");
+		icone.src = "imagens/bau-aventura.svg";
+		icone.alt = "";
+
+		const selo = document.createElement("span");
+		selo.id = "bauBuild-selo";
+		selo.setAttribute("aria-hidden", "true");
+		selo.textContent = quantidade > 1 ? `ITENS ×${quantidade}` : "ITENS";
+
+		chip.appendChild(icone);
+		chip.appendChild(selo);
+
+		chip.addEventListener("click", () => Tapeira.ItensBuild.abreEscolha());
+		chip.addEventListener("keydown", event => {
 			if (event.key === "Enter" || event.key === " ") {
 				event.preventDefault();
 				if (event.repeat) return;
 				Tapeira.ItensBuild.abreEscolha();
 			}
-        });
+		});
 
-        document.body.appendChild(bau);
+		rail.appendChild(chip);
+	},
 
-        const selo = document.createElement("span");
-        selo.id = "bauBuild-selo";
-        selo.className = "bau-build-selo";
-        selo.setAttribute("aria-hidden", "true");
-		selo.textContent = quantidade > 1 ? `ITENS ×${quantidade}` : "ITENS";
-        document.body.appendChild(selo);
-
-        const posicionaSelo = () => {
-            if (!bau.isConnected || !selo.isConnected) return;
-            const rect = bau.getBoundingClientRect();
-            selo.style.left = `${rect.left + rect.width / 2}px`;
-            selo.style.top = `${rect.top - 4}px`;
-        };
-        if (this.bauBuildResizeHandler) {
-            window.removeEventListener("resize", this.bauBuildResizeHandler);
-        }
-        this.bauBuildResizeHandler = posicionaSelo;
-        window.addEventListener("resize", posicionaSelo);
-        posicionaSelo();
-    },
-
-    removeBauBuild() {
-        if (this.bauBuildResizeHandler) {
-            window.removeEventListener("resize", this.bauBuildResizeHandler);
-            this.bauBuildResizeHandler = null;
-        }
-        document.getElementById("bauBuild")?.remove();
-        document.getElementById("bauBuild-selo")?.remove();
-    },
+	removeBauBuild() {
+		document.getElementById("bauBuild")?.remove();
+		document.getElementById("bauBuild-selo")?.remove();
+	},
 
     // =========================
     // COMPANHEIROS (VISUAL)

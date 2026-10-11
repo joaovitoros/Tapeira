@@ -4,33 +4,33 @@
   ESBOÇO (mockup estático, descartável) — NÃO faz parte do jogo.
   Sem script, sem save; não é carregado por index.html nem Caverna.html.
 
-  ESCOLHA: "Esboço A" — faixa de avisos no topo que EMPURRA o conteúdo.
-  v3 (ajustes pedidos):
-    · baú → itens → buff formam UMA coluna de largura única (mesma largura
-      para os três).
-    · Essa coluna fica AO LADO de Objetivo/Missão (não mais no meio).
-    · A coluna e o card Objetivo/Missão têm a MESMA ALTURA (linha esticada).
-    · Em telas maiores (PC), a coluna continua à ESQUERDA.
-    · O aviso "Baú encontrado" segue na faixa de avisos do topo (a fila), para
-      não brigar com #container-Habilidades/.skill-unlock-panel nem com a nav.
+  VERSÃO ATUAL: duas peças convivem.
 
-  Regra: nada cobre nada; a linha dos monstros (~40–60% da altura) fica livre.
+  (A) COLUNA à ESQUERDA, ao lado do Objetivo/Missão (layout do esboço A):
+      baú dourado (timer + AUTO) em cima; abaixo o chip ITENS — baús de itens
+      da build PENDENTES (Tapeira.ItensBuild.quantidadeBausPendentes()) — e o
+      chip do buff ativo do Alquimista (tipo baú ×3: "Baú ×3 (Ns)"; no jogo é
+      o selo #buffAlquimista). A coluna e o card têm a MESMA ALTURA
+      (align-items: stretch) e largura única (104px; 130px no PC).
+
+  (B) LOG estilo chat do World of Warcraft, no canto inferior esquerdo: marco
+      de andar e "baú encontrado" (avisos de UI.showMilestone) viram um feed
+      de leitura (sem input/canais/comandos). O Objetivo/Missão fica INTACTO.
+
+  Tamanhos do log: Android width: min(290px, 80vw) (~74% da tela, dentro de
+  60–80%) × max-height: 60px; telas maiores width: 33% (1/3), acima da faixa
+  inferior (nav + skills), que é ocupada.
 -->
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Esboço A v3 — coluna baú/itens/buff ao lado do objetivo</title>
+<title>Esboço HUD — coluna (baú/ITENS/buff) + log (WoW) · versão final</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
     --hud-bg: linear-gradient(145deg, rgba(14,18,27,.94), rgba(22,25,31,.86));
     --hud-border: 1px solid rgba(229,183,96,.42);
-    --hud-radius: 9px;
-    --gold: #ffd36b;
-    --violet: #c79bff;
-    --muted: #b9c3d3;
-    --font: "Segoe UI", "Roboto", sans-serif;
+    --gold: #ffd36b; --muted: #b9c3d3; --font: "Segoe UI", "Roboto", sans-serif;
   }
   body {
     min-height: 100vh; padding: 26px 16px 70px;
@@ -45,17 +45,17 @@
   .ref { margin-top: 10px; padding: 10px 13px; max-width: 980px; border-radius: 9px;
          background: rgba(120,200,255,.06); border: 1px solid rgba(120,200,255,.28);
          color: #cfe6ff; font-size: 13px; line-height: 1.5; }
+  .ref b { color: #ffe9a8; }
 
-  .layout { display: flex; flex-wrap: wrap; gap: 30px; align-items: flex-start; justify-content: center; max-width: 1500px; margin: 0 auto; }
+  .layout { display: flex; flex-wrap: wrap; gap: 30px; align-items: flex-start; justify-content: center; max-width: 1320px; margin: 0 auto; }
   .col { flex: 0 0 auto; display: grid; gap: 12px; }
   .col h2 { font-size: 15px; color: #9ccfff; }
   .col h2 span { color: var(--gold); }
 
-  /* ============================== FRAMES ============================== */
   .phone { position: relative; width: 390px; height: 780px;
            border: 10px solid #05070b; border-radius: 42px; overflow: hidden;
            box-shadow: 0 26px 70px rgba(0,0,0,.7), 0 0 0 2px rgba(229,183,96,.18); background: #0a0d12; }
-  .frame-wide { position: relative; width: 780px; height: 440px;
+  .frame-wide { position: relative; width: 780px; height: 640px;
                 border: 10px solid #05070b; border-radius: 20px; overflow: hidden;
                 box-shadow: 0 26px 70px rgba(0,0,0,.7), 0 0 0 2px rgba(229,183,96,.18); background: #0a0d12; }
 
@@ -63,169 +63,168 @@
            background-image: linear-gradient(rgba(0,0,0,.30), rgba(0,0,0,.52)), url("../imagens/background cristal.png");
            background-size: cover; background-position: center; }
   .sprite { position: absolute; object-fit: contain; user-select: none; }
-  .player { left: 50%; top: 46%; width: 116px; transform: translateX(-50%); filter: drop-shadow(0 7px 5px rgba(0,0,0,.4)); }
-  .inimigo { width: 80px; filter: drop-shadow(0 6px 4px rgba(0,0,0,.4)); }
-  .i1 { left: 15%; top: 37%; } .i2 { left: 11%; top: 58%; }
-  .i3 { right: 12%; top: 37%; } .i4 { right: 8%; top: 58%; }
-  .frame-wide .player { top: 52%; width: 120px; }
-  .frame-wide .i1 { left: 22%; top: 42%; } .frame-wide .i2 { left: 18%; top: 66%; }
-  .frame-wide .i3 { right: 20%; top: 42%; } .frame-wide .i4 { right: 15%; top: 66%; }
+  .player { left: 50%; top: 48%; width: 112px; transform: translateX(-50%); filter: drop-shadow(0 7px 5px rgba(0,0,0,.4)); }
+  .inimigo { width: 78px; filter: drop-shadow(0 6px 4px rgba(0,0,0,.4)); }
+  .i1 { left: 16%; top: 38%; } .i2 { left: 12%; top: 60%; }
+  .i3 { right: 14%; top: 38%; } .i4 { right: 10%; top: 60%; }
+  .frame-wide .player { top: 54%; width: 116px; }
+  .frame-wide .i1 { left: 30%; top: 44%; } .frame-wide .i2 { left: 26%; top: 70%; }
+  .frame-wide .i3 { right: 26%; top: 44%; } .frame-wide .i4 { right: 21%; top: 70%; }
 
   .guide { position: absolute; left: 0; right: 0; z-index: 8; height: 0;
            border-top: 1px dashed rgba(120,200,255,.42); pointer-events: none; }
   .guide__label { position: absolute; right: 3px; top: 0; transform: translateY(-50%);
                   padding: 1px 5px; border-radius: 4px; background: rgba(6,12,20,.85);
                   color: #8fd0ff; font-size: 8.5px; font-weight: 700; border: 1px solid rgba(120,200,255,.45); }
-  /* guias verticais do esboço (largura/altura da coluna) */
-  .vguide { position: absolute; top: 0; bottom: 0; z-index: 8; width: 0;
-            border-left: 1px dashed rgba(200,160,255,.55); pointer-events: none; }
   .pin { position: absolute; z-index: 9; display: grid; place-items: center; width: 21px; height: 21px;
          border-radius: 999px; background: #d94c32; border: 2px solid #ffe6c4; color: #fff;
          font-size: 12px; font-weight: 900; box-shadow: 0 3px 10px rgba(0,0,0,.6); }
 
-  /* ---------- TOPO ---------- */
-  .toprow { position: absolute; top: 10px; left: 10px; right: 10px; z-index: 5;
-            display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 48px; }
-  .frame-wide .toprow { gap: 12px; }
-  .hud-floor { display: flex; align-items: center; gap: 6px; height: 100%; min-width: 0; padding: 0 7px;
-               background: var(--hud-bg); border: var(--hud-border); border-radius: var(--hud-radius);
-               box-shadow: 0 6px 20px rgba(0,0,0,.38); backdrop-filter: blur(6px); }
+  /* ---------- TOPO (INALTERADO) ---------- */
+  .toprow { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 5;
+            display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 46px; }
+  .hud-floor { display: flex; align-items: center; gap: 6px; height: 100%; padding: 0 7px;
+               background: var(--hud-bg); border: var(--hud-border); border-radius: 9px; backdrop-filter: blur(6px); }
   .hud-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-  .hud-lbl { font-size: 10px; line-height: 1; letter-spacing: .03em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .hud-lbl { font-size: 9px; line-height: 1; letter-spacing: .03em; text-transform: uppercase; color: var(--muted); }
   .floor-val { font-size: 15px; font-weight: 800; line-height: 1; color: var(--gold); }
-  .hud-sep { width: 1px; height: 28px; margin: 0 5px; background: rgba(255,255,255,.12); }
-  .hud-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: #f0b64a; }
-  .btn-voltar { display: grid; place-items: center; height: 30px; padding: 0 6px; margin-left: 4px; border-radius: 7px;
-                background: linear-gradient(to bottom, #e44d6e 5%, #ec9c9c 100%); border: 1px solid #d14931;
-                color: #fff; font-size: 10.5px; font-weight: 800; text-transform: uppercase; box-shadow: 0 3px 0 #8c2137; }
-  .pause { display: flex; align-items: center; justify-content: center; gap: 5px; height: 100%; flex: 0 0 auto; padding: 0 10px;
-           border: 1px solid #ffe4a0; border-radius: 10px; background: linear-gradient(145deg,#ffd66f,#e79432 58%,#b85d25);
-           color: #26170a; font-weight: 800; font-size: 14px; box-shadow: 0 3px 0 #75401b, 0 0 16px rgba(255,173,55,.5); }
+  .hud-sep { width: 1px; height: 26px; margin: 0 5px; background: rgba(255,255,255,.12); }
+  .hud-item input[type="checkbox"] { width: 14px; height: 14px; accent-color: #f0b64a; }
+  .btn-voltar { display: grid; place-items: center; height: 28px; padding: 0 6px; margin-left: 3px; border-radius: 7px;
+                background: linear-gradient(to bottom,#e44d6e 5%,#ec9c9c 100%); border: 1px solid #d14931; color: #fff;
+                font-size: 10px; font-weight: 800; text-transform: uppercase; box-shadow: 0 3px 0 #8c2137; }
+  .pause { display: flex; align-items: center; gap: 4px; height: 100%; padding: 0 9px; border: 1px solid #ffe4a0;
+           border-radius: 10px; background: linear-gradient(145deg,#ffd66f,#e79432 58%,#b85d25); color: #26170a;
+           font-weight: 800; font-size: 13px; box-shadow: 0 3px 0 #75401b; }
   .hud-res { display: flex; flex-direction: column; gap: 2px; height: 100%; padding: 3px 4px;
-             background: var(--hud-bg); border: var(--hud-border); border-radius: var(--hud-radius);
-             box-shadow: 0 6px 20px rgba(0,0,0,.38); backdrop-filter: blur(6px); }
+             background: var(--hud-bg); border: var(--hud-border); border-radius: 9px; backdrop-filter: blur(6px); }
   .res { flex: 1 1 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 0 7px;
          background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.07); border-radius: 6px;
-         font-weight: 800; font-variant-numeric: tabular-nums; font-size: 14px; }
-  .res img { width: 16px; height: 16px; }
+         font-weight: 800; font-variant-numeric: tabular-nums; font-size: 13px; }
+  .res img { width: 15px; height: 15px; }
   .res--gold { color: #ffd84a; } .res--gem { color: #4dff88; }
 
-  .escape { position: absolute; top: 62px; left: 50%; transform: translateX(-50%); z-index: 4;
-            display: flex; align-items: center; gap: 7px; width: 208px; height: 20px; padding: 0 9px;
+  .escape { position: absolute; top: 56px; left: 50%; transform: translateX(-50%); z-index: 4;
+            display: flex; align-items: center; gap: 6px; width: 200px; height: 20px; padding: 0 9px;
             background: linear-gradient(145deg, rgba(40,22,14,.92), rgba(24,18,16,.92));
             border: 1px solid rgba(255,150,90,.5); border-radius: 999px; font-size: 10px; color: #ffd9b8; }
-  .escape b { color: #ff9a5a; }
+  .escape b { color: #ff9a5a; } .escape .bar { flex: 1 1 auto; }
   .bar { height: 6px; border-radius: 999px; overflow: hidden; background: rgba(5,8,14,.85); border: 1px solid rgba(255,255,255,.1); }
-  .bar > i { display: block; height: 100%; }
-  .escape .bar { flex: 1 1 auto; } .escape .bar > i { width: 62%; background: linear-gradient(90deg,#ff7a4a,#ffb066); }
+  .bar > i { display: block; height: 100%; } .escape .bar > i { width: 62%; background: linear-gradient(90deg,#ff7a4a,#ffb066); }
 
-  /* ---------- FAIXA DE AVISOS (topo, empurra) ---------- */
-  .avisos-topo { position: absolute; top: 86px; left: 10px; right: 10px; z-index: 5; display: grid; gap: 5px; }
-  .milestone { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 6px 12px;
-               background: linear-gradient(145deg, rgba(38,33,23,.98), rgba(15,18,25,.97));
-               border: 1px solid rgba(255,211,107,.82); border-radius: 10px;
-               box-shadow: 0 0 18px rgba(255,190,73,.22), 0 8px 22px rgba(0,0,0,.45); color: #fff2ce; text-align: center; }
-  .milestone__title { color: var(--gold); font-size: 12.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-  .milestone__msg { color: #e6edf3; font-size: 11px; }
-  .milestone__msg b { color: #9fe6b8; }
-  .bau { display: flex; align-items: center; gap: 10px; padding: 8px 12px;
-         background: linear-gradient(145deg, rgba(29,31,39,.97), rgba(12,14,20,.97));
-         border: 1px solid rgba(255,211,79,.6); border-radius: 12px;
-         box-shadow: 0 10px 28px rgba(0,0,0,.5), 0 0 18px rgba(255,211,79,.16); color: #fff4d5; }
-  .bau__icone { width: 42px; height: 36px; filter: drop-shadow(0 0 8px rgba(255,196,52,.6)); }
-  .bau__txt { display: grid; gap: 1px; min-width: 0; }
-  .bau__rotulo { font-size: 9.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #ffd34f; }
-  .bau__valor { font-size: 15px; font-weight: 800; } .bau__valor b { color: #ffd84a; }
-
-  /* ============ LINHA: [coluna baú/itens/buff] + [objetivo/missão] ============
-     align-items: stretch → a coluna e o card ficam com a MESMA ALTURA. */
-  .linha-topo { position: absolute; left: 10px; right: 10px; z-index: 3;
+  /* ===== Coluna (baú dourado + ITENS + Baú/buff) AO LADO do Objetivo/Missão =====
+     A coluna fica à ESQUERDA e o card à DIREITA; os dois esticam para a MESMA
+     ALTURA (align-items: stretch). Baú, ITENS e Baú/buff têm a LARGURA ÚNICA
+     da coluna (mesmas bordas) — é o layout do esboço A, com o buff do
+     Alquimista (tipo baú ×3) e os baús de itens da build PENDENTES. */
+  .linha-topo { position: absolute; left: 8px; right: 8px; top: 96px; z-index: 3;
                 display: flex; align-items: stretch; gap: 8px; }
-  .st-marco .linha-topo { top: 126px; height: 124px; }
-  .st-bau .linha-topo { top: 150px; height: 124px; }
-  /* TELA MAIOR = como está hoje no jogo: coluna baú/itens/buff à ESQUERDA e
-     Objetivo/Missão no canto DIREITO, mais estreito (space-between), sem
-     esticar a altura (align-items: flex-start), igual ao @media (min-width:1000px). */
-  .frame-wide .linha-topo { top: 126px; height: auto; justify-content: space-between; align-items: flex-start; gap: 16px; }
 
-  /* coluna esquerda: LARGURA ÚNICA para baú, itens e buff */
-  .coluna-rail { flex: 0 0 auto; width: 104px; display: grid; grid-template-rows: 56px 34px 1fr; gap: 4px; }
-  .frame-wide .coluna-rail { width: 130px; grid-template-rows: 64px 40px 1fr; gap: 4px; }
-  /* No PC o card Objetivo/Missão fica estreito e encostado à direita (como hoje) */
-  .frame-wide .coluna-rail + .aim { flex: 0 0 auto; width: min(420px, 34%); }
+  /* coluna esquerda: largura única para baú, ITENS e Baú/buff */
+  .coluna-rail { flex: 0 0 auto; width: 104px;
+                 display: grid; grid-template-rows: 86px auto 1fr; gap: 4px; }
 
-  .golden-chest { width: 100%; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 5px 7px;
+  .golden-chest { display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 6px;
                   border: 1px solid rgba(255,204,77,.62); border-radius: 12px;
-                  background: linear-gradient(145deg, rgba(49,39,19,.97), rgba(19,20,24,.97));
-                  box-shadow: 0 8px 24px rgba(0,0,0,.55); color: #fff4d5; font-size: 12px; }
-  .golden-chest__main { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
-  .golden-chest__icon { width: 32px; height: 27px; filter: drop-shadow(0 0 6px rgba(255,196,52,.62)); }
-  .golden-chest__time { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+                  background: linear-gradient(145deg, rgba(49,39,19,.97), rgba(19,20,24,.97)); color: #fff4d5; font-size: 11px; }
+  .golden-chest__main { display: flex; align-items: center; justify-content: space-between; gap: 3px; }
+  .golden-chest__icon { width: 34px; height: 29px; filter: drop-shadow(0 0 6px rgba(255,196,52,.62)); }
+  .golden-chest__time { font-size: 13px; font-weight: 800; }
   .golden-chest__bottom { display: flex; align-items: flex-end; justify-content: space-between; gap: 4px; }
   .golden-chest__info { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
                         border: 1px solid rgba(255,224,138,.55); background: rgba(0,0,0,.5); color: #ffe08a; font-size: 10px; font-weight: 800; }
-  .golden-chest__auto { display: flex; align-items: center; gap: 3px; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; color: #d8cba9; }
-  .golden-chest__auto input { width: 13px; height: 13px; accent-color: #72e7c1; }
+  .golden-chest__auto { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: 9px; text-transform: uppercase; color: #d8cba9; }
+  .golden-chest__auto input { width: 14px; height: 14px; accent-color: #72e7c1; }
 
-  .itens-chip { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 4px 7px;
+  /* ITENS — baús de itens da build PENDENTES (mesma largura do baú) */
+  .itens-chip { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 5px 7px;
                 background: linear-gradient(145deg, rgba(49,30,74,.97), rgba(20,16,30,.97));
                 border: 1px solid rgba(200,160,255,.7); border-radius: 11px;
                 box-shadow: 0 8px 22px rgba(0,0,0,.5), 0 0 14px rgba(185,115,255,.25);
-                color: #f2e6ff; font-size: 11px; font-weight: 700; }
-  .itens-chip img { width: 22px; height: 19px; filter: hue-rotate(215deg) saturate(1.2) drop-shadow(0 0 6px rgba(190,120,255,.7)); }
-  .itens-chip b { color: #d9c3ff; }
-  .itens-chip__dot { display: grid; place-items: center; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px;
-                     background: #d94c32; border: 1px solid #fff1b8; color: #fff; font-size: 11px; }
+                color: #f2e6ff; font-size: 11px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }
+  .itens-chip img { width: 20px; height: 17px; flex: none;
+                    filter: hue-rotate(215deg) saturate(1.2) drop-shadow(0 0 6px rgba(190,120,255,.7)); }
+  .itens-chip b { color: #e2d1ff; }
 
-  .buff-alquimista { width: 100%; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 4px 7px;
-                     border-radius: 11px; background: rgba(14,22,38,.94);
-                     border: 1px solid rgba(140,220,255,.55); color: #eaf1fc;
-                     font-size: 10.5px; font-weight: 700; white-space: nowrap; text-align: center;
-                     box-shadow: 0 0 14px rgba(90,200,255,.35); animation: buff-pulse 1.2s ease-in-out infinite; }
+  /* BAÚ/buff — buff ativo do Alquimista (tipo baú ×3) */
+  .buff-alquimista { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 5px 7px;
+                     border-radius: 11px; background: linear-gradient(145deg, rgba(16,42,34,.96), rgba(12,20,18,.96));
+                     border: 1px solid rgba(110,235,185,.6); color: #eafff5;
+                     font-size: 10.5px; font-weight: 800; white-space: nowrap; text-align: center;
+                     box-shadow: 0 0 14px rgba(80,220,170,.32); animation: buff-pulse 1.2s ease-in-out infinite; }
+  .buff-alquimista b { color: #9dffd8; }
   @keyframes buff-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
 
   /* card Objetivo/Missão — mesma altura da coluna (a linha estica) */
-  .aim { flex: 1 1 auto; min-width: 0; padding: 7px 11px; display: grid; gap: 3px; align-content: center;
-         background: var(--hud-bg); border: var(--hud-border); border-radius: var(--hud-radius);
-         box-shadow: 0 6px 20px rgba(0,0,0,.34); backdrop-filter: blur(6px); }
+  .aim { flex: 1 1 auto; min-width: 0; padding: 6px 11px; display: grid; gap: 3px; align-content: start;
+         background: var(--hud-bg); border: var(--hud-border); border-radius: 9px; backdrop-filter: blur(6px); }
   .aim__eyebrow { font-size: 8.5px; letter-spacing: .12em; text-transform: uppercase; }
   .aim__eyebrow--gold { color: #e5c47e; } .aim__eyebrow--blue { color: #9bc8e5; }
-  .aim__row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .aim__row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 8px; }
   .aim__desc { font-weight: 700; font-size: 12.5px; }
-  .aim__count { font-size: 10px; color: #c6cfdd; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .aim__bar { height: 6px; border-radius: 999px; overflow: hidden; background: rgba(5,8,14,.85); border: 1px solid rgba(255,255,255,.12); }
+  .aim__count { margin-left: auto; font-size: 10px; color: #c6cfdd; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .aim__bar { height: 7px; border-radius: 999px; overflow: hidden; background: rgba(5,8,14,.85); border: 1px solid rgba(255,255,255,.12); }
   .aim__bar > i { display: block; height: 100%; }
-  .fill--gold { width: 46%; background: linear-gradient(90deg,#d89537,#ffd36b); }
-  .fill--blue { width: 15%; background: linear-gradient(90deg,#4983ae,#9ed8ff); }
+  .fill--gold { width: 0%; background: linear-gradient(90deg,#d89537,#ffd36b); }
+  .fill--blue { width: 12%; background: linear-gradient(90deg,#4983ae,#9ed8ff); }
   .aim__div { height: 1px; margin: 2px 0; background: linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent); }
+  .aim__aviso { font-size: 10px; font-weight: 700; color: #4dff88; text-align: right;
+                text-shadow: 0 0 9px rgba(77,255,136,.45); }
 
-  /* ---------- RODAPÉ: habilidades + nav ---------- */
-  .habilidades { position: absolute; right: 12px; bottom: 76px; z-index: 5;
-                 display: flex; align-items: flex-end; gap: 5px; }
-  .frame-wide .habilidades { left: 200px; right: auto; bottom: 70px; }
-  .hab-icon { width: 40px; height: 40px; border-radius: 9px;
-              background: linear-gradient(145deg,#2a3b57,#16243a); border: 1px solid rgba(137,177,255,.5);
-              display: grid; place-items: center; color: #bcd8ff; font-size: 17px; }
-  .hab-bar { width: 20px; height: 72px; border-radius: 6px; padding: 1px; overflow: hidden;
-             background: linear-gradient(180deg, rgba(15,21,35,.96), rgba(5,9,18,.96));
-             border: 1px solid rgba(137,177,255,.58); display: flex; align-items: flex-end; }
+  /* TELA MAIOR: mesma coluna à esquerda, Objetivo/Missão encostado à direita */
+  .frame-wide .linha-topo { justify-content: space-between; gap: 16px; }
+  .frame-wide .coluna-rail { width: 130px; grid-template-rows: 64px auto 1fr; }
+  .frame-wide .coluna-rail + .aim { flex: 0 0 auto; width: min(460px, 48%); }
+
+  /* ---------- RODAPÉ (inalterado) ---------- */
+  .habilidades { position: absolute; right: 108px; bottom: 68px; z-index: 5; display: flex; align-items: flex-end; gap: 5px; }
+  .frame-wide .habilidades { left: 352px; right: auto; bottom: 84px; }
+  .hab-icon { width: 40px; height: 40px; border-radius: 9px; background: linear-gradient(145deg,#2a3b57,#16243a);
+              border: 1px solid rgba(137,177,255,.5); display: grid; place-items: center; color: #bcd8ff; font-size: 16px; }
+  .hab-bar { width: 18px; height: 72px; border-radius: 6px; padding: 1px; overflow: hidden; display: flex; align-items: flex-end;
+             background: linear-gradient(180deg, rgba(15,21,35,.96), rgba(5,9,18,.96)); border: 1px solid rgba(137,177,255,.58); }
   .hab-bar > i { width: 100%; border-radius: 0 0 4px 4px; background: linear-gradient(180deg,#77c7ff,#3578ff 55%,#1946c2); }
-  .h40 { height: 40% } .h70 { height: 70% } .h25 { height: 25% } .h88 { height: 88% } .h55 { height: 55% }
-  .rodape-rotulo { position: absolute; right: 12px; bottom: 152px; z-index: 5;
-                   font-size: 8.5px; letter-spacing: .08em; text-transform: uppercase; color: #7fb6e6; }
-  .frame-wide .rodape-rotulo { left: 200px; right: auto; bottom: 146px; }
+  .h40 { height: 40% } .h70 { height: 70% } .h25 { height: 25% } .h88 { height: 88% }
 
-  .bottomnav { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 5;
-               display: flex; gap: 6px; padding: 6px;
-               background: var(--hud-bg); border: var(--hud-border); border-radius: var(--hud-radius);
-               box-shadow: 0 8px 24px rgba(0,0,0,.42); backdrop-filter: blur(6px); }
-  .nav-btn { flex: 1 1 0; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  .bottomnav { position: absolute; left: 8px; right: 8px; bottom: 10px; z-index: 5; display: flex; gap: 6px; padding: 6px;
+               background: var(--hud-bg); border: var(--hud-border); border-radius: 9px; backdrop-filter: blur(6px); }
+  .frame-wide .bottomnav { left: 8px; right: auto; width: 520px; }
+  .nav-btn { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
              height: 44px; border-radius: 8px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07);
              color: #e9dcc0; font-size: 8.5px; font-weight: 700; }
-  .nav-btn img { width: 18px; height: 18px; filter: invert(82%) sepia(31%) saturate(694%) hue-rotate(354deg) brightness(103%) contrast(92%); }
+  .nav-btn img { width: 17px; height: 17px; filter: invert(82%) sepia(31%) saturate(694%) hue-rotate(354deg) brightness(103%) contrast(92%); }
 
-  /* legenda */
-  .legend { flex: 1 1 520px; max-width: 660px; display: grid; gap: 12px; align-content: start; }
+  /* ============================ O LOG (novo) ============================ */
+  .log {
+    position: absolute; left: 8px; z-index: 6;
+    width: min(290px, 80vw); max-height: 60px;
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 5px 8px 6px;
+    background: linear-gradient(180deg, rgba(4,6,10,.10), rgba(4,6,10,.55) 45%, rgba(4,6,10,.72));
+    border-radius: 6px;
+    box-shadow: 0 6px 22px rgba(0,0,0,.35);
+    font: 600 11.5px/1.3 var(--font);
+    color: #e9eef5; text-shadow: 0 1px 2px #000, 0 0 3px rgba(0,0,0,.9);
+    pointer-events: none;
+  }
+  .phone .log { bottom: 156px; }          /* acima da fileira de skills */
+  .frame-wide .log { bottom: 248px; width: 33%; } /* acima da nav/skills no PC */
+  .log__cabeca { display: flex; align-items: center; gap: 6px; color: #9fb2c9;
+                 font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+  .log__seta { margin-left: auto; }
+  .log--recolhido .log__corpo { display: none; }
+  .log__corpo { display: flex; flex-direction: column; gap: 2px; overflow: hidden;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 12px, #000 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 12px, #000 100%); }
+  .log__linha { display: grid; grid-template-columns: auto 1fr; column-gap: 6px; align-items: baseline; }
+  .log__hora { color: #93a1b3; font-size: 10px; font-variant-numeric: tabular-nums; }
+  .log__txt { min-width: 0; word-break: break-word; }
+  .log__txt b { color: #fff; }
+  .t-marco { color: #ffd36b; } .t-bau { color: #72e7c1; } .t-gold { color: #ffd84a; }
+  .t-buff { color: #8fd0ff; } .t-xp { color: #9fe6b8; } .t-info { color: #c3d2e2; }
+
+  /* legendas */
+  .legend { flex: 1 1 520px; max-width: 640px; display: grid; gap: 12px; align-content: start; }
   .legend h2 { font-size: 15px; color: var(--gold); }
   .legend ol { list-style: none; display: grid; gap: 8px; }
   .legend li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; padding: 10px 12px;
@@ -235,36 +234,38 @@
   .legend .card { padding: 12px 14px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px;
                   background: rgba(255,255,255,.03); font-size: 13px; line-height: 1.5; color: #dbe3ee; }
   .legend .card b { color: #fff; }
-  .legend .k { color: var(--gold); font-weight: 800; } .legend .v { color: var(--violet); font-weight: 800; }
+  .legend .k { color: var(--gold); font-weight: 800; } .legend .v { color: #c79bff; font-weight: 800; }
   .legend .ok { color: #9ff5c0; } .legend .nao { color: #ffb4b4; }
   .legend code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 4px; font-size: .92em; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 12.5px; }
+  .swatches span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatches i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
 </style>
 </head>
 
 <body>
   <div class="doc-head">
-    <h1>Esboço A (v3) — coluna baú/itens/buff ao lado do Objetivo/Missão</h1>
-    <p><b>Mudanças desta versão:</b> os três itens da esquerda (<b>baú dourado → itens da build → buff
-       do alquimista</b>) formam uma <b>coluna de largura única</b> (os três com a mesma largura), que no
-       <b>celular</b> fica <b>ao lado</b> do card Objetivo/Missão, com a <b>mesma altura</b> (a linha usa
-       <code>align-items: stretch</code>). Em <b>telas maiores</b> fica como <b>hoje no jogo</b>: a coluna
-       continua à <b>esquerda</b> e o card Objetivo/Missão no canto <b>direito</b>, <b>mais estreito</b>
-       (<code>space-between</code> + <code>align-items: flex-start</code>), sem esticar a altura. O aviso
-       “Baú encontrado” segue na faixa de avisos do topo, para não brigar com
-       <code>#container-Habilidades</code>/<code>.skill-unlock-panel</code> e com a nav.</p>
+    <h1>Esboço HUD — coluna (baú / ITENS / buff) + log (WoW) · versão final</h1>
+    <p><b>Coluna à esquerda:</b> baú dourado (timer + AUTO), chip <b>ITENS</b> (baús de itens da build
+       pendentes) e chip do <b>buff do Alquimista</b> (tipo baú ×3). A coluna fica ao lado do card de
+       <b>Objetivo/Missão</b> e os dois têm a <b>mesma altura</b> (a linha usa <code>align-items: stretch</code>).</p>
+    <p><b>Log (canto inferior esquerdo):</b> marco de andar, "baú encontrado" e demais avisos
+       (<code>UI.showMilestone</code>) viram um <b>log estilo chat do WoW</b> — hora + texto colorido por
+       tipo, mais nova embaixo. <b>Não é chat:</b> sem input, canais ou comandos. O Objetivo/Missão fica
+       intacto no topo, nada é empurrado.</p>
     <div class="ref">
-      <b>Referências:</b> Raid: Shadow Legends (banner de marco abaixo da barra de recursos; blocos
-      alinhados por altura), Idle Miner Tycoon (toast que some), Hopeless Hero (faixa própria de avisos).
-      <b>Slots fixos</b> (baú, itens, buff) numa coluna; <b>avisos</b> (marco, baú encontrado) na faixa
-      do topo que empurra.
+      <b>Referência:</b> o chat do World of Warcraft (caixa translúcida no canto, texto com contorno,
+      linhas coloridas por canal). Aqui as "cores de canal" são os tipos de aviso do jogo.
+      <b>Tamanhos do log:</b> Android <code>width: min(290px, 80vw)</code> (≈74%, entre 60–80%) ×
+      <code>max-height: 60px</code>; telas maiores <code>width: 33%</code> (1/3).
     </div>
   </div>
 
   <div class="layout">
-    <!-- ============ 1: PHONE, MARCO ============ -->
+    <!-- ============= 1: ANDROID, log ATIVO ============= -->
     <div class="col" style="width:390px">
-      <h2>Celular — <span>marco ativo</span></h2>
-      <div class="phone st-marco">
+      <h2>Android — <span>log ativo (marco + baú)</span></h2>
+      <div class="phone">
         <div class="scene">
           <img class="sprite inimigo i1" src="../imagens/inimigo.png" alt="">
           <img class="sprite inimigo i2" src="../imagens/inimigo.png" alt="">
@@ -289,46 +290,44 @@
 
         <div class="escape"><span>Fuga <b>121s</b></span><span class="bar"><i></i></span></div>
 
-        <div class="avisos-topo">
-          <div class="milestone">
-            <span class="milestone__title">Marco do andar 110</span>
-            <span class="milestone__msg"><b>+10%</b> de gold nesta run</span>
-          </div>
-        </div>
-
-        <!-- LINHA: coluna (mesma largura/altura) + objetivo/missão -->
         <div class="linha-topo">
           <div class="coluna-rail">
             <section class="golden-chest">
-              <div class="golden-chest__main"><img class="golden-chest__icon" src="../imagens/bau-dourado.svg" alt=""><span class="golden-chest__time">9:18</span></div>
+              <div class="golden-chest__main"><img class="golden-chest__icon" src="../imagens/bau-dourado.svg" alt=""><span class="golden-chest__time">19:56</span></div>
               <div class="golden-chest__bottom"><span class="golden-chest__info">i</span><label class="golden-chest__auto">auto<input type="checkbox" checked></label></div>
             </section>
-            <div class="itens-chip">
-              <img src="../imagens/bau-aventura.svg" alt="">
-              <span>Itens <b>×2</b></span>
-            </div>
-            <div class="buff-alquimista">🧪 Gold ×2 <b>· 8s</b></div>
+            <div class="itens-chip"><img src="../imagens/bau-aventura.svg" alt=""><span>ITENS <b>×49</b></span></div>
+            <div class="buff-alquimista">🧪 Baú <b>×3</b> (9s)</div>
           </div>
 
           <div class="aim">
             <span class="aim__eyebrow aim__eyebrow--gold">Objetivo do andar</span>
-            <div class="aim__row"><span class="aim__desc">Limpa a caverna</span><span class="aim__count">4 / 8 inimigos</span></div>
+            <div class="aim__row"><span class="aim__desc">Limpe a caverna</span><span class="aim__count">0 / 196 inimigos derrotados</span></div>
             <span class="aim__bar"><i class="fill--gold"></i></span>
+            <span class="aim__aviso">Reset livre disponível! +878170 CM</span>
             <span class="aim__div"></span>
             <span class="aim__eyebrow aim__eyebrow--blue">Missão atual</span>
-            <div class="aim__row"><span class="aim__desc">Tempo</span><span class="aim__count">38 / 600 seg</span></div>
+            <div class="aim__row"><span class="aim__desc">Tempo</span><span class="aim__count">73 / 600 seg</span></div>
             <span class="aim__bar"><i class="fill--blue"></i></span>
           </div>
         </div>
 
-        <span class="rodape-rotulo">#container-Habilidades</span>
+        <!-- O LOG (290 × 60) -->
+        <div class="log">
+          <div class="log__cabeca"><span>💬 Registro</span><span class="log__seta">⌄</span></div>
+          <div class="log__corpo">
+            <div class="log__linha"><span class="log__hora">12:04</span><span class="log__txt t-marco">Marco do andar 110 — +10% de gold nesta run</span></div>
+            <div class="log__linha"><span class="log__hora">12:04</span><span class="log__txt t-gold">Baú encontrado: <b>+107.31T Gold</b></span></div>
+            <div class="log__linha"><span class="log__hora">12:05</span><span class="log__txt t-buff">Alquimista: Gold ×2 por 10s</span></div>
+          </div>
+        </div>
+
         <div class="habilidades">
           <span class="hab-icon">🗡</span>
           <span class="hab-bar"><i class="h70"></i></span>
           <span class="hab-bar"><i class="h40"></i></span>
           <span class="hab-bar"><i class="h25"></i></span>
           <span class="hab-bar"><i class="h88"></i></span>
-          <span class="hab-bar"><i class="h55"></i></span>
         </div>
 
         <nav class="bottomnav">
@@ -339,24 +338,19 @@
           <span class="nav-btn"><img src="../imagens/settings-black-18dp.svg" alt="">Config</span>
         </nav>
 
-        <span class="vguide" style="left:10px"></span>
-        <span class="vguide" style="left:114px"></span>
-        <span class="guide" style="top:124px"><span class="guide__label">mesma altura →</span></span>
-        <span class="guide" style="top:250px"><span class="guide__label">arena livre</span></span>
-        <span class="guide" style="top:632px"><span class="guide__label">rodapé: skills + nav</span></span>
+        <span class="guide" style="top:250px"><span class="guide__label">coluna + objetivo (mesma altura)</span></span>
+        <span class="guide" style="top:634px"><span class="guide__label">skills</span></span>
+        <span class="guide" style="top:726px"><span class="guide__label">nav</span></span>
 
-        <span class="pin" style="top:108px; left:6px;">1</span>
-        <span class="pin" style="top:160px; left:6px;">2</span>
-        <span class="pin" style="top:196px; left:6px;">3</span>
-        <span class="pin" style="top:230px; left:6px;">4</span>
-        <span class="pin" style="top:236px; right:6px;">5</span>
+        <span class="pin" style="top:556px; left:6px;">1</span>
+        <span class="pin" style="top:586px; left:6px;">2</span>
       </div>
     </div>
 
-    <!-- ============ 2: PHONE, BAÚ ============ -->
+    <!-- ============= 2: ANDROID, log RECOLHIDO ============= -->
     <div class="col" style="width:390px">
-      <h2>Celular — <span>“Baú encontrado” ativo</span></h2>
-      <div class="phone st-bau">
+      <h2>Android — <span>log recolhido</span></h2>
+      <div class="phone">
         <div class="scene">
           <img class="sprite inimigo i1" src="../imagens/inimigo.png" alt="">
           <img class="sprite inimigo i2" src="../imagens/inimigo.png" alt="">
@@ -381,45 +375,35 @@
 
         <div class="escape"><span>Fuga <b>121s</b></span><span class="bar"><i></i></span></div>
 
-        <div class="avisos-topo">
-          <div class="bau">
-            <img class="bau__icone" src="../imagens/bau-aventura.svg" alt="">
-            <span class="bau__txt"><span class="bau__rotulo">Baú encontrado</span><span class="bau__valor">+107.31T <b>Gold</b></span></span>
-          </div>
-        </div>
-
         <div class="linha-topo">
           <div class="coluna-rail">
             <section class="golden-chest">
               <div class="golden-chest__main"><img class="golden-chest__icon" src="../imagens/bau-dourado.svg" alt=""><span class="golden-chest__time">9:18</span></div>
               <div class="golden-chest__bottom"><span class="golden-chest__info">i</span><label class="golden-chest__auto">auto<input type="checkbox" checked></label></div>
             </section>
-            <div class="itens-chip">
-              <img src="../imagens/bau-aventura.svg" alt="">
-              <span>Itens <b>×2</b></span>
-            </div>
-            <div class="buff-alquimista">🧪 Baú ×3 <b>· 3s</b></div>
+            <div class="itens-chip"><img src="../imagens/bau-aventura.svg" alt=""><span>ITENS <b>×12</b></span></div>
+            <div class="buff-alquimista">🧪 Gold <b>×2</b> (8s)</div>
           </div>
 
           <div class="aim">
             <span class="aim__eyebrow aim__eyebrow--gold">Objetivo do andar</span>
-            <div class="aim__row"><span class="aim__desc">Limpa a caverna</span><span class="aim__count">4 / 8 inimigos</span></div>
+            <div class="aim__row"><span class="aim__desc">Limpe a caverna</span><span class="aim__count">0 / 196 inimigos derrotados</span></div>
             <span class="aim__bar"><i class="fill--gold"></i></span>
-            <span class="aim__div"></span>
-            <span class="aim__eyebrow aim__eyebrow--blue">Missão atual</span>
-            <div class="aim__row"><span class="aim__desc">Tempo</span><span class="aim__count">38 / 600 seg</span></div>
-            <span class="aim__bar"><i class="fill--blue"></i></span>
+            <span class="aim__aviso">Reset livre disponível! +878170 CM</span>
           </div>
         </div>
 
-        <span class="rodape-rotulo">#container-Habilidades</span>
+        <div class="log log--recolhido">
+          <div class="log__cabeca"><span>💬 Registro</span><span class="log__seta">⌄</span></div>
+          <div class="log__corpo"></div>
+        </div>
+
         <div class="habilidades">
           <span class="hab-icon">🗡</span>
           <span class="hab-bar"><i class="h70"></i></span>
           <span class="hab-bar"><i class="h40"></i></span>
           <span class="hab-bar"><i class="h25"></i></span>
           <span class="hab-bar"><i class="h88"></i></span>
-          <span class="hab-bar"><i class="h55"></i></span>
         </div>
 
         <nav class="bottomnav">
@@ -430,14 +414,14 @@
           <span class="nav-btn"><img src="../imagens/settings-black-18dp.svg" alt="">Config</span>
         </nav>
 
-        <span class="guide" style="top:148px"><span class="guide__label">faixa de avisos · baú</span></span>
+        <span class="pin" style="top:556px; left:6px;">3</span>
       </div>
     </div>
 
-    <!-- ============ 3: TELA LARGA (PC) ============ -->
+    <!-- ============= 3: TELA MAIOR ============= -->
     <div class="col" style="width:780px">
-      <h2>Tela maior (PC) — <span>como hoje: coluna à esquerda, Objetivo/Missão à direita e estreito</span></h2>
-      <div class="frame-wide st-marco">
+      <h2>Tela maior (PC) — <span>mesmo log, 1/3 da largura</span></h2>
+      <div class="frame-wide">
         <div class="scene">
           <img class="sprite inimigo i1" src="../imagens/inimigo.png" alt="">
           <img class="sprite inimigo i2" src="../imagens/inimigo.png" alt="">
@@ -462,46 +446,42 @@
 
         <div class="escape"><span>Fuga <b>121s</b></span><span class="bar"><i></i></span></div>
 
-        <div class="avisos-topo">
-          <div class="milestone">
-            <span class="milestone__title">Marco do andar 110</span>
-            <span class="milestone__msg"><b>+10%</b> de gold nesta run</span>
-          </div>
-        </div>
-
         <div class="linha-topo">
           <div class="coluna-rail">
             <section class="golden-chest">
-              <div class="golden-chest__main"><img class="golden-chest__icon" src="../imagens/bau-dourado.svg" alt=""><span class="golden-chest__time">9:18</span></div>
+              <div class="golden-chest__main"><img class="golden-chest__icon" src="../imagens/bau-dourado.svg" alt=""><span class="golden-chest__time">19:56</span></div>
               <div class="golden-chest__bottom"><span class="golden-chest__info">i</span><label class="golden-chest__auto">auto<input type="checkbox" checked></label></div>
             </section>
-            <div class="itens-chip">
-              <img src="../imagens/bau-aventura.svg" alt="">
-              <span>Itens <b>×2</b></span>
-            </div>
-            <div class="buff-alquimista">🧪 Gold ×2 <b>· 8s</b></div>
+            <div class="itens-chip"><img src="../imagens/bau-aventura.svg" alt=""><span>ITENS <b>×49</b></span></div>
+            <div class="buff-alquimista">🧪 Baú <b>×3</b> (9s)</div>
           </div>
 
           <div class="aim">
             <span class="aim__eyebrow aim__eyebrow--gold">Objetivo do andar</span>
-            <div class="aim__row"><span class="aim__desc">Limpa a caverna</span><span class="aim__count">4 / 8 inimigos</span></div>
+            <div class="aim__row"><span class="aim__desc">Limpe a caverna</span><span class="aim__count">0 / 196 inimigos derrotados</span></div>
             <span class="aim__bar"><i class="fill--gold"></i></span>
+            <span class="aim__aviso">Reset livre disponível! +878170 CM</span>
             <span class="aim__div"></span>
             <span class="aim__eyebrow aim__eyebrow--blue">Missão atual</span>
-            <div class="aim__row"><span class="aim__desc">Coleta de Gold</span><span class="aim__count">77.08 / 500.00 Gold</span></div>
+            <div class="aim__row"><span class="aim__desc">Coleta de Gold</span><span class="aim__count">77.08 / 500.00</span></div>
             <span class="aim__bar"><i class="fill--blue"></i></span>
           </div>
         </div>
 
-        <span class="rodape-rotulo">#container-Habilidades</span>
+        <div class="log">
+          <div class="log__cabeca"><span>💬 Registro</span><span class="log__seta">⌄</span></div>
+          <div class="log__corpo">
+            <div class="log__linha"><span class="log__hora">12:04</span><span class="log__txt t-marco">Marco do andar 110 — +10% de gold nesta run</span></div>
+            <div class="log__linha"><span class="log__hora">12:04</span><span class="log__txt t-gold">Baú encontrado: <b>+107.31T Gold</b></span></div>
+            <div class="log__linha"><span class="log__hora">12:05</span><span class="log__txt t-info">Save automático no andar 110</span></div>
+          </div>
+        </div>
+
         <div class="habilidades">
           <span class="hab-icon">🗡</span>
           <span class="hab-bar"><i class="h70"></i></span>
           <span class="hab-bar"><i class="h40"></i></span>
-          <span class="hab-bar"><i class="h25"></i></span>
-          <span class="hab-bar"><i class="h88"></i></span>
         </div>
-
         <nav class="bottomnav">
           <span class="nav-btn"><img src="../imagens/account_circle-24px.svg" alt="">Status</span>
           <span class="nav-btn"><img src="../imagens/store-24px.svg" alt="">Loja</span>
@@ -510,46 +490,52 @@
           <span class="nav-btn"><img src="../imagens/settings-black-18dp.svg" alt="">Config</span>
         </nav>
 
-        <span class="vguide" style="left:10px"></span>
-        <span class="vguide" style="left:140px"></span>
-        <span class="vguide" style="left:505px"></span>
-        <span class="guide" style="top:124px"><span class="guide__label">coluna (esq.) · objetivo estreito (dir.)</span></span>
-        <span class="guide" style="top:266px"><span class="guide__label">arena livre</span></span>
-
-        <span class="pin" style="top:108px; left:6px;">1</span>
-        <span class="pin" style="top:160px; left:6px;">2</span>
-        <span class="pin" style="top:196px; left:6px;">3</span>
-        <span class="pin" style="top:230px; left:6px;">4</span>
+        <span class="pin" style="top:180px; left:6px;">4</span>
       </div>
     </div>
 
-    <!-- ============ LEGENDA ============ -->
+    <!-- ============= LEGENDA ============= -->
     <aside class="legend">
-      <h2>Regras do layout</h2>
+      <h2>Como funciona</h2>
       <ol>
-        <li><span class="num">1</span><span><b>Mesma largura.</b> Baú, itens e buff usam <code>width: 100%</code> de uma coluna única (104px no celular, 130px em telas grandes) — alinhados nas mesmas bordas (linhas roxas tracejadas).</span></li>
-        <li><span class="num">2</span><span><b>Ao lado do Objetivo/Missão.</b> A coluna encosta no card, com <code>gap</code> de 8px; sobra espaço para título, descrição, barras e contagens.</span></li>
-        <li><span class="num">3</span><span><b>Mesma altura (celular).</b> Onde coluna e card ficam lado a lado, a linha usa <code>align-items: stretch</code>: a coluna estica junto com o Objetivo/Missão. O buff ocupa a sobra (<code>grid-template-rows: 56px 34px 1fr</code>).</span></li>
-        <li><span class="num">4</span><span><b>Tela maior = como está hoje no jogo.</b> Coluna à <b>esquerda</b>; Objetivo/Missão no canto <b>direito</b> e <b>mais estreito</b> (<code>space-between</code> + <code>align-items: flex-start</code>), igual ao <code>@media (min-width: 1000px)</code> atual.</span></li>
-        <li><span class="num">5</span><span><b>Arena livre.</b> A linha do topo (coluna + card) termina bem antes da faixa dos monstros; o rodapé (skills + nav) não é tocado.</span></li>
+        <li><span class="num">1</span><span><b>Coluna à esquerda</b> (baú dourado + <b>ITENS</b> + <b>Baú/buff</b>), com <b>largura única</b> e ao lado do Objetivo/Missão; os dois têm a <b>mesma altura</b> (<code>align-items: stretch</code>).</span></li>
+        <li><span class="num">2</span><span><b>Chip ITENS:</b> baús de itens da build <b>pendentes</b> (<span class="v">Tapeira.ItensBuild.quantidadeBausPendentes()</span>) — o antigo selo "ITENS ×N" da arena.</span></li>
+        <li><span class="num">3</span><span><b>Chip Baú/buff:</b> buff ativo do <b>Alquimista</b> (tipo baú ×3) — no jogo, o selo <code>#buffAlquimista</code> exibe "🧪 Baú (Ns)".</span></li>
+        <li><span class="num">4</span><span><b>Log no canto inferior esquerdo</b> (estilo WoW): hora + texto colorido por tipo, mais nova embaixo; <b>recolhível</b> pela barra "💬 Registro". Android <code>width: min(290px, 80vw)</code> × <code>max-height: 60px</code>; telas maiores <code>width: 33%</code>.</span></li>
       </ol>
 
       <div class="card">
-        <b>Checagem de sobreposição</b><br>
-        <span class="ok">✔</span> Coluna ↔ Objetivo/Missão: lado a lado, sem sobrepor.<br>
-        <span class="ok">✔</span> Coluna/card ↔ monstros: a linha inteira termina antes da faixa dos monstros.<br>
-        <span class="ok">✔</span> Faixa de avisos ↔ card: a faixa <b>empurra</b> (a linha desce quando há aviso).<br>
-        <span class="ok">✔</span> Coluna/avisos ↔ <code>#container-Habilidades</code>/<code>.skill-unlock-panel</code>/nav: nada encosta no rodapé.<br>
-        <span class="nao">✘</span> Em telas muito estreitas (~320px) o card Objetivo/Missão fica apertado; a coluna pode reduzir para ~88px ou o card passar a 2 linhas.
+        <b>Cores das linhas (o "canal")</b>
+        <div class="swatches" style="margin-top:8px;">
+          <span><i style="background:#ffd36b"></i>marco</span>
+          <span><i style="background:#72e7c1"></i>baú</span>
+          <span><i style="background:#ffd84a"></i>gold</span>
+          <span><i style="background:#8fd0ff"></i>buff</span>
+          <span><i style="background:#9fe6b8"></i>xp</span>
+          <span><i style="background:#c3d2e2"></i>info</span>
+        </div>
       </div>
 
       <div class="card">
-        <b>Notas de implementação</b><br>
-        · <span class="v">Coluna</span>: novo contêiner em volta de <code>#golden-chest-tracker</code>, do chip de itens e do selo <code>#buffAlquimista</code> — <code>display:grid; gap:4px; width:104px</code>. No <b>celular</b> a linha pai é <code>display:flex; align-items:stretch</code> (mesma altura do Objetivo/Missão); em <b>≥1000px</b> reaproveita o layout de hoje: <code>justify-content:space-between; align-items:flex-start</code>, com o card Objetivo/Missão à direita (<code>max-width: min(420px, 32vw)</code>).<br>
-        · <span class="v">Baú</span>: deixa de ser quadrado fixo (<code>aspect-ratio:1</code>, <code>top:31.33vh</code>) e passa a preencher a largura da coluna.<br>
-        · <span class="v">Itens</span>: o antigo <code>.bau-build</code> (sprite na arena, <code>top:26vw;left:62vw</code>) vira chip fixo nessa coluna; o <code>.itens-build-titulo</code> continua no modal de escolha.<br>
-        · <span class="v">Buff</span>: <code>AtualizaBuffAlquimistaUI()</code> passa a anexar o selo à coluna em vez de <code>position:fixed; right:1rem</code>.<br>
-        · <span class="v">Avisos</span>: <code>#gameMilestone</code> e <code>#chestOpening</code> entram numa faixa <code>#container-Avisos</code> no topo; a linha ganha <code>margin-top</code> quando a faixa está visível (classe <code>tem-aviso</code>). Reusa a fila/timer de milestones já existente.
+        <b>Regras garantidas</b><br>
+        <span class="ok">✔</span> Coluna e Objetivo/Missão <b>lado a lado</b>, com a <b>mesma altura</b> — nada se sobrepõe.<br>
+        <span class="ok">✔</span> Objetivo/Missão <b>intacto</b> no topo — nada empurra.<br>
+        <span class="ok">✔</span> Sem cartão no centro, sem escurecer a tela, sem fechar a arena.<br>
+        <span class="ok">✔</span> Log fica atrás do modal da build (<code>.itens-build-tela-aberta</code>).<br>
+        <span class="nao">✘</span> Em telas muito estreitas (~320px) a coluna pode apertar o card; reduzir a coluna a ~88px.<br>
+        <span class="ok">✔</span> A coluna (baú / ITENS / buff) foi <b>implementada no jogo</b> (<code>Caverna.html</code> + <code>css/estilos.css</code>).
+      </div>
+
+      <div class="card">
+        <b>Implementado no jogo</b><br>
+        · Coluna: <code>#container-Metas &gt; .coluna-rail</code>; chip ITENS = <span class="v">`UI.spawnBauBuild`</span>
+        (id <code>#bauBuild</code>, texto <code>#bauBuild-selo</code>) e buff = <span class="v">`AtualizaBuffAlquimistaUI`</span>
+        (id <code>#buffAlquimista</code>).<br>
+        · <span class="k">`UI.showMilestone`</span> (marco, missão, conquista, eventos…) e
+        <span class="k">`UI.showChestOpening`</span> escrevem no log via <span class="v">`UI.logAviso`</span>.<br>
+        · O antigo banner <code>#gameMilestone</code> e o cartão <code>.chest-opening</code> saíram do CSS/JS.<br>
+        · Também grava no histórico <code>Tapeira.Logs</code> (tela "Logs").<br>
+        · Cabeçalho "Registro" usa <code>addEventListener</code> (sem <code>onclick</code> inline).
       </div>
     </aside>
   </div>

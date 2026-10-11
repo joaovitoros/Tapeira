@@ -166,23 +166,26 @@ body{
 .bau:hover{
 	cursor: pointer;
 }
-/* Selo do buff do Alquimista (criado por AtualizaBuffAlquimistaUI):
-   pílula fixa abaixo do HUD de gold, só some quando o buff expira */
+/* Selo do buff do Alquimista (criado por AtualizaBuffAlquimistaUI): chip na
+   coluna esquerda do HUD (junto do baú dourado e do chip ITENS); só some
+   quando o buff expira. Mesma largura do baú; o texto pode quebrar em duas
+   linhas nos buffs de nome longo (ex.: "Velocidade ×2"). */
 .buff-alquimista {
-	position: fixed;
-	top: calc(1rem + 6.25vh + 8px);
-	right: 1rem;
-	z-index: 6;
-	padding: 6px 12px;
+	width: 100%;
+	min-width: 0;
 	box-sizing: border-box;
-	border-radius: 999px;
+	padding: 5px 7px;
+	border-radius: 11px;
 	background: rgba(14, 22, 38, 0.92);
 	border: 1px solid rgba(140, 220, 255, 0.55);
 	color: #eaf1fc;
-	font-size: clamp(12px, 1.1vw, 16px);
+	font-size: clamp(9px, 0.75vw, 12px);
 	font-weight: 700;
 	letter-spacing: 0.02em;
-	white-space: nowrap;
+	line-height: 1.2;
+	text-align: center;
+	white-space: normal;
+	overflow-wrap: anywhere;
 	pointer-events: none;
 	box-shadow: 0 0 14px rgba(90, 200, 255, 0.35);
 	animation: buff-alquimista-pulse 1.2s ease-in-out infinite;
@@ -8467,47 +8470,9 @@ button.skill-ramo-no:focus-visible {
 }
 
 /* ===================== Itens da build (por run) ==========================
-   Baú de build: visual próprio (brilho violeta + selo "ITENS") para não se
-   confundir com o baú comum; posição à direita da arena. O baú de build NÃO
-   é removido na troca de andar — some só quando o item é escolhido. */
-.bau-build {
-	top: 26vw;
-	left: 62vw;
-	z-index: 2;
-	background: radial-gradient(
-		ellipse at 50% 68%,
-		rgba(190, 120, 255, 0.22),
-		rgba(190, 120, 255, 0.08) 42%,
-		transparent 72%
-	);
-	filter:
-		drop-shadow(0 5px 3px rgba(0, 0, 0, 0.48))
-		drop-shadow(0 0 8px rgba(185, 115, 255, 0.55))
-		hue-rotate(215deg) saturate(1.15);
-}
-
-.bau-build:hover {
-	filter:
-		drop-shadow(0 6px 4px rgba(0, 0, 0, 0.5))
-		drop-shadow(0 0 12px rgba(205, 150, 255, 0.95))
-		hue-rotate(215deg) saturate(1.2);
-}
-
-.bau-build-selo {
-	position: fixed;
-	transform: translate(-50%, -100%);
-	padding: 2px 8px;
-	border-radius: 999px;
-	background: rgba(58, 30, 88, 0.92);
-	border: 1px solid rgba(200, 160, 255, 0.7);
-	color: #f2e6ff;
-	font-size: 11px;
-	font-weight: 700;
-	letter-spacing: 1px;
-	pointer-events: none;
-	z-index: 3;
-	white-space: nowrap;
-}
+   O baú de build virou o chip ITENS na coluna esquerda do HUD (#container-Metas
+   > .coluna-rail; visual em .itens-chip, criado por ui-baus.js). O baú de
+   itens NÃO é removido na troca de andar — some só quando o item é escolhido. */
 
 /* Modal da escolha (1 de 3; vira "qual sai" quando a build está cheia) */
 .modal-itens-build {
@@ -8646,10 +8611,9 @@ button.skill-ramo-no:focus-visible {
 }
 
 /* com a tela de escolha/leitura da build aberta, os avisos não ficam
-   visíveis por cima do modal (fundo translúcido): o chip do baú, o selo
-   "ITENS ×N" e o log de avisos do canto */
-.itens-build-tela-aberta .bau-build,
-.itens-build-tela-aberta .bau-build-selo,
+   visíveis por cima do modal (fundo translúcido): o chip ITENS e o log de
+   avisos do canto */
+.itens-build-tela-aberta .itens-chip,
 .itens-build-tela-aberta .log-avisos {
 	visibility: hidden;
 }
@@ -9311,8 +9275,68 @@ img.ramos-tree-no__tile {
 #container-Metas {
 	top: 7rem;
 	display: flex;
-	align-items: flex-start;
+	align-items: stretch; /* coluna e card de Objetivo/Missão com a MESMA ALTURA */
 	gap: 8px;
+}
+
+/* (4b) Coluna à esquerda: baú dourado em cima; abaixo o chip ITENS (baús de
+   itens da build pendentes) e o chip do buff do Alquimista — ambos criados
+   por JS (ui-baus.js / companheiros.js). Mesma largura do baú; "order" fixa a
+   ordem mesmo com os chips entrando/saindo do DOM. */
+#container-Metas > .coluna-rail {
+	flex: 0 0 auto;
+	display: grid;
+	align-content: start;
+	gap: 4px;
+	width: 92px;
+}
+#container-Metas > .coluna-rail > #golden-chest-tracker { order: 1; }
+#container-Metas > .coluna-rail > .itens-chip { order: 2; }
+#container-Metas > .coluna-rail > .buff-alquimista { order: 3; }
+
+/* (5) Chip ITENS: baús de itens da build pendentes. Substitui o antigo baú
+   solto na arena; clicar abre a escolha 1 de 3 (mesmo fluxo). */
+.itens-chip {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	width: 100%;
+	overflow: hidden;
+	padding: 5px 7px;
+	border: 1px solid rgba(200, 160, 255, 0.7);
+	border-radius: 11px;
+	background: linear-gradient(145deg, rgba(49, 30, 74, 0.97), rgba(20, 16, 30, 0.97));
+	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5), 0 0 14px rgba(185, 115, 255, 0.25);
+	color: #f2e6ff;
+	font-family: inherit;
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	line-height: 1.2;
+	white-space: nowrap;
+	cursor: pointer;
+	pointer-events: auto; /* #container-Metas é pointer-events:none */
+}
+.itens-chip img {
+	width: 20px;
+	height: 17px;
+	flex: none;
+	filter: hue-rotate(215deg) saturate(1.2) drop-shadow(0 0 6px rgba(190, 120, 255, 0.7));
+}
+.itens-chip span {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.itens-chip:hover {
+	border-color: #d9c3ff;
+	background: linear-gradient(145deg, rgba(62, 38, 94, 0.98), rgba(28, 22, 42, 0.98));
+}
+.itens-chip:focus-visible {
+	outline: 2px solid #f0e3ff;
+	outline-offset: 2px;
 }
 #container-Metas.has-mission {
 	display: flex;
@@ -9325,7 +9349,7 @@ img.ramos-tree-no__tile {
 	justify-self: auto;
 }
 
-#container-Metas > #golden-chest-tracker {
+#container-Metas > .coluna-rail > #golden-chest-tracker {
 	position: relative; /* flex item; relativo para o balão de info ancorar no card */
 	top: auto;
 	left: auto;
@@ -9394,10 +9418,10 @@ img.ramos-tree-no__tile {
 		width: auto;
 		transform: none;
 		justify-content: space-between;
-		align-items: flex-start;
+		align-items: stretch; /* coluna e card com a MESMA ALTURA (esboço) */
 		gap: 16px;
 	}
-	#container-Metas > #golden-chest-tracker {
+	#container-Metas > .coluna-rail > #golden-chest-tracker {
 		flex: 0 0 auto;
 	}
 	#container-Metas.has-mission > #container-Objetivo {
@@ -9487,15 +9511,27 @@ img.ramos-tree-no__tile {
 		transform: none;
 		gap: 5px;
 	}
-	#container-Metas > #golden-chest-tracker {
+	#container-Metas > .coluna-rail {
 		width: 84px;
+	}
+	#container-Metas > .coluna-rail > #golden-chest-tracker {
+		width: 84px;
+	}
+	.itens-chip {
+		gap: 4px;
+		padding: 4px 6px;
+		font-size: 9px;
+	}
+	.itens-chip img {
+		width: 16px;
+		height: 14px;
 	}
 }
 
 /* Balão de info do baú: em telas onde o card fica no topo (mobile retrato e
    landscape baixo) abrir para CIMA estoura a tela — abre para BAIXO. */
 @media (max-width: 700px), (max-width: 900px) and (max-height: 520px) and (orientation: landscape) {
-	#container-Metas > #golden-chest-tracker .golden-chest-tracker__desc {
+	#container-Metas > .coluna-rail > #golden-chest-tracker .golden-chest-tracker__desc {
 		top: calc(100% + 6px);
 		bottom: auto;
 		left: 0;

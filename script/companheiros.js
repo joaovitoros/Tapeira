@@ -75,7 +75,10 @@ function AtualizaBuffAlquimistaUI() {
 		selo = document.createElement("div");
 		selo.id = "buffAlquimista";
 		selo.className = "buff-alquimista";
-		document.body.appendChild(selo);
+		// Vive na coluna esquerda do HUD (junto do baú dourado e do chip
+		// ITENS); no menu, onde não há coluna, cai no body.
+		const rail = document.querySelector("#container-Metas > .coluna-rail") || document.body;
+		rail.appendChild(selo);
 	}
 	const resta = Math.max(0, Math.ceil((buffAtivo.fimMs - Date.now()) / 1000));
 	selo.innerHTML = "🧪 " + info.nome + " (" + resta + "s)";

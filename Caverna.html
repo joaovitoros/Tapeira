@@ -125,7 +125,11 @@
 		</div>
 
 		<div id="container-Metas">
-			<!-- (4) Baú dourado no vão à esquerda do Objetivo/Missão (esboço HUD v3) -->
+			<!-- (4) Coluna à esquerda do Objetivo/Missão (esboço HUD): baú dourado +
+			     chip ITENS (baús de itens da build pendentes) + chip do buff do
+			     Alquimista. Os dois chips entram aqui por JS (ui-baus.js e
+			     companheiros.js). -->
+			<div class="coluna-rail" id="colunaRail">
 			<section id="golden-chest-tracker" aria-label="Baú dourado">
 				<button type="button" id="golden-chest-claim" class="golden-chest-tracker__main" disabled>
 					<img src="imagens/bau-dourado.svg" alt="" class="golden-chest-tracker__icon">
@@ -159,6 +163,7 @@
 					<p><b>Fora do jogo:</b> a cada 40 min.</p>
 				</div>
 			</section>
+			</div>
 
 			<!-- (2) Objetivo com a missão como segunda seção do mesmo card -->
 			<div id="container-Objetivo" aria-live="polite">
