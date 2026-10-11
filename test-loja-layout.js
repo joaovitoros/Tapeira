@@ -35,7 +35,10 @@ const views = [
             const sobrepoe = !(loja.left >= metas.right || loja.right <= metas.left || loja.top >= metas.bottom || loja.bottom <= metas.top);
             return {
                 sobrepoe,
+                estouraBaixo: loja.bottom > window.innerHeight + 1,
+                vh: window.innerHeight,
                 lojaTop: Math.round(loja.top),
+                lojaBottom: Math.round(loja.bottom),
                 metasBottom: Math.round(metas.bottom),
                 folga: Math.round(loja.top - metas.bottom)
             };
@@ -43,6 +46,8 @@ const views = [
 
         check("Loja nao invade Objetivo/Missao (" + v.w + "x" + v.h + ")",
             !r.sobrepoe, "loja.top=" + r.lojaTop + " metas.bottom=" + r.metasBottom + " folga=" + r.folga);
+        check("Loja nao estoura o rodape (" + v.w + "x" + v.h + ")",
+            !r.estouraBaixo, "loja.bottom=" + r.lojaBottom + " vh=" + r.vh);
         await ctx.close();
     }
 

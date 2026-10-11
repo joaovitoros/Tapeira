@@ -2085,7 +2085,8 @@ body {
 	bottom: calc(1rem + env(safe-area-inset-bottom));
 	box-sizing: border-box;
 	width: min(45vw, 600px);
-	height: 85vh;
+	/* nunca deixa o fundo passar da tela (o topo já começa abaixo do topo) */
+	max-height: calc(100vh - 22rem);
 	overflow: hidden;
 	transform: none;
 	z-index: 10;
