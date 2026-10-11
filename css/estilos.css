@@ -9810,6 +9810,30 @@ img.ramos-tree-no__tile {
 	pointer-events: none;
 }
 
+/* Trilhas de terra ligando os prédios à praça central: cada trilha sai do
+   centro e aponta pro prédio (giro fixo por prédio; o ângulo depende da
+   proporção da cena, então há um ajuste por breakpoint mais abaixo). */
+.cidade-trilha {
+	position: absolute;
+	left: 50%;
+	top: 55%;
+	height: clamp(30px, 4vw, 62px);
+	width: 30%;
+	translate: 0 -50%;
+	transform-origin: 0 50%;
+	border-radius: 999px;
+	background: linear-gradient(90deg, rgba(146, 110, 68, 0.62), rgba(146, 110, 68, 0.14) 78%, rgba(146, 110, 68, 0));
+	filter: blur(2px);
+	z-index: 0;
+	pointer-events: none;
+}
+
+.cidade-trilha--casa     { transform: rotate(-90deg);  width: 21%; }
+.cidade-trilha--mercado  { transform: rotate(-163deg); width: 32%; }
+.cidade-trilha--pesquisa { transform: rotate(-17deg);  width: 32%; }
+.cidade-trilha--fabrica  { transform: rotate(155deg);  width: 32%; }
+.cidade-trilha--fazenda  { transform: rotate(25deg);   width: 32%; }
+
 .cidade-decor {
 	position: absolute;
 	z-index: 1;
@@ -10010,16 +10034,26 @@ img.ramos-tree-no__tile {
 	.cidade-predio { width: var(--largura-cel, 40%); }
 
 	.cidade-predio--casa     { left: 50%; top: 24%; --largura-cel: 44%; }
-	.cidade-predio--mercado  { left: 24%; top: 42%; --largura-cel: 40%; }
-	.cidade-predio--pesquisa { left: 76%; top: 42%; --largura-cel: 40%; }
-	.cidade-predio--fabrica  { left: 26%; top: 76%; --largura-cel: 44%; }
-	.cidade-predio--fazenda  { left: 74%; top: 76%; --largura-cel: 44%; }
+	.cidade-predio--mercado  { left: 21%; top: 43%; --largura-cel: 39%; }
+	.cidade-predio--pesquisa { left: 79%; top: 43%; --largura-cel: 39%; }
+	.cidade-predio--fabrica  { left: 25%; top: 76%; --largura-cel: 44%; }
+	.cidade-predio--fazenda  { left: 75%; top: 76%; --largura-cel: 44%; }
 
-	.cidade-predio__nome { font-size: 11px; }
-	.cidade-predio__banner { padding: 4px 9px; gap: 4px; }
+	.cidade-predio__nome { font-size: 10px; }
+	.cidade-predio__banner { padding: 4px 8px; gap: 3px; }
+	.cidade-predio__icone { font-size: 12px; }
 
-	.cidade-fonte { width: 22%; top: 56%; }
-	.cidade-praca { width: 56%; }
+	.cidade-fonte { width: 22%; top: 57%; }
+	.cidade-praca { width: 56%; top: 57%; }
+
+	/* ângulos das trilhas pro retrato (a cena é alta: os prédios ficam mais
+	   "na vertical") */
+	.cidade-trilha { top: 57%; }
+	.cidade-trilha--casa     { transform: rotate(-90deg);  width: 24%; }
+	.cidade-trilha--mercado  { transform: rotate(-132deg); width: 34%; }
+	.cidade-trilha--pesquisa { transform: rotate(-48deg);  width: 34%; }
+	.cidade-trilha--fabrica  { transform: rotate(120deg);  width: 34%; }
+	.cidade-trilha--fazenda  { transform: rotate(60deg);   width: 34%; }
 
 	.cidade-decor--moita-esq  { left: 50%; top: 48%; height: 44px; }
 	.cidade-decor--pedras-esq { left: 14%; top: 58%; height: 26px; }
