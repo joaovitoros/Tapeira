@@ -6,6 +6,7 @@
   "main": "desktop/main.cjs",
   "scripts": {
     "test": "node --test tests/regression.test.cjs",
+    "test:auditoria": "node --test tests/auditoria.test.cjs",
     "sync:scripts": "node scripts/sync-scripts.js",
     "start:pc": "electron .",
     "build:pc": "electron-builder --win nsis",
