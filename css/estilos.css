@@ -9679,7 +9679,7 @@ img.ramos-tree-no__tile {
 	gap: 14px;
 	padding: clamp(14px, 3vw, 32px);
 	background: linear-gradient(160deg, rgba(14, 18, 27, 0.98), rgba(7, 10, 16, 0.99));
-	overflow-y: auto;
+	overflow: auto;
 }
 
 #container-Cidade[hidden] {
@@ -10049,8 +10049,15 @@ img.ramos-tree-no__tile {
 	.cidade-predio__icone { font-size: 12px; }
 
 	.cidade-fonte { width: 22%; top: 57%; }
-	/* no celular (retrato) a cena preenche a tela (sem rolagem) */
-	.cidade-cena { aspect-ratio: auto; flex: 1 1 auto; background-position: center 42%; }
+	/* no celular (retrato) a cena preenche a ALTURA e fica mais larga que o
+	   visor (proporção 3:2) — dá pra arrastar pros lados pra ver a cidade toda */
+	.cidade-cena {
+		flex: 1 1 auto;
+		min-height: 0;
+		width: auto;
+		aspect-ratio: 3 / 2;
+		background-position: center 45%;
+	}
 
 	.cidade-decor--moita-esq  { left: 50%; top: 48%; height: 44px; }
 	.cidade-decor--pedras-esq { left: 14%; top: 58%; height: 26px; }
