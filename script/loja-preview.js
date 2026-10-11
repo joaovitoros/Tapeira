@@ -114,9 +114,12 @@ const PREVIEWS_LOJA = {
 			+ " (metade em automáticos) · veneno 1% (3% da vida)";
 	},
 	CompraComp6() {
-		const chance = PctTexto(ChanceExploradorNoNivel(lvlComp6));
-		const prox = PctTexto(ChanceExploradorNoNivel(N(lvlComp6) + 1));
-		return "Explorador: " + chance + " → " + prox + " de avançar +1 andar";
+		const n = Math.max(0, N(lvlComp6) | 0);
+		const chance = PctTexto(ChanceExplorador());
+		return n > 0
+			? "Explorador: " + chance + " de avançar " + TextoAndaresExplorador(n)
+				+ " → " + TextoAndaresExplorador(n + 1)
+			: "Explorador: " + chance + " de avançar " + TextoAndaresExplorador(1);
 	},
 	CompraXP() {
 		const n = Math.max(0, N(lvlXP) | 0);

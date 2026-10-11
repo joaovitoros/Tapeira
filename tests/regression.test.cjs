@@ -1574,6 +1574,154 @@ test("loja do Conhecimento aplica +5% de dano/gold/XP por nível", async () => {
     }
 });
 
+test("explorador: chance só da distância e o nível pula N andares", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.TentaPuloExplorador === "function");
+        const result = await page.evaluate(() => {
+            UI.showInfo = () => {};
+            const out = {};
+            // a chance não muda mais com o nível — só com a distância
+            maxAndar = 100; andar = 100;
+            lvlComp6 = 1;
+            const c1 = ChanceExplorador();
+            lvlComp6 = 9;
+            const c9 = ChanceExplorador();
+            out.chanceNivelIndependente = Math.abs(c1 - 0.05) < 1e-9 && Math.abs(c9 - 0.05) < 1e-9;
+            andar = 50; // distância 50 → fator 2
+            out.chanceDistancia = Math.abs(ChanceExplorador() - 0.10) < 1e-9;
+            // a quantidade de andares pulados é o nível comprado
+            lvlComp6 = 4;
+            out.qtd = AndaresPuladosExplorador();
+            lvlComp6 = 9999;
+            out.qtdTravada = AndaresPuladosExplorador();
+            // Status e preview mostram a quantidade
+            lvlComp6 = 4; andar = 50; maxAndar = 100;
+            UI.showStatus();
+            out.status = [...document.querySelectorAll("#StatusBody tr")]
+                .find(tr => tr.cells[0]?.textContent.includes("Companheiro 6"))?.textContent || "";
+            out.preview = PREVIEWS_LOJA.CompraComp6();
+            // pulo real: rolagem garantida pula N andares (= nível)
+            lvlComp6 = 3; andar = 10; maxAndar = 50;
+            const randomReal = Math.random;
+            const eventoReal = window.TentaEventoAndar;
+            window.TentaEventoAndar = () => {};
+            // rolagem < chance mínima (5%) → sempre pula
+            Math.random = () => 0.0001;
+            try {
+                out.pulados = TentaPuloExplorador();
+                out.andarApos = andar;
+            } finally {
+                Math.random = randomReal;
+                window.TentaEventoAndar = eventoReal;
+            }
+            // sem nível comprado não pula nada
+            lvlComp6 = 0; andar = 13; maxAndar = 50;
+            window.TentaEventoAndar = () => {};
+            Math.random = () => 0.0001;
+            try {
+                out.puladosSemNivel = TentaPuloExplorador();
+                out.andarSemNivel = andar;
+            } finally {
+                Math.random = randomReal;
+                window.TentaEventoAndar = eventoReal;
+            }
+            return out;
+        });
+
+        assert.ok(result.chanceNivelIndependente, "chance = 5% fixo em qualquer nível");
+        assert.ok(result.chanceDistancia, "distância 50 dobra para 10%");
+        assert.equal(result.qtd, 4, "nível 4 = +4 andares");
+        assert.equal(result.qtdTravada, 50, "trava de segurança em 50 andares");
+        assert.ok(/10%/.test(result.status) && /\+4 andares/.test(result.status),
+            "Status mostra chance e quantidade (" + result.status.trim() + ")");
+        assert.ok(/Explorador: 10% de avançar \+4 andares → \+5 andares/.test(result.preview),
+            "preview mostra progressão da quantidade (" + result.preview + ")");
+        assert.equal(result.pulados, 3, "ativação pula 3 andares (= nível)");
+        assert.equal(result.andarApos, 13, "andar 10 → 13");
+        assert.equal(result.puladosSemNivel, 0, "sem nível não pula");
+        assert.equal(result.andarSemNivel, 13, "andar intacto sem nível");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("companheiro de dano + Frenesi: marca alvo (1 ou 2) e estoura 25% do dano da janela", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.AtivaHabilidadeCombate === "function");
+        const result = await page.evaluate(() => {
+            UI.showInfo = () => {};
+            const out = {};
+            // cenário: janela do Frenesi pronta e companheiro de dano comprado
+            lvlComp1 = 1;
+            maxAndar = 60;
+            andar = 60;
+            avanco = 0; qtdAvanco = 1; // Avancar() sempre devolve 1
+            inimigosDerrotados = 0;
+            numInimigosTela = 3;
+            const manter = document.getElementById("manterAndar");
+            if (manter) manter.checked = true; // abate não pode subir andar
+            vidaInimigo1 = 1000; vidaInimigo2 = 1000;
+            vidaInimigo3 = 800; vidaInimigo4 = 0;
+            const skill = habilidadesCombate.find(s => s.id === "frenzy");
+            abatesFrenesi = skill.killsRequired;
+            ataquesFrenesi = 0;
+
+            AtivaHabilidadeCombate("frenzy");
+            out.janelaAtivou = ataquesFrenesi > 0;
+            out.marca = alvoFrenesiComp;
+
+            // só hits da janela acumulam
+            RegistraDanoFrenesiComp(400, true);
+            RegistraDanoFrenesiComp(200, true);
+            RegistraDanoFrenesiComp(999, false); // fora da janela: ignora
+            out.acumulado = danoJanelaFrenesiComp;
+
+            // mata o marcado com um golpe real → a explosão sai na hora
+            const marca = out.marca;
+            const outro1 = marca === 1 ? 2 : 1;
+            const vidaAntes1 = window["vidaInimigo" + outro1];
+            const vidaAntes3 = vidaInimigo3;
+            window["vidaInimigo" + marca] = 1;
+            danoJogador = 100;
+            danoCritJogador = 100;
+            Bater(marca, true, false);
+
+            out.marcaMorta = window["vidaInimigo" + marca] <= 0;
+            out.splashOutro1 = vidaAntes1 - window["vidaInimigo" + outro1];
+            out.splashInimigo3 = vidaAntes3 - vidaInimigo3;
+            out.marcaLimpa = alvoFrenesiComp === 0;
+            out.acumuladoLimpo = danoJanelaFrenesiComp === 0;
+
+            // sem companheiro de dano não há marca nem acumulado
+            lvlComp1 = 0;
+            ataquesFrenesi = 0;
+            abatesFrenesi = skill.killsRequired;
+            AtivaHabilidadeCombate("frenzy");
+            out.semCompanheiro = alvoFrenesiComp === 0 && danoJanelaFrenesiComp === 0;
+
+            return out;
+        });
+
+        assert.ok(result.janelaAtivou, "janela do Frenesi ativou");
+        assert.ok(result.marca === 1 || result.marca === 2, "marcou o inimigo 1 ou 2 (alvo " + result.marca + ")");
+        assert.equal(result.acumulado, 600, "só hits da janela acumulam (600)");
+        assert.ok(result.marcaMorta, "o golpe matou o marcado (vida 1)");
+        // 600 acumulados + 1 do próprio golpe de kill = 601 → 25% = 150,25
+        assert.ok(Math.abs(result.splashOutro1 - 150.25) < 1e-9,
+            "splash de 150,25 no outro inimigo 1/2 (veio " + result.splashOutro1 + ")");
+        assert.ok(Math.abs(result.splashInimigo3 - 150.25) < 1e-9,
+            "splash de 150,25 no inimigo 3 (veio " + result.splashInimigo3 + ")");
+        assert.ok(result.marcaLimpa && result.acumuladoLimpo, "marca e acumulado zerados após a explosão");
+        assert.ok(result.semCompanheiro, "sem companheiro de dano não marca");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("simulação offline mantém vidas, conta mortes e reinicia onda completa", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

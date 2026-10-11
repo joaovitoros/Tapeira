@@ -489,7 +489,10 @@ function AtivaHabilidadeCombate(id, opcoes = {}) {
 		abatesFrenesi = 0;
 		ataquesFrenesi = DuracaoJanelaFrenesi();
 		ChamaSom("audio5");
-		UI.showInfo(`Toque Frenético ativo por ${ataquesFrenesi} toques!`);
+		// companheiro de dano: marca o alvo da janela (1 ou 2) e zera o acumulado
+		const alvoComp = MarcaAlvoFrenesiComp();
+		UI.showInfo(`Toque Frenético ativo por ${ataquesFrenesi} toques!`
+			+ (alvoComp > 0 ? ` · inimigo ${alvoComp} marcado!` : ""));
 	}
 
 	//desafio "sem habilidades": só ativar de verdade falha (tentativa sem carga não conta)
