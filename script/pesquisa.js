@@ -157,9 +157,17 @@ function RenderPesquisaPainel() {
 	corpo.replaceChildren(PesquisaSecaoItens(), PesquisaSecaoInimigos());
 }
 
-function PesquisaLinha(nome, sub, nivel, max, preco, compra) {
+function PesquisaLinha(nome, sub, nivel, max, preco, compra, icone) {
 	const linha = document.createElement("div");
 	linha.className = "pesquisa-linha" + (nivel >= max ? " is-max" : "");
+
+	if (icone) {
+		const img = document.createElement("img");
+		img.className = "pesquisa-linha__icone";
+		img.src = icone;
+		img.alt = "";
+		linha.append(img);
+	}
 
 	const info = document.createElement("div");
 	info.className = "pesquisa-linha__info";
@@ -206,7 +214,7 @@ function PesquisaSecaoItens() {
 			+ " · bônus ×" + PesquisaBonusItem(item.id).toFixed(2)
 			+ (copias > 0 ? " · você tem " + copias : " · você não tem");
 		lista.append(PesquisaLinha(item.nome, sub, nivel, PESQUISA_ITEM_MAX,
-			CustoPesquisaItem(item.id), () => CompraPesquisaItem(item.id)));
+			CustoPesquisaItem(item.id), () => CompraPesquisaItem(item.id), item.icone));
 	}
 	secao.append(lista);
 	return secao;

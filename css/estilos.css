@@ -10486,7 +10486,16 @@ img.ramos-tree-no__tile {
 	border-color: rgba(126, 224, 160, 0.5);
 }
 
+.pesquisa-linha__icone {
+	flex: 0 0 auto;
+	width: clamp(30px, 3vw, 40px);
+	height: clamp(30px, 3vw, 40px);
+	object-fit: contain;
+	filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
 .pesquisa-linha__info {
+	flex: 1 1 auto;
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
