@@ -23,13 +23,17 @@
 
 | O quê | Gate | Observação |
 | --- | --- | --- |
-| **Cidade** (aba) | `nivelJogador >= 50` | o botão só aparece a partir daí |
-| 🏠 **Casa** | (já no desbloqueio da Cidade) | 1º prédio, ensina o lugar |
-| 🐜 **Fazenda de Formigas** | `nivelJogador >= 55` | |
-| 🛒 **Mercado** | `nivelJogador >= 60` | |
-| ⚙️ **Fábrica** | `nivelJogador >= 70` | |
-| 🔬 **Centro de Pesquisa** | `nivelJogador >= 80` | |
-| 💎 **Cristal central** | `nivelJogador >= 100` | liga a Cidade à profundidade do reset |
+| **Cidade** (aba) | `maxAndar >= 80` | abre o "pós-especializações", sem competir com o meio-jogo (1–80 é denso) |
+| 🏠 **Casa** | 80 | 1º prédio, no desbloqueio da Cidade |
+| 🐜 **Fazenda de Formigas** | 85 | |
+| 🛒 **Mercado** | 90 | |
+| ⚙️ **Fábrica** | 100 | junto dos itens de build |
+| 🔬 **Centro de Pesquisa** | 110 | |
+| 💎 **Cristal central** | 120 | liga a Cidade à profundidade do reset |
+
+> Os gates são por **andar máximo** (o padrão do jogo: skills, automação e especializações
+> também usam `maxAndar`/`pisoDesbloqueio`). O mapa completo dos desbloqueios atuais está em
+> `IDEIAS-FUTURAS.md`/histórico; a janela escolhida foi **80+**, que estava vazia.
 
 Dentro de cada prédio, as **funções** também destravam em degraus (ex.: Forja só depois de N
 itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
@@ -53,11 +57,11 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
 
 ## Plano de trabalho
 
-### Fase 0 — Decisões (rápida)
-- [ ] Fechar a tabela de gates (níveis acima).
+### Fase 0 — Decisões (fechada)
+- [x] Gates: **andar 80** para a Cidade; prédios em 85/90/100/110/120 (ver tabela acima).
+- [x] Pesquisa de itens: **por item**.
 - [ ] Arte/UX do mapa: usar a imagem do hub como fundo + **hotspots** por prédio (botões
       posicionados) — responsivo.
-- [ ] Confirmar: pesquisa de itens **por item** ou **geral** (decidir aqui).
 
 ### Fase 1 — A aba "Cidade" + o mapa (sem mecânica nova)
 - [ ] `Caverna.html`: `#btnCidade` na `#container-Botoes` (ícone 🏘️) + `#container-Cidade`.
@@ -65,9 +69,9 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
 - [ ] Cada hotspot **abre um painel que já existe** (Mercado→Loja, Pesquisa→CM+Ramos,
       Fazenda→Formigas+Companheiros, Casa→Status, Fábrica→Automação).
 - [ ] `ui.js`: entrar em `syncScreenButtons` / `closeOtherPanels` (1 painel por vez).
-- [ ] Gate: a aba **só aparece** com `nivelJogador >= 50` (derivado, sem save).
+- [ ] Gate: a aba **só aparece** com `maxAndar >= 80` (derivado, sem save).
 - [ ] CSS responsivo (validar breakpoints do `AGENTS.md`, **celular intacto**).
-- [ ] Teste focado `test-cidade.js`: aba aparece no nível 50; hotspots abrem o painel certo; mobile.
+- [ ] Teste focado `test-cidade.js`: aba aparece no andar 80; hotspots abrem o painel certo; mobile.
 - [ ] **Save: nenhum campo novo.**
 
 ### Fase 2 — Desbloqueio gradual dos prédios
