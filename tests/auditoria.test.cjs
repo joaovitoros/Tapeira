@@ -469,24 +469,38 @@ test("progressão: Mago do Relógio ativa a Pausa da fuga (+50%) ao encher", asy
             AtivaHabilidadeCombate("escape");
             const manual = segundosPausaFuga;
 
-            // Todas as de COMBATE cheias (a de Dano NÃO entra na validação):
-            // o mago foca na Pausa da fuga pra ligar a passiva.
-            abateshabilidadeDano = 10; qtdCarregaHabilidade = 0; // Dano ainda com espaço
+            // Skills de combate todas cheias, mas o Dano ainda tem espaço:
+            // o Dano continua valendo e a Pausa da fuga (cheia) também entra
+            // no sorteio — ela é a ÚNICA que pode ser escolhida cheia.
+            abateshabilidadeDano = 10; qtdCarregaHabilidade = 0; // Dano com espaço
             abatesCorrenteEletrica = TetoSkill("electric");
             abatesBonusGoldAtaque = TetoSkill("gold");
             abatesFrenesi = TetoSkill("frenzy");
             abatesPausaFuga = TetoSkill("escape"); // cheia
             segundosPausaFuga = 0;
-            CarregaSkillAleatoriaMago();
-            const tudoCheio = segundosPausaFuga;
+            const candidatas = CandidatasMago(); // ["dano", "escape"]
 
-            return { duracao, mago, manual, tudoCheio };
+            // força o sorteio a pegar a Pausa da fuga (última da lista)
+            const randOriginal = Math.random;
+            Math.random = () => 0.999;
+            CarregaSkillAleatoriaMago();
+            Math.random = randOriginal;
+            const magoLiga = segundosPausaFuga;
+
+            // agora o Dano também cheio: a Pausa da fuga vira a única opção
+            qtdCarregaHabilidade = abateshabilidadeDano;
+            segundosPausaFuga = 0;
+            const soEscape = CandidatasMago();
+
+            return { duracao, mago, manual, candidatas, magoLiga, soEscape };
         });
         assert.equal(r.duracao, 20, "duração base 20s no nível 5");
         assert.equal(r.mago.segundos, 30, "mago: +50% (20 -> 30)");
         assert.equal(r.mago.carga, 0, "a carga zera ao ativar");
         assert.equal(r.manual, 20, "ativação manual não tem o bônus");
-        assert.equal(r.tudoCheio, 30, "tudo cheio: o mago liga a Pausa da fuga (+50%)");
+        assert.deepEqual(r.candidatas, ["dano", "escape"], "Dano continua valendo e a Pausa da fuga entra mesmo cheia");
+        assert.equal(r.magoLiga, 30, "o mago ainda liga a Pausa da fuga (+50%) mesmo cheia");
+        assert.deepEqual(r.soEscape, ["escape"], "com o Dano cheio, a Pausa da fuga é a única opção");
         assert.deepEqual(pageErrors, []);
     } finally { await context.close(); }
 });

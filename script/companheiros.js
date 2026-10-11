@@ -105,35 +105,35 @@ function ChanceMorteAssassino(manual) {
 const CHANCE_VENENO_ASSASSINO = 0.01;
 const VENENO_ASSASSINO_PCT = 0.03;
 
-// Mago do Relógio: enche uma fatia da barra de uma skill aleatória.
-// Considera as skills desbloqueadas e que ainda não estão cheias. Se todas as
-// skills DE COMBATE estiverem cheias (a de Dano, de ataque automático, NÃO
-// entra nesta validação), ele foca na Pausa da fuga — pra ligar a passiva dele
-// (a skill ativa sozinha e dura 50% a mais).
-function CarregaSkillAleatoriaMago() {
-	if (jogoPausado || fugaEmAndamento) return;
-	if (lvlComp3 <= 0) return;
-
-	// skill de Dano (barra própria: qtdCarregaHabilidade/abateshabilidadeDano)
+// Mago do Relógio: lista as skills que ele pode sortear agora.
+// Entram as skills desbloqueadas que ainda têm espaço — inclusive a de Dano
+// (barra própria: qtdCarregaHabilidade/abateshabilidadeDano), que continua
+// valendo mesmo quando as de combate estão cheias.
+// A Pausa da fuga (skill de tempo) é a ÚNICA que entra MESMO CHEIA: é assim
+// que o Mago ainda tem chance de ligar a passiva dele (a skill ativa sozinha e
+// dura 50% a mais). Ela só entra quando não está ativa, pra não redisparar.
+function CandidatasMago() {
 	const candidatas = [];
 	if (qtdCarregaHabilidade < abateshabilidadeDano) candidatas.push("dano");
 	habilidadesCombate.forEach(skill => {
+		if (skill.id === "escape") return; // tratada à parte (pode entrar cheia)
 		if (maxAndar < skill.unlockFloor) return;
 		const atual = ContagemSkill(skill.id);
 		if (atual < skill.killsRequired) candidatas.push(skill.id);
 	});
-
-	// Todas as de COMBATE cheias (ignora a de Dano): foca na Pausa da fuga.
-	const combateTudoCheio = habilidadesCombate.every(skill =>
-		maxAndar < skill.unlockFloor || ContagemSkill(skill.id) >= skill.killsRequired
-	);
-	if (combateTudoCheio) {
-		const escape = habilidadesCombate.find(s => s.id === "escape");
-		if (escape && maxAndar >= escape.unlockFloor && segundosPausaFuga === 0 && !fugaEmAndamento) {
-			candidatas.length = 0;
-			candidatas.push("escape");
-		}
+	const escape = habilidadesCombate.find(s => s.id === "escape");
+	if (escape && maxAndar >= escape.unlockFloor && segundosPausaFuga === 0 && !fugaEmAndamento) {
+		candidatas.push("escape");
 	}
+	return candidatas;
+}
+
+// Mago do Relógio: enche uma fatia da barra de uma skill aleatória.
+function CarregaSkillAleatoriaMago() {
+	if (jogoPausado || fugaEmAndamento) return;
+	if (lvlComp3 <= 0) return;
+
+	const candidatas = CandidatasMago();
 	if (candidatas.length === 0) return;
 
 	const escolhida = candidatas[Math.floor(Math.random() * candidatas.length)];
