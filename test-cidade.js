@@ -124,6 +124,14 @@ const path = require('path');
         res.tremeSemCidade = raiz.classList.contains("crit-shake");
         raiz.classList.remove("crit-shake");
 
+        // ESC fecha a Cidade (volta pra caverna) em vez de abrir o pause
+        maxAndar = 120;
+        document.getElementById("pauseOverlay")?.remove();
+        window.Tapeira.Cidade.abrir();
+        document.dispatchEvent(new KeyboardEvent("keydown", { code: "Escape", key: "Escape", bubbles: true }));
+        res.escFechaCidade = document.getElementById("container-Cidade").hidden === true;
+        res.escSemPause = !document.getElementById("pauseOverlay");
+
         return res;
     });
 
@@ -149,6 +157,8 @@ const path = require('path');
     check("selo de trancado mostra o requisito", /Andar 85/.test(r.seloFazenda), r.seloFazenda);
     check("crítico não treme a tela com a Cidade aberta", r.tremeComCidade === false);
     check("crítico treme a tela com a Cidade fechada", r.tremeSemCidade === true);
+    check("ESC fecha a Cidade (volta pra caverna)", r.escFechaCidade === true);
+    check("ESC não abre o pause com a Cidade aberta", r.escSemPause === true);
 
     await browser.close();
     let falhas = 0;

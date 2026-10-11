@@ -10050,13 +10050,19 @@ img.ramos-tree-no__tile {
 
 	.cidade-fonte { width: 22%; top: 57%; }
 	/* no celular (retrato) a cena preenche a ALTURA e fica mais larga que o
-	   visor (proporção 3:2) — dá pra arrastar pros lados pra ver a cidade toda */
+	   visor (proporção 3:2) — dá pra arrastar pros lados pra ver a cidade toda.
+	   align-self: flex-start impede o flex de esticar a largura até o container. */
 	.cidade-cena {
 		flex: 1 1 auto;
 		min-height: 0;
 		width: auto;
 		aspect-ratio: 3 / 2;
+		align-self: flex-start;
 		background-position: center 45%;
+	}
+
+	.cidade-topo {
+		align-self: stretch;
 	}
 
 	.cidade-decor--moita-esq  { left: 50%; top: 48%; height: 44px; }

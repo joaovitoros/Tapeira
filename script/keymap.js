@@ -189,6 +189,13 @@ function FechaJanelasAbertas() {
         fechou = true;
     }
 
+    // Cidade aberta (tela cheia): ESC volta pra caverna (fecha a Cidade) em
+    // vez de abrir o menu de pause.
+    if (document.getElementById("container-Cidade")?.hidden === false) {
+        window.Tapeira?.Cidade?.fechar?.();
+        fechou = true;
+    }
+
     // Painéis abertos por visibility (loja, status, salvar/carregar)
     ["Loja", "LojaEsm", "LojaCM", "DivStatus", "container-SalvaCarrega"].forEach(id => {
         const el = document.getElementById(id);
