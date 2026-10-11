@@ -29,6 +29,10 @@ function NormalizaPrecosLoja() {
 	const lvlXPN = Number(lvlXP);
 	window.precoXP = Math.pow(2, Math.max(0, Math.floor(Number.isFinite(lvlXPN) ? lvlXPN : 0)));
 
+	// Item "CM em dobro": preço derivado do nível (base 5, dobra por nível) —
+	// saves antigos (base 10, item de 1 nível) migram sozinhos para a curva nova
+	window.precoEsmCM = 5 * Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
+
 	const nomesPrecos = [
 		"precoDano", "precoBau", "precoGold", "precoBEspaco", "precoAvan",
 		"precoDCrit", "precoVidaInimigo", "precoCCrit", "precoQTDAvanco",
@@ -298,8 +302,8 @@ function CompraCM(tipo) {
 	conhecimentoMug = conhecimentoMug - preco;
 	if (tipo === "dano") {
 		cmNivelDano++;
-		// efeito imediato; no reset o Resetar remonta tudo com ×1.02 por nível
-		danoJogador = danoJogador * 1.02;
+		// efeito imediato; no reset o Resetar remonta tudo com ×1.05 por nível
+		danoJogador = danoJogador * 1.05;
 		LimitaDanoCritico();
 		if (danoComp1 > 0) danoComp = danoJogador * danoComp1;
 	} else if (tipo === "gold") {

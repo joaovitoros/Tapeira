@@ -16,9 +16,9 @@ var gateDanoPago = 10; //ultimo portão de reset (>= 35) que já pagou o +5% de 
 var danoResetQtd = 0; //quantidade de bonus permanentes de +5% de dano ganhos no reset
 var conhecimentoMug = 0; //moeda permanente da Loja do Conhecimento (1 abate = 1 CM no reset a partir do andar 20)
 var derrotadosRun = 0; //abates desde o último reset (base da conversão em Conhecimento Mug)
-var cmNivelDano = 0; //níveis da Loja do Conhecimento: +2% de dano permanente cada
-var cmNivelGold = 0; //níveis da Loja do Conhecimento: +2% de gold cada
-var cmNivelXp = 0; //níveis da Loja do Conhecimento: +2% de XP cada
+var cmNivelDano = 0; //níveis da Loja do Conhecimento: +5% de dano permanente cada
+var cmNivelGold = 0; //níveis da Loja do Conhecimento: +5% de gold cada
+var cmNivelXp = 0; //níveis da Loja do Conhecimento: +5% de XP cada
 var cmNivelFuga = 0; //níveis da Loja do Conhecimento: +2 no tempo máximo de fuga cada
 var cmNivelCrit = 0; //níveis da Loja do Conhecimento: +2% de dano crítico cada
 var cmNivelFormiga = 0; //níveis da Loja do Conhecimento: +0,5% na chance de drop de formiga por abate (48 níveis = chance máx 25%)
@@ -106,14 +106,14 @@ function PrecoLojaCM(nivel) {
 	return Math.round(10 * Math.pow(1.4, Math.max(0, Number(nivel) || 0)));
 }
 
-// +2% de gold por nível — aplicado em todo ganho de gold (AddGold)
+// +5% de gold por nível — aplicado em todo ganho de gold (AddGold)
 function MultiplicadorGoldConhecimento() {
-	return 1 + cmNivelGold * 0.02;
+	return 1 + cmNivelGold * 0.05;
 }
 
-// +2% de XP por nível — aplicado em toda XP ganha (GanhaXP)
+// +5% de XP por nível — aplicado em toda XP ganha (GanhaXP)
 function BonusXPConhecimento() {
-	return 1 + cmNivelXp * 0.02;
+	return 1 + cmNivelXp * 0.05;
 }
 
 // Tempo máximo do cronômetro de fuga: base 120 + 2 s por nível da loja. O
@@ -303,8 +303,9 @@ var marcosNivel50 = 0;
 // permanente no MultiplicadorCM cada — acumulativo (1,05^N), não zera no Resetar
 var resetsCurtosCM = 0;
 
-var precoEsmCM = 10;
-var lvlEsmCM = 0; //0/1: item de 1 nível da loja de esmeraldas — duplica o CM ganho no reset
+var precoEsmCM = 5; //base do item "CM em dobro"; dobra por nível (5/10/20/40)
+const MAX_ESM_CM = 4; //níveis do "CM em dobro" (cada nível dobra o CM no reset)
+var lvlEsmCM = 0; //0..MAX_ESM_CM
 ////
 
 function CarregarStatus(){

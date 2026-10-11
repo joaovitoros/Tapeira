@@ -30,6 +30,10 @@ Object.assign(UI, {
         const stack = document.querySelectorAll(".reward-number").length;
         marker.className = `floating-game-text reward-number reward-number--${type}`;
         marker.setAttribute("aria-hidden", "true");
+        if (type === "gold") {
+            PulsaElemento(document.getElementById("contGold"), "contador--pulso");
+            VoaMoeda(rect);
+        }
         if (type === "emerald") {
             const icon = document.createElement("img");
             icon.className = "reward-number__icon";
@@ -57,6 +61,7 @@ Object.assign(UI, {
         const stack = document.querySelectorAll(".reward-number").length;
         marker.className = "floating-game-text reward-number reward-number--xp";
         marker.setAttribute("aria-hidden", "true");
+        PulsaElemento(document.getElementById("skill-player-xp-fill"), "xp-fill--pulso");
         marker.textContent = `+${amount} XP`;
         marker.style.left = `${rect.left + rect.width / 2}px`;
         marker.style.top = `${rect.top + rect.height * 0.2 - stack * 24}px`;
@@ -232,9 +237,9 @@ Object.assign(UI, {
             const inimigo = document.getElementById("inimigo" + i);
 
             setTimeout(() => {
-                inimigo.style.visibility = window["vidaInimigo" + i] > 0
-                    ? "visible"
-                    : "hidden";
+                const visivel = window["vidaInimigo" + i] > 0;
+                inimigo.style.visibility = visivel ? "visible" : "hidden";
+                if (visivel) SurgeInimigo(inimigo);
 
             }, 600);
 
@@ -320,3 +325,87 @@ Object.assign(UI, {
     // MODAL
     // =========================
 });
+
+// Materializa o inimigo ao entrar na arena: fade-in no sprite + anel de
+// "surgimento" no chão. Só visual; some no animationend (sem timer novo).
+function SurgeInimigo(el) {
+	if (!el) return;
+	el.classList.remove("inimigo--surgindo");
+	void el.offsetWidth;
+	el.classList.add("inimigo--surgindo");
+	el.getAnimations().forEach(anim =>
+		anim.finished.then(() => el.classList.remove("inimigo--surgindo")).catch(() => {})
+	);
+
+	const rect = el.getBoundingClientRect();
+	const anel = document.createElement("div");
+	anel.className = "inimigo-surgir-anel";
+	anel.setAttribute("aria-hidden", "true");
+	anel.style.left = `${rect.left + rect.width / 2}px`;
+	anel.style.top = `${rect.top + rect.height * 0.86}px`;
+	anel.style.width = `${rect.width}px`;
+	anel.style.height = `${rect.width * 0.42}px`;
+	document.body.appendChild(anel);
+	anel.getAnimations().forEach(anim =>
+		anim.finished.then(() => anel.remove()).catch(() => {})
+	);
+}
+
+// Pulsa um elemento (classe + fim da animação) — feedback rápido de ganho,
+// sem timer novo. Guarda contra elemento ausente (ex.: painel fechado).
+function PulsaElemento(el, classe) {
+	if (!el) return;
+	el.classList.remove(classe);
+	void el.offsetWidth;
+	el.classList.add(classe);
+	el.getAnimations().forEach(anim =>
+		anim.finished.then(() => el.classList.remove(classe)).catch(() => {})
+	);
+}
+
+// Moeda voando do ponto do ganho até o contador de gold (só visual; some no
+// animationend). A direção vai nas custom properties --dx/--dy.
+function VoaMoeda(origem) {
+	const alvo = document.getElementById("contGold");
+	if (!alvo || !origem) return;
+	const destino = alvo.getBoundingClientRect();
+	const x0 = origem.left + origem.width / 2;
+	const y0 = origem.top + origem.height * 0.2;
+	const moeda = document.createElement("img");
+	moeda.className = "moeda-voadora";
+	moeda.src = "imagens/gold.png";
+	moeda.alt = "";
+	moeda.setAttribute("aria-hidden", "true");
+	moeda.style.left = `${x0}px`;
+	moeda.style.top = `${y0}px`;
+	moeda.style.setProperty("--dx", `${destino.left + destino.width / 2 - x0}px`);
+	moeda.style.setProperty("--dy", `${destino.top + destino.height / 2 - y0}px`);
+	document.body.appendChild(moeda);
+	moeda.addEventListener("animationend", () => moeda.remove(), { once: true });
+}
+
+// Brilho dos cristais: pontinhos que cintilam sobre a caverna (só visual).
+// Criado uma vez; posições/tempos fixos (sem Math.random no load).
+function CriaBrilhoCristais() {
+	if (!document.getElementById("game-root")) return;
+	if (document.getElementById("cristaisCintilam")) return;
+	const camada = document.createElement("div");
+	camada.id = "cristaisCintilam";
+	camada.setAttribute("aria-hidden", "true");
+	const pontos = [
+		[12, 30, 0], [22, 62, 1.2], [38, 24, 2.4], [52, 70, 0.6],
+		[64, 34, 1.8], [76, 58, 3.0], [86, 28, 0.9], [30, 82, 2.1],
+		[70, 84, 1.5], [92, 66, 2.7]
+	];
+	for (const [x, y, delay] of pontos) {
+		const ponto = document.createElement("span");
+		ponto.className = "cintilar";
+		ponto.style.left = x + "%";
+		ponto.style.top = y + "%";
+		ponto.style.animationDelay = delay + "s";
+		camada.appendChild(ponto);
+	}
+	document.body.appendChild(camada);
+}
+
+document.addEventListener("DOMContentLoaded", CriaBrilhoCristais);

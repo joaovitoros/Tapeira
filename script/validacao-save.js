@@ -171,9 +171,9 @@ function ValidarSave(save) {
 		}
 	}
 
-	// item de 1 nível da loja de esmeraldas: dobra o CM ganho (0 ou 1)
+	// item "CM em dobro" da loja de esmeraldas: 0..MAX_ESM_CM (dobra o CM por nível)
 	if (save.lvlEsmCM !== undefined
-		&& (!Number.isSafeInteger(save.lvlEsmCM) || save.lvlEsmCM < 0 || save.lvlEsmCM > 1)) {
+		&& (!Number.isSafeInteger(save.lvlEsmCM) || save.lvlEsmCM < 0 || save.lvlEsmCM > MAX_ESM_CM)) {
 		throw new TypeError("O nível do item de CM da loja de esmeraldas é inválido.");
 	}
 
@@ -347,7 +347,7 @@ function ValidarSave(save) {
 	if (save.autoItensLoja !== undefined
 		&& (!Array.isArray(save.autoItensLoja)
 			|| save.autoItensLoja.length > 64
-			|| save.autoItensLoja.some(v => v !== 0 && v !== 1))) {
+			|| save.autoItensLoja.some(v => v !== 0 && v !== 1 && v !== null))) {
 		throw new TypeError("A seleção de auto-compra da loja no save é inválida.");
 	}
 	if (save.autoGasto !== undefined

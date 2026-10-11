@@ -363,7 +363,7 @@ function Resetar() {
 	especializacao = 0;
 	especializacaoTrocas = 0;
 	// itens da build são por run: zeram no reset (o desbloqueio permanente
-	// é o andar 100; os baús voltam a aparecer a cada 10 andares)
+	// é o andar 100; os baús voltam a aparecer a cada 5 andares)
 	Tapeira.ItensBuild.limpa();
 	UI.removeBauBuild?.();
 	UI.fechaEscolhaItensBuild?.();
@@ -515,9 +515,9 @@ function Resetar() {
 		LimitaDanoCritico();
 	}
 
-	// Loja do Conhecimento: +2% de dano permanente por nível
+	// Loja do Conhecimento: +5% de dano permanente por nível
 	if (cmNivelDano > 0 && isFinite(cmNivelDano)) {
-		danoJogador = danoJogador * Math.pow(1.02, cmNivelDano);
+		danoJogador = danoJogador * Math.pow(1.05, cmNivelDano);
 		LimitaDanoCritico();
 	}
 

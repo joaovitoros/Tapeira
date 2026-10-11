@@ -141,19 +141,61 @@ function XPNecessarioProximoNivel(nivel = nivelJogador) {
 	return 50 + 25 * Math.max(0, nivel - 1);
 }
 
-// Bônus por nível do jogador: a cada nível ganho, +10% de dano e
-// −1 inimigo exigido para avançar de andar (quota mínima de 1).
+// Bônus por nível do jogador: a cada nível ganho, +15% de dano (somado).
+// O −inimigos exigidos para avançar de andar começa em −1 por nível e vai
+// encarecendo (ver BonusQuotaNivel).
 // ×1,05 da conquista Velocista entra no mesmo ponto único (status, DPS e
 // golpes saem sempre coerentes).
+const DANO_POR_NIVEL = 0.15;                                 // fração somada por nível
+const DANO_POR_NIVEL_PCT = Math.round(DANO_POR_NIVEL * 100); // o mesmo em % (UI)
+
 function MultiplicadorDanoNivel() {
-	return (1 + Math.max(0, nivelJogador - 1) * 0.1) * MultiplicadorDanoConquistaComp();
+	return (1 + Math.max(0, nivelJogador - 1) * DANO_POR_NIVEL) * MultiplicadorDanoConquistaComp();
+}
+
+// Quota do andar: quantos inimigos o nível do jogador reduz da exigência.
+// Base como era antes (−1 inimigo por nível), mas com custo crescente: a cada
+// faixa de 5 inimigos reduzidos, o próximo −1 passa a exigir +1 nível por
+// inimigo (1 → 2 → 3 …). Ex.: nível 50 → −20; nível 100 → −29; nível 300 → −52.
+const QUOTA_FAIXA_INIMIGOS = 5;
+const QUOTA_FAIXA_NIVEIS_BASE = 1;
+const QUOTA_FAIXA_NIVEIS_PASSO = 1;
+
+// níveis acumulados para completar k faixas (genérico para as constantes acima)
+function quotaNiveisFaixas(k) {
+	return QUOTA_FAIXA_INIMIGOS * (QUOTA_FAIXA_NIVEIS_BASE * k + QUOTA_FAIXA_NIVEIS_PASSO * k * (k - 1) / 2);
+}
+
+function BonusQuotaNivel(nivel = nivelJogador) {
+	const restante0 = Math.max(0, Math.floor(Number(nivel) || 0));
+	// chute pela raiz da quadrática e ajuste fino (robusto às constantes)
+	const a = QUOTA_FAIXA_INIMIGOS * QUOTA_FAIXA_NIVEIS_PASSO / 2;
+	const b = QUOTA_FAIXA_INIMIGOS * (QUOTA_FAIXA_NIVEIS_BASE - QUOTA_FAIXA_NIVEIS_PASSO / 2);
+	let k = a > 0
+		? Math.floor((Math.sqrt(b * b + 4 * a * restante0) - b) / (2 * a))
+		: (b > 0 ? Math.floor(restante0 / b) : 0);
+	if (k < 0) k = 0;
+	while (quotaNiveisFaixas(k + 1) <= restante0) k++;
+	while (k > 0 && quotaNiveisFaixas(k) > restante0) k--;
+	const restante = restante0 - quotaNiveisFaixas(k);
+	const niveisPorInimigo = QUOTA_FAIXA_NIVEIS_BASE + k * QUOTA_FAIXA_NIVEIS_PASSO;
+	return k * QUOTA_FAIXA_INIMIGOS + Math.floor(restante / niveisPorInimigo);
+}
+
+// Redução vinda da conquista de nível (a cada 100 níveis acumulados)
+function BonusQuotaConquista() {
+	return Math.floor(Math.max(0, totalNiveis | 0) / 100);
+}
+
+// Total de inimigos que a quota do andar reduz (nível + conquista): fonte
+// única para o QuotaAndar e para os painéis que exibem o bônus
+function BonusQuotaTotal() {
+	return BonusQuotaNivel(nivelJogador) + BonusQuotaConquista();
 }
 
 function QuotaAndar() {
-	const bonusNivel = Math.max(0, nivelJogador - 1);
-	const bonusConquista = Math.floor(Math.max(0, totalNiveis | 0) / 100);
 	// mínimo de 1: mesmo com bônus acumulados, nunca avança sem pelo menos um abate
-	return Math.max(1, qtdInimigosAndar - bonusNivel - bonusConquista);
+	return Math.max(1, qtdInimigosAndar - BonusQuotaTotal());
 }
 
 // Bônus do item de XP da loja de esmeraldas: cada nível soma o próprio
@@ -181,7 +223,7 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 		: abates >= Math.ceil(limiteXP / xpPorAbate)
 			? limiteXP
 			: abates * xpPorAbate;
-	// +2% de XP por nível da Loja do Conhecimento e +10% da conquista
+	// +5% de XP por nível da Loja do Conhecimento e +10% da conquista
 	// Milionário (arredonda pra baixo e respeita o teto de XP restante)
 	// Grimório Estelar (itens da build): +20% por cópia no XP por abate
 	const xpBase = Math.min(limiteXP, Math.floor(xpCalculado * BonusXPConhecimento() * MultiplicadorXPConquistaComp() * Tapeira.ItensBuild.multXP()));
@@ -208,9 +250,14 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 		const marcosGanhos = ConfereMarcosNivel50();
 		const conquistaAntes = Math.floor(Math.max(0, totalNiveis | 0) / 100);
 		totalNiveis = Math.min(Number.MAX_SAFE_INTEGER, (totalNiveis | 0) + niveisGanhos);
+		// a redução de inimigos agora tem custo crescente: mostra o delta real
+		const reducaoGanha = BonusQuotaNivel(nivelJogador) - BonusQuotaNivel(nivelJogador - niveisGanhos);
+		const sufixoReducao = reducaoGanha > 0
+			? ` e −${reducaoGanha} ${reducaoGanha === 1 ? "inimigo" : "inimigos"} para avançar`
+			: "";
 		UI.showMilestone(
 			niveisGanhos === 1 ? "Nível aumentado!" : `${niveisGanhos} níveis aumentados!`,
-			`Você alcançou o nível ${nivelJogador} e recebeu ${niveisGanhos} ${niveisGanhos === 1 ? "ponto de habilidade" : "pontos de habilidade"}. Bônus: +${niveisGanhos * 10}% de dano e −${niveisGanhos} ${niveisGanhos === 1 ? "inimigo" : "inimigos"} para avançar.`
+			`Você alcançou o nível ${nivelJogador} e recebeu ${niveisGanhos} ${niveisGanhos === 1 ? "ponto de habilidade" : "pontos de habilidade"}. Bônus: +${niveisGanhos * DANO_POR_NIVEL_PCT}% de dano${sufixoReducao}.`
 		);
 		if (marcosGanhos > 0) {
 			UI.showInfo(`Marco de 50 níveis!\n+${marcosGanhos} no multiplicador de CM no reset (×${FormataMultCM()}).`);

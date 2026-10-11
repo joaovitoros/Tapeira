@@ -11,6 +11,11 @@ foreach ($file in @("index.html", "Caverna.html")) {
 foreach ($directory in @("css", "script", "imagens", "media")) {
     $sourceDirectory = Join-Path $projectRoot $directory
     $destinationDirectory = Join-Path $webRoot $directory
+    # Limpa o destino antes de copiar: sem isso, arquivos removidos da fonte
+    # (ex.: uma pasta apagada) continuariam no www/ indefinidamente.
+    if (Test-Path $destinationDirectory) {
+        Remove-Item -LiteralPath $destinationDirectory -Recurse -Force
+    }
     New-Item -ItemType Directory -Force -Path $destinationDirectory | Out-Null
     # Copia o conteÃºdo da pasta, e nÃ£o a pasta em si. Assim, execuÃ§Ãµes
     # posteriores atualizam www/script/*.js em vez de criar www/script/script/.

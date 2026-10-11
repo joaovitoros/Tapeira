@@ -1,14 +1,15 @@
 {
   "name": "tapeira",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "description": "TAPeira - uma aventura sob a montanha",
   "main": "desktop/main.cjs",
   "scripts": {
     "test": "node --test tests/regression.test.cjs",
+    "sync:scripts": "node scripts/sync-scripts.js",
     "start:pc": "electron .",
     "build:pc": "electron-builder --win nsis",
-    "prepare:web": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-animation-sprites.ps1 && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-web.ps1 && esbuild scripts/android-save-entry.js --bundle --platform=browser --format=iife --outfile=www/script/android-save.bundle.js",
+    "prepare:web": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-animation-sprites.ps1 && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-web.ps1 && esbuild scripts/android-save-entry.js --bundle --platform=browser --format=iife --outfile=www/script/android-save.bundle.js && node scripts/prepare-bundle.js",
     "android:init": "npm run prepare:web && cap add android && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-android-icons.ps1",
     "android:sync": "npm run prepare:web && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-android-icons.ps1 && cap sync android",
     "android:debug": "npm run android:sync && cd android && gradlew.bat assembleDebug",

@@ -59,11 +59,14 @@ Object.assign(UI, {
         const focoAnterior = document.activeElement instanceof HTMLElement
             ? document.activeElement.dataset.focusKey
             : null;
+        // re-render (level-up, compra, seção recolhida) recria o painel: não
+        // pode replayar a animação de entrada, senão a tela "pisca" a cada ação
+        const reRenderizacao = !!document.getElementById("skillUpgradeModal");
         document.getElementById("skillUpgradeModal")?.remove();
 
         const overlay = document.createElement("div");
         overlay.id = "skillUpgradeModal";
-        overlay.className = "ant-collection-overlay skill-upgrade-overlay";
+        overlay.className = "ant-collection-overlay skill-upgrade-overlay" + (reRenderizacao ? " sem-entrada" : "");
         overlay.setAttribute("role", "dialog");
         overlay.setAttribute("aria-modal", "true");
         overlay.setAttribute("aria-labelledby", "skill-upgrade-title");
@@ -186,18 +189,24 @@ Object.assign(UI, {
             const semPontos = pontosHabilidade <= 0;
             const podeMelhorar = unlocked && !noMaximo && !semPontos;
             const icone = ICONE_SKILL[skill.id] || "imagens/espada-habilidade.svg";
+            // "máximo" só quando a skill E o perk estiverem no máximo
+            const perk = PERKS.find(item => item.skillId === skill.id);
+            const perkNivel = perk ? (Number(window[perk.varName]) || 0) : 0;
+            const perkNoMaximo = perk ? perkNivel >= perk.maximo : true;
+            const tudoMaximo = noMaximo && perkNoMaximo;
 
-            // tronco recolhível: resumo com nível + o que dá para fazer agora
+            // tronco recolhível: resumo com nível + perk + o que dá para fazer agora
             const resumoTronco = [
                 `Nv ${skillLevel}/${skill.maximo}`,
+                perk ? `perk ${perkNivel}/${perk.maximo}` : "",
                 !unlocked
                     ? `✕ andar ${skill.pisoDesbloqueio}`
-                    : noMaximo
+                    : tudoMaximo
                         ? "✓ máximo"
-                        : semPontos
-                            ? "✕ sem pontos"
-                            : "● 1 ponto para subir"
-            ].join(" · ");
+                        : !noMaximo
+                            ? (semPontos ? "✕ sem pontos" : "● 1 ponto para subir")
+                            : "● perk pendente"
+            ].filter(Boolean).join(" · ");
             const ramoPronto = RamoEscolhido(skill.id) === 0 && unlocked && skillLevel >= RAMO_NIVEL_ESCOLHA;
             const destaqueTronco = podeMelhorar || ramoPronto;
             const tronco = this.criaSecaoRecuavelSkill({
@@ -282,10 +291,7 @@ Object.assign(UI, {
                 return linha;
             };
 
-            const perk = PERKS.find(item => item.skillId === skill.id);
             if (perk) {
-                const perkNivel = Number(window[perk.varName]) || 0;
-                const perkNoMaximo = perkNivel >= perk.maximo;
                 const semPontoPerk = PontosPerkDisponiveis() <= 0;
                 const perkPronto = unlocked && !perkNoMaximo && !semPontoPerk;
                 const estadoPerk = !unlocked
@@ -537,7 +543,7 @@ Object.assign(UI, {
         this.showSkillUpgradePanel();
     },
 
-// ===================== PAINEL "ÁRVORE DE HABILIDADES" =====================
+    // ===================== PAINEL "ÁRVORE DE HABILIDADES" =====================
     // Segundo painel (2º botão "Ramos"): 5 botões de skill à esquerda e, ao
     // clicar, abre a seção da skill com tudo sobre ela (níveis, perk e os
     // ramos lado a lado). As mesmas regras de EvoluiSkill / CompraPerk /
@@ -927,7 +933,9 @@ Object.assign(UI, {
         return no;
     },
 
-    closeOtherPanels(activePanel) {
+    
+
+closeOtherPanels(activePanel) {
         const mobileLayout = window.matchMedia(
             "(max-width: 700px), (min-width: 701px) and (max-width: 900px) and (orientation: portrait), (max-width: 900px) and (max-height: 520px) and (orientation: landscape), (min-width: 1000px) and (max-width: 1500px) and (min-height: 780px) and (max-height: 950px) and (orientation: landscape)"
         ).matches;
@@ -947,8 +955,6 @@ Object.assign(UI, {
     }
 });
 
-// Linha curta dos níveis ("valor de hoje · ganho por nível") para o painel de
-// seções — usa as MESMAS fórmulas do jogo, sem mudar nenhuma regra.
 function DicaNiveisSkill(id) {
 	const nivel = NivelDaSkill(id);
 	if (id === "damage") return `Dura ${DuracaoHabilidadeDano()} s hoje · +5 s por nível.`;
@@ -958,3 +964,4 @@ function DicaNiveisSkill(id) {
 	if (id === "frenzy") return `Multiplicador do toque ×${(2 + nivel * 0.15).toFixed(2).replace(".", ",")} hoje · +0,15 por nível.`;
 	return "";
 }
+

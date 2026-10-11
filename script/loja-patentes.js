@@ -42,10 +42,10 @@ var ITENS_PATENTE = {
 	},
 	subvida: {
 		nome: "Vida do Inimigo", patenteVar: "patenteSubVida", precoVar: "precoVidaInimigo",
-		tetos: [0.50, 0.60, 0.67, 0.72, 0.76, 0.80],
+		tetos: [0.60, 0.70, 0.77, 0.82, 0.86, 0.90],
 		passos: [0.01, 0.002, 0.001, 0.0005, 0.0004, 0.0004],
-		// gate por nível (o de hoje é 50); o resto da coluna é soma de segmentos
-		niveis: [50, 100, 170, 270, 370, 470],
+		// gate por nível (★I fecha no 60 → −60% de vida); o resto da coluna é soma de segmentos
+		niveis: [60, 110, 180, 280, 380, 480],
 		noTeto: () => N(lvlSubVida) >= NiveisLoja("subvida")
 	},
 	avan: {
@@ -66,15 +66,15 @@ var ITENS_PATENTE = {
 	},
 	dano: {
 		nome: "Dano", patenteVar: "patenteDano", precoVar: "precoDano",
-		// gate por nível (★I fecha no 50, mesma coluna da Vida do Inimigo);
-		// a ★ também acelera a taxa do passo dinâmico: 1,025 → +0,005 por ★
-		niveis: [50, 100, 170, 270, 370, 470],
+		// gate por nível (★I fecha no 75); a ★ também acelera a taxa do passo
+		// dinâmico: 1,025 → +0,005 por ★
+		niveis: [75, 150, 250, 370, 490, 610],
 		taxas: [1.025, 1.03, 1.035, 1.04, 1.045, 1.05],
 		noTeto: () => N(lvlDano) >= NiveisLoja("dano")
 	},
 	dcrit: {
 		nome: "Dano Crítico", patenteVar: "patenteDCrit", precoVar: "precoDCrit",
-		niveis: [50, 100, 170, 270, 370, 470],
+		niveis: [75, 150, 250, 370, 490, 610],
 		taxas: [1.025, 1.03, 1.035, 1.04, 1.045, 1.05],
 		noTeto: () => N(lvlDCrit) >= NiveisLoja("dcrit")
 	}
@@ -128,9 +128,9 @@ function TaxaPassoLoja(id) {
 	return cfg.taxas[Math.min(PatenteAtual(id), cfg.taxas.length - 1)];
 }
 
-// Ingresso da próxima patente: 30× o preço que o próximo nível teria
+// Ingresso da próxima patente: 10× o preço que o próximo nível teria
 function PrecoPatenteLoja(id) {
-	return N(window[ItemPatente(id).precoVar]) * 30;
+	return N(window[ItemPatente(id).precoVar]) * 10;
 }
 
 // Formata um teto de efeito (todos são frações de chance/redutores em %)
@@ -166,6 +166,10 @@ function GanhoProximaPatenteTexto(id) {
 	if (cfg.taxas) {
 		texto += " · passo " + FormataTaxa(cfg.taxas[atual]) + " → " + FormataTaxa(cfg.taxas[atual + 1]);
 	}
+	// Dano: cada patente dá um bônus único de +25% no ganho por nível
+	if (id === "dano") {
+		texto += " · +25% no ganho por nível";
+	}
 	return texto;
 }
 
@@ -188,6 +192,11 @@ function CompraPatenteLoja(id) {
 
 	PagaLoja(preco);
 	window[cfg.patenteVar] = PatenteAtual(id) + 1;
+	// Dano: cada patente ★ dá um bônus único de +25% no ganho por nível
+	// (mulDano é o que CompraDano soma a danoJogador a cada compra)
+	if (id === "dano") {
+		mulDano = N(mulDano) * 1.25;
+	}
 
 	ChamaSom('audio6');
 	document.getElementById("contGold").innerHTML = FormatGold(gold);

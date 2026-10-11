@@ -195,6 +195,13 @@ const UI = {
         }, bossFloor ? 2800 : 1500);
 
         if (bossFloor) {
+            // "rugido" do guardião: tremor curto na cena (só visual; sai no animationend)
+            const raiz = document.documentElement;
+            raiz.classList.remove("guardian-rumble");
+            void raiz.offsetWidth;
+            raiz.classList.add("guardian-rumble");
+            raiz.addEventListener("animationend", () => raiz.classList.remove("guardian-rumble"), { once: true });
+
             let spotlight = document.getElementById("guardianIntroSpotlight");
             if (!spotlight) {
                 spotlight = document.createElement("div");
@@ -299,17 +306,16 @@ const UI = {
         const xpLabel = document.getElementById("skill-player-xp-label");
         if (xpLabel) xpLabel.textContent = `${xpAtual} / ${nextLevelXP} XP para o próximo nível`;
         const niveis = Math.max(0, nivelJogador - 1);
-        const conquistas = Math.floor(Math.max(0, totalNiveis | 0) / 100);
-        const reducao = niveis + conquistas;
+        const reducao = BonusQuotaTotal();
         const bonus = document.getElementById("skill-player-bonus");
         if (bonus) {
-            bonus.textContent = `Bônus atual: +${niveis * 10}% de dano · −${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} para avançar`;
+            bonus.textContent = `Bônus atual: +${niveis * DANO_POR_NIVEL_PCT}% de dano · −${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} para avançar`;
         }
         // resumo da seção "Progresso e bônus" quando ela está recolhida
         const resumoProgresso = document.getElementById("skill-player-progresso-resumo");
         if (resumoProgresso) {
             const pontosPerk = PontosPerkDisponiveis();
-            const texto = `+${niveis * 10}% dano · ${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} a menos · ${pontosPerk} ${pontosPerk === 1 ? "ponto" : "pontos"} de perk`;
+            const texto = `+${niveis * DANO_POR_NIVEL_PCT}% dano · ${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} a menos · ${pontosPerk} ${pontosPerk === 1 ? "ponto" : "pontos"} de perk`;
             if (resumoProgresso.textContent !== texto) resumoProgresso.textContent = texto;
         }
         if (button) button.setAttribute("aria-label", `Skills, nível ${nivelJogador}, ${pontosHabilidade} pontos disponíveis`);
@@ -492,8 +498,11 @@ const UI = {
     },
 
     showStatus() {
-        // dano real aplicado no inimigo = base × formigas × nível × especialização
-        const multDanoTotal = MultiplicadorDanoFormigas() * MultiplicadorDanoNivel();
+        // dano real aplicado no inimigo = base × formigas × nível × itens da
+        // build × especialização (os itens entram como no Bater: Adaga no dano,
+        // Poção Rubra no crítico, Colar no companheiro)
+        const multItensDano = Tapeira.ItensBuild.multDano();
+        const multDanoTotal = MultiplicadorDanoFormigas() * MultiplicadorDanoNivel() * multItensDano;
         const multEspNormal = MultiplicadorDanoEspecializacao(false);
         const multEspCritico = MultiplicadorDanoEspecializacao(true);
 
@@ -508,28 +517,28 @@ const UI = {
         const stats = [
             // Cadeia de Ataques: o valor "no cap" é o golpe cheio com o stack
             // de +400% fechado (base ×0,5 ×5 = ×2,5)
-            ["Dano", (danoJogador * multDanoTotal * multEspNormal).toFixed(2)
+            ["Dano", FormatarGold(danoJogador * multDanoTotal * multEspNormal)
                 + (especializacao === 5
-                    ? " → " + (danoJogador * multDanoTotal * 2.5).toFixed(2) + " no cap"
+                    ? " → " + FormatarGold(danoJogador * multDanoTotal * 2.5) + " no cap"
                     : "")],
-            ["Multiplicador Gold", mulGold.toFixed(2)],
+            ["Multiplicador Gold", FormatarGold(mulGold)],
             ["Gold por inimigo", FormatGold(andar * mulGold * MultiplicadorGoldConhecimento() * MultiplicadorGoldFormigas() * MultiplicadorGoldEspecializacao())],
             ["Gold total", FormatGold(totalGold)],
             ["Bonus avanço", FormatGold(BonusGoldAvanco())],
             ["Chance avanço", (avanco * 100).toFixed(2) + "%"],
             ["Qtd avanço", qtdAvanco],
-            ["Dano crítico", (danoCritJogador * multDanoTotal * multEspCritico).toFixed(2)],
+            ["Dano crítico", FormatarGold(danoCritJogador * Tapeira.ItensBuild.multDanoCrit() * multDanoTotal * multEspCritico)],
             ["Chance crítica", (chanceCrit * 100).toFixed(2) + "%"],
             ["Especialização", especializacao > 0 ? ESPECIALIZACOES[especializacao].nome : "—"],
             // DPS de verdade: a Velocidade do Companheiro multiplica os hits/s
-            ["DPS companheiros", (danoComp * multDanoTotal * multEspNormal * N(velAtaqueComp)).toFixed(2)],
+            ["DPS companheiros", FormatarGold(danoComp * Tapeira.ItensBuild.multDanoComp() * multDanoTotal * multEspNormal * N(velAtaqueComp))],
             // Companheiros: nível + efeito vigente de cada um (loja de esmeraldas)
             ["Companheiro 1 — dano", N(lvlComp1) > 0 ? "nível " + (N(lvlComp1) | 0) + ": " + FormataPct(danoComp1, 0) + " do seu dano" : "não comprado"],
             ["Companheiro 2 — gold", N(lvlComp2) > 0 ? "nível " + (N(lvlComp2) | 0) + ": " + FormatGold(goldCompanheiro) + "/s (" + (25 + 10 * (N(lvlComp2) - 1)) + "% do gold de um inimigo)" : "não comprado"],
             ["Companheiro 3 — Mago do Relógio", N(lvlComp3) > 0 ? "nível " + (N(lvlComp3) | 0) + ": +" + (PctCargaMago() * 100).toFixed(0) + "% de uma skill a cada 5s" : "não comprado"],
             ["Companheiro 4 — Alquimista", N(lvlComp4) > 0 ? "nível " + (N(lvlComp4) | 0) + ": " + buffAlqTxt : "não comprado"],
-            ["Companheiro 5 — Assassino", N(lvlComp5) > 0 ? "nível " + (N(lvlComp5) | 0) + ": " + PctTexto(ChanceMorteAssassino(true)) + " de morte instantânea (" + PctTexto(ChanceMorteAssassino(false)) + " em automáticos)" : "não comprado"],
-            ["Companheiro 6 — Explorador", N(lvlComp6) > 0 ? "nível " + (N(lvlComp6) | 0) + ": " + Math.min(50, 5 + 2 * Math.max(0, N(lvlComp6) - 1)) + "% de avançar +1 andar" : "não comprado"],
+            ["Companheiro 5 — Assassino", N(lvlComp5) > 0 ? "nível " + (N(lvlComp5) | 0) + ": " + PctTexto(ChanceMorteAssassino(true)) + " de morte instantânea (" + PctTexto(ChanceMorteAssassino(false)) + " em automáticos) · veneno: " + PctTexto(CHANCE_VENENO_ASSASSINO) + " de tirar " + PctTexto(VENENO_ASSASSINO_PCT) + " da vida" : "não comprado"],
+            ["Companheiro 6 — Explorador", N(lvlComp6) > 0 ? "nível " + (N(lvlComp6) | 0) + ": " + PctTexto(ChanceExplorador()) + " de avançar +1 andar" : "não comprado"],
             // Conhecimento Mug que vale no reset — recalculado na hora em que
             // o painel abre (base da loja/marcos × resets curtos)
             ["Multiplicador CM", "×" + FormataMultCM()],
@@ -537,16 +546,16 @@ const UI = {
 			["Itens da build", Tapeira.ItensBuild.desbloqueada()
 				? ((Tapeira.ItensBuild.contagem() > 0
 					? Tapeira.ItensBuild.resumo()
-					: "nenhum (baú de itens a cada 10 andares)")
+					: "nenhum (baú de itens a cada 5 andares)")
 					+ (Tapeira.ItensBuild.quantidadeBausPendentes() > 0
 						? ` · ${Tapeira.ItensBuild.quantidadeBausPendentes()} baú(s) pendente(s)`
 						: ""))
 				: "desbloqueia no andar 100"],
             ["Bônus XP", "+" + BonusXPLoja()],
             ["XP por inimigo", (XPPorInimigo() * BonusXPConhecimento()).toFixed(2)],
-            // total do bônus do CM: +2% por nível (dobro do +1% original)
-            ["Conhecimento gold", "+" + (cmNivelGold * 2) + "%"],
-            ["Conhecimento XP", "+" + (cmNivelXp * 2) + "%"],
+            // total do bônus do CM: +5% por nível
+            ["Conhecimento gold", "+" + (cmNivelGold * 5) + "%"],
+            ["Conhecimento XP", "+" + (cmNivelXp * 5) + "%"],
             ["Vida Mug", (subVidaInimigo * 100).toFixed(2) + "%"],
             ["Chance baú", (chanceBau * 100).toFixed(2) + "%"],
             ["Chance esmeralda", (chanceEsmeraldaBau * 100).toFixed(2) + "%"]

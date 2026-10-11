@@ -12,7 +12,7 @@ function SobeUmAndar() {
 		// desbloqueio único dos itens de build (piso 100): a partir daí os
 		// baús de build valem para sempre, mesmo depois do reset
 		if (maxAndarAnterior < 100 && maxAndar >= 100) {
-			UI.showMilestone("Itens de build desbloqueados!", "A cada 10 andares um baú de itens aparece");
+			UI.showMilestone("Itens de build desbloqueados!", "A cada 5 andares um baú de itens aparece");
 		}
 	}
 	andarMaxRun = Math.max(andarMaxRun, andar); //pico da run (base dos pontos de perk)
@@ -55,7 +55,7 @@ function SobeUmAndar() {
 	Conquistas();
 	ConquistasComportamentais();
 	CriaBau();
-	// baú de itens da build: a cada 10 andares depois do desbloqueio (andar 100)
+	// baú de itens da build: a cada 5 andares depois do desbloqueio (andar 100)
 	Tapeira.ItensBuild.tentaBau();
 
 	if (missaoAtual == 1) {
@@ -100,6 +100,9 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	// nos automáticos e do companheiro — ChanceMorteAssassino().
 	const morteInstantaneaAssassino = lvlComp5 > 0
 		&& Math.random() < ChanceMorteAssassino(validaDano);
+	// Assassino: passiva de veneno — 1% dos golpes tiram 3% da vida máxima do andar
+	const venenoAssassino = lvlComp5 > 0 && Math.random() < CHANCE_VENENO_ASSASSINO;
+	const danoVeneno = venenoAssassino ? N(vidaAndar) * VENENO_ASSASSINO_PCT : 0;
 	// especialização Cadeia de Ataques: este golpe conta pro stack do alvo
 	// (16 acertos fecham o cap; os contadores zeram em cada onda nova)
 	if (especializacao === 5) ataquesCadeia[inimigo] = N(ataquesCadeia[inimigo]) + 1;
@@ -207,10 +210,21 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	ChamaSom(critico ? "audio8" : "audio3");
 	// Assassino: se a passiva acertou, o golpe mata na hora
 	// (dano = vida toda, o fluxo de abate roda normalmente)
-	if (morteInstantaneaAssassino || hitKillDebug) dano = vidaAnterior;
+	if (morteInstantaneaAssassino || hitKillDebug) {
+		dano = vidaAnterior;
+	} else if (venenoAssassino) {
+		dano += danoVeneno;
+	}
 	let vidaAtual = vidaAnterior - dano;
 	window["vidaInimigo" + inimigo] = vidaAtual;
 	UI.showDamageNumber(inimigoElement, dano, critico);
+	if (critico) FeedbackCritico();
+	// Assassino: efeitos visuais do hit kill e do veneno
+	if (morteInstantaneaAssassino) {
+		animarHitKill(inimigoElement);
+	} else if (venenoAssassino) {
+		animarVeneno(inimigoElement, danoVeneno);
+	}
 
 	if (chainTargets.length > 0) {
 		// ramo Sobrecarga da árvore: +50% por nó no dano da cadeia
@@ -309,10 +323,10 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 
 			SobeUmAndar();
 
-			// Explorador do mapa (comp 6): chance de avançar mais um
-			// andar de uma vez — 5% no nível 1, +2% por nível (teto 50%)
+			// Explorador do mapa (comp 6): chance de avançar mais um andar
+			// de uma vez — cresce com o nível e com a distância do recorde
 			if (lvlComp6 > 0) {
-				const chanceExplorador = Math.min(0.5, 0.05 + 0.02 * (lvlComp6 - 1));
+				const chanceExplorador = ChanceExplorador();
 				if (Math.random() < chanceExplorador) {
 					SobeUmAndar();
 				}
@@ -405,6 +419,33 @@ function Avancar() {
 	}
 }
 
+// Feedback do crítico: flash na borda + tremor leve da cena. Só visual; a
+// classe sai no animationend (sem timer novo) e há um throttle pra não sacudir
+// a tela a cada golpe quando a chance de crítico está alta.
+let ultimoFeedbackCriticoMs = 0;
+function FeedbackCritico() {
+	const agora = Date.now();
+	if (agora - ultimoFeedbackCriticoMs < 600) return;
+	ultimoFeedbackCriticoMs = agora;
+
+	let flash = document.getElementById("critFlash");
+	if (!flash) {
+		flash = document.createElement("div");
+		flash.id = "critFlash";
+		flash.setAttribute("aria-hidden", "true");
+		document.body.appendChild(flash);
+	}
+	flash.classList.remove("crit-flash--on");
+	void flash.offsetWidth;
+	flash.classList.add("crit-flash--on");
+
+	const raiz = document.documentElement;
+	raiz.classList.remove("crit-shake");
+	void raiz.offsetWidth;
+	raiz.classList.add("crit-shake");
+	raiz.addEventListener("animationend", () => raiz.classList.remove("crit-shake"), { once: true });
+}
+
 function animarImpacto(el, critico, eletrico = false) {
 	const rect = el.getBoundingClientRect();
 	const recuoBase = eletrico ? 18 : 12;
@@ -460,6 +501,45 @@ function animarImpacto(el, critico, eletrico = false) {
 	burst.style.top = `${rect.top + rect.height * 0.58}px`;
 	document.body.appendChild(burst);
 	burst.addEventListener("animationend", () => burst.remove(), { once: true });
+}
+
+// Assassino: golpe de morte instantânea — burst vermelho + "HIT KILL"
+function animarHitKill(el) {
+	if (!el) return;
+	disparaBurstAssassino(el, "enemy-impact-burst--hitkill");
+	flutuaSobreInimigo(el, "☠ HIT KILL", "hitkill-number");
+}
+
+// Assassino: passiva de veneno — burst verde + "veneno -N"
+function animarVeneno(el, dano) {
+	if (!el) return;
+	disparaBurstAssassino(el, "enemy-impact-burst--veneno");
+	flutuaSobreInimigo(el, "☠ veneno -" + FormatGold(dano), "poison-number");
+}
+
+function disparaBurstAssassino(el, modificador) {
+	const rect = el.getBoundingClientRect();
+	const burst = document.createElement("div");
+	burst.className = "enemy-impact-burst " + modificador;
+	burst.setAttribute("aria-hidden", "true");
+	burst.style.left = `${rect.left + rect.width / 2}px`;
+	burst.style.top = `${rect.top + rect.height * 0.5}px`;
+	document.body.appendChild(burst);
+	burst.addEventListener("animationend", () => burst.remove(), { once: true });
+}
+
+// Texto flutuante sobre o inimigo (reusa a animação floating-game-text)
+function flutuaSobreInimigo(el, texto, classe) {
+	const rect = el.getBoundingClientRect();
+	const stack = document.querySelectorAll(".floating-game-text").length;
+	const marker = document.createElement("div");
+	marker.className = "floating-game-text " + classe;
+	marker.setAttribute("aria-hidden", "true");
+	marker.textContent = texto;
+	marker.style.left = `${rect.left + rect.width / 2}px`;
+	marker.style.top = `${rect.top + rect.height * 0.18 - stack * 22}px`;
+	document.body.appendChild(marker);
+	setTimeout(() => marker.remove(), 1100);
 }
 
 function animarEfeitoEletrico(el) {
@@ -518,8 +598,23 @@ function LimpaEfeitosMorte() {
 	efeitosMorteAtivos.clear();
 }
 
+// Poeira da morte: nuvemzinha no chão onde o inimigo caiu (só visual; some
+// no animationend).
+function CriaPoeiraMorte(rect) {
+	const poeira = document.createElement("div");
+	poeira.className = "morte-poeira";
+	poeira.setAttribute("aria-hidden", "true");
+	poeira.style.left = `${rect.left + rect.width / 2}px`;
+	poeira.style.top = `${rect.top + rect.height * 0.86}px`;
+	poeira.style.width = `${rect.width * 0.9}px`;
+	poeira.style.height = `${rect.height * 0.3}px`;
+	document.body.appendChild(poeira);
+	poeira.addEventListener("animationend", () => poeira.remove(), { once: true });
+}
+
 function animarMorte(el) {
 	const rect = el.getBoundingClientRect();
+	CriaPoeiraMorte(rect);
 	const morte = document.createElement("img");
 	morte.className = "morteAnim";
 	morte.src = "imagens/morte/frame12.png";

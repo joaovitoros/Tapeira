@@ -109,21 +109,21 @@ const PREVIEWS_LOJA = {
 	},
 	CompraComp5() {
 		const n = Math.max(0, N(lvlComp5) | 0);
-		const ch = lv => 0.005 + 0.0005 * Math.max(0, lv - 1);
+		const ch = lv => 0.01 + 0.001 * Math.max(0, lv - 1);
 		return "Assassino: morte instantânea " + (n > 0 ? PctTexto(ch(n)) + " → " + PctTexto(ch(n + 1)) : PctTexto(ch(1)))
-			+ " (metade em automáticos)";
+			+ " (metade em automáticos) · veneno 1% (3% da vida)";
 	},
 	CompraComp6() {
-		const chance = Math.min(50, 5 + 2 * Math.max(0, N(lvlComp6) - 1));
-		const prox = Math.min(50, 5 + 2 * N(lvlComp6));
-		return "Explorador: " + chance + "% → " + prox + "% de avançar +1 andar";
+		const chance = PctTexto(ChanceExploradorNoNivel(lvlComp6));
+		const prox = PctTexto(ChanceExploradorNoNivel(N(lvlComp6) + 1));
+		return "Explorador: " + chance + " → " + prox + " de avançar +1 andar";
 	},
 	CompraXP() {
 		const n = Math.max(0, N(lvlXP) | 0);
 		return "Bônus de XP: +" + BonusXPLoja(n) + " → +" + BonusXPLoja(n + 1) + " por abate";
 	},
 	CompraEsmCM() {
-		if (N(lvlEsmCM) >= 1) return "CM ganho: no nível máximo (×2 do item)";
+		if (N(lvlEsmCM) >= MAX_ESM_CM) return "CM ganho: no nível máximo (×" + Math.pow(2, MAX_ESM_CM) + " do item)";
 		// o item dobra só a parte dele (2^nível); os marcos de 50 níveis e o
 		// bônus de resets curtos multiplicam por fora e não dobram
 		const atual = MultiplicadorCM();

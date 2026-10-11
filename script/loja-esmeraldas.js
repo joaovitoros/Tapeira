@@ -222,16 +222,18 @@ function CompraXP(){
 	}
 }
 
-// Item de 1 nível: duplica a quantidade de Conhecimento Mug ganha no reset
+// Item "CM em dobro": cada nível dobra o Conhecimento Mug ganho no reset
+// (×2/×4/×8/×16). Preço base 5, dobrando por nível.
 function CompraEsmCM(){
 	NormalizaPrecosLoja();
-	if(N(lvlEsmCM) >= 1){
+	if(N(lvlEsmCM) >= MAX_ESM_CM){
 		MostraInfo("Item no nível máximo!");
 		return;
 	}
 	if(N(esmeraldas) >= N(precoEsmCM)){
 		esmeraldas = N(esmeraldas) - N(precoEsmCM);
-		lvlEsmCM = 1;
+		lvlEsmCM = N(lvlEsmCM) + 1;
+		precoEsmCM = N(precoEsmCM) * 2;
 
 		ChamaSom('audio6');
 
@@ -245,7 +247,7 @@ function CompraEsmCM(){
 	}
 }
 
-// Espaço extra de build: +1 slot por nível, preço dobra a cada compra.
+// Espaço extra de build: +5 slots por compra, preço dobra a cada compra.
 // Só aparece depois do andar 100 (mesmo destrave do sistema de build) e a
 // compra é permanente — só os itens da build zeram no reset, o espaço não.
 function AtualizaLojaEsmSlotBuild(){

@@ -69,7 +69,7 @@ const CONQUISTAS_COMP = [
 	{ id: "poupado", nome: "Poupado", desc: "Chegue ao andar 25×nível sem comprar nada na loja de gold", recompensa: "+5% de gold permanente por nível", max: 10, passo: 25 },
 	{ id: "missionario", nome: "Missionário", desc: "Conclua 20/50/100 missões", recompensa: "+25% no gold de toda missão por nível", max: 3, marcos: [20, 50, 100] },
 	{ id: "destemido", nome: "Destemido", desc: "Vença 1/3/10 desafios da missão 5", recompensa: "+5 s no tempo de fuga por nível", max: 3, marcos: [1, 3, 10] },
-	{ id: "milionario", nome: "Milionário", desc: "Acumule 1M/10M/100M de gold numa única run", recompensa: "+10% de XP permanente por nível", max: 3, marcos: [1e6, 1e7, 1e8] },
+	{ id: "milionario", nome: "Milionário", desc: "Acumule 1M/1B/1T/Qa/Qi/Sx de gold numa única run", recompensa: "+10% de XP permanente por nível", max: 6, marcos: [1e6, 1e9, 1e12, 1e15, 1e18, 1e21] },
 ];
 
 function NivelConquistaComp(indice) {
@@ -111,10 +111,15 @@ function ConquistasComportamentais() {
 	if (GE(totalGold, melhorGoldRun)) melhorGoldRun = new GoldNumber(totalGold);
 	// Poupado: andar 25×nível sem nenhuma compra de gold na run
 	if (comprasRun === 0 && andar >= 25) SobeNivelConquistaComp(1, Math.floor(andar / 25));
-	// Milionário: 1M/10M/100M de gold numa run — a melhor run serve de base,
-	// então marcos já vencidos no passado contam no primeiro golpe pós-load
-	if (GE(melhorGoldRun, 1e6))
-		SobeNivelConquistaComp(4, GE(melhorGoldRun, 1e8) ? 3 : GE(melhorGoldRun, 1e7) ? 2 : 1);
+	// Milionário: 1M, 1B, 1T, Qa, Qi, Sx de gold numa run (×1000 por nível)
+	// — a melhor run serve de base, então marcos já vencidos no passado
+	// contam no primeiro golpe pós-load; os marcos vêm de CONQUISTAS_COMP
+	let nivelMilionario = 0;
+	for (const marco of CONQUISTAS_COMP[4].marcos) {
+		if (!GE(melhorGoldRun, marco)) break; // marcos em ordem crescente
+		nivelMilionario++;
+	}
+	if (nivelMilionario > 0) SobeNivelConquistaComp(4, nivelMilionario);
 }
 
 // Texto de progresso da tela de Conquistas para as conquistas ainda não no máximo

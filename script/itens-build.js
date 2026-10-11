@@ -1,8 +1,8 @@
 // ===================== ITENS DA BUILD (por run) ==========================
 // Desbloqueio permanente ao chegar no andar 100 a primeira vez. Depois
-// disso, a cada 10 andares um baú de build aparece — inclusive em runs
+// disso, a cada 5 andares um baú de build aparece — inclusive em runs
 // novas, depois do reset (o andar 100 só destrava o sistema).
-// Os baús são MANUAIS e persistentes: cada marco de 10 andares acumula um,
+// Os baús são MANUAIS e persistentes: cada marco de 5 andares acumula um,
 // mesmo que os anteriores ainda não tenham sido abertos. Ignorar o baú
 // ("não escolher nenhum item") consome esse baú — ele some da tela.
 // A escolha é 1 de 3 itens aleatórios; cada cópia ocupa um slot próprio
@@ -21,15 +21,15 @@
 
 	window.Tapeira = window.Tapeira || {};
 
-	// slots base; cada nível do item da loja de esmeraldas soma +1 (teto LIMITE_EXTRAS)
-	const LIMITE = 10;
+	// slots base; cada compra na loja de esmeraldas soma +5 (teto LIMITE_EXTRAS)
+	const LIMITE = 20;
 	const LIMITE_EXTRAS = 30;
 
 	// Pool de itens (ícones recortados da "Grade de Ícones Fantásticos de RPG").
 	// Todos positivos; o custo é o espaço limitado dos slots da build.
 	const POOL = [
 		{ id: "adaga", nome: "Adaga Sombria", icone: "imagens/itens/adaga.png",
-			efeito: "+15% de dano" },
+			efeito: "+25% de dano" },
 		{ id: "escudo", nome: "Escudo do Guardião", icone: "imagens/itens/escudo.png",
 			efeito: "+30% de dano contra guardiões (andares múltiplos de 10)" },
 		{ id: "moedas", nome: "Saco de Moedas", icone: "imagens/itens/moedas.png",
@@ -59,7 +59,7 @@
 	let bausPendentes = 0;
 	let opcoesBauAtual = null;
 	// espaços extras comprados na loja de esmeraldas: permanentes (não zeram
-	// no Resetar), cada nível dá +1 slot e o preço dobra por nível
+	// no Resetar), cada compra dá +5 slots e o preço dobra por compra
 	let slotsExtras = 0;
 
 	function item(id) {
@@ -103,9 +103,9 @@
 			: 0;
 	}
 
-	// preço do próximo espaço: 10 esmeraldas e dobra por nível comprado
+	// preço do próximo espaço: 10 esmeraldas e dobra por COMPRA (5 slots cada)
 	function precoSlotExtra() {
-		return 10 * Math.pow(2, slotsExtras);
+		return 10 * Math.pow(2, Math.floor(slotsExtras / 5));
 	}
 
 	function resumo() {
@@ -136,10 +136,10 @@
 		precoSlotExtra: precoSlotExtra,
 		// limite da lista gravada num save (validacao-save.js)
 		limiteDoSave: save => LIMITE + slotsExtrasDoSave(save),
-		// item da loja de esmeraldas: +1 espaço permanente (loja-esmeraldas.js)
+		// item da loja de esmeraldas: +5 espaços permanentes (loja-esmeraldas.js)
 		compraSlotExtra() {
 			if (slotsExtras >= LIMITE_EXTRAS) return false;
-			slotsExtras++;
+			slotsExtras = Math.min(LIMITE_EXTRAS, slotsExtras + 5);
 			return true;
 		},
 		resumo: resumo,
@@ -149,7 +149,7 @@
 		// Cada marco gera um baú, acumulado com os que continuam pendentes.
 		tentaBau() {
 			if (!desbloqueada()) return;
-			if (window.andar % 10 !== 0) return;
+			if (window.andar % 5 !== 0) return;
 			if (bausPendentes >= Number.MAX_SAFE_INTEGER) return;
 			bausPendentes++;
 			UI.spawnBauBuild();
@@ -241,7 +241,7 @@
 		},
 
 		// ---- multiplicadores dos efeitos (hooks nos donos dos sistemas) ----
-		multDano: () => mult(1.15, "adaga"),
+		multDano: () => mult(1.25, "adaga"),
 		multGuardiao: () => mult(1.30, "escudo"),
 		multGold: () => mult(1.20, "moedas"),
 		multEvento: () => mult(1.25, "mapa"),

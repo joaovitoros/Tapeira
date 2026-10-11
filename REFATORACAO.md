@@ -134,24 +134,48 @@ navegador, Windows (Electron) e Android (Capacitor).
     (`ui-combate.js`) viraram `addEventListener`. Não sobrou handler inline
     vivo em JS (só `xhr.onload`/`reader.onload`, que não são de DOM, e um
     trecho comentado).
+15. `Salvar` e `CriarObjetoSave` unificados: `Salvar` reusa
+    `CriarObjetoSave(false)` (o auto save usa `CriarObjetoSave()`, com os
+    campos offline). Some a duplicação do objeto de save e o `getRawGold`
+    morto que estava em `Salvar`.
+16. Carregamento consolidado numa **lista única**: `scripts/script-manifest.js`
+    define a ordem dos scripts de cada página; `scripts/sync-scripts.js`
+    (`npm run sync:scripts`) gera o bloco entre os marcadores
+    `<!-- scripts:start/end -->` em `index.html` e `Caverna.html`; um teste
+    garante que o HTML não saiu de sincronia.
+17. Limpeza de assets: removida a duplicata **não referenciada**
+    `imagens/imagens/` (−15,4 MB) e o `prepare-web.ps1` passou a limpar o
+    destino antes de copiar, então o `www/` não acumula mais arquivos
+    obsoletos (`www` de 61 → 37 MB).
+18. Otimização de assets: PNGs reencodados **sem perda** (lossless,
+    29,8 → 9,2 MB) e o mp3 de fundo de 320 → 128 kbps (6,6 → 2,6 MB). O `www`
+    caiu de 61 → ~13 MB.
+19. Bundle minificado no `www`: `scripts/prepare-bundle.js` concatena os
+    scripts na ordem do `script-manifest.js` e minifica com esbuild **sem
+    renomear identificadores** (o jogo acessa globais por string). O
+    `prepare:web` passou a gerar `bundle-caverna.js` (300 KB) e
+    `bundle-index.js` (230 KB) — as 35 requisições da caverna viram 3 (bundle +
+    `android-save` + `dev-tools`). A fonte e a suíte seguem com os scripts
+    individuais; `test-bundle.js` valida o bundle sobre o `www`.
 
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
 
 ## Próximos passos sugeridos (em ordem de valor)
 
-1. **Consolidar o carregamento:** hoje a ordem dos `<script>` é manual em
-   duas páginas; uma lista única (gerador ou bundler com esbuild) evita
-   esquecimento.
-2. **Unificar a montagem do save:** `Salvar` (exportação) e `CriarObjetoSave`
-   (auto save) repetem quase todo o mesmo objeto — a exportação apenas omite
-   os campos offline. `Salvar` ainda define um `getRawGold` local sem uso.
-   Unificar evita que um campo novo entre só num dos caminhos.
+Os itens do plano original (handlers inline, bug de save, consolidação do
+carregamento e unificação do save) estão concluídos. Candidatos naturais agora:
+
+1. **Cachear `getElementById` e consolidar ticks** (1s/250ms) nos laços.
+2. **Assets restantes:** tirar as folhas de arte-fonte do pacote
+   (`Grade de Ícones`, `Fauna Fantastica`, `personagens.png`) e otimizar os
+   sprites gerados pelo build — `prepare-animation-sprites.ps1` os recria sem
+   otimização (~711 KB).
 
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (38 testes)
+npm test                 # suíte principal (42 testes)
 node test-logs.js        # tela de logs
 node test-itens-build.js # itens de build (roda sobre www/)
 npm run prepare:web      # sincroniza www/ para web/Android

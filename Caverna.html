@@ -6,6 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title id="titulo"></title>
 	<link rel="stylesheet" href="css/estilos.css">
+	<!-- scripts:start (gerado por scripts/sync-scripts.js; npm run sync:scripts) -->
 	<script src="script/break_infinity.min.js"></script>
 	<script src="script/sistema.js"></script>
 	<script src="script/audio.js"></script>
@@ -41,6 +42,7 @@
 	<script src="script/persistencia-autosave.js"></script>
 	<script src="script/persistencia.js"></script>
 	<script src="script/progresso-offline.js"></script>
+	<!-- scripts:end -->
 </head>
 
 <body class="Batalha">
@@ -282,7 +284,7 @@
 					<span>Skills</span>
 					<span id="skill-point-badge" class="skill-point-badge" hidden aria-label="Pontos de habilidade disponíveis"></span>
 				</button>
-				<button type="button" id="btnRamos" class="btn-Padrao screen-nav-button"
+<button type="button" id="btnRamos" class="btn-Padrao screen-nav-button"
 					aria-expanded="false">
 					<span class="screen-nav-icon screen-nav-icon--ramos" aria-hidden="true">🌿</span>
 					<span>Ramos</span>
@@ -680,7 +682,7 @@
 					</tr>
 
 					<tr>
-						<td>CM em dobro (x2 no Conhecimento Mug)</td>
+						<td>CM em dobro (×2 por nível no Conhecimento Mug)</td>
 						<td align="center">
 							<div id="precoEsmCM"></div>
 						</td>
@@ -691,7 +693,7 @@
 								data-compra="esmcm"></td>
 					</tr>
 					<tr id="linhaEsmSlotBuild" hidden>
-						<td>Espaço extra de build (+1 por nível)</td>
+						<td>Espaço extra de build (+5 por compra)</td>
 						<td align="center">
 							<div id="precoEsmSlotBuild"></div>
 						</td>
@@ -720,7 +722,7 @@
 						</tr>
 					</thead>
 					<tr>
-						<td>+2% de dano</td>
+						<td>+5% de dano</td>
 						<td align="center">
 							<div id="precoCMDano"></div>
 						</td>
@@ -731,7 +733,7 @@
 								data-compra-cm="dano"></td>
 					</tr>
 					<tr>
-						<td>+2% de gold</td>
+						<td>+5% de gold</td>
 						<td align="center">
 							<div id="precoCMGold"></div>
 						</td>
@@ -742,7 +744,7 @@
 								data-compra-cm="gold"></td>
 					</tr>
 					<tr>
-						<td>+2% de XP</td>
+						<td>+5% de XP</td>
 						<td align="center">
 							<div id="precoCMXp"></div>
 						</td>

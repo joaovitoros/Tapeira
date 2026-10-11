@@ -53,32 +53,47 @@ body{
 }
 .btn-Padrao{
 	display:inline-block;
-	margin:0 0.3em 0.3em 0; 
-	border-radius:0.2em;
+	margin:0 0.3em 0.3em 0;
+	border-radius: 8px;
 	box-sizing: border-box;
 
 	font-family: 'Segoe UI', sans-serif;
-	font-weight: 600;
+	font-weight: 700;
 
 	color:#ffffff;
 	text-align: center;
-	transition: all 0.2s;
-	cursor:pointer;	
+	transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, border-color 140ms ease;
+	cursor:pointer;
 
 	text-shadow:0px 1px 2px rgba(0,0,0,0.8);
 
-	padding: 0.35em 1.2em;
+	padding: 0.4em 1.2em;
 
-	background: linear-gradient(to bottom, #2b2f3a, #1b1f2a);
-	border: 1px solid #3b4255;
+	background: linear-gradient(to bottom, #333a49, #1b1f2a);
+	border: 1px solid #46506a;
+	box-shadow:
+		0 3px 0 #10131b,
+		0 6px 14px rgba(0, 0, 0, 0.35),
+		inset 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .btn-Padrao:hover{
-	background: linear-gradient(to bottom, #3a4255, #2b2f3a);
+	background: linear-gradient(to bottom, #414a5f, #2b3040);
+	border-color: #5c6a8c;
+	transform: translateY(-1px);
+	box-shadow:
+		0 4px 0 #10131b,
+		0 8px 18px rgba(0, 0, 0, 0.4),
+		0 0 14px rgba(120, 160, 255, 0.18),
+		inset 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .btn-Padrao:active {
-    transform: translateY(1px);
+	transform: translateY(1px);
+	box-shadow:
+		0 1px 0 #10131b,
+		0 3px 8px rgba(0, 0, 0, 0.35),
+		inset 0 1px rgba(255, 255, 255, 0.05);
 }
 
 #btn-Jogar{
@@ -751,6 +766,8 @@ tr, td, th{
 
 #TabLoja td, #TabLojaEsm td, #TabLojaCM td{
 	padding: 0.3vw 0.4vw;
+	vertical-align: middle;
+	line-height: 1.25;
 }
 
 /* Item no nível máximo: substitui o preço na loja (o botão é escondido via JS) */
@@ -765,6 +782,47 @@ tr, td, th{
 	color: #ffb84d;
 	font-weight: 800;
 	white-space: nowrap;
+}
+
+/* Transição de abrir/fechar dos painéis (Status, Config e as 3 lojas). Eles são
+   ligados por visibility inline no JS, então a regra casa pelo atributo style.
+   Ao abrir, opacity/transform animam; ao fechar, o visibility só aplica depois
+   (transition-delay) pra o fade-out aparecer. */
+#DivStatus,
+#container-SalvaCarrega,
+#Loja,
+#LojaEsm,
+#LojaCM {
+	opacity: 0;
+	transform: translateY(6px) scale(0.985);
+	transition:
+		opacity 160ms ease,
+		transform 160ms ease,
+		visibility 0s linear 160ms;
+}
+
+#DivStatus[style*="visible"],
+#container-SalvaCarrega[style*="visible"],
+#Loja[style*="visible"],
+#LojaEsm[style*="visible"],
+#LojaCM[style*="visible"] {
+	opacity: 1;
+	transform: none;
+	transition:
+		opacity 160ms ease,
+		transform 160ms ease,
+		visibility 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#DivStatus,
+	#container-SalvaCarrega,
+	#Loja,
+	#LojaEsm,
+	#LojaCM {
+		transition: none;
+		transform: none;
+	}
 }
 
 /* Coluna de preço: valor em destaque na cor da moeda da loja (valor vs informação) */
@@ -1099,42 +1157,51 @@ tr, td, th{
 }
 
 .infoLinha{
-
-    padding: 0.5em 0.7em;
-
-    background: rgba(255,255,255,0.03);
-
+    padding: 0.55em 0.8em;
+    background: linear-gradient(145deg, rgba(77, 166, 255, 0.1), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(120, 160, 255, 0.18);
     border-left: 3px solid #4da6ff;
-
-    border-radius: 0.3em;
+    border-radius: 8px;
 }
 
 .destaqueInfo{
-
     color: #ffd84a;
-
     border-left-color: #ffd84a;
+    border-color: rgba(255, 216, 74, 0.22);
+    background: linear-gradient(145deg, rgba(255, 216, 74, 0.12), rgba(255, 255, 255, 0.02));
 }
 
 .btn-FecharModal{
-
     margin-top: 1.2em;
-
     width: 100%;
-
-    height: 2.5em;
-
-    border: none;
-
-    border-radius: 0.4em;
-
+    height: 2.6em;
+    border: 1px solid #5c6a8c;
+    border-radius: 8px;
     cursor: pointer;
+    font-weight: 800;
+    color: #eef4ff;
+    background: linear-gradient(to bottom, #3a4358, #232a38);
+    box-shadow:
+        0 3px 0 #10131b,
+        0 6px 14px rgba(0, 0, 0, 0.4),
+        inset 0 1px rgba(255, 255, 255, 0.07);
+    transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, border-color 140ms ease;
+}
 
-    font-weight: bold;
+.btn-FecharModal:hover{
+    background: linear-gradient(to bottom, #47526c, #2c3446);
+    border-color: #7f8fbf;
+    transform: translateY(-1px);
+    box-shadow:
+        0 4px 0 #10131b,
+        0 9px 20px rgba(0, 0, 0, 0.45),
+        0 0 16px rgba(120, 160, 255, 0.22),
+        inset 0 1px rgba(255, 255, 255, 0.09);
+}
 
-    color: white;
-
-    background: linear-gradient(145deg, #3a4255, #2a3242);
+.btn-FecharModal:active{
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 #10131b, 0 3px 8px rgba(0, 0, 0, 0.4);
 }
 
 .infoModalBox{
@@ -1278,7 +1345,9 @@ body {
 	mix-blend-mode: screen;
 	opacity: 0.32;
 	pointer-events: none;
-	animation: cave-atmosphere-drift 28s ease-in-out infinite alternate;
+	animation:
+		cave-atmosphere-drift 28s ease-in-out infinite alternate,
+		cave-atmosphere-twinkle 7s ease-in-out infinite;
 }
 
 #menu-container {
@@ -2152,16 +2221,6 @@ caption {
 		opacity: 0.62;
 	}
 
-	@keyframes cave-atmosphere-drift {
-		from {
-			transform: translate3d(-0.5%, 0.7%, 0);
-		}
-
-		to {
-			transform: translate3d(0.7%, -0.8%, 0);
-		}
-	}
-
 	50% {
 		transform: translate(1%, -1%) scale(1.045);
 		opacity: 0.9;
@@ -2171,6 +2230,23 @@ caption {
 		transform: translate(0.5%, 1%) scale(1.015);
 		opacity: 0.7;
 	}
+}
+
+/* Estava aninhado dentro de cave-ambient-light (CSS inválido): a poeira/
+   atmosfera da arena nunca se movia. Agora é um keyframe próprio. */
+@keyframes cave-atmosphere-drift {
+	from {
+		transform: translate3d(-0.5%, 0.7%, 0);
+	}
+
+	to {
+		transform: translate3d(0.7%, -0.8%, 0);
+	}
+}
+
+@keyframes cave-atmosphere-twinkle {
+	0%, 100% { opacity: 0.26; }
+	50% { opacity: 0.42; }
 }
 
 .enemy-hit-eyes {
@@ -2193,6 +2269,32 @@ caption {
 	object-fit: contain;
 	pointer-events: none;
 	animation: enemy-electric-flash 480ms ease-out forwards;
+}
+
+/* Inimigo "materializando" ao entrar na arena (script/ui-combate.js ->
+   SurgeInimigo): fade-in no sprite + anel no chão. Só visual. */
+.inimigo--surgindo {
+	animation: inimigo-surgir 380ms ease-out;
+}
+
+@keyframes inimigo-surgir {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+.inimigo-surgir-anel {
+	position: fixed;
+	z-index: 5;
+	transform: translate(-50%, -50%);
+	border: 2px solid rgba(150, 220, 255, 0.7);
+	border-radius: 50%;
+	pointer-events: none;
+	animation: inimigo-surgir-anel 480ms ease-out forwards;
+}
+
+@keyframes inimigo-surgir-anel {
+	0% { opacity: 0.85; transform: translate(-50%, -50%) scale(0.3); }
+	100% { opacity: 0; transform: translate(-50%, -50%) scale(1.4); }
 }
 
 .enemy-hit-eyes span {
@@ -2283,6 +2385,31 @@ caption {
 	animation-duration: 460ms;
 }
 
+/* Assassino: hit kill (vermelho) e veneno (verde) */
+.enemy-impact-burst--hitkill {
+	width: 92px;
+	height: 92px;
+	background: repeating-conic-gradient(
+		from 8deg,
+		rgba(255, 96, 96, 1) 0deg 8deg,
+		rgba(176, 20, 40, 0.7) 8deg 13deg,
+		transparent 13deg 24deg
+	);
+	filter: drop-shadow(0 0 10px rgba(255, 60, 60, 0.95));
+	animation-duration: 470ms;
+}
+
+.enemy-impact-burst--veneno {
+	background: repeating-conic-gradient(
+		from 8deg,
+		rgba(150, 255, 140, 1) 0deg 8deg,
+		rgba(40, 170, 60, 0.7) 8deg 13deg,
+		transparent 13deg 24deg
+	);
+	filter: drop-shadow(0 0 8px rgba(90, 255, 110, 0.9));
+	animation-duration: 420ms;
+}
+
 .floating-game-text {
 	position: fixed;
 	z-index: 8;
@@ -2302,6 +2429,29 @@ caption {
 .damage-number--critical {
 	color: #ffe36b;
 	font-size: clamp(16px, 1.45vw, 25px);
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95), 0 0 10px rgba(255, 200, 60, 0.8);
+	animation: floating-game-text-crit 1000ms ease-out forwards;
+}
+
+/* crítico: "pop" maior + leve rotação (dá mais peso que o número normal) */
+@keyframes floating-game-text-crit {
+	0% { opacity: 0; transform: translate(-50%, 8px) scale(0.7) rotate(-4deg); }
+	12% { opacity: 1; transform: translate(-50%, -2px) scale(1.4) rotate(3deg); }
+	30% { transform: translate(-50%, -10px) scale(1.05) rotate(-1deg); }
+	100% { opacity: 0; transform: translate(-50%, -72px) scale(1) rotate(0); }
+}
+
+.hitkill-number {
+	color: #ff5a5a;
+	font-size: clamp(16px, 1.5vw, 26px);
+	letter-spacing: 0.04em;
+	-webkit-text-stroke: 0.4px rgba(60, 0, 0, 0.9);
+}
+
+.poison-number {
+	color: #8dff86;
+	font-size: clamp(14px, 1.15vw, 20px);
+	-webkit-text-stroke: 0.35px rgba(10, 50, 15, 0.9);
 }
 
 .reward-number {
@@ -2314,6 +2464,115 @@ caption {
 
 .reward-number--xp {
 	color: #a8d7ff;
+}
+
+/* Pulso rápido no contador de gold e na barra de XP ao ganhar
+   (script/ui-combate.js -> PulsaElemento). Só visual. */
+.contador--pulso {
+	animation: contador-pulso 320ms ease-out;
+}
+
+@keyframes contador-pulso {
+	0% { transform: scale(1); }
+	40% { transform: scale(1.16); }
+	100% { transform: scale(1); }
+}
+
+.xp-fill--pulso {
+	animation: xp-fill-pulso 360ms ease-out;
+}
+
+@keyframes xp-fill-pulso {
+	0%, 100% { filter: brightness(1); }
+	50% { filter: brightness(1.7); }
+}
+
+/* Moeda voando do ganho até o contador de gold (script/ui-combate.js -> VoaMoeda) */
+.moeda-voadora {
+	position: fixed;
+	z-index: 14;
+	width: 20px;
+	height: 20px;
+	pointer-events: none;
+	filter: drop-shadow(0 0 6px rgba(255, 214, 90, 0.8));
+	animation: moeda-voa 540ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+@keyframes moeda-voa {
+	0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+	15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+	100% { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px))) scale(0.45); }
+}
+
+/* Poeira da morte do inimigo (script/batalha.js -> CriaPoeiraMorte) */
+.morte-poeira {
+	position: fixed;
+	z-index: 5;
+	transform: translate(-50%, -50%);
+	border-radius: 50%;
+	pointer-events: none;
+	background: radial-gradient(ellipse at center, rgba(210, 190, 160, 0.55), rgba(210, 190, 160, 0) 70%);
+	animation: morte-poeira 520ms ease-out forwards;
+}
+
+@keyframes morte-poeira {
+	0% { opacity: 0.85; transform: translate(-50%, -50%) scale(0.5); }
+	100% { opacity: 0; transform: translate(-50%, -50%) scale(1.6); }
+}
+
+/* "Rugido" do guardião: tremor curto na cena (script/ui.js -> showFloorTransition) */
+html.guardian-rumble {
+	animation: guardian-rumble 620ms ease-out;
+}
+
+@keyframes guardian-rumble {
+	0%, 100% { transform: translate3d(0, 0, 0); }
+	12% { transform: translate3d(-5px, 2px, 0); }
+	26% { transform: translate3d(5px, -2px, 0); }
+	40% { transform: translate3d(-4px, -2px, 0); }
+	54% { transform: translate3d(4px, 2px, 0); }
+	70% { transform: translate3d(-3px, 1px, 0); }
+	86% { transform: translate3d(3px, -1px, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.moeda-voadora,
+	.morte-poeira,
+	html.guardian-rumble {
+		animation-duration: 1ms;
+	}
+}
+
+/* Brilho dos cristais: pontinhos que cintilam sobre a caverna
+   (script/ui-combate.js -> CriaBrilhoCristais). Só visual. */
+#cristaisCintilam {
+	position: fixed;
+	inset: 0;
+	z-index: 2;
+	pointer-events: none;
+	overflow: hidden;
+}
+
+.cintilar {
+	position: absolute;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	transform: translate(-50%, -50%) scale(0.2);
+	background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(170, 220, 255, 0) 70%);
+	animation: cintilar 4.5s ease-in-out infinite;
+}
+
+@keyframes cintilar {
+	0%, 70%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+	82% { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
+	92% { opacity: 0.4; transform: translate(-50%, -50%) scale(0.7); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cintilar {
+		animation: none;
+	}
 }
 
 .reward-number--emerald {
@@ -2453,6 +2712,44 @@ caption {
 	}
 }
 
+/* Feedback do crítico (script/batalha.js -> FeedbackCritico): flash na borda +
+   tremor leve da cena. Só visual; a classe sai no animationend. */
+#critFlash {
+	position: fixed;
+	inset: 0;
+	z-index: 15;
+	pointer-events: none;
+	box-shadow: inset 0 0 0 0 rgba(255, 224, 130, 0);
+}
+
+#critFlash.crit-flash--on {
+	animation: crit-flash 240ms ease-out;
+}
+
+@keyframes crit-flash {
+	0% { box-shadow: inset 0 0 110px 10px rgba(255, 224, 130, 0.5); }
+	100% { box-shadow: inset 0 0 110px 10px rgba(255, 224, 130, 0); }
+}
+
+html.crit-shake {
+	animation: crit-shake 200ms ease-out;
+}
+
+@keyframes crit-shake {
+	0%, 100% { transform: translate3d(0, 0, 0); }
+	20% { transform: translate3d(-3px, 1px, 0); }
+	40% { transform: translate3d(3px, -1px, 0); }
+	60% { transform: translate3d(-2px, -1px, 0); }
+	80% { transform: translate3d(2px, 1px, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#critFlash.crit-flash--on,
+	html.crit-shake {
+		animation: none;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.fundo-camada {
 		transition: none; // troca de fundo vira corte seco
@@ -2487,6 +2784,10 @@ caption {
 	.enemy-hit-smoke,
 	.enemy-impact-burst,
 	.enemy-electric-impact,
+	.inimigo--surgindo,
+	.inimigo-surgir-anel,
+	.contador--pulso,
+	.xp-fill--pulso,
 	.floor-transition--visible,
 	#contAndar.floor-counter--changed,
 	.floating-game-text {
@@ -3131,26 +3432,38 @@ body.desktop-app img {
 	min-width: 78px;
 	min-height: 32px;
 	padding: 5px 10px;
-	background: linear-gradient(145deg, #36df88, #129b5a);
+	background: linear-gradient(to bottom, #3ee98f, #129b5a);
 	border: 1px solid rgba(137, 255, 193, 0.58);
 	border-radius: 6px;
-	box-shadow: 0 3px 0 #075c34;
+	box-shadow:
+		0 3px 0 #075c34,
+		0 6px 14px rgba(0, 0, 0, 0.35),
+		inset 0 1px rgba(255, 255, 255, 0.28);
 	color: #07190f;
 	font-size: 0.9em;
 	font-weight: 800;
 	cursor: pointer;
-	transition: filter 120ms ease, transform 120ms ease;
+	transition: filter 120ms ease, transform 140ms ease, box-shadow 140ms ease;
 }
 
 #TabLoja .Loja:hover,
 #TabLojaEsm .Loja:hover , #TabLojaCM .Loja:hover {
 	filter: brightness(1.12);
 	transform: translateY(-1px);
+	box-shadow:
+		0 4px 0 #075c34,
+		0 9px 20px rgba(0, 0, 0, 0.42),
+		0 0 16px rgba(60, 255, 150, 0.32),
+		inset 0 1px rgba(255, 255, 255, 0.32);
 }
 
 #TabLoja .Loja:active,
 #TabLojaEsm .Loja:active , #TabLojaCM .Loja:active {
 	transform: translateY(1px);
+	box-shadow:
+		0 1px 0 #075c34,
+		0 3px 8px rgba(0, 0, 0, 0.35),
+		inset 0 1px rgba(255, 255, 255, 0.2);
 }
 
 #container-Status {
@@ -3401,14 +3714,6 @@ input:focus-visible {
 	filter: none;
 	color: #ffd36b;
 	font-size: 22px;
-	line-height: 1;
-}
-
-.screen-nav-icon--ramos {
-	display: grid;
-	place-items: center;
-	filter: none;
-	font-size: 18px;
 	line-height: 1;
 }
 
@@ -5659,6 +5964,40 @@ input:focus-visible {
 	font: 15px/1.45 "Segoe UI", sans-serif;
 }
 
+/* Entrada dos painéis Formigas/Skills (criados no runtime: a animação roda
+   sozinha quando o elemento nasce) */
+.ant-collection-overlay {
+	animation: painel-overlay-abre 160ms ease-out;
+}
+
+.ant-collection-panel {
+	animation: painel-conteudo-abre 220ms ease-out;
+}
+
+@keyframes painel-overlay-abre {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes painel-conteudo-abre {
+	from { opacity: 0; transform: translateY(10px) scale(0.98); }
+	to { opacity: 1; transform: none; }
+}
+
+/* Re-renderização do painel (level-up, compra, seção): sem animação de entrada
+   — senão a tela pisca a cada ação. A entrada anima só na 1ª abertura. */
+.sem-entrada,
+.sem-entrada .ant-collection-panel {
+	animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ant-collection-overlay,
+	.ant-collection-panel {
+		animation: none;
+	}
+}
+
 .ant-collection-header {
 	display: flex;
 	align-items: center;
@@ -6843,11 +7182,13 @@ button.skill-ramo-no:focus-visible {
 	font: 700 12px/1.25 "Segoe UI", sans-serif;
 	text-align: left;
 	cursor: pointer;
-	transition: border-color 0.15s, box-shadow 0.15s;
+	transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
 .esp-cartao:hover:not(:disabled) {
 	border-color: #ffe08a;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 224, 138, 0.22);
 }
 
 .esp-cartao__efeito {
@@ -7603,20 +7944,38 @@ button.skill-ramo-no:focus-visible {
 }
 
 /* Inseto fugaz: cruza a tela uma vez (~4s) e some na borda. A posição vem
-   do keyframes (left: 0 + translateX), então ele passa por toda a viewport. */
-.evento-inseto {
+   do keyframes (left: 0 + translateX), então ele passa por toda a viewport.
+   O wrapper carrega a animação e a sombra no chão; a imagem fica dentro. */
+.evento-inseto-wrap {
 	position: absolute;
 	bottom: clamp(90px, 14vh, 160px);
 	left: 0;
-	width: clamp(40px, 5vw, 58px);
-	height: auto;
 	pointer-events: auto;
 	cursor: pointer;
-	filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55));
 	animation: evento-inseto-cruza 4s linear forwards;
 }
 
-.evento-inseto:focus-visible {
+.evento-inseto-wrap::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: -5px;
+	width: 72%;
+	height: 10px;
+	transform: translateX(-50%);
+	border-radius: 50%;
+	background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0) 72%);
+	pointer-events: none;
+}
+
+.evento-inseto {
+	display: block;
+	width: clamp(40px, 5vw, 58px);
+	height: auto;
+	filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55));
+}
+
+.evento-inseto-wrap:focus-visible {
 	outline: 2px solid #ffe08a;
 	outline-offset: 2px;
 	border-radius: 6px;
@@ -7641,10 +8000,114 @@ button.skill-ramo-no:focus-visible {
 	100% { opacity: 0; }
 }
 
+/* Rastro do meteoro caindo no ponto onde o fragmento pousou (só visual) */
+.evento-meteoro-rastro {
+	position: absolute;
+	width: 3px;
+	height: 62px;
+	border-radius: 2px;
+	pointer-events: none;
+	transform-origin: bottom center;
+	background: linear-gradient(to top, rgba(255, 224, 138, 0.9), rgba(255, 160, 60, 0));
+	animation: evento-meteoro-rastro 420ms ease-out forwards;
+}
+
+@keyframes evento-meteoro-rastro {
+	0% { opacity: 0.9; transform: translate(-50%, -190%) rotate(14deg); }
+	100% { opacity: 0; transform: translate(-50%, -90%) rotate(14deg); }
+}
+
 /* Float "+N CM" da Névoa (mesmo padrão dos floats de gold/XP) */
 .reward-number--cm {
 	color: #c9a7ff;
 	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95), 0 0 9px rgba(157, 123, 255, 0.85);
+}
+
+/* Camada de ambiente do evento (script/eventos.js -> AplicaAmbienteEvento):
+   um elemento fixo cobre a caverna (atrás dos inimigos e do HUD) e recebe a
+   classe do evento ativo. Só visual, sem timers novos e sem capturar clique. */
+#eventoAmbiente {
+	position: fixed;
+	inset: 0;
+	z-index: 3;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 450ms ease;
+}
+
+#eventoAmbiente.evento-nevoa {
+	opacity: 1;
+	background:
+		radial-gradient(120% 90% at 50% 35%, rgba(160, 130, 255, 0.18), rgba(160, 130, 255, 0) 70%),
+		radial-gradient(80% 70% at 18% 85%, rgba(120, 205, 255, 0.12), rgba(120, 205, 255, 0) 62%);
+	animation: evento-nevoa-drift 9s ease-in-out infinite alternate;
+}
+
+#eventoAmbiente.evento-veia {
+	opacity: 1;
+	background:
+		radial-gradient(140% 110% at 50% 115%, rgba(60, 255, 150, 0.16), rgba(60, 255, 150, 0) 62%),
+		radial-gradient(55% 45% at 84% 28%, rgba(120, 255, 190, 0.1), rgba(120, 255, 190, 0) 62%);
+	animation: evento-veia-pulse 2.4s ease-in-out infinite;
+}
+
+#eventoAmbiente.evento-fissura {
+	opacity: 1;
+	background:
+		radial-gradient(120% 100% at 50% 50%, rgba(120, 200, 255, 0) 42%, rgba(120, 200, 255, 0.22) 100%);
+	animation: evento-fissura-pulse 3.6s ease-in-out infinite;
+}
+
+#eventoAmbiente.evento-emboscada {
+	opacity: 1;
+	background:
+		radial-gradient(120% 100% at 50% 50%, rgba(255, 60, 60, 0) 38%, rgba(255, 40, 40, 0.3) 100%);
+	animation: evento-emboscada-pulse 1.6s ease-in-out infinite;
+}
+
+#eventoAmbiente.evento-comercio {
+	opacity: 1;
+	background:
+		radial-gradient(85% 80% at 28% 72%, rgba(255, 190, 90, 0.16), rgba(255, 190, 90, 0) 65%);
+}
+
+#eventoAmbiente.evento-meteoro {
+	opacity: 1;
+	background:
+		radial-gradient(120% 90% at 50% 18%, rgba(255, 150, 60, 0.13), rgba(255, 150, 60, 0) 62%);
+}
+
+#eventoAmbiente.evento-inseto {
+	opacity: 1;
+	background:
+		radial-gradient(70% 60% at 80% 60%, rgba(180, 255, 120, 0.1), rgba(180, 255, 120, 0) 62%);
+}
+
+@keyframes evento-nevoa-drift {
+	from { transform: translate3d(-2%, 1%, 0) scale(1.05); }
+	to { transform: translate3d(2%, -1.5%, 0) scale(1.12); }
+}
+
+@keyframes evento-veia-pulse {
+	0%, 100% { filter: brightness(1); }
+	50% { filter: brightness(1.3); }
+}
+
+@keyframes evento-fissura-pulse {
+	0%, 100% { opacity: 0.72; }
+	50% { opacity: 1; }
+}
+
+@keyframes evento-emboscada-pulse {
+	0%, 100% { opacity: 0.72; }
+	50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#eventoAmbiente {
+		transition: none;
+		animation: none !important;
+	}
 }
 
 /* Telas baixas (ex.: 640×360): painel compacto no canto superior esquerdo —
@@ -7701,7 +8164,7 @@ button.skill-ramo-no:focus-visible {
 	}
 
 	/* sem movimento: o inseto aparece parado em vez de cruzar a tela */
-	.evento-inseto {
+	.evento-inseto-wrap {
 		animation: none;
 		left: auto;
 		right: clamp(24px, 6vw, 64px);
@@ -7710,6 +8173,10 @@ button.skill-ramo-no:focus-visible {
 	.meteoro-flash {
 		animation: none;
 		opacity: 0.45;
+	}
+
+	.evento-meteoro-rastro {
+		animation-duration: 1ms;
 	}
 }
 
@@ -8628,4 +9095,12 @@ img.ramos-tree-no__tile {
 		width: 46px;
 		height: 46px;
 	}
+}
+
+.screen-nav-icon--ramos {
+	display: grid;
+	place-items: center;
+	filter: none;
+	font-size: 18px;
+	line-height: 1;
 }

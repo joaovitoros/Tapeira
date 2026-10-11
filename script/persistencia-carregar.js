@@ -207,7 +207,7 @@ function Carregar(saveData, calculaOffline = false) {
 	// reivindica os marcos pendentes sem nunca repetir os já pagos
 	ConfereMarcosNivel50();
 
-	precoEsmCM = save.precoEsmCM ?? 10;
+	precoEsmCM = save.precoEsmCM ?? 5;
 	lvlEsmCM = save.lvlEsmCM ?? 0;
 
 	descontoLoja = save.descontoLoja ?? 0;

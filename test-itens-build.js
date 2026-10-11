@@ -1,6 +1,6 @@
-// Teste focado: itens de build (desbloqueio no andar 100, baú a cada 10
-// andares com acúmulo de marcos, 10 slots com cópias em slots próprios,
-// espaços extras comprados na loja de esmeraldas, troca descartando a
+// Teste focado: itens de build (desbloqueio no andar 100, baú a cada 5
+// andares com acúmulo de marcos, 20 slots com cópias em slots próprios,
+// espaços extras comprados na loja de esmeraldas (+5 por compra), troca descartando a
 // pilha inteira, "não escolher" que consome o baú,
 // tela de leitura no Status, save/reset e API encapsulada em
 // window.Tapeira.ItensBuild). Segue o
@@ -26,6 +26,11 @@ const fs = require('fs');
       resultados.push({ nome, ok: !!ok, detalhe: detalhe === undefined ? "" : String(detalhe) });
     const arredonda = v => Math.round(v * 10000) / 10000;
     const IB = window.Tapeira && window.Tapeira.ItensBuild;
+    // build cheia (20 slots): adaga ×3 + 17 outras cópias
+    const buildCheia = [
+      "adaga", "adaga", "moedas", "mapa", "relogio", "grimorio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas",
+      "bauPortatil", "esmeralda", "escudo", "adaga", "moedas", "mapa", "relogio", "grimorio", "pocaoVerde", "pocaoRubra"
+    ];
 
     try {
       // ---- API encapsulada (AGENTS.md: sem novos globais) ----
@@ -61,29 +66,26 @@ const fs = require('fs');
         todos.every(m => IB[m]() === 1));
       window.maxAndar = 100;
       IB.carrega({ itensBuild: ["adaga"], bauBuildPendente: false });
-      check("1 cópia de adaga: dano ×1,15", arredonda(IB.multDano()) === 1.15, arredonda(IB.multDano()));
+      check("1 cópia de adaga: dano ×1,25", arredonda(IB.multDano()) === 1.25, arredonda(IB.multDano()));
       IB.carrega({ itensBuild: ["adaga", "adaga"], bauBuildPendente: false });
-      check("2 cópias de adaga: dano ×1,3225", arredonda(IB.multDano()) === 1.3225, arredonda(IB.multDano()));
+      check("2 cópias de adaga: dano ×1,5625", arredonda(IB.multDano()) === 1.5625, arredonda(IB.multDano()));
       check("copias() conta por id", IB.copias("adaga") === 2 && IB.copias("moedas") === 0);
 
-      // ---- baú: cadência a cada 10 andares (marcos acumulam) ----
+      // ---- baú: cadência a cada 5 andares (marcos acumulam) ----
       IB.limpa();
       UI.removeBauBuild();
       window.maxAndar = 100;
       window.andar = 4;
       IB.tentaBau();
-      check("sem baú no andar 4 (múltiplo de 10 obrigatório)", !document.getElementById("bauBuild"));
+      check("sem baú no andar 4 (múltiplo de 5 obrigatório)",
+        !document.getElementById("bauBuild") && IB.quantidadeBausPendentes() === 0);
       window.andar = 5;
       IB.tentaBau();
-      check("sem baú no andar 5 (agora é a cada 10 andares)",
-        !document.getElementById("bauBuild") && IB.quantidadeBausPendentes() === 0);
-      window.andar = 10;
-      IB.tentaBau();
-      check("baú no andar 10 com selo",
+      check("baú no andar 5 com selo",
         !!document.getElementById("bauBuild")
         && document.getElementById("bauBuild-selo")?.textContent === "ITENS");
       check("bauBuildPendente vira true", IB.pendente() === true);
-      window.andar = 20; // marco seguinte acumula com o que estava pendente
+      window.andar = 10; // marco seguinte acumula com o que estava pendente
       IB.tentaBau();
       check("marco seguinte acumula outro baú (selo ×2)",
         IB.quantidadeBausPendentes() === 2
@@ -174,36 +176,35 @@ const fs = require('fs');
         IB.quantidadeBausPendentes() === 0
         && !document.getElementById("bauBuild") && !document.getElementById("bauBuild-selo"));
 
-      // ---- build cheia: limite 10 e troca descartando a pilha inteira ----
+      // ---- build cheia: limite 20 e troca descartando a pilha inteira ----
       IB.carrega({
-        itensBuild: ["adaga", "adaga", "moedas", "mapa", "relogio", "grimorio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas"],
+        itensBuild: buildCheia.slice(),
         bausBuildPendentes: 1,
         bauBuildPendente: true,
         opcoesBauBuild: ["esmeralda", "escudo", "lanterna"]
       });
       UI.spawnBauBuild();
-      check("build cheia com 10", IB.contagem() === 10 && IB.LIMITE === 10);
+      check("build cheia com 20", IB.contagem() === 20 && IB.LIMITE === 20);
       IB.escolhe("moedas", null); // id fora das opções atuais: não pode entrar
       check("id fora das opções não entra (build intacta)",
-        IB.contagem() === 10 && IB.quantidadeBausPendentes() === 1
-        && IB.pegaLista().join(",") === "adaga,adaga,moedas,mapa,relogio,grimorio,pocaoVerde,pocaoRubra,lanterna,colarFormigas");
+        IB.contagem() === 20 && IB.quantidadeBausPendentes() === 1
+        && IB.pegaLista().join(",") === buildCheia.join(","));
       IB.escolhe("esmeralda", null); // build cheia sem descarte: o modal precisa escolher
       check("build cheia sem descarte não entra nem consome o baú",
-        IB.contagem() === 10 && IB.quantidadeBausPendentes() === 1
-        && IB.pegaLista().join(",") === "adaga,adaga,moedas,mapa,relogio,grimorio,pocaoVerde,pocaoRubra,lanterna,colarFormigas");
+        IB.contagem() === 20 && IB.quantidadeBausPendentes() === 1
+        && IB.pegaLista().join(",") === buildCheia.join(","));
       IB.abreEscolha();
       document.querySelector("#modalItensBuild [data-item='esmeralda']").click(); // passo 2: qual sai
       const cartoesDescarte = [...document.querySelectorAll("#modalItensBuild [data-descartar]")];
-      check("etapa de troca mostra um cartão por item único (9)",
-        cartoesDescarte.length === 9
+      check("etapa de troca mostra um cartão por item único (12)",
+        cartoesDescarte.length === 12
         && cartoesDescarte[0].getAttribute("data-descartar") === "adaga");
-      check("pilha de 2 cópias avisa que sai tudo",
-        cartoesDescarte[0].textContent.includes("pilha ×2 — sai tudo"));
+      check("pilha de 3 cópias avisa que sai tudo",
+        cartoesDescarte[0].textContent.includes("pilha ×3 — sai tudo"));
       cartoesDescarte[0].click(); // descarta a pilha inteira de adaga
       check("descartar um item some a pilha inteira dele",
-        IB.copias("adaga") === 0 && IB.contagem() === 9 && IB.pendente() === false
-        && IB.pegaLista().join(",") === "moedas,mapa,relogio,grimorio,pocaoVerde,pocaoRubra,lanterna,colarFormigas,esmeralda");
-      check("resumo mostra (9/10) após descartar a pilha", IB.resumo().includes("(9/10)"));
+        IB.copias("adaga") === 0 && IB.contagem() === 18 && IB.pendente() === false);
+      check("resumo mostra (18/20) após descartar a pilha", IB.resumo().includes("(18/20)"));
 
       // ---- save: round-trip e save antigo ----
       IB.carrega({ itensBuild: ["moedas", "moedas"], bauBuildPendente: true });
@@ -219,10 +220,10 @@ const fs = require('fs');
       check("id desconhecido é ignorado no load",
         IB.pegaLista().join(",") === "adaga,moedas" && IB.pendente() === true);
       IB.carrega({
-        itensBuild: ["adaga", "escudo", "moedas", "mapa", "relogio", "grimorio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas", "bauPortatil"],
+        itensBuild: [...buildCheia, "escudo"], // 21 ids
         bauBuildPendente: false
       });
-      check("load com 11 ids é cortado no limite de 10", IB.contagem() === 10);
+      check("load com 21 ids é cortado no limite de 20", IB.contagem() === 20);
       IB.carrega({ bausBuildPendentes: 2, bauBuildPendente: true, opcoesBauBuild: ["adaga", "moedas"] });
       check("opções inválidas no save são descartadas",
         IB.quantidadeBausPendentes() === 2 && IB.serializa().opcoesBauBuild === null);
@@ -240,7 +241,7 @@ const fs = require('fs');
       catch (e) { rejeitouInvalido = true; }
       check("ValidarSave rejeita id de item inválido", rejeitouInvalido);
       let rejeitouExcesso = false;
-      try { ValidarSave({ ...saveValido, itensBuild: ["adaga", "escudo", "moedas", "mapa", "relogio", "grimorio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas", "bauPortatil"] }); }
+      try { ValidarSave({ ...saveValido, itensBuild: [...buildCheia, "escudo"] }); } // 21 ids
       catch (e) { rejeitouExcesso = true; }
       check("ValidarSave rejeita build acima do limite", rejeitouExcesso);
 
@@ -267,7 +268,7 @@ const fs = require('fs');
         document.body.classList.contains("itens-build-tela-aberta"));
       check("tela mostra nome, efeito e resumo com cópias",
         !!tela && tela.textContent.includes("Adaga Sombria")
-        && tela.textContent.includes("+15% de dano")
+        && tela.textContent.includes("+25% de dano")
         && tela.textContent.includes("Adaga Sombria ×2"));
       tela.click(); // clique no fundo (fora do conteúdo) fecha
       check("clique fora fecha a tela",
@@ -300,12 +301,12 @@ const fs = require('fs');
         && IB.serializa().opcoesBauBuild === null
         && !document.getElementById("bauBuild") && !document.getElementById("bauBuild-selo"));
 
-      // ---- espaço extra comprado na loja de esmeraldas (permanente) ----
+      // ---- espaço extra comprado na loja de esmeraldas (permanente, +5/compra) ----
       const esmeraldasOriginais = window.esmeraldas;
       const maxAndarSecao = window.maxAndar;
       IB.limpa();
-      check("sem extras o limite continua 10 e o preço começa em 10",
-        IB.slotsExtras() === 0 && IB.limiteAtual() === 10 && IB.precoSlotExtra() === 10);
+      check("sem extras o limite é 20 e o preço começa em 10",
+        IB.slotsExtras() === 0 && IB.limiteAtual() === 20 && IB.precoSlotExtra() === 10);
       window.maxAndar = 99;
       window.esmeraldas = 1000;
       CompraEsmSlotBuild();
@@ -317,27 +318,25 @@ const fs = require('fs');
         IB.slotsExtras() === 0 && N(window.esmeraldas) === 9);
       window.esmeraldas = 10;
       CompraEsmSlotBuild();
-      check("comprar 1º espaço: -10 esmeraldas, nível 1, limite 11",
-        IB.slotsExtras() === 1 && IB.limiteAtual() === 11
+      check("1ª compra: -10 esmeraldas, +5 slots, limite 25",
+        IB.slotsExtras() === 5 && IB.limiteAtual() === 25
         && N(window.esmeraldas) === 0 && IB.precoSlotExtra() === 20);
       window.esmeraldas = 100;
       CompraEsmSlotBuild(); // custa 20
       CompraEsmSlotBuild(); // custa 40
-      check("preço dobra por nível (10→20→40) e o limite sobe junto",
-        IB.slotsExtras() === 3 && IB.limiteAtual() === 13
+      check("preço dobra por compra (10→20→40) e cada uma dá +5 slots",
+        IB.slotsExtras() === 15 && IB.limiteAtual() === 35
         && N(window.esmeraldas) === 40 && IB.precoSlotExtra() === 80);
-      const onze = ["adaga", "escudo", "moedas", "mapa", "relogio", "grimorio",
-        "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas", "bauPortatil"];
-      IB.carrega({ ...IB.serializa(), itensBuild: onze });
-      check("save grava os extras e o carrega permite 11 itens",
-        IB.serializa().slotsExtrasBuild === 3 && IB.contagem() === 11);
+      IB.carrega({ ...IB.serializa(), itensBuild: [...buildCheia, "escudo"] }); // 21 ids
+      check("save grava os extras (15) e o limite efetivo é 35",
+        IB.serializa().slotsExtrasBuild === 15 && IB.limiteAtual() === 35 && IB.contagem() === 21);
       IB.limpa();
       check("reset (limpa) preserva o espaço comprado e zera os itens",
-        IB.slotsExtras() === 3 && IB.limiteAtual() === 13 && IB.contagem() === 0);
+        IB.slotsExtras() === 15 && IB.limiteAtual() === 35 && IB.contagem() === 0);
       let aceitouComExtras = true;
-      try { ValidarSave({ ...saveValido, slotsExtrasBuild: 1, itensBuild: onze }); }
+      try { ValidarSave({ ...saveValido, slotsExtrasBuild: 5, itensBuild: buildCheia }); }
       catch (e) { aceitouComExtras = false; }
-      check("ValidarSave aceita 11 itens com 1 espaço extra", aceitouComExtras);
+      check("ValidarSave aceita 20 itens com 5 espaços extras", aceitouComExtras);
       let rejeitouExtraNegativo = false;
       try { ValidarSave({ ...saveValido, slotsExtrasBuild: -1 }); }
       catch (e) { rejeitouExtraNegativo = true; }

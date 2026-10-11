@@ -316,6 +316,52 @@ test("pontos de perk contam o Toque Frenético e saves da época do bug continua
     }
 });
 
+test("Salvar e o auto save compartilham o mesmo objeto (só os campos offline diferem)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.CriarObjetoSave === "function" && typeof window.Salvar === "function");
+        const result = await page.evaluate(async () => {
+            const comOffline = Object.keys(CriarObjetoSave(true));
+            const bruto = CriarObjetoSave(false);
+            // JSON.stringify descarta chaves de valor undefined: o esperado
+            // precisa refletir isso para comparar com o JSON exportado.
+            const semOfflineDefinidas = Object.keys(bruto).filter(k => bruto[k] !== undefined);
+
+            let blob = null;
+            window.saveAs = capturado => { blob = capturado; };
+            Salvar();
+            const salvo = blob ? JSON.parse(await blob.text()) : null;
+
+            return {
+                temOffline: comOffline.includes("offlineLastSavedAt") && comOffline.includes("offlinePendingRewards"),
+                semOfflineTem: Object.keys(bruto).includes("offlineLastSavedAt") || Object.keys(bruto).includes("offlinePendingRewards"),
+                chavesSalvo: salvo ? Object.keys(salvo) : null,
+                chavesEsperadas: semOfflineDefinidas.concat(["saveFormat", "saveVersion", "exportedAt"]),
+                formato: salvo ? [salvo.saveFormat, salvo.saveVersion, typeof salvo.exportedAt] : null
+            };
+        });
+
+        assert.equal(result.temOffline, true, "o auto save inclui os campos offline");
+        assert.equal(result.semOfflineTem, false, "a exportação não inclui os campos offline");
+        assert.deepEqual(result.chavesSalvo, result.chavesEsperadas, "exportação = auto save sem offline + formato");
+        assert.deepEqual(result.formato, ["tapeira-save", 1, "string"]);
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("as páginas carregam exatamente os scripts da lista única (manifest)", () => {
+    const manifest = require("../scripts/script-manifest.js");
+    for (const [arquivo, esperado] of Object.entries(manifest)) {
+        const html = fs.readFileSync(path.join(projectRoot, arquivo), "utf8");
+        const bloco = html.match(/<!-- scripts:start[\s\S]*?<!-- scripts:end -->/);
+        assert.ok(bloco, arquivo + ": bloco de scripts com marcadores ausente");
+        const encontrados = [...bloco[0].matchAll(/<script src="([^"]+)"><\/script>/g)].map(m => m[1]);
+        assert.deepEqual(encontrados, esperado, arquivo + ": scripts fora do manifest (rode npm run sync:scripts)");
+    }
+});
+
 test("save antigo é migrado sem perder compatibilidade", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
@@ -598,7 +644,7 @@ test("combate aplica dano, item de build e respeita pausa", async () => {
 
         assert.equal(result.pausado, 1000, "ataque durante pausa não altera a vida");
         assert.ok(Math.abs(result.semItem - 990) < 1e-9);
-        assert.ok(Math.abs(result.comAdaga - 988.5) < 1e-9);
+        assert.ok(Math.abs(result.comAdaga - 987.5) < 1e-9);
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();
@@ -1198,17 +1244,30 @@ test("automação respeita desbloqueios, compra mais barato e gasta pontos eleg�
                 chanceBau
             };
 
-            // No andar 100+, seleção vazia não deve comprar todos os itens.
+            // No andar 100+, a seleção padrão (vazia = tudo marcado) compra TUDO.
             maxAndar = 100;
             autoItensLoja = [];
             gold = new GoldNumber(10);
+            precoBau = 5;
             const nivelAntesDaSeletiva = lvlBau;
             AutoCompraMaisBarato();
-            const semItemSelecionado = lvlBau === nivelAntesDaSeletiva;
-            autoItensLoja[1] = 1; // índice 1 = baú
+            const seletivaPadraoCompra = lvlBau === nivelAntesDaSeletiva + 1;
+
+            // Desmarcar o baú tira ele da auto-compra.
+            autoItensLoja = [];
+            autoItensLoja[1] = 0; // índice 1 = baú, desmarcado
+            gold = new GoldNumber(10);
+            precoBau = 5;
+            const nivelAntesDoDesmarque = lvlBau;
+            AutoCompraMaisBarato();
+            const seletivaDesmarcadaNaoCompra = lvlBau === nivelAntesDoDesmarque;
+
+            // Marcar de novo volta a comprar.
+            autoItensLoja[1] = 1;
+            gold = new GoldNumber(10);
             precoBau = 5;
             AutoCompraMaisBarato();
-            const seletivaComprou = lvlBau === nivelAntesDaSeletiva + 1;
+            const seletivaComprou = lvlBau === nivelAntesDoDesmarque + 1;
 
             // Auto-gasto distribui pontos só em habilidades desbloqueadas.
             maxAndar = 54;
@@ -1234,7 +1293,8 @@ test("automação respeita desbloqueios, compra mais barato e gasta pontos eleg�
                 seletivaAindaBloqueada,
                 seletivaDesbloqueada,
                 comprouMaisBarato,
-                semItemSelecionado,
+                seletivaPadraoCompra,
+                seletivaDesmarcadaNaoCompra,
                 seletivaComprou,
                 bloqueadoNaoGasta,
                 pontosEnquantoBloqueado,
@@ -1256,7 +1316,8 @@ test("automação respeita desbloqueios, compra mais barato e gasta pontos eleg�
         assert.equal(result.comprouMaisBarato.gold, 5);
         assert.equal(result.comprouMaisBarato.nivelBau, 2);
         assert.ok(Math.abs(result.comprouMaisBarato.chanceBau - 0.15) < 1e-10);
-        assert.equal(result.semItemSelecionado, true);
+        assert.equal(result.seletivaPadraoCompra, true);
+        assert.equal(result.seletivaDesmarcadaNaoCompra, true);
         assert.equal(result.seletivaComprou, true);
         assert.equal(result.bloqueadoNaoGasta, 0);
         assert.equal(result.pontosEnquantoBloqueado, 2);
@@ -1372,6 +1433,152 @@ test("companheiro de gold calcula renda e conquistas aplicam bônus por nível",
     }
 });
 
+test("conquista Milionário sobe pelos marcos 1M/1B/1T/Qa/Qi/Sx", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.ConquistasComportamentais === "function");
+        const result = await page.evaluate(() => {
+            UI.showInfo = () => {};
+            UI.showMilestone = () => {};
+            const antes = {
+                conquistasComp: conquistasComp.slice(),
+                melhorGoldRun,
+                totalGold,
+                comprasRun,
+                andar
+            };
+            comprasRun = 1; // evita disparar o Poupado por acidente
+            totalGold = new GoldNumber(0);
+            andar = 1;
+            const niveis = [];
+            for (const alvo of [5e5, 1e6, 1e8, 1e9, 1e12, 1e15, 1e18, 1e21]) {
+                conquistasComp = [0, 0, 0, 0, 0];
+                melhorGoldRun = new GoldNumber(alvo);
+                ConquistasComportamentais();
+                niveis.push(NivelConquistaComp(4));
+            }
+            // save antigo no nível 3 (100M de gold) mantém o nível — nunca regredir
+            conquistasComp = [0, 0, 0, 0, 3];
+            melhorGoldRun = new GoldNumber(1e8);
+            ConquistasComportamentais();
+            const nivelAntigoMantido = NivelConquistaComp(4);
+            const progressoNivel3 = ProgressoConquistaComp(4); // próximo marco: Qa
+            conquistasComp[4] = 6;
+            const xpNoNivel6 = MultiplicadorXPConquistaComp();
+            // round-trip JSON como no fluxo real (descarta campos undefined)
+            const novoSave = () => JSON.parse(JSON.stringify(CriarObjetoSave()));
+            let validouNivel6 = true;
+            try { ValidarSave({ ...novoSave(), conquistasComp: [0, 0, 0, 0, 6] }); }
+            catch (e) { validouNivel6 = e.message; }
+            let rejeitouNivel7 = false;
+            try { ValidarSave({ ...novoSave(), conquistasComp: [0, 0, 0, 0, 7] }); }
+            catch (e) { rejeitouNivel7 = true; }
+            conquistasComp = antes.conquistasComp;
+            melhorGoldRun = antes.melhorGoldRun;
+            totalGold = antes.totalGold;
+            comprasRun = antes.comprasRun;
+            andar = antes.andar;
+            return {
+                niveis,
+                max: CONQUISTAS_COMP[4].max,
+                marcos: CONQUISTAS_COMP[4].marcos,
+                desc: CONQUISTAS_COMP[4].desc,
+                nivelAntigoMantido,
+                progressoNivel3,
+                xpNoNivel6,
+                validouNivel6,
+                rejeitouNivel7
+            };
+        });
+
+        assert.deepEqual(result.niveis, [0, 1, 1, 2, 3, 4, 5, 6],
+            "1M→nível 1, 100M segue nível 1, 1B→2, 1T→3 ... 1 sextilhão→6");
+        assert.equal(result.max, 6);
+        assert.deepEqual(result.marcos, [1e6, 1e9, 1e12, 1e15, 1e18, 1e21]);
+        assert.ok(result.desc.includes("1M/1B/1T/Qa/Qi/Sx"));
+        assert.equal(result.nivelAntigoMantido, 3, "nível de save antigo nunca regredir");
+        assert.ok(result.progressoNivel3.includes("Qa"), "progresso aponta o próximo marco (quadrilhão)");
+        assert.equal(result.xpNoNivel6, 1.6, "recompensa continua +10% de XP por nível");
+        assert.equal(result.validouNivel6, true, "ValidarSave aceita o nível máximo novo");
+        assert.equal(result.rejeitouNivel7, true, "ValidarSave rejeita nível acima do máximo");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("loja do Conhecimento aplica +5% de dano/gold/XP por nível", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.CompraCM === "function");
+        const result = await page.evaluate(() => {
+            UI.showInfo = () => {};
+            const antes = {
+                dano: cmNivelDano, gold: cmNivelGold, xp: cmNivelXp,
+                danoJogador, conhecimentoMug
+            };
+            // efeitos por nível: gold/XP lineares, com Status e rótulos da loja
+            cmNivelGold = 3;
+            cmNivelXp = 2;
+            UI.showStatus();
+            const linhas = [...document.querySelectorAll("#StatusBody tr")];
+            const linhaGold = linhas.find(tr => tr.cells[0]?.textContent.includes("Conhecimento gold"))?.textContent || "";
+            const linhaXp = linhas.find(tr => tr.cells[0]?.textContent.includes("Conhecimento XP"))?.textContent || "";
+            const rotulos = [...document.querySelectorAll("#TabLojaCM td:first-child")].map(td => td.textContent.trim());
+            const multGold = MultiplicadorGoldConhecimento();
+            const multXp = BonusXPConhecimento();
+            // compra de dano aplica ×1,05 na hora e compõe por nível
+            cmNivelDano = 0;
+            danoJogador = 100;
+            conhecimentoMug = 1000;
+            CompraCM("dano");
+            const danoApos1 = danoJogador;
+            CompraCM("dano");
+            const danoApos2 = danoJogador;
+            const niveisDano = cmNivelDano;
+            // a decomposição do dano lista o bônus do Conhecimento (embutido)
+            MostraDecomposicaoDano();
+            const modalDecomp = document.getElementById("gameModal");
+            const textoDecomp = modalDecomp ? modalDecomp.textContent : "";
+            const temLinhaDanoCm = !!modalDecomp && [...modalDecomp.querySelectorAll(".decomp-linha")]
+                .some(l => l.textContent.includes("Dano: 2 níveis") && l.textContent.includes("×1.10"));
+            // o reset remonta o dano com o mesmo ×1,05 por nível
+            cmNivelDano = 0;
+            Resetar();
+            const danoBase = danoJogador;
+            cmNivelDano = 4;
+            Resetar();
+            const fatorReset = danoBase > 0 ? danoJogador / danoBase : 0;
+            cmNivelDano = antes.dano; cmNivelGold = antes.gold; cmNivelXp = antes.xp;
+            danoJogador = antes.danoJogador; conhecimentoMug = antes.conhecimentoMug;
+            return {
+                multGold, multXp, linhaGold, linhaXp,
+                danoApos1, danoApos2, niveisDano, fatorReset,
+                textoDecomp, temLinhaDanoCm,
+                temRotuloDano5: rotulos.includes("+5% de dano"),
+                temRotuloGold5: rotulos.includes("+5% de gold"),
+                temRotuloXp5: rotulos.includes("+5% de XP")
+            };
+        });
+
+        assert.ok(Math.abs(result.multGold - 1.15) < 1e-12, "3 níveis de gold = +15%");
+        assert.ok(Math.abs(result.multXp - 1.1) < 1e-12, "2 níveis de XP = +10%");
+        assert.ok(result.linhaGold.includes("+15%"), "Status mostra o total novo de gold");
+        assert.ok(result.linhaXp.includes("+10%"), "Status mostra o total novo de XP");
+        assert.ok(Math.abs(result.danoApos1 - 105) < 1e-9, "compra aplica ×1,05 imediato");
+        assert.ok(Math.abs(result.danoApos2 - 110.25) < 1e-9, "segunda compra compõe (×1,05²)");
+        assert.equal(result.niveisDano, 2);
+        assert.ok(result.temLinhaDanoCm, "decomposição mostra a linha do Conhecimento (×1,10 com 2 níveis)");
+        assert.ok(result.textoDecomp.includes("Conhecimento Mug"), "grupo do Conhecimento na decomposição");
+        assert.ok(Math.abs(result.fatorReset - Math.pow(1.05, 4)) < 1e-9, "reset aplica ×1,05 por nível");
+        assert.ok(result.temRotuloDano5 && result.temRotuloGold5 && result.temRotuloXp5,
+            "rótulos da loja mostram +5%");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("simulação offline mantém vidas, conta mortes e reinicia onda completa", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
@@ -1408,7 +1615,7 @@ test("simulação offline mantém vidas, conta mortes e reinicia onda completa",
     }
 });
 
-test("baú de builds desbloqueia a cada 10 andares, acumula e consome por escolha", async () => {
+test("baú de builds desbloqueia a cada 5 andares, acumula e consome por escolha", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
         await page.waitForFunction(() => typeof Tapeira?.ItensBuild?.tentaBau === "function");
@@ -1430,7 +1637,7 @@ test("baú de builds desbloqueia a cada 10 andares, acumula e consome por escolh
             maxAndar = 100;
             build.tentaBau(); // marco 100
             const bauOriginal = document.getElementById("bauBuild");
-            andar = 105;
+            andar = 103;
             build.tentaBau(); // fora do marco: não gera baú
             const foraDoMarco = {
                 quantidade: build.quantidadeBausPendentes(),
@@ -1499,7 +1706,7 @@ test("baú de builds desbloqueia a cada 10 andares, acumula e consome por escolh
         assert.deepEqual(result.bloqueado, { desbloqueada: false, pendente: false, bauVisivel: false });
         assert.equal(result.desbloqueada, true);
         assert.deepEqual(result.foraDoMarco, { quantidade: 1, mesmoBau: true },
-            "andar fora do múltiplo de 10 não gera baú");
+            "andar fora do múltiplo de 5 não gera baú");
         assert.deepEqual(result.acumulados, {
             quantidade: 2,
             bauRecriado: true,
@@ -1741,7 +1948,11 @@ test("habilidades de combate usam listeners registrados (sem onclick inline)", a
 
             const chamadas = [];
             window.AtivaHabilidadeCombate = tipo => chamadas.push(tipo);
-            for (const id of ids) document.getElementById(id).click();
+            for (const id of ids) {
+                const botao = document.getElementById(id);
+                botao.disabled = false; // o teste é do listener, não do estado travado
+                botao.click();
+            }
 
             return { inline, chamadas };
         });
@@ -1780,14 +1991,14 @@ test("tela da build esconde a notificação de baú aberto (chest-opening)", asy
     }
 });
 
-test("efeitos dos itens, limite de dez e troca descartando a pilha inteira", async () => {
+test("efeitos dos itens, limite de vinte e troca descartando a pilha inteira", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
         await page.waitForFunction(() => typeof Tapeira?.ItensBuild?.carrega === "function");
         const result = await page.evaluate(() => {
             const build = Tapeira.ItensBuild;
             const efeitos = [
-                ["adaga", "multDano", 1.15],
+                ["adaga", "multDano", 1.25],
                 ["escudo", "multGuardiao", 1.30],
                 ["moedas", "multGold", 1.20],
                 ["mapa", "multEvento", 1.25],
@@ -1814,9 +2025,9 @@ test("efeitos dos itens, limite de dez e troca descartando a pilha inteira", asy
                 multiplicador: build.multDano()
             };
 
-            // Dados desconhecidos são ignorados e a lista nunca ultrapassa o limite (10).
+            // Dados desconhecidos são ignorados e a lista nunca ultrapassa o limite (20).
             build.carrega({
-                itensBuild: ["adaga", "desconhecido", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas"],
+                itensBuild: ["adaga", "desconhecido", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas", "bauPortatil", "esmeralda", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde"],
 				bausBuildPendentes: 1,
 				bauBuildPendente: true,
 				opcoesBauBuild: ["grimorio", "lanterna", "esmeralda"]
@@ -1851,7 +2062,7 @@ test("efeitos dos itens, limite de dez e troca descartando a pilha inteira", asy
         });
 
         const esperados = {
-            adaga: 1.15, escudo: 1.30, moedas: 1.20, mapa: 1.25,
+            adaga: 1.25, escudo: 1.30, moedas: 1.20, mapa: 1.25,
             relogio: 1.10, grimorio: 1.20, pocaoVerde: 1.50,
             pocaoRubra: 1.25, lanterna: 1.20, colarFormigas: 1.20,
             bauPortatil: 1.15, esmeralda: 1.50
@@ -1861,21 +2072,18 @@ test("efeitos dos itens, limite de dez e troca descartando a pilha inteira", asy
             assert.ok(Math.abs(valor - esperados[id]) < 1e-10, `${id}: esperado ${esperados[id]}, recebido ${valor}`);
         }
         assert.equal(result.multiplicadorNeutro, 1);
-        assert.deepEqual(result.copiasAdaga, { contagem: 2, copias: 2, multiplicador: 1.15 ** 2 });
-        assert.deepEqual(result.listaSanitizada, ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna"]);
-        assert.deepEqual(result.escolhaSemDescarte, {
-            lista: ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna"],
-            pendente: true
-        });
-        assert.equal(result.limite, 10);
-        assert.equal(result.opcoesDeTroca, 9, "um cartão por item único na etapa de descarte");
+        assert.deepEqual(result.copiasAdaga, { contagem: 2, copias: 2, multiplicador: 1.25 ** 2 });
+        const cheia = ["adaga", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas", "bauPortatil", "esmeralda", "adaga", "moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde"];
+        assert.deepEqual(result.listaSanitizada, cheia);
+        assert.deepEqual(result.escolhaSemDescarte, { lista: cheia, pendente: true });
+        assert.equal(result.limite, 20);
+        assert.equal(result.opcoesDeTroca, 12, "um cartão por item único na etapa de descarte");
         assert.equal(result.descarteEscolhido, "adaga");
         assert.equal(result.copiasAdagaAposDescarte, 0, "descartar some a pilha inteira");
-        assert.equal(result.listaFinal.length, 9, "pilha de 2 saiu e o item novo entrou com 1 cópia");
-        assert.deepEqual(result.listaFinal, ["moedas", "escudo", "mapa", "grimorio", "relogio", "pocaoVerde", "pocaoRubra", "lanterna", "grimorio"]);
+        assert.equal(result.listaFinal.length, 18, "pilha de 3 saiu e o item novo entrou com 1 cópia");
         assert.equal(result.pendente, false);
-        assert.match(result.resumo, /9\/10/);
-        assert.match(result.resumo, /Grimório Estelar ×2/, "cópia repetida empilha no resumo");
+        assert.match(result.resumo, /18\/20/);
+        assert.match(result.resumo, /Grimório Estelar ×3/, "cópia repetida empilha no resumo");
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();
@@ -2063,3 +2271,4 @@ test("árvore de ramos: 2º botão, trilha de skills e seções com descrições
         await context.close();
     }
 });
+
