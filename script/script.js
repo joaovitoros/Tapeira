@@ -5,7 +5,7 @@ var andar = 1;	//usada para contagem do andar atual do jogo (Necessario para cal
 var andarMaxRun = 1; //pico de andar desta run (base dos pontos de perk; zera no reset)
 var qtdInimigosAndar = 1; //quantidade necessaria de inimigos que devem ser derrotados para avançar para o proximo andar
 var inimigosDerrotados = 0; //quantidade de inimigos derrotados naquele andar
-var limiteInimigos; //usada para controlar quantos inimigos podem ser criados na tela ao mesmo tempo
+var limiteInimigos = 1; //usada para controlar quantos inimigos podem ser criados na tela ao mesmo tempo
 var gold = new GoldNumber(0); //quantidade de dinheiro do jogador
 var saveAnd = 10; //andar que será efetuado o salvamento automatico
 var qtdSave = 0; //Quantidade de vezes que o jogo foi salvo
