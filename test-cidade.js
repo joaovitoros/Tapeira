@@ -67,6 +67,16 @@ const path = require('path');
         document.querySelector('[data-cidade="fechar"]').click();
         res.fechouPeloX = document.getElementById("container-Cidade").hidden;
 
+        // decoração da cena: chão presente e todas as imagens de prop carregadas
+        res.chao = !!document.querySelector("#container-Cidade .cidade-chao");
+        res.decorTotal = document.querySelectorAll("#container-Cidade .cidade-decor").length;
+        const decorImgs = [...document.querySelectorAll(
+            "#container-Cidade img.cidade-decor, #container-Cidade .cidade-decor img"
+        )];
+        res.decorImgs = decorImgs.length;
+        res.decorImgsOk = decorImgs.length > 0 && decorImgs.every(i => i.complete && i.naturalWidth > 0);
+        res.decorQuebradas = decorImgs.filter(i => !(i.complete && i.naturalWidth > 0)).map(i => i.getAttribute("src"));
+
         return res;
     });
 
@@ -79,6 +89,9 @@ const path = require('path');
     check("Fazenda abre as Formigas", r.fazenda.formigas && r.fazenda.cidadeFechada, JSON.stringify(r.fazenda));
     check("Fábrica abre os itens da build", r.fabrica.itens && r.fabrica.cidadeFechada, JSON.stringify(r.fabrica));
     check("fecha pelo ×", r.fechouPeloX === true);
+    check("cena tem chão", r.chao === true);
+    check("cena tem props de decoração", r.decorTotal >= 10, r.decorTotal);
+    check("imagens de decoração carregam", r.decorImgsOk === true, "quebradas: " + JSON.stringify(r.decorQuebradas));
 
     await browser.close();
     let falhas = 0;

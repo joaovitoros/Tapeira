@@ -60,19 +60,23 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
 ### Fase 0 — Decisões (fechada)
 - [x] Gates: **andar 80** para a Cidade; prédios em 85/90/100/110/120 (ver tabela acima).
 - [x] Pesquisa de itens: **por item**.
-- [ ] Arte/UX do mapa: usar a imagem do hub como fundo + **hotspots** por prédio (botões
-      posicionados) — responsivo.
+- [x] Arte/UX do mapa: **cena** com os 5 prédios recortados + **decoração** (props de
+      natureza/luz/estruturas e ursinhos passeando) + **hotspots** por prédio — responsivo.
 
 ### Fase 1 — A aba "Cidade" + o mapa (sem mecânica nova)
-- [ ] `Caverna.html`: `#btnCidade` na `#container-Botoes` (ícone 🏘️) + `#container-Cidade`.
-- [ ] `script/ui-cidade.js` (novo): monta o mapa, hotspots e o **HUD compacto** (gold + andar).
-- [ ] Cada hotspot **abre um painel que já existe** (Mercado→Loja, Pesquisa→CM+Ramos,
-      Fazenda→Formigas+Companheiros, Casa→Status, Fábrica→Automação).
-- [ ] `ui.js`: entrar em `syncScreenButtons` / `closeOtherPanels` (1 painel por vez).
-- [ ] Gate: a aba **só aparece** com `maxAndar >= 80` (derivado, sem save).
-- [ ] CSS responsivo (validar breakpoints do `AGENTS.md`, **celular intacto**).
-- [ ] Teste focado `test-cidade.js`: aba aparece no andar 80; hotspots abrem o painel certo; mobile.
-- [ ] **Save: nenhum campo novo.**
+- [x] `Caverna.html`: `#btnCidade` na `#container-Botoes` (ícone 🏘️) + `#container-Cidade`.
+- [x] `script/ui-cidade.js` (novo): monta o mapa, hotspots e o **HUD compacto** (gold + andar).
+- [x] Cada hotspot **abre um painel que já existe** (Mercado→Loja, Pesquisa→Ramos,
+      Fazenda→Formigas, Casa→Status, Fábrica→Itens da build).
+- [x] `ui.js`: entrar em `syncScreenButtons` / `closeOtherPanels` (1 painel por vez).
+- [x] Gate: a aba **só aparece** com `maxAndar >= 80` (derivado, sem save).
+- [x] CSS responsivo (validado 1400/1000/390; **celular intacto**).
+- [x] Teste focado `test-cidade.js`: aba aparece no andar 80; hotspots abrem o painel certo;
+      chão e props de decoração presentes; imagens carregam; mobile.
+- [x] **Save: nenhum campo novo.**
+- [x] **Decoração da cena** (extraída de `imagens/cidade/props 4/6/7/9.png` → `imagens/cidade/decor/`):
+      chão, moitas/rochas/cogumelos, poste e lanternas penduradas, carrinho/barril e ursinhos
+      passeando (2, em loop). Animações desligadas com `prefers-reduced-motion`.
 
 ### Fase 2 — Desbloqueio gradual dos prédios
 - [ ] Cada prédio com gate (tabela) e estado **"trancado"** mostrando o requisito.
