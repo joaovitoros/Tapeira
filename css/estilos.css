@@ -10050,19 +10050,19 @@ img.ramos-tree-no__tile {
 	/* no celular a cena é ampliada (preenche a altura), então os prédios
 	   precisam ser menores pra não parecerem gigantes na tela do aparelho.
 	   As POSIÇÕES são as mesmas do PC (a cena é 3:2 nos dois). */
-	.cidade-predio { width: var(--largura-cel, 12%); }
+	.cidade-predio { width: var(--largura-cel, 16%); }
 
-	.cidade-predio--casa     { --largura-cel: 13%; }
-	.cidade-predio--mercado  { --largura-cel: 12%; }
-	.cidade-predio--pesquisa { --largura-cel: 12%; }
-	.cidade-predio--fabrica  { --largura-cel: 13%; }
-	.cidade-predio--fazenda  { --largura-cel: 13%; }
+	.cidade-predio--casa     { --largura-cel: 17%; }
+	.cidade-predio--mercado  { --largura-cel: 16%; }
+	.cidade-predio--pesquisa { --largura-cel: 16%; }
+	.cidade-predio--fabrica  { --largura-cel: 17%; }
+	.cidade-predio--fazenda  { --largura-cel: 17%; }
 
 	.cidade-predio__nome { font-size: 10px; }
 	.cidade-predio__banner { padding: 4px 8px; gap: 3px; }
 	.cidade-predio__icone { font-size: 12px; }
 
-	.cidade-fonte { width: 22%; top: 57%; }
+	.cidade-fonte { width: 14%; top: 57%; }
 	/* no celular (retrato) a cena preenche a ALTURA e fica mais larga que o
 	   visor (proporção 3:2) — dá pra arrastar pros lados pra ver a cidade toda.
 	   align-self: flex-start impede o flex de esticar a largura até o container. */
