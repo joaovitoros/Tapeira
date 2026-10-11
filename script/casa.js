@@ -18,9 +18,9 @@ function CasaNivelValido(nivel) {
 	return Math.max(0, Math.min(CASA_MAX_NIVEL, n));
 }
 
-// Custo em CM do próximo nível (base 200, ×1,5 por nível)
+// Custo em CM do próximo nível (base 2.000, ×1,5 por nível)
 function CustoConfortoCasa(nivel) {
-	return Math.round(200 * Math.pow(1.5, CasaNivelValido(nivel)));
+	return Math.round(2000 * Math.pow(1.5, CasaNivelValido(nivel)));
 }
 
 function MultiplicadorOfflineCasa() {

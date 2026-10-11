@@ -43,7 +43,7 @@ const path = require('path');
         casaNivel = 0;
         conhecimentoMug = 0;
         res.compraSemCM = CompraConfortoCasa(); // false
-        conhecimentoMug = 1000;
+        conhecimentoMug = 10000;
         res.compraOk = CompraConfortoCasa(); // true
         res.nivelDepois = casaNivel;
         res.cmDepois = conhecimentoMug;
@@ -132,11 +132,11 @@ const path = require('path');
     check("conforto nível 0 = ×1", r.mult0 === 1);
     check("conforto nível 3 = ×1.18", Math.abs(r.mult3 - 1.18) < 1e-9, r.mult3);
     check("limite offline cresce com conforto", r.tempoCresce === true);
-    check("custo do conforto (200, 300)", r.custo0 === 200 && r.custo1 === 300, r.custo0 + "/" + r.custo1);
+    check("custo do conforto (2000, 3000)", r.custo0 === 2000 && r.custo1 === 3000, r.custo0 + "/" + r.custo1);
     check("nível é limitado ao máximo", r.nivelClamp === r.casaMax, r.nivelClamp);
     check("compra sem CM falha", r.compraSemCM === false);
     check("compra com CM funciona", r.compraOk === true && r.nivelDepois === 1, r.nivelDepois);
-    check("CM é descontado (1000-200)", r.cmDepois === 800, r.cmDepois);
+    check("CM é descontado (10000-2000)", r.cmDepois === 8000, r.cmDepois);
     check("compra no máximo falha", r.compraNoMax === false);
 
     check("troféu de conquista bloqueada não exibe", r.trofeuBloqueado === true && r.alternarBloqueado === false);

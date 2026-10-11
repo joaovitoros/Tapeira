@@ -35,13 +35,13 @@ function NivelPesquisaInimigo(id) {
 	return Math.max(0, Math.min(PESQUISA_INIMIGO_MAX, n));
 }
 
-// Custo em CM do próximo nível: item base 400 (×1,6); inimigo base 800 (×1,8)
+// Custo em CM do próximo nível: item base 4.000 (×1,6); inimigo base 8.000 (×1,8)
 function CustoPesquisaItem(id) {
-	return Math.round(400 * Math.pow(1.6, NivelPesquisaItem(id)));
+	return Math.round(4000 * Math.pow(1.6, NivelPesquisaItem(id)));
 }
 
 function CustoPesquisaInimigo(id) {
-	return Math.round(800 * Math.pow(1.8, NivelPesquisaInimigo(id)));
+	return Math.round(8000 * Math.pow(1.8, NivelPesquisaInimigo(id)));
 }
 
 // Multiplicador do efeito do item (fonte única, consumida por ItensBuild.mult)
