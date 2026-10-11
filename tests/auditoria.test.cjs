@@ -879,12 +879,22 @@ test("sonda: formatação de gold nos extremos", async () => {
             zero: FormatarGold(0),
             mil: FormatarGold(1000),
             milhao: FormatarGold(1e6),
-            infinito: FormatarGold(Infinity)
+            infinito: FormatarGold(Infinity),
+            // sufixos além de "Sx": formatNumber parava em Sx e o valor virava
+            // um número gigante tipo "229986612.80Sx"
+            alemDeSx: FormatGold(2.299866128e29),
+            dc: FormatGold(1e33),
+            cientifico: FormatGold(1e36),
+            cmGrande: FormatCM(2.299866128e29)
         }));
         assert.equal(r.zero, "0.00");
         assert.equal(r.mil, "1.00K");
         assert.equal(r.milhao, "1.00M");
         assert.equal(r.infinito, "∞");
+        assert.equal(r.alemDeSx, "229.99Oc");
+        assert.equal(r.dc, "1.00Dc");
+        assert.equal(r.cientifico, "1.00e+36");
+        assert.equal(r.cmGrande, "229.99Oc");
         assert.deepEqual(pageErrors, []);
     } finally { await context.close(); }
 });
