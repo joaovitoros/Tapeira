@@ -537,6 +537,396 @@ Object.assign(UI, {
         this.showSkillUpgradePanel();
     },
 
+// ===================== PAINEL "ÁRVORE DE HABILIDADES" =====================
+    // Segundo painel (2º botão "Ramos"): 5 botões de skill à esquerda e, ao
+    // clicar, abre a seção da skill com tudo sobre ela (níveis, perk e os
+    // ramos lado a lado). As mesmas regras de EvoluiSkill / CompraPerk /
+    // EscolheRamoSkill valem aqui — nada de lógica nova.
+    ramosTreeSecoes: {},
+    ramosTreeAtiva: null,
+
+    ramosTreeAcento: {
+        damage: "#e0463c",
+        electric: "#c9a227",
+        gold: "#e0a72e",
+        escape: "#4a9be0",
+        frenzy: "#9b6be0"
+    },
+
+    // ícones dos dois caminhos de ramo de cada skill (caminho 1, caminho 2)
+    ramosTreeRamoTiles: {
+        damage: ["💥", "💨"],
+        electric: ["🔥", "🕸"],
+        gold: ["🪙", "🌬"],
+        escape: ["⚔", "🛡"],
+        frenzy: ["🌞", "🌀"]
+    },
+
+    SkillUnlocked(id) {
+        const skill = SKILLS_UPGRADE.find(s => s.id === id);
+        return !!skill && PisoMaximoAlcancado() >= skill.pisoDesbloqueio;
+    },
+
+    SkillTemAcao(id) {
+        const skill = SKILLS_UPGRADE.find(s => s.id === id);
+        if (!skill || !this.SkillUnlocked(id)) return false;
+        const nivel = NivelDaSkill(id);
+        if (nivel < skill.maximo && pontosHabilidade > 0) return true;
+        const perk = PERKS.find(p => p.skillId === id);
+        if (perk && (Number(window[perk.varName]) || 0) < perk.maximo && PontosPerkDisponiveis() > 0) return true;
+        if (nivel >= RAMO_NIVEL_ESCOLHA && RamoEscolhido(id) === 0) return true;
+        return false;
+    },
+
+    primeiraSkillComAcao() {
+        const comAcao = SKILLS_UPGRADE.find(s => this.SkillTemAcao(s.id));
+        return comAcao ? comAcao.id : null;
+    },
+
+    toggleRamosTreePanel() {
+        if (document.getElementById("ramosTreeModal")) {
+            document.getElementById("ramosTreeModal").remove();
+            this.syncScreenButtons();
+            return;
+        }
+        document.getElementById("skillUpgradeModal")?.remove();
+        document.getElementById("antCollectionModal")?.remove();
+        this.closeOtherPanels("ramos");
+        this.showRamosTreePanel();
+    },
+
+    showRamosTreePanel() {
+        const focoAnterior = document.activeElement instanceof HTMLElement
+            ? document.activeElement.dataset.focusKey
+            : null;
+        document.getElementById("ramosTreeModal")?.remove();
+
+        const overlay = document.createElement("div");
+        overlay.id = "ramosTreeModal";
+        overlay.className = "ant-collection-overlay ramos-tree-overlay";
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.setAttribute("aria-labelledby", "ramos-tree-title");
+
+        const panel = document.createElement("section");
+        panel.className = "ant-collection-panel ramos-tree-panel";
+
+        const header = document.createElement("header");
+        header.className = "ant-collection-header ramos-tree-header";
+        const title = document.createElement("h2");
+        title.id = "ramos-tree-title";
+        title.textContent = "Árvore de habilidades";
+        const close = document.createElement("button");
+        close.type = "button";
+        close.className = "ant-collection-close";
+        close.setAttribute("aria-label", "Fechar árvore de ramos");
+        close.setAttribute("data-focus-key", "fechar");
+        close.textContent = "×";
+        const fechar = () => {
+            overlay.remove();
+            this.syncScreenButtons();
+            document.getElementById("btnRamos")?.focus();
+        };
+        close.addEventListener("click", fechar);
+        header.append(title, close);
+
+        const corpo = document.createElement("div");
+        corpo.className = "ramos-tree-corpo";
+        const trilha = document.createElement("nav");
+        trilha.className = "ramos-tree-trilha";
+        trilha.setAttribute("aria-label", "Selecionar habilidade");
+        const secao = document.createElement("div");
+        secao.className = "ramos-tree-secao";
+        secao.setAttribute("role", "region");
+
+        // qual skill abre por padrão: a primeira com algo para gastar
+        if (!SKILLS_UPGRADE.some(s => s.id === this.ramosTreeAtiva)) {
+            this.ramosTreeAtiva = this.primeiraSkillComAcao()
+				|| (SKILLS_UPGRADE[0] ? SKILLS_UPGRADE[0].id : null);
+        }
+
+        for (const skill of SKILLS_UPGRADE) {
+            const acento = this.ramosTreeAcento[skill.id] || "#6b8bb0";
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "ramos-tree-trilha__btn";
+            btn.style.setProperty("--acento", acento);
+            btn.setAttribute("aria-label", skill.nome);
+            btn.setAttribute("data-focus-key", `trilha:${skill.id}`);
+            btn.title = skill.nome;
+            const icone = document.createElement("img");
+            icone.className = "ramos-tree-trilha__icone";
+            icone.src = ICONE_SKILL[skill.id] || "imagens/espada-habilidade.svg";
+            icone.alt = "";
+            icone.setAttribute("aria-hidden", "true");
+            btn.append(icone);
+            if (skill.id === this.ramosTreeAtiva) btn.classList.add("ramos-tree-trilha__btn--ativo");
+            if (!this.SkillUnlocked(skill.id)) btn.classList.add("ramos-tree-trilha__btn--travada");
+            else if (this.SkillTemAcao(skill.id)) btn.classList.add("ramos-tree-trilha__btn--pronta");
+            btn.addEventListener("click", () => {
+                this.ramosTreeAtiva = this.ramosTreeAtiva === skill.id ? null : skill.id;
+                this.showRamosTreePanel();
+            });
+            trilha.appendChild(btn);
+        }
+
+        this.montarSecaoSkill(secao, this.ramosTreeAtiva);
+
+        corpo.append(trilha, secao);
+        panel.append(header, corpo);
+        overlay.appendChild(panel);
+        overlay.addEventListener("click", event => {
+            if (event.target === overlay) fechar();
+        });
+        overlay.addEventListener("keydown", event => {
+            if (event.key === "Escape") {
+                fechar();
+                return;
+            }
+            if (event.key !== "Tab") return;
+            const focaveis = Array.from(overlay.querySelectorAll(
+                'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+            )).filter(el => el.offsetParent !== null);
+            if (focaveis.length === 0) return;
+            const primeiro = focaveis[0];
+            const ultimo = focaveis[focaveis.length - 1];
+            const atual = document.activeElement;
+            if (event.shiftKey && (atual === primeiro || !overlay.contains(atual))) {
+                event.preventDefault();
+                ultimo.focus();
+            } else if (!event.shiftKey && (atual === ultimo || !overlay.contains(atual))) {
+                event.preventDefault();
+                primeiro.focus();
+            }
+        });
+        document.body.appendChild(overlay);
+        this.syncScreenButtons();
+
+        const alvoFoco = focoAnterior
+            ? Array.from(overlay.querySelectorAll("[data-focus-key]"))
+                .find(el => el.dataset.focusKey === focoAnterior)
+            : null;
+        const focoInicial = alvoFoco
+            || trilha.querySelector(".ramos-tree-trilha__btn--ativo")
+            || close;
+        focoInicial.focus({ preventScroll: true });
+    },
+
+    // monta a seção da skill escolhida (descrições sempre visíveis)
+    montarSecaoSkill(secao, skillId) {
+        secao.innerHTML = "";
+        if (!skillId) skillId = SKILLS_UPGRADE[0] ? SKILLS_UPGRADE[0].id : null;
+        const skill = skillId ? SKILLS_UPGRADE.find(s => s.id === skillId) : null;
+        if (!skill) return;
+        const acento = this.ramosTreeAcento[skill.id] || "#6b8bb0";
+        secao.style.setProperty("--acento", acento);
+        const skillLevel = NivelDaSkill(skill.id);
+        const unlocked = this.SkillUnlocked(skill.id);
+        const semPontos = pontosHabilidade <= 0;
+        const perk = PERKS.find(p => p.skillId === skill.id);
+        const arvoreRamos = RAMOS_SKILL.find(item => item.skillId === skill.id);
+        const escolhido = arvoreRamos ? RamoEscolhido(skill.id) : 0;
+
+        const bloco = (rotulo) => {
+            const b = document.createElement("div");
+            b.className = "ramos-tree-bloco";
+            const r = document.createElement("div");
+            r.className = "ramos-tree-bloco__rotulo";
+            r.textContent = rotulo;
+            b.appendChild(r);
+            return b;
+        };
+
+        // topo: ícone + nome + nível
+        const topo = document.createElement("div");
+        topo.className = "ramos-tree-topo";
+        const iconeTopo = document.createElement("img");
+        iconeTopo.className = "ramos-tree-topo__icone";
+        iconeTopo.src = ICONE_SKILL[skill.id] || "imagens/espada-habilidade.svg";
+        iconeTopo.alt = "";
+        iconeTopo.setAttribute("aria-hidden", "true");
+        const titulo = document.createElement("span");
+        titulo.className = "ramos-tree-topo__titulo";
+        const nome = document.createElement("b");
+        nome.textContent = skill.nome;
+        const sub = document.createElement("span");
+        sub.className = "ramos-tree-topo__sub";
+        sub.textContent = unlocked
+            ? `Nível ${skillLevel}/${skill.maximo}`
+            : `🔒 desbloqueia no andar ${skill.pisoDesbloqueio}`;
+        titulo.append(nome, sub);
+        const seloNivel = document.createElement("span");
+        seloNivel.className = "ramos-tree-topo__selo";
+        seloNivel.textContent = `${skillLevel}/${skill.maximo}`;
+        topo.append(iconeTopo, titulo, seloNivel);
+        secao.appendChild(topo);
+
+        // efeito (frase curta da skill)
+        const efeito = document.createElement("p");
+        efeito.className = "ramos-tree-efeito";
+        efeito.textContent = skill.tagline || "";
+        secao.appendChild(efeito);
+
+        // níveis: faixa de pílulas; a "próxima" compra
+        const bNiveis = bloco("Níveis");
+        const dica = document.createElement("p");
+        dica.className = "ramos-tree-dica";
+        dica.textContent = unlocked ? DicaNiveisSkill(skill.id) : "Ganhe pontos para desbloquear e investir aqui.";
+        bNiveis.appendChild(dica);
+        const faixa = document.createElement("div");
+        faixa.className = "ramos-tree-niveis";
+        for (let nivel = 1; nivel <= skill.maximo; nivel++) {
+            const compravel = nivel === skillLevel + 1 && unlocked && !semPontos;
+            const pip = document.createElement(compravel ? "button" : "span");
+            pip.type = compravel ? "button" : undefined;
+            pip.className = "ramos-tree-niv";
+            let estado;
+            if (nivel <= skillLevel) estado = nivel === skill.maximo ? "ramos-tree-niv--max" : "ramos-tree-niv--feito";
+            else if (!unlocked || semPontos || nivel > skillLevel + 1) estado = "ramos-tree-niv--travado";
+            else estado = "ramos-tree-niv--proximo";
+            pip.classList.add(estado);
+            pip.textContent = String(nivel);
+            pip.setAttribute("aria-label", `Nível ${nivel}`);
+            if (compravel) {
+                pip.setAttribute("data-focus-key", `nivel:${skill.id}:${nivel}`);
+                pip.addEventListener("click", () => {
+                    if (EvoluiSkill(skill.id)) this.showRamosTreePanel();
+                });
+            }
+            faixa.appendChild(pip);
+        }
+        bNiveis.appendChild(faixa);
+        secao.appendChild(bNiveis);
+
+        // perk
+        if (perk) {
+            const perkNivel = Number(window[perk.varName]) || 0;
+            const perkNoMaximo = perkNivel >= perk.maximo;
+            const perkPronto = unlocked && !perkNoMaximo && PontosPerkDisponiveis() > 0;
+            const bPerk = bloco("Perk");
+            const noPerk = document.createElement(perkPronto ? "button" : "div");
+            noPerk.type = perkPronto ? "button" : undefined;
+            noPerk.className = "ramos-tree-perk"
+                + (perkNoMaximo ? " ramos-tree-perk--max" : perkPronto ? " ramos-tree-perk--pronto" : " ramos-tree-perk--travado");
+            const tPerk = document.createElement("span");
+            tPerk.className = "ramos-tree-perk__tile";
+            tPerk.setAttribute("aria-hidden", "true");
+            tPerk.textContent = "◆";
+            const txtPerk = document.createElement("span");
+            txtPerk.className = "ramos-tree-perk__txt";
+            const bPerkTxt = document.createElement("b");
+            bPerkTxt.textContent = `Perk ${perkNivel}/${perk.maximo}`;
+            const sPerkTxt = document.createElement("span");
+            sPerkTxt.textContent = perk.efeito;
+            txtPerk.append(bPerkTxt, sPerkTxt);
+            noPerk.append(tPerk, txtPerk);
+            if (perkPronto) {
+                const seloPerk = document.createElement("span");
+                seloPerk.className = "ramos-tree-selo";
+                seloPerk.textContent = "APLICAR";
+                noPerk.append(seloPerk);
+                noPerk.setAttribute("data-focus-key", `perk:${skill.id}`);
+                noPerk.addEventListener("click", () => {
+                    if (CompraPerk(skill.id)) this.showRamosTreePanel();
+                });
+            }
+            bPerk.appendChild(noPerk);
+            secao.appendChild(bPerk);
+        }
+
+        // ramos lado a lado
+        if (arvoreRamos) {
+            const bRamos = bloco("Ramos · Nv 5 → Nv 10");
+            const grades = document.createElement("div");
+            grades.className = "ramos-tree-ramos";
+            const tilesRamo = ICONE_SKILL[skill.id] || "imagens/espada-habilidade.svg";
+            const podeEscolher = escolhido === 0 && unlocked && skillLevel >= RAMO_NIVEL_ESCOLHA;
+            for (const ramo of arvoreRamos.ramos) {
+                const ehEscolhido = escolhido === ramo.id;
+                const outroSelado = escolhido !== 0 && escolhido !== ramo.id;
+                const disponivel = podeEscolher;
+                const card = document.createElement("div");
+                card.className = "ramos-tree-ramo"
+                    + (ehEscolhido ? " ramos-tree-ramo--escolhido" : "")
+                    + (outroSelado ? " ramos-tree-ramo--selado" : "");
+                const nomeRamo = document.createElement("div");
+                nomeRamo.className = "ramos-tree-ramo__nome";
+                nomeRamo.textContent = ramo.nome;
+                card.appendChild(nomeRamo);
+                card.appendChild(this.noRamo(
+                    tilesRamo, `Nv ${RAMO_NIVEL_ESCOLHA}`, ramo.efeito5,
+                    ehEscolhido ? "ramos-tree-no--escolhido"
+                        : outroSelado ? "ramos-tree-no--selado"
+                        : disponivel ? "ramos-tree-no--pronto" : "ramos-tree-no--pendente",
+                    disponivel ? () => EscolheRamoSkill(skill.id, ramo.id) : null,
+                    disponivel ? "ESCOLHER" : null
+                ));
+                const fio = document.createElement("span");
+                fio.className = "ramos-tree-fio";
+                fio.setAttribute("aria-hidden", "true");
+                card.appendChild(fio);
+                card.appendChild(this.noRamo(
+                    tilesRamo, `Nv ${RAMO_NIVEL_CONCLUSAO}`, ramo.efeito10,
+                    ehEscolhido
+                        ? (skillLevel >= RAMO_NIVEL_CONCLUSAO ? "ramos-tree-no--max" : "ramos-tree-no--pendente")
+                        : outroSelado ? "ramos-tree-no--selado" : "ramos-tree-no--pendente"
+                ));
+                if (ehEscolhido) {
+                    const seloRamo = document.createElement("span");
+                    seloRamo.className = "ramos-tree-selo ramos-tree-selo--escolhido";
+                    seloRamo.textContent = "★ ESCOLHIDO";
+                    card.appendChild(seloRamo);
+                } else if (outroSelado) {
+                    const seloRamo = document.createElement("span");
+                    seloRamo.className = "ramos-tree-selo ramos-tree-selo--selado";
+                    seloRamo.textContent = "selado";
+                    card.appendChild(seloRamo);
+                }
+                grades.appendChild(card);
+            }
+            bRamos.appendChild(grades);
+            secao.appendChild(bRamos);
+        }
+    },
+
+    // nó de ramo (nível 5 ou 10); com `acao` vira botão que aplica e re-renderiza
+    noRamo(tile, titulo, desc, classe, acao, selo) {
+        const no = document.createElement(acao ? "button" : "div");
+        no.type = acao ? "button" : undefined;
+        no.className = "ramos-tree-no " + (classe || "");
+        const usaImagem = /\.(svg|png|webp)$/i.test(String(tile));
+        const t = document.createElement(usaImagem ? "img" : "span");
+        t.className = "ramos-tree-no__tile" + (usaImagem ? " ramos-tree-no__icone" : "");
+        if (usaImagem) {
+            t.src = String(tile);
+            t.alt = "";
+            t.setAttribute("aria-hidden", "true");
+        } else {
+            t.textContent = tile;
+        }
+        const txt = document.createElement("span");
+        txt.className = "ramos-tree-no__txt";
+        const b = document.createElement("b");
+        b.textContent = titulo;
+        const d = document.createElement("span");
+        d.textContent = desc;
+        txt.append(b, d);
+        no.append(t, txt);
+        if (selo) {
+            const s = document.createElement("span");
+            s.className = "ramos-tree-selo";
+            s.textContent = selo;
+            no.append(s);
+        }
+        if (acao) {
+            no.setAttribute("data-focus-key", "acao");
+            no.addEventListener("click", () => {
+                if (acao()) this.showRamosTreePanel();
+            });
+        }
+        return no;
+    },
+
     closeOtherPanels(activePanel) {
         const mobileLayout = window.matchMedia(
             "(max-width: 700px), (min-width: 701px) and (max-width: 900px) and (orientation: portrait), (max-width: 900px) and (max-height: 520px) and (orientation: landscape), (min-width: 1000px) and (max-width: 1500px) and (min-height: 780px) and (max-height: 950px) and (orientation: landscape)"
@@ -556,3 +946,15 @@ Object.assign(UI, {
         }
     }
 });
+
+// Linha curta dos níveis ("valor de hoje · ganho por nível") para o painel de
+// seções — usa as MESMAS fórmulas do jogo, sem mudar nenhuma regra.
+function DicaNiveisSkill(id) {
+	const nivel = NivelDaSkill(id);
+	if (id === "damage") return `Dura ${DuracaoHabilidadeDano()} s hoje · +5 s por nível.`;
+	if (id === "electric") return `${Math.round((25 + nivel * 5) * FatorRamo("electric", 1, 1.5))}% nos vizinhos hoje · +5% por nível.`;
+	if (id === "gold") return `${Math.round((35 + nivel * 5) * FatorRamo("gold", 1, 1.5))}% de gold por golpe hoje · +5% por nível.`;
+	if (id === "escape") return `${Math.round((10 + nivel * 2) * FatorRamo("escape", 2, 1.5))} s de pausa hoje · +2 s por nível.`;
+	if (id === "frenzy") return `Multiplicador do toque ×${(2 + nivel * 0.15).toFixed(2).replace(".", ",")} hoje · +0,15 por nível.`;
+	return "";
+}

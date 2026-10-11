@@ -266,7 +266,8 @@ const UI = {
             )],
             ["btn-Config", document.getElementById("container-SalvaCarrega")?.style.visibility === "visible"],
             ["btn-Formigas", !!document.getElementById("antCollectionModal")],
-            ["btnSkills", !!document.getElementById("skillUpgradeModal")]
+            ["btnSkills", !!document.getElementById("skillUpgradeModal")],
+            ["btnRamos", !!document.getElementById("ramosTreeModal")]
         ];
 
         states.forEach(([id, isOpen]) => {
@@ -900,6 +901,10 @@ document.addEventListener("click", (e) => {
     }
     if (e.target.closest("#btnSkills")) {
         UI.toggleSkillUpgradePanel();
+    }
+    if (e.target.closest("#btnRamos")) {
+        UI.toggleRamosTreePanel();
+        return;
     }
     if (e.target.closest("[data-status-dano]")) {
         MostraDecomposicaoDano();

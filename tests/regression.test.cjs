@@ -193,7 +193,7 @@ test("navegação lateral usa delegação registrada (sem onclick inline)", asyn
         await page.waitForFunction(() =>
             document.getElementById("btn-Config") && typeof window.SobeStatus === "function");
         const result = await page.evaluate(() => {
-            const ids = ["btnStatus", "btn-Loja", "btn-Config", "btn-Formigas", "btnSkills"];
+            const ids = ["btnStatus", "btn-Loja", "btn-Config", "btn-Formigas", "btnSkills", "btnRamos"];
             const inline = ids.filter(id => document.getElementById(id)?.hasAttribute("onclick"));
 
             const config = document.getElementById("container-SalvaCarrega");
@@ -1967,6 +1967,97 @@ test("regressão de habilidades, reset e save/load", { timeout: 120000 }, async 
 
         assert.ok(results.some(result => result === "FIM negócio"), "o harness deve concluir os testes de negócio");
         assert.deepEqual(failures, []);
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("árvore de ramos: 2º botão, trilha de skills e seções com descrições", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            document.getElementById("btnRamos")
+            && typeof UI !== "undefined"
+            && typeof UI.toggleRamosTreePanel === "function",
+            undefined,
+            { timeout: 15000 }
+        );
+
+        // pausa o jogo, dá pontos e abre pelo 2º botão (delegação no document)
+        await page.evaluate(() => {
+            if (typeof AlternaPausa === "function") AlternaPausa();
+            document.getElementById("infoModal")?.remove();
+            window.pontosHabilidade = 5;
+            document.getElementById("btnRamos").click();
+        });
+        await page.waitForSelector("#ramosTreeModal");
+
+        const resumo = await page.evaluate(() => {
+            const trilha = document.querySelectorAll("#ramosTreeModal .ramos-tree-trilha__btn").length;
+            const secao = document.querySelector("#ramosTreeModal .ramos-tree-secao");
+            if (!secao) return null;
+            const descs = [...secao.querySelectorAll(".ramos-tree-no__txt span, .ramos-tree-perk__txt span")]
+                .filter(el => getComputedStyle(el).display !== "none").length;
+            return {
+                trilha,
+                pips: secao.querySelectorAll(".ramos-tree-niv").length,
+                dica: secao.querySelector(".ramos-tree-dica")?.textContent || "",
+                efeito: secao.querySelector(".ramos-tree-efeito")?.textContent || "",
+                ramos: secao.querySelectorAll(".ramos-tree-ramo").length,
+                descsVisiveis: descs,
+                temSeloNivel: !!secao.querySelector(".ramos-tree-topo__selo")
+            };
+        });
+        assert.ok(resumo, "uma seção abre ao clicar");
+        assert.equal(resumo.trilha, 5, "5 botões à esquerda (um por skill)");
+        assert.equal(resumo.pips, 10, "faixa de níveis de 1 a 10");
+        assert.match(resumo.dica, /hoje/, "linha dos níveis no padrão aprovado");
+        assert.ok(resumo.efeito.length > 0, "efeito curto da skill visível");
+        assert.ok(resumo.ramos >= 2, "ramos lado a lado na seção");
+        assert.ok(resumo.descsVisiveis > 0, "descrições sempre visíveis");
+        assert.ok(resumo.temSeloNivel, "selo de nível no topo");
+
+        // a pílula "próximo" compra o nível usando a regra existente
+        const compra = await page.evaluate(() => {
+            const nivelAntes = NivelDaSkill("damage");
+            const pip = document.querySelector("#ramosTreeModal .ramos-tree-niv--proximo");
+            if (!pip) return null;
+            pip.click();
+            return { antes: nivelAntes, depois: NivelDaSkill("damage"), painel: !!document.getElementById("ramosTreeModal") };
+        });
+        assert.deepEqual(compra, { antes: 0, depois: 1, painel: true },
+            "clique na pílula usa EvoluiSkill e re-renderiza");
+
+        // trocar de skill pela trilha abre outra seção
+        const trocada = await page.evaluate(() => {
+            const alvo = [...document.querySelectorAll("#ramosTreeModal .ramos-tree-trilha__btn")]
+                .find(b => b.getAttribute("aria-label") === "Corrente elétrica");
+            if (!alvo) return null;
+            alvo.click();
+            const secao = document.querySelector("#ramosTreeModal .ramos-tree-secao");
+            return {
+                titulo: secao?.querySelector(".ramos-tree-topo__titulo b")?.textContent || "",
+                ativo: document.querySelectorAll("#ramosTreeModal .ramos-tree-trilha__btn--ativo").length
+            };
+        });
+        assert.deepEqual(trocada, { titulo: "Corrente elétrica", ativo: 1 },
+            "clicar na trilha abre a seção da skill");
+
+        // fechar pelo × devolve o foco ao 2º botão
+        await page.evaluate(() => document.querySelector("#ramosTreeModal .ant-collection-close").click());
+        await page.waitForFunction(() => !document.getElementById("ramosTreeModal"));
+        assert.equal(await page.evaluate(() => document.activeElement?.id), "btnRamos");
+
+        // reabrir e fechar com Esc
+        await page.evaluate(() => {
+            document.getElementById("infoModal")?.remove();
+            document.getElementById("btnRamos").click();
+        });
+        await page.waitForSelector("#ramosTreeModal");
+        await page.keyboard.press("Escape");
+        await page.waitForFunction(() => !document.getElementById("ramosTreeModal"));
+
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();

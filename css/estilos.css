@@ -1628,7 +1628,8 @@ body {
 #btn-Loja,
 #btn-Config,
 #btn-Formigas,
-#btnSkills {
+#btnSkills,
+#btnRamos {
 	height: clamp(38px, 3.5vw, 50px);
 	font-size: var(--ui-text);
 }
@@ -3400,6 +3401,14 @@ input:focus-visible {
 	filter: none;
 	color: #ffd36b;
 	font-size: 22px;
+	line-height: 1;
+}
+
+.screen-nav-icon--ramos {
+	display: grid;
+	place-items: center;
+	filter: none;
+	font-size: 18px;
 	line-height: 1;
 }
 
@@ -8132,4 +8141,491 @@ button.skill-ramo-no:focus-visible {
 .logs-vazio {
 	opacity: 0.7;
 	font-style: italic;
+}
+
+/* ===================== Painel "Árvore de habilidades" =====================
+   Segundo painel (2º botão "Ramos"): 5 botões de skill à esquerda (trilha) e
+   a seção da skill escolhida ao lado, com descrições sempre visíveis.
+   Os ramos ficam lado a lado. Tokens locais deste painel. */
+.ramos-tree-overlay {
+	padding: 12px;
+	padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+}
+
+.ramos-tree-panel {
+	--ramos-linha: rgba(255, 255, 255, 0.16);
+	--ramos-proximo: #ffd36b;
+	--ramos-ok: #9ff5c0;
+
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	width: min(780px, 97vw);
+	max-height: min(92vh, 920px);
+	max-height: min(92dvh, 920px);
+	overflow: hidden;
+	padding: clamp(12px, 2vw, 20px);
+}
+
+.ramos-tree-header {
+	flex: 0 0 auto;
+	gap: 10px;
+}
+
+.ramos-tree-header h2 {
+	flex: 1;
+	min-width: 0;
+	font-size: clamp(18px, 4vw, 24px);
+	overflow-wrap: anywhere;
+}
+
+.ramos-tree-corpo {
+	display: flex;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+/* ===== trilha: 5 botões à esquerda ===== */
+.ramos-tree-trilha {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 10px;
+	border-right: 1px solid #2b4160;
+	background: rgba(0, 0, 0, 0.18);
+}
+
+.ramos-tree-trilha__btn {
+	position: relative;
+	width: 52px;
+	height: 52px;
+	display: grid;
+	place-items: center;
+	border: 2px solid #2b4160;
+	border-radius: 12px;
+	background: #14263a;
+	cursor: pointer;
+	touch-action: manipulation;
+	transition: transform 0.1s ease;
+}
+
+.ramos-tree-trilha__btn:hover {
+	transform: translateY(-1px);
+}
+
+.ramos-tree-trilha__icone {
+	width: 24px;
+	height: 24px;
+	object-fit: contain;
+}
+
+.ramos-tree-trilha__btn--ativo {
+	border-color: var(--acento);
+	box-shadow: 0 0 12px color-mix(in srgb, var(--acento) 55%, transparent);
+}
+
+.ramos-tree-trilha__btn--travada {
+	filter: grayscale(0.8);
+	opacity: 0.55;
+}
+
+.ramos-tree-trilha__btn--pronta::after {
+	content: "";
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	width: 12px;
+	height: 12px;
+	border-radius: 999px;
+	background: var(--ramos-proximo);
+	box-shadow: 0 0 8px rgba(255, 211, 107, 0.8);
+}
+
+/* ===== seção da skill ===== */
+.ramos-tree-secao {
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+	padding: 16px;
+}
+
+.ramos-tree-vazio {
+	margin: 40px 0 0;
+	color: #8fa6c0;
+	text-align: center;
+}
+
+.ramos-tree-topo {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 6px;
+}
+
+.ramos-tree-topo__icone {
+	box-sizing: border-box;
+	width: 40px;
+	height: 40px;
+	flex: 0 0 auto;
+	padding: 7px;
+	border: 1px solid var(--acento);
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--acento) 25%, #0d1826);
+	object-fit: contain;
+}
+
+.ramos-tree-topo__titulo {
+	flex: 1;
+	min-width: 0;
+}
+
+.ramos-tree-topo__titulo b {
+	display: block;
+	font-size: 17px;
+}
+
+.ramos-tree-topo__sub {
+	font-size: 12px;
+	color: #b8c6d9;
+}
+
+.ramos-tree-topo__selo {
+	flex: 0 0 auto;
+	padding: 4px 10px;
+	border: 1px solid rgba(255, 211, 107, 0.65);
+	border-radius: 999px;
+	background: rgba(255, 211, 107, 0.12);
+	color: #ffe09a;
+	font-size: 13px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+.ramos-tree-efeito {
+	margin: 0 0 4px;
+	color: #cbd5e1;
+	font-size: 12px;
+}
+
+.ramos-tree-bloco {
+	margin-top: 14px;
+}
+
+.ramos-tree-bloco__rotulo {
+	margin-bottom: 8px;
+	font-size: 10px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #8fa6c0;
+}
+
+.ramos-tree-bloco__rotulo::after {
+	content: "";
+	display: block;
+	margin-top: 5px;
+	border-top: 1px dashed rgba(255, 255, 255, 0.14);
+}
+
+.ramos-tree-dica {
+	margin: -2px 0 8px;
+	font-size: 11px;
+	color: #a9bdd6;
+}
+
+/* ===== faixa de níveis (pílulas) ===== */
+.ramos-tree-niveis {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.ramos-tree-niv {
+	position: relative;
+	box-sizing: border-box;
+	width: 34px;
+	height: 34px;
+	display: grid;
+	place-items: center;
+	border: 2px solid var(--ramos-linha);
+	border-radius: 9px;
+	background: linear-gradient(180deg, #172a40, #0f1e30);
+	color: #9fb2c8;
+	font: inherit;
+	font-size: 13px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+.ramos-tree-niv--feito {
+	border-color: var(--acento);
+	background: color-mix(in srgb, var(--acento) 32%, #0d1826);
+	color: #eaf1fb;
+}
+
+.ramos-tree-niv--max {
+	border-color: var(--ramos-ok);
+	background: color-mix(in srgb, var(--ramos-ok) 22%, #0d1826);
+	color: var(--ramos-ok);
+}
+
+.ramos-tree-niv--max::after {
+	content: "✓";
+	position: absolute;
+	right: -4px;
+	top: -7px;
+	display: grid;
+	place-items: center;
+	width: 13px;
+	height: 13px;
+	border: 1px solid var(--ramos-ok);
+	border-radius: 999px;
+	background: #123a24;
+	color: var(--ramos-ok);
+	font-size: 9px;
+	line-height: 1;
+}
+
+.ramos-tree-niv--travado {
+	opacity: 0.5;
+}
+
+.ramos-tree-niv--travado::after {
+	content: "🔒";
+	position: absolute;
+	right: -3px;
+	top: -6px;
+	font-size: 9px;
+}
+
+.ramos-tree-niv--proximo {
+	border-color: var(--ramos-proximo);
+	color: #ffe09a;
+	animation: ramos-pulso 1.5s ease-in-out infinite;
+	cursor: pointer;
+}
+
+/* ===== perk ===== */
+.ramos-tree-perk {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 8px 10px;
+	border: 2px solid var(--ramos-linha);
+	border-radius: 10px;
+	background: rgba(0, 0, 0, 0.2);
+	color: inherit;
+	font: inherit;
+	text-align: left;
+}
+
+.ramos-tree-perk__tile {
+	width: 34px;
+	height: 34px;
+	flex: 0 0 auto;
+	display: grid;
+	place-items: center;
+	border-radius: 9px;
+	background: rgba(0, 0, 0, 0.35);
+	font-size: 18px;
+}
+
+.ramos-tree-perk__txt {
+	flex: 1;
+	min-width: 0;
+}
+
+.ramos-tree-perk__txt b {
+	display: block;
+	font-size: 13px;
+}
+
+.ramos-tree-perk__txt span {
+	display: block;
+	font-size: 11px;
+	color: #b8c6d9;
+}
+
+.ramos-tree-perk--max {
+	border-color: var(--ramos-ok);
+}
+
+.ramos-tree-perk--pronto {
+	border-color: #ffd0c4;
+	box-shadow: 0 0 12px rgba(255, 90, 77, 0.5);
+	cursor: pointer;
+}
+
+.ramos-tree-perk--travado {
+	opacity: 0.6;
+}
+
+/* ===== ramos lado a lado ===== */
+.ramos-tree-ramos {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+
+.ramos-tree-ramo {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	padding: 10px;
+	border: 1px solid #2b4160;
+	border-radius: 12px;
+	background: rgba(0, 0, 0, 0.18);
+}
+
+.ramos-tree-ramo--escolhido {
+	border-color: var(--acento);
+	box-shadow: 0 0 12px color-mix(in srgb, var(--acento) 35%, transparent);
+}
+
+.ramos-tree-ramo--selado {
+	opacity: 0.55;
+}
+
+.ramos-tree-ramo__nome {
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #cfe0f2;
+}
+
+.ramos-tree-no {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 7px 8px;
+	border: 2px solid var(--ramos-linha);
+	border-radius: 10px;
+	background: #12213a;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+}
+
+.ramos-tree-no__tile {
+	width: 30px;
+	height: 30px;
+	flex: 0 0 auto;
+	display: grid;
+	place-items: center;
+	border-radius: 8px;
+	background: rgba(0, 0, 0, 0.35);
+	font-size: 16px;
+}
+
+img.ramos-tree-no__tile {
+	box-sizing: border-box;
+	padding: 4px;
+	object-fit: contain;
+}
+
+.ramos-tree-no__txt {
+	flex: 1;
+	min-width: 0;
+}
+
+.ramos-tree-no__txt b {
+	display: block;
+	font-size: 12px;
+}
+
+.ramos-tree-no__txt span {
+	display: block;
+	font-size: 10px;
+	color: #b8c6d9;
+}
+
+.ramos-tree-no--escolhido {
+	border-color: var(--acento);
+	background: color-mix(in srgb, var(--acento) 28%, #0d1826);
+}
+
+.ramos-tree-no--escolhido .ramos-tree-no__txt b {
+	color: #ffe08a;
+}
+
+.ramos-tree-no--max {
+	border-color: var(--ramos-ok);
+}
+
+.ramos-tree-no--selado {
+	border-color: #a33;
+	background: #3a1015;
+	opacity: 0.8;
+}
+
+.ramos-tree-no--pendente {
+	border-color: rgba(255, 255, 255, 0.22);
+	background: rgba(255, 255, 255, 0.05);
+	opacity: 0.85;
+}
+
+.ramos-tree-no--pronto {
+	border-color: var(--ramos-proximo);
+	box-shadow: 0 0 12px rgba(255, 211, 107, 0.45);
+	cursor: pointer;
+}
+
+.ramos-tree-fio {
+	width: 3px;
+	height: 14px;
+	background: #5b768f;
+}
+
+.ramos-tree-selo {
+	align-self: flex-start;
+	padding: 1px 7px;
+	border-radius: 999px;
+	background: var(--ramos-proximo);
+	color: #2a1d00;
+	font-size: 8px;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+}
+
+.ramos-tree-selo--escolhido {
+	background: var(--acento);
+	color: #fff;
+}
+
+.ramos-tree-selo--selado {
+	background: rgba(170, 51, 51, 0.9);
+	color: #ffd9d9;
+}
+
+.ramos-tree-no:focus-visible,
+.ramos-tree-niv:focus-visible,
+.ramos-tree-trilha__btn:focus-visible,
+.ramos-tree-perk:focus-visible {
+	outline: 2px solid #a8d7ff;
+	outline-offset: 2px;
+	border-radius: 8px;
+}
+
+@keyframes ramos-pulso {
+	0%, 100% { box-shadow: 0 0 1px rgba(255, 211, 107, 0.4), 0 0 10px rgba(255, 211, 107, 0.35); }
+	50% { box-shadow: 0 0 2px rgba(255, 211, 107, 0.7), 0 0 20px rgba(255, 211, 107, 0.7); }
+}
+
+@media (max-width: 420px) {
+	.ramos-tree-ramos {
+		grid-template-columns: 1fr;
+	}
+	.ramos-tree-trilha__btn {
+		width: 46px;
+		height: 46px;
+	}
 }

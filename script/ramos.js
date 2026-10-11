@@ -27,32 +27,32 @@ var ramoSkillFrenesi = 0;
 const RAMOS_SKILL = [
 	{
 		skillId: "damage", ramos: [
-			{ id: 1, nome: "Canhão", efeito5: "+50% de dano no hit automático", efeito10: "+50% de novo (×2,25 no total)" },
-			{ id: 2, nome: "Rajada", efeito5: "Janela de ativação 50% mais longa", efeito10: "+50% de novo (×2,25 no total)" }
+			{ id: 1, nome: "Canhão", efeito5: "Golpes 50% mais fortes.", efeito10: "De novo +50%, total 2,25×." },
+			{ id: 2, nome: "Rajada", efeito5: "A janela dura 50% a mais.", efeito10: "De novo +50%, o dobro da janela." }
 		]
 	},
 	{
 		skillId: "electric", ramos: [
-			{ id: 1, nome: "Sobrecarga", efeito5: "+50% de dano na corrente", efeito10: "+50% de novo (×2,25 no total)" },
-			{ id: 2, nome: "Rede", efeito5: "+1 inimigo atingido pela corrente", efeito10: "+1 inimigo de novo (máx +2)" }
+			{ id: 1, nome: "Sobrecarga", efeito5: "Choque 50% mais forte.", efeito10: "De novo +50%, total 2,25×." },
+			{ id: 2, nome: "Rede", efeito5: "+1 alvo na cadeia.", efeito10: "+1 alvo de novo, até +2." }
 		]
 	},
 	{
 		skillId: "gold", ramos: [
-			{ id: 1, nome: "Veia", efeito5: "+50% no bônus de gold por ataque", efeito10: "+50% de novo (×2,25 no total)" },
-			{ id: 2, nome: "Fôlego", efeito5: "Carga vale 40 ataques (era 25)", efeito10: "60 ataques no total" }
+			{ id: 1, nome: "Veia", efeito5: "+50% de gold por ataque.", efeito10: "De novo +50%, total 2,25×." },
+			{ id: 2, nome: "Fôlego", efeito5: "A carga dura 40 ataques.", efeito10: "Agora dura 60 ataques." }
 		]
 	},
 	{
 		skillId: "escape", ramos: [
-			{ id: 1, nome: "Oportunidade", efeito5: "+15% de dano do jogador durante a pausa", efeito10: "+15% de novo (×1,32 no total)" },
-			{ id: 2, nome: "Cortina", efeito5: "Pausa da fuga 50% mais longa", efeito10: "+50% de novo (×2,25 no total)" }
+			{ id: 1, nome: "Oportunidade", efeito5: "+15% de dano na pausa.", efeito10: "De novo +15%, total 1,32×." },
+			{ id: 2, nome: "Cortina", efeito5: "A pausa dura 50% mais.", efeito10: "De novo +50%, total 2,25×." }
 		]
 	},
 	{
 		skillId: "frenzy", ramos: [
-			{ id: 1, nome: "Calor", efeito5: "+50% no dano da janela", efeito10: "+50% de novo (×2,25 no total)" },
-			{ id: 2, nome: "Ímpeto", efeito5: "Janela 50% mais longa", efeito10: "+50% de novo (×2,25 no total)" }
+			{ id: 1, nome: "Calor", efeito5: "Fúria 50% mais forte.", efeito10: "De novo +50%, total 2,25×." },
+			{ id: 2, nome: "Ímpeto", efeito5: "Fúria 50% mais longa.", efeito10: "De novo +50%, total 2,25×." }
 		]
 	}
 ];
