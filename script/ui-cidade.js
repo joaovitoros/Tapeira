@@ -14,7 +14,7 @@
     const PREDIOS = {
         casa: () => Tapeira.Casa.abrir(),
         mercado: () => AbreLoja(false),
-        pesquisa: () => UI.showRamosTreePanel(),
+        pesquisa: () => Tapeira.Pesquisa.abrir(),
         fazenda: () => Tapeira.Fazenda.abrir(),
         fabrica: () => UI.showItensBuild()
     };

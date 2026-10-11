@@ -253,6 +253,25 @@ function ValidarSave(save) {
 		&& (!Number.isSafeInteger(save.fazendaRainha) || save.fazendaRainha < 0 || save.fazendaRainha > fazendaRainhaMax)) {
 		throw new TypeError("O nível da Rainha da Fazenda no save é inválido.");
 	}
+	// Centro de Pesquisa (Cidade): objetos { id: nível } com ids conhecidos e
+	// níveis dentro do teto. Campos não-numéricos (whitelist abaixo).
+	const pesquisaItemMax = (typeof PESQUISA_ITEM_MAX === "number") ? PESQUISA_ITEM_MAX : 5;
+	const pesquisaInimigoMax = (typeof PESQUISA_INIMIGO_MAX === "number") ? PESQUISA_INIMIGO_MAX : 5;
+	const idsItens = ((window.Tapeira && window.Tapeira.ItensBuild && window.Tapeira.ItensBuild.POOL) || []).map(i => i.id);
+	const idsInimigos = (typeof PESQUISA_INIMIGOS !== "undefined" ? PESQUISA_INIMIGOS : []).map(t => t.id);
+	const validaMapaPesquisa = (valor, ids, max) => {
+		if (valor === undefined) return;
+		if (!valor || typeof valor !== "object" || Array.isArray(valor)) {
+			throw new TypeError("Os dados de pesquisa do save são inválidos.");
+		}
+		for (const [chave, nivel] of Object.entries(valor)) {
+			if (!ids.includes(chave) || !Number.isSafeInteger(nivel) || nivel < 0 || nivel > max) {
+				throw new TypeError("Os dados de pesquisa do save são inválidos.");
+			}
+		}
+	};
+	validaMapaPesquisa(save.pesquisaItens, idsItens, pesquisaItemMax);
+	validaMapaPesquisa(save.pesquisaInimigos, idsInimigos, pesquisaInimigoMax);
 	if (save.missoesCompletas !== undefined
 		&& (!Number.isSafeInteger(save.missoesCompletas) || save.missoesCompletas < 0 || save.missoesCompletas > 1000000)) {
 		throw new TypeError("O contador de missões do save é inválido.");
@@ -449,7 +468,8 @@ function ValidarSave(save) {
 		// campos não-numéricos já validados especificamente acima (shape conferido)
 		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards",
 			"conquistasComp", "melhorGoldRun", "autoItensLoja",
-			"itensBuild", "bauBuildPendente", "opcoesBauBuild"].includes(key)) continue;
+			"itensBuild", "bauBuildPendente", "opcoesBauBuild",
+			"pesquisaItens", "pesquisaInimigos"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");
 		}

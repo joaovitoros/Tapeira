@@ -349,6 +349,7 @@ function Resetar() {
 	// Casa (Cidade): casaNivel e trofeusExibidos são PERMANENTES — não zeram
 	// aqui (só no ZerarTodosSaves), como o Conhecimento Mug e seus níveis.
 	// Fazenda de Formigas (Cidade): fazendaNivel e fazendaRainha idem.
+	// Centro de Pesquisa (Cidade): pesquisaItens e pesquisaInimigos idem.
 	recompensasOfflinePendentes = null;
 	ultimaDataSaveOffline = Date.now();
 	numInimigosTela = 1; //usada para validar quantos inimigos e

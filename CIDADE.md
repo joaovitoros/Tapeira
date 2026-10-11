@@ -109,9 +109,15 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
       save/validação e reset.
 
 ### Fase 5 — 🔬 Centro de Pesquisa
-- [ ] Pesquisa por item (multiplicador no efeito do item) + Análise de inimigos.
-- [ ] **Save**: `pesquisaItens`, `pesquisaInimigos`.
-- [ ] Teste: pesquisa sobe o efeito; dano contra o inimigo analisado.
+- [x] **Pesquisa por item**: nível por item (pago em CM) que potencializa o efeito
+      (+10%/nível) — aplicado num ponto único em `ItensBuild.mult` (só vale se você
+      tiver o item).
+- [x] **Análise de inimigos**: +10%/nível de dano contra um TIPO (comuns / guardiões,
+      andares múltiplos de 10) — ponto único no combate (`batalha.js`).
+- [x] **Save** (5 passos): `pesquisaItens` + `pesquisaInimigos` (objetos `{id: nível}`;
+      whitelist + shape no `ValidarSave`). Permanentes — não zeram no `Resetar`.
+- [x] Painel próprio (`script/pesquisa.js` + `#pesquisaModal`), aberto pelo prédio Pesquisa.
+- [x] Teste `test-pesquisa.js`: bônus, custos, compras, save/validação e reset.
 
 ### Fase 6 — 🛒 Mercado
 - [ ] Vender duplicatas (itens/formigas → gold/CM) + Reputação (desconto nas lojas).

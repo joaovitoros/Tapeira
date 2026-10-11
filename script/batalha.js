@@ -145,6 +145,11 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	// bloqueia o caminho)
 	dano *= Tapeira.ItensBuild.multDano();
 	if (andar % 10 === 0) dano *= Tapeira.ItensBuild.multGuardiao();
+	// Análise de inimigos (Centro de Pesquisa): +% de dano contra o tipo do
+	// andar atual (comuns / guardiões) — ponto único do bônus
+	if (typeof PesquisaBonusInimigo === "function") {
+		dano *= PesquisaBonusInimigo(TipoInimigoAtual());
+	}
 	// especialização: buff/nerf aplicado no tempo do hit (não muta danoJogador)
 	dano *= MultiplicadorDanoEspecializacao(critico);
 	// Cadeia de Ataques: dano extra por ataque acumulado no MESMO alvo

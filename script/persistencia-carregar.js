@@ -240,6 +240,12 @@ function Carregar(saveData, calculaOffline = false) {
 	// Fazenda de Formigas (Cidade): nível e Rainha — permanentes
 	fazendaNivel = save.fazendaNivel ?? 0;
 	fazendaRainha = save.fazendaRainha ?? 0;
+	// Centro de Pesquisa (Cidade): pesquisa por item e por tipo de inimigo —
+	// permanentes. Objetos { id: nível }; valores inválidos caem no default.
+	pesquisaItens = (save.pesquisaItens && typeof save.pesquisaItens === "object" && !Array.isArray(save.pesquisaItens))
+		? Object.assign({}, save.pesquisaItens) : {};
+	pesquisaInimigos = (save.pesquisaInimigos && typeof save.pesquisaInimigos === "object" && !Array.isArray(save.pesquisaInimigos))
+		? Object.assign({}, save.pesquisaInimigos) : {};
 	missoesCompletas = save.missoesCompletas ?? 0;
 	desafiosVencidos = save.desafiosVencidos ?? 0;
 	melhorGoldRun = GoldNumber.fromMantissaExponent(save.melhorGoldRun?.m ?? 0, save.melhorGoldRun?.e ?? 0);

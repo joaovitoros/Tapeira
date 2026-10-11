@@ -71,9 +71,13 @@
 	}
 
 	// sem cópia o valor é exatamente 1 (Math.pow(x, 0)); cada cópia repete
-	// o fator, então acumular o mesmo item multiplica o bônus por cópia
+	// o fator, então acumular o mesmo item multiplica o bônus por cópia.
+	// Centro de Pesquisa (Cidade): a pesquisa do item potencializa o efeito
+	// (+10% por nível), aplicado aqui — ponto único de todo bônus de item.
 	function mult(base, id) {
-		return Math.pow(base, copias(id));
+		if (copias(id) === 0) return 1;
+		const bonus = (typeof PesquisaBonusItem === "function") ? PesquisaBonusItem(id) : 1;
+		return Math.pow(base, copias(id)) * bonus;
 	}
 
 	function desbloqueada() {

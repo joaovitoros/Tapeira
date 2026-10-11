@@ -72,6 +72,10 @@ var trofeusExibidos = 0;
 var fazendaNivel = 0;
 var fazendaRainha = 0;
 var intervaloFazenda = null; // handle do timer de produção da Fazenda
+// Centro de Pesquisa (Cidade): nível por item da build e por tipo de inimigo.
+// Permanentes (não zeram no reset). Objetos { id: nível }.
+var pesquisaItens = {};
+var pesquisaInimigos = {};
 const TEMPO_BAU_DOURADO_JOGO = 20 * 60 * 1000;
 const TEMPO_BAU_DOURADO_OFFLINE = 40 * 60 * 1000;
 var progressoBauDourado = 0;
