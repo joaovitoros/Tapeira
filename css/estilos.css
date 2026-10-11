@@ -9764,8 +9764,10 @@ img.ramos-tree-no__tile {
 	padding: 0;
 	border: 1px solid rgba(255, 255, 255, 0.06);
 	border-radius: 14px;
+	/* a cena é a imagem estática da cidade inteira (prédios já inclusos);
+	   por cima vão só os bichinhos animados e o brilho da fonte */
 	background:
-		url("../imagens/cidade/cidade background.png") center / cover no-repeat,
+		url("../imagens/cidade/cena.png") center / cover no-repeat,
 		#070a10;
 	cursor: grab;
 	touch-action: none;
@@ -9803,44 +9805,34 @@ img.ramos-tree-no__tile {
 
 /* A fonte fica no MEIO da profundidade (como na arte-base: o cristal está no
    centro da praça, na frente da Casa e atrás da Fábrica/Fazenda). */
+/* Brilho pulsante sobre o cristal central (a arte já está na imagem) */
 .cidade-fonte {
 	position: absolute;
 	left: 50%;
-	top: 55%;
-	width: 13%;
+	top: 48%;
+	width: 16%;
+	aspect-ratio: 1;
 	transform: translate(-50%, -50%);
-	z-index: 3;
+	z-index: 2;
 	pointer-events: none;
-}
-
-.cidade-fonte img {
-	display: block;
-	width: 100%;
-	height: auto;
-	filter: drop-shadow(0 0 20px rgba(60, 170, 255, 0.6)) drop-shadow(0 12px 16px rgba(0, 0, 0, 0.55));
+	border-radius: 50%;
+	background: radial-gradient(50% 50% at 50% 50%,
+		rgba(150, 225, 255, 0.55) 0%,
+		rgba(70, 160, 255, 0.28) 45%,
+		rgba(50, 120, 255, 0.08) 68%,
+		transparent 78%);
+	mix-blend-mode: screen;
 	animation: cidadeFonteBrilha 3.4s ease-in-out infinite alternate;
 }
 
 @keyframes cidadeFonteBrilha {
-	from { filter: drop-shadow(0 0 14px rgba(60, 170, 255, 0.45)) drop-shadow(0 12px 16px rgba(0, 0, 0, 0.55)); }
-	to   { filter: drop-shadow(0 0 26px rgba(90, 200, 255, 0.85)) drop-shadow(0 12px 16px rgba(0, 0, 0, 0.55)); }
+	from { opacity: 0.55; transform: translate(-50%, -50%) scale(0.9); }
+	to   { opacity: 1;    transform: translate(-50%, -50%) scale(1.12); }
 }
 
-/* ---- Decoração da cena (props) ----
-   A decoração vem ANTES dos prédios no HTML: fica atrás deles por ordem de
-   pintura. Os props "sentam" no ponto informado (centro-embaixo).
-   O .cidade-chao agora é só uma vinheta de base (o piso é a imagem de fundo). */
-.cidade-chao {
-	position: absolute;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	height: 24%;
-	z-index: 0;
-	background: linear-gradient(180deg, rgba(4, 6, 12, 0), rgba(4, 6, 12, 0.55));
-	pointer-events: none;
-}
-
+/* ---- Bichinhos animados (props) ----
+   Ficam POR CIMA da imagem estática da cidade (os prédios e a decoração já
+   estão na imagem). Cada um "senta" no ponto informado (centro-embaixo). */
 .cidade-decor {
 	position: absolute;
 	z-index: 1;
@@ -9850,40 +9842,6 @@ img.ramos-tree-no__tile {
 	transform: translate(-50%, -100%);
 	filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.45));
 }
-
-.cidade-decor--moita-esq    { left: 30%; top: 47%; height: clamp(38px, 5vw, 84px); }
-.cidade-decor--pedras-esq   { left: 39%; top: 49%; height: clamp(24px, 3vw, 46px); }
-.cidade-decor--poste-esq    { left: 33%; top: 63%; height: clamp(66px, 8.4vw, 138px); }
-.cidade-decor--carrinho-dir { left: 67%; top: 64%; height: clamp(46px, 5.8vw, 96px); }
-.cidade-decor--barril-dir   { left: 61%; top: 50%; height: clamp(34px, 4.4vw, 72px); }
-.cidade-decor--moita-dir    { left: 70%; top: 47%; height: clamp(36px, 4.8vw, 78px); }
-
-/* Lanternas penduradas: pendem do topo por uma corrente (::before) */
-.cidade-decor--lanterna {
-	top: 0;
-	width: clamp(26px, 3vw, 48px);
-	height: clamp(80px, 10vw, 160px);
-	transform: translateX(-50%);
-	background: url("../imagens/cidade/decor/lanterna-pend.png") center bottom / contain no-repeat;
-}
-
-.cidade-decor--lanterna::before {
-	content: "";
-	position: absolute;
-	left: 50%;
-	top: 0;
-	width: 2px;
-	height: 58%;
-	transform: translateX(-50%);
-	background: linear-gradient(180deg, #6b5230, #453320);
-}
-
-.cidade-decor--lanterna-esq { left: 26%; }
-.cidade-decor--lanterna-dir { left: 74%; }
-
-/* Enfeites no campo */
-.cidade-decor--campo-cogumelos { left: 44%; top: 71%; height: clamp(30px, 3.8vw, 62px); }
-.cidade-decor--campo-flores    { left: 57%; top: 73%; height: clamp(32px, 4vw, 66px); }
 
 /* Bichinhos parados (só com "idle" — o corpo balança de leve), temáticos:
    mineradores perto da Fábrica, pesquisadores no Centro de Pesquisa e
@@ -9935,6 +9893,8 @@ img.ramos-tree-no__tile {
 /* Prédios: posicionados em volta da praça (2.5D), com banner-placa acima.
    Profundidade: os de cima (z-index 2) ficam ATRÁS da fonte (3); os de baixo
    (z-index 4) ficam NA FRENTE — como na arte-base. */
+/* Prédio = HOTSPOT invisível sobre a imagem (a arte já está na imagem de fundo).
+   O clique abre o painel; o banner identifica o prédio. */
 .cidade-predio {
 	position: absolute;
 	z-index: 2;
@@ -9945,42 +9905,23 @@ img.ramos-tree-no__tile {
 	color: #eaf1fc;
 	font: inherit;
 	cursor: pointer;
-	width: var(--largura, 28%);
-	transform: translate(-50%, -50%) scale(var(--escala, 1));
-	transition: translate 140ms ease, filter 140ms ease;
+	width: var(--largura, 24%);
+	height: var(--altura, 22%);
+	transform: translate(-50%, -50%);
+	border-radius: 14px;
+	transition: background 140ms ease, box-shadow 140ms ease;
 }
 
-.cidade-predio--casa     { left: 50%; top: 27%; --largura: 20%; --escala: 1; }
-.cidade-predio--mercado  { left: 27%; top: 38%; --largura: 19%; --escala: 0.96; }
-.cidade-predio--pesquisa { left: 73%; top: 40%; --largura: 19%; --escala: 0.96; }
-.cidade-predio--fabrica  { left: 27%; top: 76%; --largura: 21%; --escala: 1.05; z-index: 4; }
-.cidade-predio--fazenda  { left: 73%; top: 72.5%; --largura: 21%; --escala: 1.05; z-index: 4; }
-
-.cidade-predio__img {
-	display: block;
-	width: 100%;
-	height: auto;
-	filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55));
-}
-
-/* Sombra de contato: "aterra" o prédio no chão (sem ela parecia flutuar) */
-.cidade-predio::after {
-	content: "";
-	position: absolute;
-	left: 50%;
-	bottom: 8%;
-	width: 80%;
-	height: 9%;
-	transform: translate(-50%, 42%);
-	border-radius: 50%;
-	background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, 0.52), rgba(0, 0, 0, 0.22) 55%, transparent 74%);
-	pointer-events: none;
-	z-index: -1;
-}
+/* posições/tamanhos dos hotspots sobre os prédios da imagem */
+.cidade-predio--casa     { left: 45%; top: 28%; --largura: 26%; --altura: 30%; }
+.cidade-predio--mercado  { left: 18%; top: 35%; --largura: 25%; --altura: 26%; }
+.cidade-predio--pesquisa { left: 79%; top: 33%; --largura: 22%; --altura: 26%; }
+.cidade-predio--fabrica  { left: 17%; top: 69%; --largura: 27%; --altura: 26%; }
+.cidade-predio--fazenda  { left: 76%; top: 67%; --largura: 24%; --altura: 24%; }
 
 .cidade-predio:hover {
-	translate: 0 -8px;
-	filter: brightness(1.08);
+	background: rgba(255, 224, 160, 0.08);
+	box-shadow: 0 0 0 2px rgba(255, 224, 160, 0.45) inset, 0 0 24px rgba(255, 200, 90, 0.25);
 }
 
 .cidade-predio:focus-visible {
@@ -10008,8 +9949,10 @@ img.ramos-tree-no__tile {
 }
 
 .cidade-predio__icone {
-	font-size: clamp(13px, 1.5vw, 20px);
-	line-height: 1;
+	flex: 0 0 auto;
+	width: clamp(20px, 2.2vw, 30px);
+	height: clamp(20px, 2.2vw, 30px);
+	object-fit: contain;
 }
 
 .cidade-predio__nome {
@@ -10019,22 +9962,19 @@ img.ramos-tree-no__tile {
 	letter-spacing: 0.02em;
 }
 
-/* Prédio trancado (gate por andar máximo): apagado + selo com o requisito */
+/* Prédio trancado (gate por andar máximo): banner apagado + selo com o requisito */
 .cidade-predio.is-travado {
 	cursor: not-allowed;
 }
 
-.cidade-predio.is-travado .cidade-predio__img {
-	filter: grayscale(0.9) brightness(0.45) drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55));
-}
-
 .cidade-predio.is-travado .cidade-predio__banner {
-	opacity: 0.6;
+	opacity: 0.55;
+	filter: grayscale(0.6);
 }
 
 .cidade-predio.is-travado:hover {
-	filter: none;
-	translate: 0 0;
+	background: rgba(0, 0, 0, 0.16);
+	box-shadow: 0 0 0 2px rgba(130, 140, 160, 0.45) inset;
 }
 
 .cidade-predio__lock {
@@ -10061,22 +10001,10 @@ img.ramos-tree-no__tile {
 
 /* ---- Celular: mantém a vila, ajustando posições/tamanhos pro retrato ---- */
 @media (max-width: 700px) {
-	/* no celular a cena é ampliada (preenche a altura), então os prédios
-	   precisam ser menores pra não parecerem gigantes na tela do aparelho.
-	   As POSIÇÕES são as mesmas do PC (a cena é 3:2 nos dois). */
-	.cidade-predio { width: var(--largura-cel, 16%); }
-
-	.cidade-predio--casa     { --largura-cel: 17%; }
-	.cidade-predio--mercado  { --largura-cel: 16%; }
-	.cidade-predio--pesquisa { --largura-cel: 16%; }
-	.cidade-predio--fabrica  { --largura-cel: 17%; }
-	.cidade-predio--fazenda  { --largura-cel: 17%; }
-
+	/* no celular a cena é a mesma (3:2) — só o banner fica um pouco menor */
 	.cidade-predio__nome { font-size: 10px; }
 	.cidade-predio__banner { padding: 4px 8px; gap: 3px; }
-	.cidade-predio__icone { font-size: 12px; }
-
-	.cidade-fonte { width: 14%; top: 57%; }
+	.cidade-predio__icone { width: 18px; height: 18px; }
 	/* no celular (retrato) a cena preenche a ALTURA e fica mais larga que o
 	   visor (proporção 3:2) — dá pra arrastar pros lados pra ver a cidade toda.
 	   align-self: flex-start impede o flex de esticar a largura até o container. */

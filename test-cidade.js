@@ -73,8 +73,8 @@ const path = require('path');
         document.querySelector('[data-cidade="fechar"]').click();
         res.fechouPeloX = document.getElementById("container-Cidade").hidden;
 
-        // decoração da cena: chão presente e todas as imagens de prop carregadas
-        res.chao = !!document.querySelector("#container-Cidade .cidade-chao");
+        // cena: usa a imagem estática da cidade; bichinhos animados carregam
+        res.cenaFundo = (getComputedStyle(document.querySelector(".cidade-cena")).backgroundImage || "").includes("cena.png");
         res.decorTotal = document.querySelectorAll("#container-Cidade .cidade-decor").length;
         const decorImgs = [...document.querySelectorAll(
             "#container-Cidade img.cidade-decor, #container-Cidade .cidade-decor img"
@@ -145,9 +145,9 @@ const path = require('path');
     check("Fazenda abre o painel da Fazenda", r.fazenda.fazenda && r.fazenda.cidadeFechada, JSON.stringify(r.fazenda));
     check("Fábrica abre os itens da build", r.fabrica.itens && r.fabrica.cidadeFechada, JSON.stringify(r.fabrica));
     check("fecha pelo ×", r.fechouPeloX === true);
-    check("cena tem chão", r.chao === true);
-    check("cena tem props de decoração", r.decorTotal >= 10, r.decorTotal);
-    check("imagens de decoração carregam", r.decorImgsOk === true, "quebradas: " + JSON.stringify(r.decorQuebradas));
+    check("cena usa a imagem da cidade (cena.png)", r.cenaFundo === true);
+    check("cena tem bichinhos animados", r.decorTotal >= 8, r.decorTotal);
+    check("imagens dos bichinhos carregam", r.decorImgsOk === true, "quebradas: " + JSON.stringify(r.decorQuebradas));
 
     check("gates batem com a tabela", JSON.stringify(r.gates) === JSON.stringify({ casa: 80, fazenda: 85, mercado: 90, fabrica: 100, pesquisa: 110 }), JSON.stringify(r.gates));
     check("andar 84: só a Casa livre", r.g84.casa === false && r.g84.fazenda && r.g84.mercado && r.g84.fabrica && r.g84.pesquisa, JSON.stringify(r.g84));
