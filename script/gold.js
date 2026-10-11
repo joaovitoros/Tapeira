@@ -284,3 +284,12 @@ function formatNumber(n) {
 
     return n.toFixed(2) + units[unitIndex];
 }
+
+// CM (Conhecimento Mug) é sempre inteiro: abaixo de 1000 fica sem decimais
+// ("0", "10", "980"); a partir daí usa os sufixos (K/M/B/T…) como o resto do
+// jogo. Evita o "10.00" que o FormatGold produziria nos valores pequenos.
+function FormatCM(valor) {
+    const n = Math.round(Number(valor) || 0);
+    if (Math.abs(n) < 1000) return String(n);
+    return formatNumber(n);
+}

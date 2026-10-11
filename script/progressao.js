@@ -112,7 +112,6 @@ function AtualizaQTDHabildiade1(){
 		: 0;
 
 	document.getElementById("BaraQTDHab1").style.height=Math.max(0, Math.min(100, porcentagem))+"%";
-	document.getElementById("QTDTempoHab1").innerHTML=qtdCarregaHabilidade;
 	document.getElementById("BaraQTDHab1").style.color="#fff";
 }
 
@@ -508,12 +507,11 @@ function HabilidadeDano(){
 		if (MultiplicadorBuffVelocidade() > 1) {
 			DanoAutomatico(false,true);
 		}
-		document.getElementById("QTDTempoHab1").innerHTML=tempoHabilidadeDano--;
+		tempoHabilidadeDano--;
 		document.getElementById("BaraQTDHab1").style.color="#f00";
 		if(tempoHabilidadeDano==0){
 			verificaHabilidadeDano=false;
 			tempoHabilidadeDano = DuracaoHabilidadeDano();
-			document.getElementById("QTDTempoHab1").innerHTML=qtdCarregaHabilidade;
 		}
 	} 	
 }
@@ -529,6 +527,26 @@ function PontosPerkGanhos(){
 function PontosPerkDisponiveis(){
 	const gastos = perkDano + perkEletrica + perkGold + perkFuga + perkFrenesi;
 	return Math.max(0, PontosPerkGanhos() - gastos);
+}
+
+// Todas as skills no nível máximo? Aí os pontos de habilidade não têm mais
+// onde ser gastos e param de contar na notificação de "Ramos".
+function TodasSkillsNoMaximo() {
+	return SKILLS_UPGRADE.every(skill => NivelDaSkill(skill.id) >= skill.maximo);
+}
+
+// Todos os perks no nível máximo? Idem: os pontos de perk deixam de contar.
+function TodosPerksNoMaximo() {
+	return PERKS.every(perk => Math.max(0, Math.floor(Number(window[perk.varName]) || 0)) >= perk.maximo);
+}
+
+// O que a notificação de "Ramos" mostra: pontos de habilidade (só enquanto
+// houver skill para subir) + pontos de perk (só enquanto houver perk para
+// comprar). Tudo no máximo = sem notificação.
+function PontosNotificadosRamos() {
+	const pontosSkill = TodasSkillsNoMaximo() ? 0 : pontosHabilidade;
+	const pontosPerk = TodosPerksNoMaximo() ? 0 : PontosPerkDisponiveis();
+	return pontosSkill + pontosPerk;
 }
 
 // Habilidades de combate: cada botão ativa a sua habilidade por

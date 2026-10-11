@@ -69,7 +69,7 @@ function PausarJogo() {
 
     const resume = document.createElement("button");
     resume.type = "button";
-    resume.className = "btn-Padrao";
+    resume.className = "btn-Padrao pause-primary";
     resume.textContent = "Continuar";
     resume.addEventListener("click", () => AtualizaEstadoPausa(false));
 

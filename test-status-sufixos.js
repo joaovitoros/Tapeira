@@ -42,6 +42,12 @@ const path = require('path');
         UI.showStatus();
         check("Dano pequeno segue 12.50", valorDe("Dano") === "12.50", valorDe("Dano"));
 
+        // CM: inteiro abaixo de 1000 (sem o ".00" do FormatGold); sufixo daí pra cima
+        check("CM zero fica 0", FormatCM(0) === "0", FormatCM(0));
+        check("CM pequeno fica inteiro (10)", FormatCM(10) === "10", FormatCM(10));
+        check("CM com sufixo (245597 → 245.60K)", FormatCM(245597) === "245.60K", FormatCM(245597));
+        check("CM grande com sufixo (1.5e6 → 1.50M)", FormatCM(1.5e6) === "1.50M", FormatCM(1.5e6));
+
         return out;
     });
 

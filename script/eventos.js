@@ -306,7 +306,7 @@ function MontaPainelEvento() {
 			</div>`).join("");
 	} else if (eventoAtivo === "nevoa") {
 		corpo = `<div class="evento-dica">${info.dica}</div>
-			<div class="evento-nevoa-contador">Ganho nesta névoa: <b id="eventoCMContador">+${eventoCM} CM</b></div>`;
+			<div class="evento-nevoa-contador">Ganho nesta névoa: <b id="eventoCMContador">+${FormatCM(eventoCM)} CM</b></div>`;
 	} else if (eventoAtivo === "veia") {
 		corpo = `<div class="evento-dica">${info.dica}</div>
 			<div class="evento-nevoa-contador">Esmeraldas nesta veia: <b id="eventoVeiaContador">+${eventoVeiaQtd}</b></div>`;
@@ -341,7 +341,7 @@ function AtualizaPainelEvento() {
 	}
 	if (eventoAtivo === "nevoa") {
 		const contador = document.getElementById("eventoCMContador");
-		if (contador) contador.textContent = "+" + eventoCM + " CM";
+		if (contador) contador.textContent = "+" + FormatCM(eventoCM) + " CM";
 	}
 	if (eventoAtivo === "veia") {
 		const contador = document.getElementById("eventoVeiaContador");
@@ -635,7 +635,7 @@ function FloatCM(quantidade) {
 	const stack = document.querySelectorAll(".reward-number").length;
 	marker.className = "floating-game-text reward-number reward-number--cm";
 	marker.setAttribute("aria-hidden", "true");
-	marker.textContent = `+${quantidade} CM`;
+	marker.textContent = `+${FormatCM(quantidade)} CM`;
 	marker.style.left = `${rect.left + rect.width / 2}px`;
 	marker.style.top = `${rect.top + rect.height * 0.2 - stack * 24}px`;
 	document.body.appendChild(marker);

@@ -36,7 +36,7 @@ const ESPECIALIZACOES = [
 	{ id: 1, nome: "Força Bruta", efeito: "+40% dano · −25% gold" },
 	{ id: 2, nome: "Toque de Midas", efeito: "+40% gold · −25% dano" },
 	{ id: 3, nome: "Olho de Águia", efeito: "Crítico ×1,8 · −10% dano · −15% gold", andar: 60 },
-	{ id: 4, nome: "Canhão de Vidro", efeito: "+80% dano · −50% tempo de fuga", andar: 70 },
+	{ id: 4, nome: "Canhão de Vidro", efeito: "+80% dano · −80% tempo de fuga", andar: 70 },
 	{ id: 5, nome: "Cadeia de Ataques", efeito: "−50% dano · +25% por ataque no mesmo alvo (até +400%)", andar: 80 }
 ];
 

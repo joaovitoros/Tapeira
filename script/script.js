@@ -117,13 +117,13 @@ function BonusXPConhecimento() {
 }
 
 // Tempo máximo do cronômetro de fuga: base 120 + 2 s por nível da loja. O
-// Canhão de Vidro corta o teto pela metade (arredonda pra baixo, nunca acima
-// de 50%); como o cronômetro só reabastece na troca de andar/onda, a troca
-// de build vale a partir do próximo abastecimento
+// Canhão de Vidro corta 80% do teto (sobra 20%, arredondado pra baixo); como o
+// cronômetro só reabastece na troca de andar/onda, a troca de build vale a
+// partir do próximo abastecimento
 function TempoFugaMax() {
 	const base = 120 + cmNivelFuga * 2;
-	const tempo = especializacao === 4 ? Math.floor(base * 0.5) : base;
-	// +5 s da conquista Destemido entra por fora (sempre +5, mesmo no ÷2 do Canhão)
+	const tempo = especializacao === 4 ? Math.floor(base * 0.2) : base;
+	// +5 s da conquista Destemido entra por fora (sempre +5, mesmo no −80% do Canhão)
 	// Relógio de Bolso (itens da build): +10% por cópia no tempo total
 	return (tempo + BonusFugaConquistaComp()) * Tapeira.ItensBuild.multFuga();
 }

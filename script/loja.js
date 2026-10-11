@@ -250,7 +250,7 @@ function FechaLojaCM() {
 
 function AtualizaLojaCM() {
 	const saldo = document.getElementById("lojaCMsaldo");
-	if (saldo) saldo.innerHTML = conhecimentoMug;
+	if (saldo) saldo.innerHTML = FormatCM(conhecimentoMug);
 
 	const itens = [
 		{ nivel: cmNivelDano, preco: "precoCMDano", lvl: "lvlCMDano" },
@@ -267,7 +267,7 @@ function AtualizaLojaCM() {
 	for (const item of itens) {
 		const elPreco = document.getElementById(item.preco);
 		const elLvl = document.getElementById(item.lvl);
-		if (elPreco) elPreco.innerHTML = PrecoLojaCM(item.nivel);
+		if (elPreco) elPreco.innerHTML = FormatCM(PrecoLojaCM(item.nivel));
 		if (elLvl) elLvl.innerHTML = item.nivel;
 	}
 }

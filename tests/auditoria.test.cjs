@@ -411,6 +411,60 @@ test("progressão: perk custa ponto de perk e ramos são exclusivos", async () =
     } finally { await context.close(); }
 });
 
+test("progressão: Canhão de Vidro corta 80% do tempo de fuga", async () => {
+    const { context, page, pageErrors } = await openPage();
+    try {
+        const r = await page.evaluate(() => {
+            cmNivelFuga = 0;
+            conquistasComp = [0, 0, 0, 0, 0]; // sem o +5 s do Destemido
+            Tapeira.ItensBuild.carrega({ itensBuild: [] }); // sem Relógio de Bolso
+            especializacao = 0;
+            const base = TempoFugaMax();
+            especializacao = 4; // Canhão de Vidro
+            const vidro = TempoFugaMax();
+            return { base, vidro };
+        });
+        assert.equal(r.base, 120);
+        assert.equal(r.vidro, 24, "120 s com −80% = 24 s");
+        assert.deepEqual(pageErrors, []);
+    } finally { await context.close(); }
+});
+
+test("telas: notificação de Ramos soma perks e ignora skill/perk no máximo", async () => {
+    const { context, page, pageErrors } = await openPage();
+    try {
+        const r = await page.evaluate(() => {
+            andar = 1;
+            andarMaxRun = 45; // PontosPerkGanhos = floor((45-35)/5)+1 = 3
+            perkDano = perkEletrica = perkGold = perkFuga = perkFrenesi = 0;
+            nivelSkillDano = nivelSkillEletrica = nivelSkillGold = 10;
+            nivelSkillFuga = nivelSkillFrenesi = 10;
+            pontosHabilidade = 2;
+            const skillsNoMax = TodasSkillsNoMaximo();
+            const perksNoMax = TodosPerksNoMaximo();
+            const comMaximo = PontosNotificadosRamos(); // skills no teto: só perks
+            nivelSkillDano = 9; // agora há skill para subir
+            const semMaximo = PontosNotificadosRamos(); // 2 skills + 3 perks
+            perkDano = 1; // 1 perk já gasto sai da conta
+            const comPerkGasto = PontosNotificadosRamos();
+            // todos os perks no teto: os pontos de perk param de contar
+            nivelSkillDano = 10; // skills de volta ao teto
+            perkDano = 4; perkEletrica = 3; perkGold = 4; perkFuga = 5; perkFrenesi = 4;
+            const perksNoTeto = TodosPerksNoMaximo();
+            const tudoNoTeto = PontosNotificadosRamos();
+            return { skillsNoMax, perksNoMax, comMaximo, semMaximo, comPerkGasto, perksNoTeto, tudoNoTeto };
+        });
+        assert.equal(r.skillsNoMax, true);
+        assert.equal(r.perksNoMax, false);
+        assert.equal(r.comMaximo, 3, "skills no máximo: só os perks contam");
+        assert.equal(r.semMaximo, 5, "com skill subível: pontos de habilidade + perks");
+        assert.equal(r.comPerkGasto, 4, "perk gasto sai da conta");
+        assert.equal(r.perksNoTeto, true);
+        assert.equal(r.tudoNoTeto, 0, "skills e perks no teto: nada a notificar");
+        assert.deepEqual(pageErrors, []);
+    } finally { await context.close(); }
+});
+
 test("progressão: reset zera a run e preserva permanentes", async () => {
     const { context, page, pageErrors } = await openPage();
     try {

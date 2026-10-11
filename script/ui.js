@@ -319,10 +319,13 @@ const UI = {
             const texto = `+${niveis * DANO_POR_NIVEL_PCT}% dano · ${reducao} ${reducao === 1 ? "inimigo" : "inimigos"} a menos · ${pontosPerk} ${pontosPerk === 1 ? "ponto" : "pontos"} de perk`;
             if (resumoProgresso.textContent !== texto) resumoProgresso.textContent = texto;
         }
-        if (button) button.setAttribute("aria-label", `Ramos, nível ${nivelJogador}, ${pontosHabilidade} pontos disponíveis`);
+        // A notificação soma os perks e para de contar pontos de habilidade
+        // quando todas as skills já estão no máximo (não há mais o que subir).
+        const pontosNotificados = PontosNotificadosRamos();
+        if (button) button.setAttribute("aria-label", `Ramos, nível ${nivelJogador}, ${pontosNotificados} pontos disponíveis`);
         if (badge) {
-            badge.textContent = String(pontosHabilidade);
-            badge.hidden = pontosHabilidade === 0;
+            badge.textContent = String(pontosNotificados);
+            badge.hidden = pontosNotificados === 0;
         }
 
     },
@@ -379,7 +382,7 @@ const UI = {
         const texto = pronto
             ? (andar >= andarVolta
                 ? "Reset disponível no botão Voltar andar!" + sufixoDano
-                : "Reset livre disponível! +" + Math.round(derrotadosRun * MultiplicadorCM() * BonusCMPontosSobra()) + " CM")
+                : "Reset livre disponível! +" + FormatCM(derrotadosRun * MultiplicadorCM() * BonusCMPontosSobra()) + " CM")
             : "Próximo reset: andar " + alvo + " (faltam " + faltam + ")" + sufixoDano;
 
         if (aviso.textContent !== texto) aviso.textContent = texto;
@@ -400,7 +403,7 @@ const UI = {
         const premios = [];
         if (recebidas > 0) premios.push(`+${recebidas} esmeralda${recebidas === 1 ? "" : "s"}`);
         if (danoRecebido > 0) premios.push(`+${danoRecebido}% de dano permanente`);
-        if (cmRecebido > 0) premios.push(`+${cmRecebido} Conhecimento Mug`);
+        if (cmRecebido > 0) premios.push(`+${FormatCM(cmRecebido)} Conhecimento Mug`);
         if (premios.length === 0) premios.push("Reset realizado");
 
         const div = document.createElement("div");
