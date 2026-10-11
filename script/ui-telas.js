@@ -2,7 +2,9 @@
 // Telas de conquistas, missoes, marcos, tutorial e decomposicao de dano.
 // Funcoes globais de UI movidas de ui.js sem alterar as chamadas.
 
-function MostraConquista() {
+// HTML das telas de Conquistas / Missões / Marcos (reusado pelo painel
+// "Feitos" e pelos modais antigos). Sem efeito colateral: só monta a string.
+function HtmlConquistas() {
 
     let conquista = "";
 
@@ -139,31 +141,21 @@ function MostraConquista() {
 		</div>
 	`;
 
-    UI.showModal("Conquistas", conquista);
+    return conquista;
 }
 
-function MostraMissao() {
+function MostraConquista() {
+    UI.showModal("Conquistas", HtmlConquistas());
+}
 
-    // toggle da modal
-    const modalExistente = document.getElementById("ui-modal-overlay");
-
-    if (modalExistente) {
-        UI.closeModal();
-        return;
-    }
-
+// HTML da tela de Missões (mesmo texto do modal antigo).
+function HtmlMissoes() {
     if (andar < 10) {
-
-        UI.showModal(
-            "Missões",
-            `
+        return `
                 <div class="modal-info">
                     Missões só serão liberadas a partir do andar 10
                 </div>
-            `
-        );
-
-        return;
+            `;
     }
 
     let progressoAtual = 0;
@@ -204,9 +196,7 @@ function MostraMissao() {
         `Faltam ${missaoDesafioTempo} segundos — o tempo zerado falha o desafio.`
     ][missaoDesafioSub] : "";
 
-    UI.showModal(
-        "Missões",
-        `
+    return `
             <div class="modal-section">
 
                 <div class="modal-linha">
@@ -237,14 +227,25 @@ function MostraMissao() {
                 </div>
 
             </div>
-        `
-    );
+        `;
+}
+
+// Mostra a tela de Missões no modal (o toggle vive aqui; o painel "Feitos"
+// usa HtmlMissoes() direto).
+function MostraMissao() {
+    const modalExistente = document.getElementById("ui-modal-overlay");
+    if (modalExistente) {
+        UI.closeModal();
+        return;
+    }
+    UI.showModal("Missões", HtmlMissoes());
 }
 
 // Todos os marcos do jogo num lugar só: ouro por andar (por run), portões
 // de reset, níveis do jogador (permanente) e desbloqueios por andar.
 // As classes modal-* são estilizadas em estilos.css.
-function MostraMarcos() {
+// HTML da tela de Marcos (mesmo texto do modal antigo).
+function HtmlMarcos() {
     const linha = (rotulo, valor, classe) => `
         <div class="modal-linha">
             <span class="modal-label">${rotulo}</span>
@@ -325,9 +326,7 @@ function MostraMarcos() {
             : linha(desbloqueio.nome, "andar " + desbloqueio.piso + " — faltam " + (desbloqueio.piso - maxAndar), "modal-value--pend");
     }).join("");
 
-    UI.showModal(
-        "Marcos",
-        `
+    return `
             <div class="modal-section">
                 <div class="modal-titulo">Ouro desta run · a cada 10 andares</div>
 
@@ -404,8 +403,12 @@ function MostraMarcos() {
                     abrem pelo mesmo critério: ${ESPECIALIZACOES.filter(esp => esp.andar > 0).map(esp => esp.nome + " (andar " + esp.andar + ")").join(", ")}.
                 </div>
             </div>
-        `
-    );
+        `;
+}
+
+// Mostra a tela de Marcos no modal (o painel "Feitos" usa HtmlMarcos() direto).
+function MostraMarcos() {
+    UI.showModal("Marcos", HtmlMarcos());
 }
 
 // Tutorial do 1º reset: força a compra do Companheiro de Dano (se ainda não tiver)
