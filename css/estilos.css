@@ -1870,9 +1870,13 @@ body {
 	margin: 0;
 }
 
+/* A fileira de botões é SEMPRE horizontal e fica no canto inferior esquerdo
+   (o pai #container-opcoes é quem ancora o canto). script/ui-rodape.js mede
+   esta fileira para posicionar #container-Habilidades ao lado ou acima. */
 #container-Botoes {
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
+	align-items: center;
 	gap: 8px;
 	width: auto;
 }
@@ -1931,8 +1935,11 @@ body {
    desta mesma fileira — assim todos compartilham posição e tamanho. */
 #container-Habilidades {
 	position: fixed;
-	bottom: 1rem;
-	left: 22rem;
+	/* Posição medida por script/ui-rodape.js: ao lado da fileira de botões
+	   quando a tela comporta os dois com folga; senão, acima dela. O fallback
+	   (sem JS) é a versão empilhada, na esquerda, por cima dos botões. */
+	left: var(--rodape-hab-left, 1rem);
+	bottom: var(--rodape-hab-bottom, 4.6rem);
 	z-index: 15;
 	display: flex;
 	align-items: flex-end;
@@ -4558,7 +4565,8 @@ input:focus-visible {
 		bottom: max(8px, env(safe-area-inset-bottom));
 		left: 8px;
 		z-index: 30;
-		justify-content: center;
+		/* botões sempre encostados no canto esquerdo */
+		justify-content: flex-start;
 	}
 
 	#container-Botoes {
@@ -5476,14 +5484,9 @@ input:focus-visible {
 		touch-action: manipulation;
 	}
 
-	/* Neste intervalo a linha de botões ocupa a faixa inferior (#container-opcoes em
-	   bottom: 12px com botões de 50px, ou seja, topo em y = altura - 62). A fileira
-	   de habilidades sobe acima dessa linha (bottom: 70px) para não ficar por baixo
-	   dos botões (z-index). */
-	#container-Habilidades {
-		bottom: 70px;
-		left: 22rem;
-	}
+	/* A posição da fileira de habilidades (lado a lado com os botões, ou
+	   acima deles) é medida por script/ui-rodape.js em todos os layouts —
+	   as media queries cuidam só do tamanho dos itens. */
 
 	#container-Loja,
 	#container-Status,
@@ -5618,9 +5621,6 @@ input:focus-visible {
 	}
 
 	#container-Habilidades {
-		right: auto;
-		left: 8px;
-		bottom: calc(62px + env(safe-area-inset-bottom));
 		gap: 4px;
 	}
 
@@ -5659,9 +5659,6 @@ input:focus-visible {
 	}
 
 	#container-Habilidades {
-		bottom: max(6px, env(safe-area-inset-bottom));
-		right: auto;
-		left: 8px;
 		gap: 3px;
 	}
 
@@ -5854,7 +5851,8 @@ input:focus-visible {
 		bottom: max(10px, env(safe-area-inset-bottom));
 		left: 12px;
 		z-index: 30;
-		justify-content: center;
+		/* botões sempre encostados no canto esquerdo */
+		justify-content: flex-start;
 	}
 
 	#container-Botoes {
@@ -5925,9 +5923,6 @@ input:focus-visible {
 	}
 
 	#container-Habilidades {
-		right: 116px;
-		bottom: calc(68px + env(safe-area-inset-bottom));
-		left: auto;
 		gap: 4px;
 	}
 
@@ -8586,7 +8581,6 @@ button.skill-ramo-no:focus-visible {
    caber inteira (antes o "Dano automático" saía da tela). */
 @media (max-width: 340px) {
 	#container-Habilidades {
-		left: 6px;
 		gap: 3px;
 	}
 
