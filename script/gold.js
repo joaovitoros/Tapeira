@@ -274,12 +274,24 @@ function formatNumber(n) {
 
     if (n < 1000) return n.toFixed(2);
 
-    const units = ["K", "M", "B", "T", "Qa", "Qi", "Sx"];
+    // mesma lista do GoldNumber.format(): até "Dc"; além disso cai na
+    // notação científica. (Antes parava em "Sx" e o valor virava um número
+    // gigante tipo "229986612.80Sx".)
+    const units = ["K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
     let unitIndex = -1;
 
-    while (n >= 1000 && unitIndex < units.length - 1) {
+    // 999.995 = o menor valor que arredonda para "1000.00": com ele o número
+    // sobe de sufixo em vez de ficar "1000.00<menor>" (erro de ponto flutuante
+    // perto do limite, ex.: 1e33 virava "1000.00No" em vez de "1.00Dc").
+    while (n >= 999.995 && unitIndex < units.length - 1) {
         n /= 1000;
         unitIndex++;
+    }
+
+    if (n >= 999.995) {
+        const exp = Math.floor(Math.log10(n)) + (unitIndex + 1) * 3;
+        const mant = n / Math.pow(10, Math.floor(Math.log10(n)));
+        return mant.toFixed(2) + "e+" + exp;
     }
 
     return n.toFixed(2) + units[unitIndex];
