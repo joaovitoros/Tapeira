@@ -273,7 +273,7 @@ const UI = {
             )],
             ["btn-Config", document.getElementById("container-SalvaCarrega")?.style.visibility === "visible"],
             ["btn-Formigas", !!document.getElementById("antCollectionModal")],
-            ["btnSkills", !!document.getElementById("skillUpgradeModal")],
+            ["btnSkills", !!document.getElementById("feitosModal")],
             ["btnRamos", !!document.getElementById("ramosTreeModal")]
         ];
 
@@ -909,7 +909,8 @@ document.addEventListener("click", (e) => {
         return;
     }
     if (e.target.closest("#btnSkills")) {
-        UI.toggleSkillUpgradePanel();
+        UI.toggleFeitosPanel();
+        return;
     }
     if (e.target.closest("#btnRamos")) {
         UI.toggleRamosTreePanel();
