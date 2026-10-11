@@ -193,7 +193,7 @@ test("navegação lateral usa delegação registrada (sem onclick inline)", asyn
         await page.waitForFunction(() =>
             document.getElementById("btn-Config") && typeof window.SobeStatus === "function");
         const result = await page.evaluate(() => {
-            const ids = ["btnStatus", "btn-Loja", "btn-Config", "btn-Formigas", "btnSkills", "btnRamos"];
+            const ids = ["btnStatus", "btn-Loja", "btn-Config", "btnSkills", "btnRamos"];
             const inline = ids.filter(id => document.getElementById(id)?.hasAttribute("onclick"));
 
             const config = document.getElementById("container-SalvaCarrega");

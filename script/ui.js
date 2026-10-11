@@ -272,7 +272,6 @@ const UI = {
                 document.getElementById(id)?.style.visibility === "visible"
             )],
             ["btn-Config", document.getElementById("container-SalvaCarrega")?.style.visibility === "visible"],
-            ["btn-Formigas", !!document.getElementById("antCollectionModal")],
             ["btnSkills", !!document.getElementById("feitosModal")],
             ["btnRamos", !!document.getElementById("ramosTreeModal")]
         ];
@@ -902,10 +901,6 @@ document.addEventListener("click", (e) => {
     }
     if (e.target.closest("#btn-Config")) {
         AbreConfig();
-        return;
-    }
-    if (e.target.closest("#btn-Formigas")) {
-        UI.toggleAntCollection();
         return;
     }
     if (e.target.closest("#btnSkills")) {

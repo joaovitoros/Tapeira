@@ -27,7 +27,8 @@ const path = require('path');
         const modal = document.getElementById("feitosModal");
         check("clique abre o painel Feitos", !!modal);
         const abas = [...modal.querySelectorAll(".feitos-aba")].map(b => b.textContent);
-        check("3 abas (Conquistas/Missões/Marcos)", abas.join(",") === "Conquistas,Missões,Marcos", abas.join(","));
+        check("4 abas (Conquistas/Missões/Marcos/Formigas)",
+            abas.join(",") === "Conquistas,Missões,Marcos,Formigas", abas.join(","));
         check("conteúdo de Conquistas renderizado",
             modal.querySelector(".feitos-corpo").textContent.includes("Conquista"),
             modal.querySelector(".feitos-corpo").textContent.replace(/\s+/g, " ").trim().slice(0, 40));
@@ -37,6 +38,12 @@ const path = require('path');
         check("aba Marcos renderiza o conteúdo de marcos",
             modal2.querySelector(".feitos-corpo").textContent.includes("Portões de reset"));
         check("aba ativa marcada", modal2.querySelector(".feitos-aba--ativa").textContent === "Marcos");
+
+        [...modal2.querySelectorAll(".feitos-aba")].find(b => b.textContent === "Formigas").click();
+        const modal3 = document.getElementById("feitosModal");
+        check("aba Formigas renderiza os cartões",
+            modal3.querySelectorAll(".ant-collection-card").length > 0,
+            modal3.querySelectorAll(".ant-collection-card").length);
 
         // clicar fora fecha
         modal2.dispatchEvent(new MouseEvent("click", { bubbles: true }));

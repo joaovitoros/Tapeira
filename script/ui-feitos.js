@@ -22,7 +22,8 @@ Object.assign(UI, {
         const abas = [
             { id: "conquistas", rotulo: "Conquistas", html: () => HtmlConquistas() },
             { id: "missoes", rotulo: "Missões", html: () => HtmlMissoes() },
-            { id: "marcos", rotulo: "Marcos", html: () => HtmlMarcos() }
+            { id: "marcos", rotulo: "Marcos", html: () => HtmlMarcos() },
+            { id: "formigas", rotulo: "Formigas", conteudo: () => this.criaConteudoFormigas() }
         ];
         const aberta = abas.some(item => item.id === aba) ? aba : "conquistas";
 
@@ -67,7 +68,9 @@ Object.assign(UI, {
         const corpo = document.createElement("div");
         corpo.className = "feitos-corpo ant-collection-list";
         corpo.setAttribute("role", "tabpanel");
-        corpo.innerHTML = abas.find(item => item.id === aberta).html();
+        const escolhida = abas.find(item => item.id === aberta);
+        if (escolhida.html) corpo.innerHTML = escolhida.html();
+        else corpo.appendChild(escolhida.conteudo());
 
         painel.append(header, barraAbas, corpo);
         overlay.appendChild(painel);
