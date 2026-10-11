@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Esboço — Árvore de ramos em colunas (descartável)</title>
+<style>
+  :root {
+    --bg: #0b1420;
+    --linha-cel: rgba(255,255,255,.16);
+    --proximo: #ffd36b;
+    --ok: #9ff5c0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    font-family: system-ui, "Segoe UI", sans-serif;
+    color: #e8eef7;
+    background: radial-gradient(circle at 30% 20%, #1d3550, var(--bg));
+  }
+
+  .hud { display: flex; gap: 10px; padding: 16px; flex-wrap: wrap; }
+  .hud button { padding: 10px 16px; border-radius: 8px; border: 1px solid #3a5c82;
+    background: linear-gradient(145deg,#235a8c,#163a5e); color: #eaf4ff; font-weight: 700; cursor: pointer; }
+  .hud button.novo { border-color: var(--proximo); box-shadow: 0 0 12px rgba(255,211,107,.5); }
+
+  .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    padding: 12px; background: rgba(3,8,14,.72); }
+  .painel { width: min(1180px, 97vw); max-height: 94vh; display: flex; flex-direction: column;
+    border: 1px solid #3a567c; border-radius: 14px; overflow: hidden;
+    background: linear-gradient(180deg,#14253a,#0d1826); box-shadow: 0 18px 50px rgba(0,0,0,.65); }
+
+  .cabecalho { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #2b4160; }
+  .cabecalho h2 { flex: 1; margin: 0; font-size: 18px; }
+  .cabecalho button { height: 42px; border-radius: 10px; cursor: pointer; font-size: 15px;
+    border: 1px solid #4a7fb5; background: #1b3550; color: #dceaff; }
+  .fechar { width: 42px; border-radius: 50%; font-size: 18px; }
+  .btnConcluidos[aria-pressed="true"] { background: #2d5a86; }
+
+  .rolagem { overflow: auto; padding: 14px; }
+
+  /* ===== árvore: colunas magras lado a lado ===== */
+  .arvore { display: flex; flex-direction: row; align-items: flex-start; gap: 10px; min-width: max-content; }
+
+  .bloco {
+    flex: 0 0 auto; width: 196px;
+    border: 1px solid #2b4160; border-radius: 12px; overflow: hidden;
+    background: rgba(0,0,0,.2); --acento: #6b8bb0;
+  }
+  .bloco--completo { border-color: rgba(159,245,192,.35); }
+  .bloco--proximo { border-color: var(--proximo); box-shadow: 0 0 16px rgba(255,211,107,.28); }
+
+  .bloco__cabecalho {
+    display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px;
+    border: 0; border-bottom: 2px solid var(--acento);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--acento) 45%, #0d1826), #0d1826);
+    color: #fff; font: inherit; text-align: left; cursor: pointer;
+  }
+  .bloco__titulo { flex: 1; min-width: 0; }
+  .bloco__titulo b { display: block; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+  .bloco__resumo { font-size: 10px; opacity: .9; }
+  .bloco__chevon { transition: transform .15s ease; opacity: .8; }
+  .bloco--colapsado .bloco__chevon { transform: rotate(-90deg); }
+  .bloco--colapsado .bloco__corpo { display: none; }
+
+  /* grade de quadradinhos */
+  .bloco__corpo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; padding: 10px; }
+
+  .cel {
+    position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center;
+  }
+  .tile {
+    position: relative; width: 100%; aspect-ratio: 1;
+    display: grid; place-items: center;
+    border: 2px solid var(--linha-cel); border-radius: 8px;
+    background: #122234; font-size: 20px;
+  }
+  .cel__tex { font-size: 8.5px; line-height: 1.15; color: #b8c6d9; }
+  /* descrição: escondida por padrão, aparece ao clicar (ou sempre nas que dá p/ escolher) */
+  .cel__desc { display: none; font-size: 10px; line-height: 1.25; color: #d7e3f2; }
+  .cel__selo {
+    display: none; margin-top: 2px; padding: 1px 6px; border-radius: 999px;
+    background: var(--proximo); color: #2a1d00; font-size: 8px; font-weight: 800; letter-spacing: .04em;
+  }
+
+  /* estados */
+  .cel--on .tile { border-color: var(--acento); background: color-mix(in srgb, var(--acento) 30%, #0d1826); }
+  .cel--on .cel__tex { color: #dfe9f5; }
+  .cel--max .tile { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 22%, #0d1826); }
+  .cel--travado .tile { filter: grayscale(.75); opacity: .55; }
+  .cel--travado .tile::after { content: "🔒"; position: absolute; right: 2px; top: 1px; font-size: 10px; }
+  .cel--selado .tile { border-color: #a33; background: #4a1218; opacity: .7; }
+  .cel--selado .tile::after { content: "✕"; position: absolute; right: 3px; top: 0; font-size: 11px; color: #ffc9c9; }
+  .cel--pronto .tile { border-color: #ffd0c4; box-shadow: 0 0 12px rgba(255,90,77,.55); }
+  .cel--proximo .tile { border-color: var(--proximo); animation: pulso 1.5s ease-in-out infinite; }
+  .cel--proximo .cel__tex { color: #ffe09a; font-weight: 700; }
+  @keyframes pulso {
+    0%, 100% { box-shadow: 0 0 1px rgba(255,211,107,.4), 0 0 10px rgba(255,211,107,.35); }
+    50%      { box-shadow: 0 0 2px rgba(255,211,107,.7), 0 0 20px rgba(255,211,107,.7); }
+  }
+
+  /* célula ABERTA: ocupa a linha toda, vira "ícone + texto" */
+  .cel--aberta {
+    grid-column: 1 / -1; flex-direction: row; align-items: flex-start; text-align: left; gap: 8px;
+    padding: 6px; border-radius: 8px; background: rgba(255,255,255,.05);
+  }
+  .cel--aberta .tile { width: 38px; flex: 0 0 38px; font-size: 19px; }
+  .cel--aberta .cel__info { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .cel--aberta .cel__desc { display: block; }
+  .cel--aberta .cel__selo { display: inline-block; align-self: flex-start; }
+  /* clicável (só quem pode abrir/fechar) */
+  .cel--clicavel { cursor: pointer; }
+  .cel--clicavel .tile:hover { border-color: #a8d7ff; }
+
+  .grupo {
+    grid-column: 1 / -1; margin: 4px 0 0; padding-top: 6px;
+    border-top: 1px dashed rgba(255,255,255,.15);
+    font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: #8fa6c0;
+  }
+  .grupo:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
+
+  .rodape-avatar { text-align: center; font-size: 11px; color: #7f93ab; padding: 10px; }
+</style>
+</head>
+<body>
+
+<div class="hud">
+  <button type="button">Status</button>
+  <button type="button">Loja</button>
+  <button type="button">Config</button>
+  <button type="button">Formigas</button>
+  <button type="button">Skills</button>
+  <button type="button" class="novo">🌿 Ramos  ← 2º botão</button>
+</div>
+
+<div class="overlay">
+  <section class="painel" id="painelRamos">
+    <header class="cabecalho">
+      <h2>Árvore de ramos</h2>
+      <button class="btnConcluidos" id="btnConcluidos" type="button" aria-pressed="true"
+              title="Mostrar/ocultar skills já concluídas">✓ Feitas</button>
+      <button class="fechar" type="button" aria-label="Fechar">✕</button>
+    </header>
+
+    <div class="rolagem" id="rolagem">
+      <div class="arvore" id="arvore">
+
+        <!-- ===== COLUNA 1: Dano automático (completa) ===== -->
+        <section class="bloco bloco--completo bloco--colapsado" style="--acento:#e0463c">
+          <button class="bloco__cabecalho" type="button" aria-expanded="false">
+            <span class="bloco__titulo"><b>Dano automático</b><span class="bloco__resumo">✓ completo · Canhão</span></span>
+            <span class="bloco__chevon">▾</span>
+          </button>
+          <div class="bloco__corpo">
+            <div class="grupo">Níveis</div>
+            <span class="cel cel--max cel--clicavel">
+              <span class="tile">⚔</span>
+              <span class="cel__info"><span class="cel__tex">Nv 10</span><span class="cel__desc">Dobra o dano do hit automático.</span></span>
+            </span>
+            <span class="cel cel--max cel--clicavel">
+              <span class="tile">◆</span>
+              <span class="cel__info"><span class="cel__tex">Perk</span><span class="cel__desc">+25% de dano por nível.</span></span>
+            </span>
+            <span class="cel cel--selado cel--clicavel">
+              <span class="tile">💨</span>
+              <span class="cel__info"><span class="cel__tex">Rajada</span><span class="cel__desc">Selado nesta run (janela 50% maior).</span></span>
+            </span>
+            <div class="grupo">Ramos</div>
+            <span class="cel cel--max cel--clicavel">
+              <span class="tile">💥</span>
+              <span class="cel__info"><span class="cel__tex">Canhão 5</span><span class="cel__desc">+50% de dano no hit automático.</span></span>
+            </span>
+            <span class="cel cel--max cel--clicavel">
+              <span class="tile">✅</span>
+              <span class="cel__info"><span class="cel__tex">Canhão 10</span><span class="cel__desc">+50% de novo (×2,25 no total).</span></span>
+            </span>
+          </div>
+        </section>
+
+        <!-- ===== COLUNA 2: Corrente elétrica (PRÓXIMA escolha) ===== -->
+        <section class="bloco bloco--proximo" id="blocoProximo" style="--acento:#c9a227">
+          <button class="bloco__cabecalho" type="button" aria-expanded="true">
+            <span class="bloco__titulo"><b>Corrente elétrica</b><span class="bloco__resumo">● escolha um caminho</span></span>
+            <span class="bloco__chevon">▾</span>
+          </button>
+          <div class="bloco__corpo">
+            <div class="grupo">Níveis</div>
+            <span class="cel cel--on cel--clicavel">
+              <span class="tile">⚡</span>
+              <span class="cel__info"><span class="cel__tex">Nv 1–5</span><span class="cel__desc">Atinge inimigos próximos.</span></span>
+            </span>
+            <span class="cel cel--proximo cel--aberta">
+              <span class="tile">⚡</span>
+              <span class="cel__info"><span class="cel__tex">Nv 6</span><span class="cel__desc">Pronto para subir (1 ponto).</span><span class="cel__selo">PRÓXIMO</span></span>
+            </span>
+            <span class="cel cel--travado cel--clicavel">
+              <span class="tile">⚡</span>
+              <span class="cel__info"><span class="cel__tex">Nv 7+</span><span class="cel__desc">Depois do nível 6.</span></span>
+            </span>
+            <div class="grupo">Ramos · Nv 5</div>
+            <span class="cel cel--pronto cel--aberta">
+              <span class="tile">🔥</span>
+              <span class="cel__info"><span class="cel__tex">Sobrecarga</span><span class="cel__desc">+50% de dano na corrente.</span><span class="cel__selo">ESCOLHER</span></span>
+            </span>
+            <span class="cel cel--pronto cel--aberta">
+              <span class="tile">🕸</span>
+              <span class="cel__info"><span class="cel__tex">Rede</span><span class="cel__desc">+1 inimigo atingido.</span><span class="cel__selo">ESCOLHER</span></span>
+            </span>
+            <div class="grupo">Ramos · Nv 10</div>
+            <span class="cel cel--travado cel--clicavel">
+              <span class="tile">🔥</span>
+              <span class="cel__info"><span class="cel__tex">×2</span><span class="cel__desc">Completa no nível 10.</span></span>
+            </span>
+            <span class="cel cel--travado cel--clicavel">
+              <span class="tile">🕸</span>
+              <span class="cel__info"><span class="cel__tex">+2</span><span class="cel__desc">Completa no nível 10.</span></span>
+            </span>
+          </div>
+        </section>
+
+        <!-- ===== COLUNA 3: Bônus de Gold (travada) ===== -->
+        <section class="bloco" style="--acento:#e0a72e">
+          <button class="bloco__cabecalho" type="button" aria-expanded="true">
+            <span class="bloco__titulo"><b>Bônus de Gold</b><span class="bloco__resumo">🔒 andar 25</span></span>
+            <span class="bloco__chevon">▾</span>
+          </button>
+          <div class="bloco__corpo">
+            <div class="grupo">Níveis</div>
+            <span class="cel cel--travado cel--clicavel">
+              <span class="tile">💰</span>
+              <span class="cel__info"><span class="cel__tex">Nv 1–10</span><span class="cel__desc">Desbloqueia no andar 25.</span></span>
+            </span>
+            <span class="cel cel--travado cel--clicavel">
+              <span class="tile">◆</span>
+              <span class="cel__info"><span class="cel__tex">Perk</span><span class="cel__desc">+25% no drop do kill com skill ativa.</span></span>
+            </span>
+            <span class="cel cel--travado cel--clicavel">
+              <span class="tile">🪙</span>
+              <span class="cel__info"><span class="cel__tex">?</span><span class="cel__desc">Recompensa ainda oculta.</span></span>
+            </span>
+          </div>
+        </section>
+
+        <!-- ===== COLUNA 4: Pausa da fuga ===== -->
+        <section class="bloco" style="--acento:#4a9be0">
+          <button class="bloco__cabecalho" type="button" aria-expanded="true">
+            <span class="bloco__titulo"><b>Pausa da fuga</b><span class="bloco__resumo">🔒 andar 35</span></span>
+            <span class="bloco__chevon">▾</span>
+          </button>
+          <div class="bloco__corpo">
+            <div class="grupo">Níveis</div>
+            <span class="cel cel--travado cel--clicavel">
+              <span class="tile">🧊</span>
+              <span class="cel__info"><span class="cel__tex">Nv 1–10</span><span class="cel__desc">Desbloqueia no andar 35.</span></span>
+            </span>
+            <span class="cel cel--travado cel--clicavel">
+              <span class="tile">◆</span>
+              <span class="cel__info"><span class="cel__tex">Perk</span><span class="cel__desc">10% de restaurar o tempo de fuga.</span></span>
+            </span>
+            <span class="cel cel--travado cel--clicavel">
+              <span class="tile">❄</span>
+              <span class="cel__info"><span class="cel__tex">?</span><span class="cel__desc">Recompensa ainda oculta.</span></span>
+            </span>
+          </div>
+        </section>
+
+        <!-- ===== COLUNA 5: Toque Frenético ===== -->
+        <section class="bloco" style="--acento:#9b6be0">
+          <button class="bloco__cabecalho" type="button" aria-expanded="true">
+            <span class="bloco__titulo"><b>Toque Frenético</b><span class="bloco__resumo">● 1 ponto para subir</span></span>
+            <span class="bloco__chevon">▾</span>
+          </button>
+          <div class="bloco__corpo">
+            <div class="grupo">Níveis</div>
+            <span class="cel cel--on cel--clicavel">
+              <span class="tile">✨</span>
+              <span class="cel__info"><span class="cel__tex">Nv 1–3</span><span class="cel__desc">+25% no dano do toque.</span></span>
+            </span>
+            <span class="cel cel--pronto cel--aberta">
+              <span class="tile">✨</span>
+              <span class="cel__info"><span class="cel__tex">Nv 4</span><span class="cel__desc">+25% no dano do toque na janela.</span><span class="cel__selo">PRÓXIMO</span></span>
+            </span>
+            <span class="cel cel--travado cel--clicavel">
+              <span class="tile">✨</span>
+              <span class="cel__info"><span class="cel__tex">Nv 5+</span><span class="cel__desc">Depois do nível 4.</span></span>
+            </span>
+          </div>
+        </section>
+
+      </div>
+      <p class="rodape-avatar">— clique no ícone para ver detalhes; as que dá pra escolher já mostram —</p>
+    </div>
+  </section>
+</div>
+
+<script>
+  const painel = document.getElementById("painelRamos");
+
+  // "Feitas": colapsa/expande as colunas já concluídas
+  const btnConcluidos = document.getElementById("btnConcluidos");
+  function aplicarConcluidos(esconder) {
+    document.querySelectorAll(".bloco--completo").forEach(b => {
+      b.classList.toggle("bloco--colapsado", esconder);
+      b.querySelector(".bloco__cabecalho").setAttribute("aria-expanded", String(!esconder));
+    });
+    btnConcluidos.setAttribute("aria-pressed", String(esconder));
+  }
+  btnConcluidos.addEventListener("click", () => {
+    aplicarConcluidos(btnConcluidos.getAttribute("aria-pressed") !== "true");
+  });
+
+  // abrir/fechar cada coluna
+  document.querySelectorAll(".bloco__cabecalho").forEach(cab => {
+    cab.addEventListener("click", () => {
+      const bloco = cab.closest(".bloco");
+      const colapsado = bloco.classList.toggle("bloco--colapsado");
+      cab.setAttribute("aria-expanded", String(!colapsado));
+    });
+  });
+
+  // clicar no ícone revela os detalhes das já escolhidas e das travadas
+  // (as que dá para escolher já ficam abertas e não fecham)
+  document.querySelectorAll(".cel--clicavel").forEach(cel => {
+    cel.addEventListener("click", () => cel.classList.toggle("cel--aberta"));
+  });
+
+  // ao abrir: vai direto para a PRÓXIMA escolha (coluna destacada)
+  function focarProximo() {
+    const alvo = document.querySelector("#blocoProximo") || document.querySelector(".bloco--proximo");
+    if (!alvo) return;
+    alvo.classList.remove("bloco--colapsado");
+    alvo.scrollIntoView({ inline: "center", block: "nearest", behavior: "auto" });
+    const primeiro = alvo.querySelector(".cel--proximo, .cel--pronto");
+    if (primeiro && primeiro.focus) primeiro.focus({ preventScroll: true });
+  }
+  requestAnimationFrame(focarProximo);
+</script>
+</body>
+</html>

@@ -70,6 +70,20 @@ No **navegador**, basta abrir `index.html` (menu) ou `Caverna.html` (a caverna).
 Para testes focados que abrem a versão web, rode antes o `prepare:web` (veja
 [Testes](#testes)).
 
+<<<<<<< HEAD
+=======
+### Docker
+
+Para servir o jogo em um contêiner nginx (sem Node/Electron):
+
+```bash
+docker compose up -d --build
+```
+
+Abra <http://localhost:8080/>. Veja [`DOCKER.md`](DOCKER.md) para detalhes e
+endurecimento da imagem.
+
+>>>>>>> karin
 ## Builds
 
 ### Windows

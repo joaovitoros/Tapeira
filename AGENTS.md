@@ -1,51 +1,174 @@
 # Guia de arquitetura e contribuição — TAPeira
 
-Leia este arquivo antes de implementar ou alterar funcionalidades. O objetivo é manter cada mudança pequena, compreensível e compatível com Windows, Android e navegador.
+Jogo incremental (clicker) em JavaScript puro. O MESMO código roda em 3 lugares:
+**navegador** (`index.html` + `Caverna.html`), **Windows** (Electron) e **Android** (Capacitor).
+Toda mudança precisa continuar funcionando nos 3. Leia este arquivo inteiro antes de editar qualquer coisa.
 
-## Estrutura atual e arquivos-fonte
+---
 
-- `index.html` e `Caverna.html` são as páginas do jogo.
-- `script/` contém as regras do jogo e a interface; os arquivos são carregados como scripts clássicos, em ordem definida no HTML.
-- Limites atuais dentro de `script/`: `sistema.js` cuida do ciclo de vida/menu/reset; `audio.js`, do áudio; `progressao.js`, de XP, skills e perks; `conquistas.js`, das conquistas; `companheiros.js`, dos ticks/buffs/criação de companheiros; `recompensas.js`, de formigas e baús; `missoes.js`, das missões; `validacao-save.js`, das regras e compatibilidade dos saves; `persistencia.js`, da exportação/importação do save em arquivo; `persistencia-carregar.js`, da montagem do estado a partir de um save (`Carregar`); `persistencia-autosave.js`, do auto save local (`CriarObjetoSave`, `AutoSaveLocal`, `CarregarAutoSave`, `LimparAutoSave`); `progresso-offline.js`, da simulação e entrega do progresso offline. A interface ficou em `ui.js` (base do objeto `UI`) mais os fragmentos `ui-skills.js`, `ui-colecao.js`, `ui-combate.js`, `ui-baus.js` (métodos movidos via `Object.assign(UI, {...})`) e `ui-telas.js` (telas legacy em funções globais). A loja ficou em `loja.js` (navegação, helpers e PagaLoja) mais `loja-patentes.js`, `loja-compras.js`, `loja-esmeraldas.js` e `loja-preview.js` (preview de compra e hold-to-buy). Preserve as APIs globais existentes até uma migração planejada para módulos.
-- `css/`, `imagens/` e `media/` contêm recursos-fonte.
-- `desktop/` contém a integração com Electron; `scripts/` contém tarefas de build e preparação.
-- `www/` é gerado/atualizado por `npm run prepare:web`. Não edite cópias dentro de `www/` como se fossem fonte.
-- `dist/`, `android/` e `node_modules/` não são o local normal para implementar funcionalidades web do jogo.
+## REGRA Nº 1 — NÃO USE MÓDULOS (ES modules). NUNCA.
 
-Consulte também `BUILDING.md` para os comandos de execução e build.
+O projeto carrega JavaScript como **scripts clássicos** (`<script src="...">`), em ordem fixa no HTML.
 
-## Regras para funcionalidades novas
+- ❌ NÃO escreva `import ...` nem `export ...`.
+- ❌ NÃO adicione `type="module"` em nenhuma `<script>`.
+- ✅ Tudo que você criar é uma função/variável **global**, visível para todos os arquivos.
+- ✅ A ordem dos `<script>` no HTML define quem enxerga quem. Scripts que rodam antes definem coisas que os scripts depois usam.
 
-1. **Defina o domínio e o dono da lógica.** Coloque regras junto ao sistema responsável (combate, loja/economia, missões, eventos, habilidades etc.). Evite acrescentar funcionalidades grandes a `script.js`, `sistema.js` ou `ui.js` apenas por conveniência. Se um sistema crescer, crie um arquivo específico em `script/` e inclua-o explicitamente em `Caverna.html` na ordem correta.
-2. **Separe regras da interface.** Cálculos e decisões pertencem à lógica do domínio. A interface lê o estado e apresenta resultados; não deve ser a autoridade sobre regras, recompensas ou progresso.
-3. **Não aumente o acoplamento global.** Os scripts atuais compartilham muitas funções e variáveis globais. Para código novo, prefira uma implementação encapsulada e uma API pequena em `window.Tapeira` (crie o namespace se ainda não existir). Evite novas variáveis globais, `window[nomeVariavel]`, nomes genéricos e dependências implícitas da ordem dos arquivos.
-4. **Mantenha o formato atual de carregamento.** Até uma migração planejada do build, não introduza `import`/`export` ou scripts `type="module"` isoladamente: as páginas e os builds atuais usam scripts clássicos. Se uma mudança exigir módulos, ajuste e valide o fluxo web, Electron e Android em conjunto.
-5. **Evite handlers inline novos.** Não adicione `onclick`, `onload` ou atributos semelhantes para código novo. Registre eventos no JavaScript com `addEventListener` e, quando fizer sentido, use atributos `data-*` como identificadores de ação. Preserve handlers existentes fora do escopo da mudança.
-6. **Considere as duas páginas.** Se adicionar um arquivo de script compartilhado, confira sua inclusão e ordem em `Caverna.html` e `index.html`. O menu e a tela da caverna não têm necessariamente os mesmos elementos no DOM; trate elementos opcionais com segurança.
-7. **Não crie timers sem ciclo de vida.** Guarde cada `setInterval`/`setTimeout`, impeça inicializações duplicadas e defina quando cancelar ou pausar — especialmente no reset, saída para o menu, pausa e troca de evento. Não use polling se um evento ou atualização já existente resolver o caso.
-8. **Trate o save como contrato público.** Se adicionar estado persistente, atualize a criação do save, o carregamento com valor padrão para saves antigos, a validação e o reset conforme a duração do estado (por run ou permanente). Mantenha compatibilidade com saves existentes; não descarte nem renomeie campos sem migração explícita.
-9. **Mantenha integrações de plataforma isoladas.** Não use APIs do Node/Electron diretamente no código web. Use a ponte segura já existente em `desktop/preload.cjs` ou os mecanismos Capacitor apropriados, com fallback para navegador quando aplicável. Preserve `contextIsolation` e `nodeIntegration: false`.
-10. **Proteja a interface e os dados.** Prefira `textContent` para texto dinâmico; valide dados vindos de saves, DOM, arquivos e APIs antes de usá-los. Não suponha que um elemento exista em todas as páginas ou estados.
+Se você ignorar isso, o jogo quebra no navegador, no Electron E no Android ao mesmo tempo.
 
-## Testes e validação
+---
 
-- Acrescente ou atualize um teste focado para a regra alterada, seguindo os testes existentes (`test-*.js` e páginas `test-*.html`). Não dependa apenas de inspeção visual para cálculos, saves ou progressão.
-- Verifique ao menos o caminho normal e casos de limite (por exemplo: sem recursos, limite máximo, save antigo ou elemento ausente), conforme a funcionalidade.
-- Execute os testes e o build relevante. Para mudanças em recursos compartilhados, confirme que a preparação web (`npm run prepare:web`) e a execução principal não foram quebradas; se tocar integração nativa, valide também o fluxo correspondente descrito em `BUILDING.md`.
-- Informe claramente qualquer validação que não pôde ser executada.
+## ONDE CADA COISA FICA
 
-## Escopo das mudanças
+### As duas páginas (você quase sempre vai editar as DUAS)
 
-- Preserve comportamento existente e saves; faça alterações incrementais.
-- Não reformate nem reescreva arquivos grandes sem necessidade para a funcionalidade solicitada.
-- Evite refatorações adjacentes. Se encontrar um problema fora do escopo, registre-o como sugestão em vez de misturá-lo à implementação.
-- Antes de concluir, confira `git status` e não sobrescreva alterações preexistentes do usuário.
+| Arquivo | O que é | O que carrega |
+| --- | --- | --- |
+| `index.html` | O **menu** | Um subconjunto dos scripts (NÃO tem missões, eventos, automação, especializações, ramos, FileSaver, validacao-save, persistencia\*, progresso-offline, dev-tools) |
+| `Caverna.html` | O **jogo** (a tela da caverna) | TODOS os scripts |
 
-## Checklist antes de concluir uma funcionalidade
+Os scripts carregados no `<head>` de `Caverna.html`, nesta ordem (não mude a ordem):
 
-- [ ] A lógica está no domínio responsável, sem aumentar arquivos já muito grandes sem necessidade.
-- [ ] O estado persistente, defaults, validação e reset estão coerentes.
-- [ ] Eventos e timers têm registro e limpeza apropriados.
-- [ ] As páginas/plataformas afetadas continuam compatíveis.
-- [ ] Existe teste relevante e foram executadas as validações possíveis.
-- [ ] O resumo informa arquivos alterados, testes executados e limitações conhecidas.
+```
+break_infinity.min.js  →  sistema.js  →  audio.js  →  gold.js  →  keymap.js
+→  script.js  →  progressao.js  →  conquistas.js  →  companheiros.js
+→  recompensas.js  →  logs.js  →  ui.js  →  ui-skills.js  →  ui-colecao.js
+→  ui-combate.js  →  ui-baus.js  →  ui-telas.js  →  missoes.js  →  batalha.js
+→  loja.js  →  loja-patentes.js  →  loja-compras.js  →  loja-esmeraldas.js
+→  loja-preview.js  →  FileSaver.js  →  eventos.js  →  automacao.js
+→  especializacoes.js  →  ramos.js  →  itens-build.js  →  validacao-save.js
+→  persistencia-carregar.js  →  persistencia-autosave.js  →  persistencia.js
+→  progresso-offline.js
+```
+
+`dev-tools.js` é carregado NO FIM do `<body>` de `Caverna.html` (não no `<head>`).
+
+### Dono de cada arquivo em `script/` (não coloque lógica no arquivo errado)
+
+- `script.js` — estado global, variáveis da loja, Conhecimento Mug, fundo da caverna, avanço de inimigos, portões, `VoltaAndar`.
+- `sistema.js` — menu, configurações, inicialização, `Resetar()`.
+- `batalha.js` — ataque, dano, abate, avanço, fuga.
+- `progressao.js` — XP, níveis, skills, perks, habilidades de combate.
+- `eventos.js` — os 7 eventos aleatórios.
+- `missoes.js` — missões normais e com desafio.
+- `conquistas.js` — conquistas clássicas e comportamentais.
+- `companheiros.js` — criação, ticks e buffs dos companheiros.
+- `recompensas.js` — formigas, baús comum/dourado e recompensas.
+- `automacao.js` — auto-coleta, auto-compra, auto-gasto.
+- `especializacoes.js` — as 5 especializações (builds).
+- `ramos.js` — árvore de ramos por skill.
+- `itens-build.js` — itens de build.
+- `gold.js` — `GoldNumber` e formatação de números grandes (`FormatGold`).
+- `keymap.js` — teclado, ataque segurando, pausa.
+- `logs.js` — histórico de mensagens.
+- Loja: `loja.js` (navegação + `PagaLoja`) + `loja-patentes.js`, `loja-compras.js`, `loja-esmeraldas.js`, `loja-preview.js`.
+- Save (3 arquivos): `persistencia.js` (export/import em arquivo: `Salvar`, `CarregarArquivo`), `persistencia-carregar.js` (`Carregar` — monta o estado a partir do save), `persistencia-autosave.js` (`CriarObjetoSave`, `AutoSaveLocal`, `CarregarAutoSave`, `LimparAutoSave`), e `validacao-save.js` (`ValidarSave`).
+- Offline: `progresso-offline.js`.
+- Interface: `ui.js` (o objeto `UI`) + os fragmentos `ui-skills.js`, `ui-colecao.js`, `ui-combate.js`, `ui-baus.js`, `ui-telas.js`.
+
+### Outras pastas (NÃO edite como se fosse fonte)
+
+- `www/` — **gerado** por `npm run prepare:web`. Não edite nada dentro dele.
+- `dist/`, `android/`, `node_modules/` — saída de build / dependências. Não implemente funcionalidade web aqui.
+- `desktop/` — Electron (`main.cjs`, `preload.cjs`). Código web não pode usar Node/Electron direto.
+- `scripts/` — tarefas de build (PowerShell).
+- `tests/` — suíte de regressão.
+
+---
+
+## COMO ADICIONAR UM ARQUIVO NOVO DE SCRIPT
+
+1. Crie `script/nome-do-dominio.js` (sem `import`/`export`; funções globais).
+2. Abra `Caverna.html` e adicione `<script src="script/nome-do-dominio.js"></script>` no `<head>`, **na posição certa** da lista acima (depois das dependências dele, antes de quem depende dele).
+3. Se o código precisa rodar TAMBÉM no menu, adicione a MESMA linha em `index.html`. Se é só do jogo, adicione apenas em `Caverna.html`.
+4. Rode `npm test` para garantir que não quebrou a ordem de carregamento.
+
+---
+
+## COMANDOS EXATOS
+
+```powershell
+npm install                     # uma vez só
+npm test                        # suíte de regressão completa
+npm run start:pc                # abre o jogo no Electron (desenvolvimento)
+npm run build:pc                # gera o instalador .exe do Windows
+npm run prepare:web             # gera a pasta www/ (roda PowerShell)
+npm run android:init            # cria o projeto nativo Android (uma vez)
+npm run android:debug           # gera o APK de teste
+npm run android:open            # abre no Android Studio
+```
+
+### Testes — detalhes que uma IA costuma errar
+
+- `npm test` = `node --test tests/regression.test.cjs`. Ele sobe um servidor HTTP local e roda **Chromium headless via Playwright**.
+- **Na primeira vez** (ou se der erro de "browser not found"), rode antes: `npx playwright install chromium`.
+- Para rodar **um único teste** (filtrar pelo nome): `node --test --test-name-pattern="combate" tests/regression.test.cjs`.
+- Testes focados que abrem `www/` (ex.: `node test-itens-build.js`) exigem `npm run prepare:web` ANTES.
+- `prepare:web` e os builds de Android usam **PowerShell** — rode no Windows.
+
+---
+
+## SAVE É CONTRATO PÚBLICO — SIGA OS 5 PASSOS, SEMPRE
+
+Se sua funcionalidade adiciona um **campo persistente** (que sobrevive ao reset ou entre sessões), você é obrigado a tocar em 5 lugares. Se esquecer um, o jogo quebra no load ou perde dados.
+
+1. **Declare a variável global** no arquivo do domínio (ex.: `var meuCampo = 0;`). Campos centrais ficam em `script.js`.
+2. **Os DOIS builders de save** (cada um tem um objeto que lista TODOS os campos):
+   - `Salvar()` em `script/persistencia.js` (o objeto `var save = {...}`);
+   - `CriarObjetoSave()` em `script/persistencia-autosave.js`.
+   - Adicione `meuCampo,` nos DOIS objetos.
+3. **`Carregar()`** em `script/persistencia-carregar.js`: leia com valor padrão para save antigo, ex.: `meuCampo = save.meuCampo ?? 0;`. Saves antigos NÃO têm o campo — por isso o `??`.
+4. **`ValidarSave()`** em `script/validacao-save.js` (função na linha ~66): valide o valor (inteiro? faixa?) e **rejeite lixo** com `throw new TypeError(...)`.
+5. **`Resetar()`** em `script/sistema.js` (função na linha ~341): se o campo é **por run**, zere aqui. Se é **permanente** (atravessa o reset), NÃO zere — e documente isso num comentário.
+
+⚠️ **PEGADINHA CRÍTICA:** no final de `ValidarSave` (linha ~424) há um loop que rejeita qualquer campo de **topo do save** que não seja número finito. Campos não-numéricos (arrays, objetos, strings) precisam ser adicionados à **whitelist** desse loop (atualmente `["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards", "conquistasComp", "melhorGoldRun", "autoItensLoja", "itensBuild", "bauBuildPendente", "opcoesBauBuild"]`). Se esquecer, TODO load de save falha.
+
+Resumo do que pode quebrar se você não fizer tudo: save antigo morre no load, save novo é rejeitado pela validação, ou o campo vaza entre runs.
+
+---
+
+## TIMERS, EVENTOS E HANDLERS — REGRAS RÁPIDAS
+
+- ❌ NÃO adicione `onclick`, `onload` etc. em HTML novo. ✅ Registre no JS com `addEventListener` e identifique ações com `data-*`. (O código antigo ainda tem alguns handlers inline; a migração para `addEventListener` está em andamento — não adicione novos.)
+- Todo `setInterval`/`setTimeout` que você criar precisa ser **guardado numa variável** e **cancelado** em: reset, sair para o menu, pausa e fim de evento. Sem timer órfão.
+- Se um tick/evento já existe que resolve o caso, NÃO crie polling novo.
+- Para forçar/inspecionar eventos e estado, use o painel **dev-tools** (tecla **F2** na caverna). Ele tem botões para disparar os eventos e "hit kill". Os testes usam esse painel (`#game-dev-tools`).
+
+---
+
+## ISOLAMENTO DE PLATAFORMA
+
+- Código web **não pode** chamar `require`, `fs`, `ipcRenderer` etc.
+- Para salvar arquivo/resolução/fechar no desktop, use a ponte já pronta `window.tapeiraDesktop` (definida em `desktop/preload.cjs`), com fallback para navegador.
+- Mantenha `contextIsolation: true` e `nodeIntegration: false` no Electron. Não mexa nisso.
+
+---
+
+## TESTES E VALIDAÇÃO
+
+- Para qualquer mudança de regra/cálculo/save/progressão: adicione ou atualize um teste. NÃO confie só em inspeção visual.
+- Teste o caminho normal E os limites (sem recurso, valor máximo, save antigo, elemento ausente).
+- Rode `npm test`. Para mudanças em recursos compartilhados, rode também `npm run prepare:web` e confirme que nada quebrou.
+- Se não conseguiu executar alguma validação, DIGA isso no resumo final.
+
+---
+
+## ESCOPO — O QUE NÃO FAZER
+
+- Não reformate/reescreva arquivos grandes "só para arrumar". Mudança incremental.
+- ⚠️ `ui.js` e `sistema.js` ainda podem ter **fim de linha misto** (`\r\n` e `\n`); os arquivos novos usam `\n`. NÃO normalize o arquivo inteiro — gera um diff gigante.
+- Não faça refatorações fora do escopo. Achou um problema separado? Anote como sugestão, não misture na mudança.
+- Antes de terminar, rode `git status` e NÃO sobrescreva alterações que o usuário já tinha.
+
+---
+
+## CHECKLIST FINAL (confira um por um antes de dizer que acabou)
+
+- [ ] A lógica está no arquivo do domínio certo (veja a lista acima).
+- [ ] Se adicionou script novo, ele entrou em `Caverna.html` (e em `index.html` se for compartilhado), na ordem certa.
+- [ ] Sem `import`/`export` e sem `type="module"`.
+- [ ] Se adicionou campo persistente: declarei a variável, atualizei os DOIS builders (`Salvar` em `persistencia.js` e `CriarObjetoSave` em `persistencia-autosave.js`), o `Carregar` (em `persistencia-carregar.js`, com `?? default`), o `ValidarSave` (validação + whitelist se for não-numérico) e o `Resetar` (se for por run).
+- [ ] Timers têm limpeza no reset/menu/pausa/evento.
+- [ ] Rodei `npm test` e passou.
+- [ ] No resumo, listei arquivos alterados, testes executados e o que NÃO pude validar.

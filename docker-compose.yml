@@ -1,0 +1,41 @@
+name: tapeira
+
+services:
+  web:
+    image: tapeira:${TAPEIRA_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NGINX_IMAGE: ${NGINX_IMAGE:-nginxinc/nginx-unprivileged:1.27-alpine}
+
+    # Host port -> container port 8080 (non-root nginx cannot bind low ports).
+    ports:
+      - "${TAPEIRA_PORT:-8080}:8080"
+
+    restart: unless-stopped
+
+    # --- Hardening --------------------------------------------------------
+    # The image is immutable: nginx only needs /tmp (pid) and its cache dir.
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+      - /var/cache/nginx:size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+    # Keep container logs bounded on long-lived hosts.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

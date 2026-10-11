@@ -1,0 +1,33 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Node / build artifacts and native shells (not needed to serve the web build)
+node_modules
+www
+dist
+android
+local.properties
+desktop
+scripts
+assets
+
+# Test suite and scratch pages/files
+tests
+test-*.js
+test-*.html
+
+# Documentation and editor / OS metadata
+*.md
+.vscode
+.idea
+*.iml
+.DS_Store
+Thumbs.db
+*.log
+
+# Docker helper files (kept out of the build context)
+docker-compose*.yml
+Dockerfile
+.dockerignore

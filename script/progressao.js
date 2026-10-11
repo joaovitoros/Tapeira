@@ -30,20 +30,20 @@ var nivelSkillFuga = 0;
 var nivelSkillFrenesi = 0;
 const NIVEL_MAXIMO_SKILLS = 10;
 const SKILLS_UPGRADE = [
-	{ id: "damage", nome: "Dano automático", pisoDesbloqueio: 1, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillDano", ramo: "ramoSkillDano" },
-	{ id: "electric", nome: "Corrente elétrica", pisoDesbloqueio: 15, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillEletrica", ramo: "ramoSkillEletrica" },
-	{ id: "gold", nome: "Bônus de Gold", pisoDesbloqueio: 25, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillGold", ramo: "ramoSkillGold" },
-	{ id: "escape", nome: "Pausa da fuga", pisoDesbloqueio: 35, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillFuga", ramo: "ramoSkillFuga" },
-	{ id: "frenzy", nome: "Toque Frenético", pisoDesbloqueio: 45, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillFrenesi", ramo: "ramoSkillFrenesi" }
+	{ id: "damage", nome: "Dano automático", tagline: "Golpeia sozinho enquanto você avança.", pisoDesbloqueio: 1, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillDano", ramo: "ramoSkillDano" },
+	{ id: "electric", nome: "Corrente elétrica", tagline: "Salta de um inimigo a outro.", pisoDesbloqueio: 15, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillEletrica", ramo: "ramoSkillEletrica" },
+	{ id: "gold", nome: "Bônus de Gold", tagline: "Faz cada golpe render mais moedas.", pisoDesbloqueio: 25, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillGold", ramo: "ramoSkillGold" },
+	{ id: "escape", nome: "Pausa da fuga", tagline: "Congela o inimigo que tenta fugir.", pisoDesbloqueio: 35, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillFuga", ramo: "ramoSkillFuga" },
+	{ id: "frenzy", nome: "Toque Frenético", tagline: "Toques rápidos acendem uma fúria breve.", pisoDesbloqueio: 45, maximo: NIVEL_MAXIMO_SKILLS, nivel: "nivelSkillFrenesi", ramo: "ramoSkillFrenesi" }
 ];
 // Perks: 1 ponto por portão alcançado no pico de andar desta run (>= 35).
 // O nível de perk é por run (zeramos no reset) e independe do nível da skill.
 const PERKS = [
-	{ skillId: "damage", varName: "perkDano", nome: "Dano automático", efeito: "+25% de dano por nível; no nível máximo a skill ativa sozinha quando carregada", maximo: 4 },
-	{ skillId: "electric", varName: "perkEletrica", nome: "Corrente elétrica", efeito: "+1 inimigo atingido por nível", maximo: 3 },
-	{ skillId: "gold", varName: "perkGold", nome: "Bônus de Gold", efeito: "+25% no drop do kill feito com a skill ativa por nível; do nível 1 em diante o companheiro também usa a skill ativa", maximo: 4 },
-	{ skillId: "escape", varName: "perkFuga", nome: "Pausa da fuga", efeito: "10% de restaurar o tempo de fuga por nível (máx 50%)", maximo: 5 },
-	{ skillId: "frenzy", varName: "perkFrenesi", nome: "Toque Frenético", efeito: "+25% no dano do toque durante a janela por nível", maximo: 4 }
+	{ skillId: "damage", varName: "perkDano", nome: "Dano automático", efeito: "Mais 25% de dano por nível.", maximo: 4 },
+	{ skillId: "electric", varName: "perkEletrica", nome: "Corrente elétrica", efeito: "+1 inimigo por nível.", maximo: 3 },
+	{ skillId: "gold", varName: "perkGold", nome: "Bônus de Gold", efeito: "+25% de moedas por nível.", maximo: 4 },
+	{ skillId: "escape", varName: "perkFuga", nome: "Pausa da fuga", efeito: "Recupera 10% do tempo por nível.", maximo: 5 },
+	{ skillId: "frenzy", varName: "perkFrenesi", nome: "Toque Frenético", efeito: "+25% no toque durante a fúria.", maximo: 4 }
 ];
 
 // +1 no MultiplicadorCM a cada 50 níveis do jogador. marcosNivel50 guarda

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Esboço — Habilidades em seções (descartável)</title>
+<style>
+  :root {
+    --bg: #0b1420;
+    --linha: rgba(255,255,255,.16);
+    --proximo: #ffd36b;
+    --ok: #9ff5c0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    font-family: system-ui, "Segoe UI", sans-serif;
+    color: #e8eef7;
+    background: radial-gradient(circle at 30% 20%, #1d3550, var(--bg));
+  }
+
+  .hud { display: flex; gap: 10px; padding: 16px; flex-wrap: wrap; }
+  .hud button { padding: 10px 16px; border-radius: 8px; border: 1px solid #3a5c82;
+    background: linear-gradient(145deg,#235a8c,#163a5e); color: #eaf4ff; font-weight: 700; cursor: pointer; }
+  .hud button.novo { border-color: var(--proximo); box-shadow: 0 0 12px rgba(255,211,107,.5); }
+
+  .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    padding: 12px; background: rgba(3,8,14,.72); }
+  .painel {
+    width: min(760px, 97vw); max-height: 92vh; display: flex; flex-direction: column;
+    border: 1px solid #3a567c; border-radius: 14px; overflow: hidden;
+    background: linear-gradient(180deg,#14253a,#0d1826); box-shadow: 0 18px 50px rgba(0,0,0,.65);
+  }
+
+  .cabecalho { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid #2b4160; }
+  .cabecalho h2 { flex: 1; margin: 0; font-size: 18px; }
+  .fechar { width: 42px; height: 42px; border-radius: 50%; cursor: pointer; font-size: 18px;
+    border: 1px solid #4a7fb5; background: #1b3550; color: #dceaff; }
+
+  .corpo { display: flex; min-height: 0; flex: 1 1 auto; }
+
+  /* ===== trilha de 5 botões à esquerda ===== */
+  .trilha {
+    flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px;
+    padding: 12px 10px; border-right: 1px solid #2b4160; background: rgba(0,0,0,.18);
+  }
+  .trilha__btn {
+    width: 52px; height: 52px; display: grid; place-items: center;
+    border: 2px solid var(--borda, #2b4160); border-radius: 12px;
+    background: #14263a; font-size: 24px; cursor: pointer;
+    position: relative; transition: transform .1s ease;
+  }
+  .trilha__btn:hover { transform: translateY(-1px); }
+  .trilha__btn--ativo { border-color: var(--acento); box-shadow: 0 0 12px color-mix(in srgb, var(--acento) 55%, transparent); }
+  .trilha__btn--travada { filter: grayscale(.8); opacity: .55; }
+  .trilha__btn--pronta::after {
+    content: ""; position: absolute; top: -4px; right: -4px; width: 12px; height: 12px;
+    border-radius: 999px; background: var(--proximo); box-shadow: 0 0 8px rgba(255,211,107,.8);
+  }
+  .trilha__ico { width: 26px; height: 26px; object-fit: contain; }
+  img.secao__icone { box-sizing: border-box; padding: 6px; object-fit: contain; }
+  img.no__tile, .no__icone { box-sizing: border-box; padding: 3px; object-fit: contain; }
+
+  /* ===== seção aberta (conteúdo da skill) ===== */
+  .secao { flex: 1 1 auto; min-width: 0; overflow-y: auto; padding: 16px; }
+  .secao__topo { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .secao__icone { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px;
+    background: color-mix(in srgb, var(--acento) 25%, #0d1826); border: 1px solid var(--acento); font-size: 22px; }
+  .secao__titulo { flex: 1; min-width: 0; }
+  .secao__titulo b { display: block; font-size: 17px; }
+  .secao__nivel { font-size: 12px; color: #b8c6d9; }
+  .selo-nivel { padding: 4px 10px; border: 1px solid rgba(255,211,107,.65); border-radius: 999px;
+    background: rgba(255,211,107,.12); color: #ffe09a; font-size: 13px; font-weight: 700; }
+  .secao__efeito { margin: 0 0 14px; color: #cbd5e1; font-size: 12px; }
+
+  .bloco { margin-top: 14px; }
+  .bloco__rotulo { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #8fa6c0; margin-bottom: 8px; }
+  .bloco__rotulo::after { content: ""; display: block; margin-top: 5px; border-top: 1px dashed rgba(255,255,255,.14); }
+  .bloco__dica { margin: -2px 0 8px; font-size: 11px; color: #a9bdd6; }
+
+  /* níveis: faixa de "pílulas" sempre visível */
+  .niveis { display: flex; flex-wrap: wrap; gap: 6px; }
+  .niv {
+    width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px;
+    border: 2px solid var(--linha); background: #12213a; font-size: 12px; font-weight: 700;
+    color: #9fb2c8; position: relative;
+  }
+  .niv--feito { border-color: var(--acento); background: color-mix(in srgb, var(--acento) 32%, #0d1826); color: #eaf1fb; }
+  .niv--max { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 22%, #0d1826); color: var(--ok); }
+  .niv--proximo { border-color: var(--proximo); color: #ffe09a; animation: pulso 1.5s ease-in-out infinite; }
+  .niv--travado { opacity: .5; }
+  .niv--travado::after { content: "🔒"; position: absolute; right: -3px; top: -6px; font-size: 9px; }
+  .niv--max::after { content: "✓"; position: absolute; right: -4px; top: -7px; font-size: 9px;
+    width: 13px; height: 13px; display: grid; place-items: center; border-radius: 999px;
+    background: #123a24; border: 1px solid var(--ok); color: var(--ok); }
+
+  /* perk */
+  .perk {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px;
+    border: 2px solid var(--linha); background: rgba(0,0,0,.2);
+  }
+  .perk--pronto { border-color: #ffd0c4; box-shadow: 0 0 12px rgba(255,90,77,.5); }
+  .perk--max { border-color: var(--ok); }
+  .perk__tile { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px;
+    background: rgba(0,0,0,.35); font-size: 18px; flex: 0 0 auto; }
+  .perk__txt b { font-size: 13px; }
+  .perk__txt span { display: block; font-size: 11px; color: #b8c6d9; }
+
+  /* ramos lado a lado */
+  .ramos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ramo {
+    border: 1px solid #2b4160; border-radius: 12px; padding: 10px; background: rgba(0,0,0,.18);
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .ramo--escolhido { border-color: var(--acento); box-shadow: 0 0 12px color-mix(in srgb, var(--acento) 35%, transparent); }
+  .ramo--selado { opacity: .55; }
+  .ramo__nome { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #cfe0f2; }
+
+  .no {
+    width: 100%; display: flex; align-items: center; gap: 8px; padding: 7px 8px; text-align: left;
+    border: 2px solid var(--linha); border-radius: 10px; background: #12213a; color: inherit; font: inherit;
+  }
+  .no__tile { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px;
+    background: rgba(0,0,0,.35); font-size: 16px; flex: 0 0 auto; }
+  .no__txt b { display: block; font-size: 12px; }
+  .no__txt span { font-size: 10px; color: #b8c6d9; }
+  .no--escolhido { border-color: var(--acento); background: color-mix(in srgb, var(--acento) 28%, #0d1826); }
+  .no--escolhido .no__tile::after { content: "★"; position: absolute; }
+  .no--max { border-color: var(--ok); }
+  .no--selado { border-color: #a33; background: #3a1015; opacity: .8; }
+  .no--pendente { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.05); opacity: .85; }
+  .no--pronto { border-color: var(--proximo); box-shadow: 0 0 12px rgba(255,211,107,.45); }
+  .fio { width: 3px; height: 14px; background: #5b768f; }
+
+  .badge { position: absolute; margin-top: -6px; padding: 1px 7px; border-radius: 999px;
+    background: var(--proximo); color: #2a1d00; font-size: 8px; font-weight: 800; letter-spacing: .04em; }
+  .no--pronto-wrap { position: relative; width: 100%; display: flex; }
+  .selo { padding: 1px 7px; border-radius: 999px; background: var(--proximo); color: #2a1d00;
+    font-size: 8px; font-weight: 800; letter-spacing: .04em; }
+  @keyframes pulso {
+    0%,100% { box-shadow: 0 0 1px rgba(255,211,107,.4), 0 0 10px rgba(255,211,107,.35); }
+    50% { box-shadow: 0 0 2px rgba(255,211,107,.7), 0 0 20px rgba(255,211,107,.7); }
+  }
+  @media (max-width: 420px) {
+    .ramos { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hud">
+  <button type="button">Status</button>
+  <button type="button">Loja</button>
+  <button type="button">Skills</button>
+  <button type="button" class="novo">🌿 Ramos  ← 2º botão</button>
+</div>
+
+<div class="overlay">
+  <section class="painel">
+    <header class="cabecalho">
+      <h2>Árvore de habilidades</h2>
+      <button class="fechar" type="button" aria-label="Fechar">✕</button>
+    </header>
+
+    <div class="corpo">
+      <!-- 5 botões à esquerda (um por skill) -->
+      <nav class="trilha" id="trilha" aria-label="Skills"></nav>
+
+      <!-- seção da skill aberta -->
+      <div class="secao" id="secao"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // ---- dados de demonstração (espelham o jogo) ----
+  const skills = [
+    { id:"damage", nome:"Dano automático", icon:"imagens/espada-habilidade.svg", acento:"#e0463c", nivel:4, max:10, unlocked:true,
+      efeito:"Golpeia sozinho enquanto você avança.",
+      dica:"Dura 50 s hoje · +5 s por nível.",
+      perk:{ n:2, max:4, efeito:"Mais 25% de dano por nível." },
+      ramos:[ { nome:"Canhão", tile:"💥", e5:"Golpes 50% mais fortes.", e10:"De novo +50%, total 2,25×.", estado:"escolhido" },
+              { nome:"Rajada", tile:"💨", e5:"A janela dura 50% a mais.", e10:"De novo +50%, o dobro da janela.", estado:"selado" } ] },
+    { id:"electric", nome:"Corrente elétrica", icon:"imagens/efeito-eletrico.svg", acento:"#c9a227", nivel:5, max:10, unlocked:true,
+      efeito:"Salta de um inimigo a outro.",
+      dica:"50% nos vizinhos hoje · +5% por nível.",
+      perk:{ n:1, max:3, efeito:"+1 inimigo por nível." },
+      ramos:[ { nome:"Sobrecarga", tile:"🔥", e5:"Choque 50% mais forte.", e10:"De novo +50%, total 2,25×.", estado:"pronto" },
+              { nome:"Rede", tile:"🕸", e5:"+1 alvo na cadeia.", e10:"+1 alvo de novo, até +2.", estado:"pronto" } ] },
+    { id:"gold", nome:"Bônus de Gold", icon:"imagens/bau-dourado.svg", acento:"#e0a72e", nivel:2, max:10, unlocked:true,
+      efeito:"Faz cada golpe render mais moedas.",
+      dica:"45% de gold por golpe hoje · +5% por nível.",
+      perk:{ n:0, max:4, efeito:"+25% de moedas por nível." },
+      ramos:[ { nome:"Veia", tile:"🪙", e5:"+50% de gold por ataque.", e10:"De novo +50%, total 2,25×.", estado:"bloqueado" },
+              { nome:"Fôlego", tile:"🌬", e5:"A carga dura 40 ataques.", e10:"Agora dura 60 ataques.", estado:"bloqueado" } ] },
+    { id:"escape", nome:"Pausa da fuga", icon:"imagens/cursor-espada.svg", acento:"#4a9be0", nivel:0, max:10, unlocked:true,
+      efeito:"Congela o inimigo que tenta fugir.",
+      dica:"10 s de pausa hoje · +2 s por nível.",
+      perk:{ n:0, max:5, efeito:"Recupera 10% do tempo por nível." },
+      ramos:[ { nome:"Oportunidade", tile:"⚔", e5:"+15% de dano na pausa.", e10:"De novo +15%, total 1,32×.", estado:"bloqueado" },
+              { nome:"Cortina", tile:"🛡", e5:"A pausa dura 50% mais.", e10:"De novo +50%, total 2,25×.", estado:"bloqueado" } ] },
+    { id:"frenzy", nome:"Toque Frenético", icon:"imagens/espada-eletrica.svg", acento:"#9b6be0", nivel:0, max:10, unlocked:false, piso:45,
+      efeito:"Toques rápidos acendem uma fúria breve.",
+      dica:"Multiplicador ×2,00 hoje · +0,15 por nível.",
+      perk:{ n:0, max:4, efeito:"+25% no toque durante a fúria." },
+      ramos:[ { nome:"Calor", tile:"🌞", e5:"Fúria 50% mais forte.", e10:"De novo +50%, total 2,25×.", estado:"bloqueado" },
+              { nome:"Ímpeto", tile:"🌀", e5:"Fúria 50% mais longa.", e10:"De novo +50%, total 2,25×.", estado:"bloqueado" } ] }
+  ];
+
+  const trilha = document.getElementById("trilha");
+  const secao = document.getElementById("secao");
+  let ativo = "damage"; // nenhuma seção aberta por padrão no jogo; no esboço já abre uma
+
+  function nivelEstado(skill, nivel) {
+    if (nivel <= skill.nivel) return nivel === skill.max ? "niv--max" : "niv--feito";
+    if (!skill.unlocked) return "niv--travado";
+    if (nivel === skill.nivel + 1) return "niv--proximo";
+    return "niv--travado";
+  }
+
+  function renderTrilha() {
+    trilha.innerHTML = "";
+    for (const s of skills) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "trilha__btn";
+      b.style.setProperty("--acento", s.acento);
+      const imgBtn = document.createElement("img");
+      imgBtn.className = "trilha__ico";
+      imgBtn.src = s.icon;
+      imgBtn.alt = "";
+      b.appendChild(imgBtn);
+      b.title = s.nome;
+      if (s.id === ativo) b.classList.add("trilha__btn--ativo");
+      if (!s.unlocked) b.classList.add("trilha__btn--travada");
+      if (s.unlocked && s.nivel < s.max) b.classList.add("trilha__btn--pronta");
+      b.addEventListener("click", () => {
+        ativo = ativo === s.id ? null : s.id; // clicar de novo fecha a seção
+        renderTrilha(); renderSecao();
+      });
+      trilha.appendChild(b);
+    }
+  }
+
+  function no(tile, titulo, desc, classe) {
+    const n = document.createElement("div");
+    n.className = "no" + (classe ? " " + classe : "");
+    n.style.position = "relative";
+    const ehImg = /\.(svg|png|webp)$/i.test(String(tile));
+    const blocoIcone = ehImg
+      ? `<img class="no__tile no__icone" src="${tile}" alt="">`
+      : `<span class="no__tile">${tile}</span>`;
+    n.innerHTML = blocoIcone + `<span class="no__txt"><b>${titulo}</b><span>${desc}</span></span>`;
+    return n;
+  }
+
+  function renderSecao() {
+    secao.innerHTML = "";
+    // nunca deixa a área vazia: sem skill ativa, mostra a primeira da lista
+    if (!ativo) ativo = skills[0].id;
+    const s = skills.find(x => x.id === ativo);
+    secao.style.setProperty("--acento", s.acento);
+
+    // topo
+    const topo = document.createElement("div");
+    topo.className = "secao__topo";
+    topo.innerHTML = `<img class="secao__icone" src="${s.icon}" alt="">
+      <span class="secao__titulo"><b>${s.nome}</b><span class="secao__nivel">${s.unlocked ? "Nível " + s.nivel + "/" + s.max : "🔒 desbloqueia no andar " + s.piso}</span></span>
+      <span class="selo-nivel">${s.nivel}/${s.max}</span>`;
+    secao.appendChild(topo);
+    const ef = document.createElement("p");
+    ef.className = "secao__efeito";
+    ef.textContent = s.efeito;
+    secao.appendChild(ef);
+
+    // níveis
+    const bl1 = bloco("Níveis");
+    if (s.dica) {
+      const d = document.createElement("p");
+      d.className = "bloco__dica";
+      d.textContent = s.dica;
+      bl1.appendChild(d);
+    }
+    const faixa = document.createElement("div");
+    faixa.className = "niveis";
+    for (let i = 1; i <= s.max; i++) {
+      const d = document.createElement("div");
+      d.className = "niv " + nivelEstado(s, i);
+      d.textContent = i;
+      faixa.appendChild(d);
+    }
+    bl1.append(faixa);
+    secao.appendChild(bl1);
+
+    // perk
+    const bl2 = bloco("Perk");
+    const perkClasse = s.perk.n >= s.perk.max ? "perk--max" : (s.unlocked && s.nivel >= 5 ? "perk--pronto" : "");
+    const perk = document.createElement("div");
+    perk.className = "perk " + perkClasse;
+    perk.innerHTML = `<span class="perk__tile">◆</span><span class="perk__txt"><b>Perk ${s.perk.n}/${s.perk.max}</b><span>${s.perk.efeito}</span></span>`;
+    bl2.append(perk);
+    secao.appendChild(bl2);
+
+    // ramos lado a lado
+    const bl3 = bloco("Ramos · Nv 5 → Nv 10");
+    const ramos = document.createElement("div");
+    ramos.className = "ramos";
+    for (const r of s.ramos) {
+      const card = document.createElement("div");
+      card.className = "ramo"
+        + (r.estado === "escolhido" ? " ramo--escolhido" : "")
+        + (r.estado === "selado" ? " ramo--selado" : "");
+      const nome = document.createElement("div");
+      nome.className = "ramo__nome";
+      nome.textContent = r.nome;
+      card.appendChild(nome);
+
+      const c5 = r.estado === "escolhido" ? "no--escolhido"
+        : r.estado === "selado" ? "no--selado"
+        : r.estado === "pronto" ? "no--pronto" : "no--pendente";
+      card.appendChild(no(s.icon, "Nv 5", r.e5, c5));
+      const fio = document.createElement("span");
+      fio.className = "fio";
+      card.appendChild(fio);
+      const c10 = r.estado === "escolhido" ? "no--max" : r.estado === "selado" ? "no--selado" : "no--pendente";
+      card.appendChild(no(s.icon, "Nv 10", r.e10, c10));
+
+      if (r.estado === "pronto") {
+        const selo = document.createElement("span");
+        selo.className = "selo";
+        selo.textContent = "ESCOLHER";
+        card.appendChild(selo);
+      }
+      if (r.estado === "escolhido") {
+        const selo = document.createElement("span");
+        selo.className = "selo";
+        selo.textContent = "★ ESCOLHIDO";
+        card.appendChild(selo);
+      }
+      ramos.appendChild(card);
+    }
+    bl3.append(ramos);
+    secao.appendChild(bl3);
+  }
+
+  function bloco(rotulo) {
+    const b = document.createElement("div");
+    b.className = "bloco";
+    const r = document.createElement("div");
+    r.className = "bloco__rotulo";
+    r.textContent = rotulo;
+    b.appendChild(r);
+    return b;
+  }
+
+  renderTrilha();
+  renderSecao();
+</script>
+</body>
+</html>
