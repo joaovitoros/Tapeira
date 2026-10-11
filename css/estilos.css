@@ -1693,8 +1693,9 @@ body {
 	display: grid;
 	justify-items: center;
 	gap: 18px;
-	width: min(360px, calc(100vw - 40px));
-	/* content-box: desconta o padding (28px×2) além da folga do overlay (40px) */
+	width: min(360px, calc(100vw - 100px));
+	/* content-box: desconta o padding (28px×2 + borda) além da folga do overlay
+	   (40px) — sem isso o painel estourava a tela no celular. */
 	max-height: calc(100dvh - 96px);
 	overflow-y: auto;
 	padding: 28px;
@@ -5509,9 +5510,9 @@ input:focus-visible {
 	}
 
 	#container-Habilidades {
-		right: 100px;
+		right: auto;
+		left: 8px;
 		bottom: calc(62px + env(safe-area-inset-bottom));
-		left: auto;
 		gap: 4px;
 	}
 
@@ -5552,7 +5553,7 @@ input:focus-visible {
 	#container-Habilidades {
 		bottom: max(6px, env(safe-area-inset-bottom));
 		right: auto;
-		left: 22rem;
+		left: 8px;
 		gap: 3px;
 	}
 
@@ -8528,6 +8529,26 @@ button.skill-ramo-no:focus-visible {
 
 	.pause-button-icon {
 		font-size: 14px;
+	}
+}
+
+/* Telas muito estreitas (ex.: 320px): a fileira de habilidades encolhe pra
+   caber inteira (antes o "Dano automático" saía da tela). */
+@media (max-width: 340px) {
+	#container-Habilidades {
+		left: 6px;
+		gap: 3px;
+	}
+
+	.combat-skill__icon,
+	.habilidade1 {
+		width: 34px;
+		height: 34px;
+	}
+
+	.combat-skill__meter,
+	#BaraQTDHab1Borda {
+		width: 16px;
 	}
 }
 
