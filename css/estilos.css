@@ -9911,7 +9911,7 @@ img.ramos-tree-no__tile {
 .cidade-predio--mercado  { left: 23%; top: 37%; --largura: 20%; --escala: 0.96; }
 .cidade-predio--pesquisa { left: 78%; top: 40%; --largura: 20%; --escala: 0.96; }
 .cidade-predio--fabrica  { left: 23%; top: 79%; --largura: 22%; --escala: 1.05; z-index: 4; }
-.cidade-predio--fazenda  { left: 76%; top: 75%; --largura: 22%; --escala: 1.05; z-index: 4; }
+.cidade-predio--fazenda  { left: 76%; top: 72.5%; --largura: 22%; --escala: 1.05; z-index: 4; }
 
 .cidade-predio__img {
 	display: block;
