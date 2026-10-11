@@ -434,6 +434,9 @@ let ultimoFeedbackCriticoMs = 0;
 function FeedbackCritico() {
 	// preferência "Tremor no crítico" desligada
 	if (window.Tapeira?.Config && !window.Tapeira.Config.ativo("tremerCritico")) return;
+	// Cidade aberta (tela cheia): a caverna continua rodando por baixo, mas o
+	// tremor/flash do crítico não devem aparecer por cima da Cidade.
+	if (document.getElementById("container-Cidade")?.hidden === false) return;
 	const agora = Date.now();
 	if (agora - ultimoFeedbackCriticoMs < 600) return;
 	ultimoFeedbackCriticoMs = agora;

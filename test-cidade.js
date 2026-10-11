@@ -108,6 +108,21 @@ const path = require('path');
         window.Tapeira.Cidade.sincroniza();
         res.seloFazenda = (document.querySelector('[data-cidade="fazenda"] .cidade-predio__lock')?.textContent || "").trim();
 
+        // crítico NÃO treme a tela com a Cidade aberta (a run segue por baixo)
+        const raiz = document.documentElement;
+        maxAndar = 120;
+        window.Tapeira.Cidade.abrir();
+        raiz.classList.remove("crit-shake");
+        ultimoFeedbackCriticoMs = 0;
+        FeedbackCritico();
+        res.tremeComCidade = raiz.classList.contains("crit-shake");
+        window.Tapeira.Cidade.fechar();
+        raiz.classList.remove("crit-shake");
+        ultimoFeedbackCriticoMs = 0;
+        FeedbackCritico();
+        res.tremeSemCidade = raiz.classList.contains("crit-shake");
+        raiz.classList.remove("crit-shake");
+
         return res;
     });
 
@@ -131,6 +146,8 @@ const path = require('path');
     check("andar 110: tudo livre", !r.g110.casa && !r.g110.fazenda && !r.g110.mercado && !r.g110.fabrica && !r.g110.pesquisa, JSON.stringify(r.g110));
     check("prédio trancado não abre o painel", r.trancadoNaoAbre === true);
     check("selo de trancado mostra o requisito", /Andar 85/.test(r.seloFazenda), r.seloFazenda);
+    check("crítico não treme a tela com a Cidade aberta", r.tremeComCidade === false);
+    check("crítico treme a tela com a Cidade fechada", r.tremeSemCidade === true);
 
     await browser.close();
     let falhas = 0;
