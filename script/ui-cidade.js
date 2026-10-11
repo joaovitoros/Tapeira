@@ -19,8 +19,17 @@
         fabrica: () => UI.showItensBuild()
     };
 
+    // Andar máximo para destravar cada prédio (derivado, sem campo no save).
+    // Bate com a tabela de gates do CIDADE.md.
+    const GATES = { casa: 80, fazenda: 85, mercado: 90, fabrica: 100, pesquisa: 110 };
+
     function desbloqueada() {
         return (Number(window.maxAndar) || 0) >= ANDAR_CIDADE;
+    }
+
+    function travado(id) {
+        const gate = GATES[id];
+        return gate !== undefined && (Number(window.maxAndar) || 0) < gate;
     }
 
     function painel() {
@@ -77,18 +86,32 @@
 
     function abrePredio(id) {
         if (id === "fechar") { fechar(); return; }
+        if (travado(id)) {
+            UI.showInfo("Prédio trancado: alcance o andar " + GATES[id] + ".");
+            return;
+        }
         const acao = PREDIOS[id];
         if (!acao) return;
         fechar();
         acao();
     }
 
-    // Reflete o gate (a aba só aparece no andar 80) e o HUD. Roda a cada 1s
-    // junto dos outros ticks leves (sistema.js) — o maxAndar muda no avanço.
+    // Reflete o gate (a aba só aparece no andar 80), o HUD e o estado
+    // trancado/destrancado de cada prédio. Roda a cada 1s junto dos outros
+    // ticks leves (sistema.js) — o maxAndar muda no avanço.
     function sincroniza() {
         const botao = document.getElementById("btnCidade");
         if (botao) botao.hidden = !desbloqueada();
         if (aberta()) atualizaHud();
+
+        Object.keys(GATES).forEach(id => {
+            const predio = document.querySelector('[data-cidade="' + id + '"]');
+            if (!predio) return;
+            const bloqueado = travado(id);
+            predio.classList.toggle("is-travado", bloqueado);
+            const selo = predio.querySelector(".cidade-predio__lock");
+            if (selo) selo.textContent = bloqueado ? "🔒 Andar " + GATES[id] : "";
+        });
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -98,12 +121,20 @@
         const el = painel();
         if (el) {
             el.querySelectorAll("[data-cidade]").forEach(b => {
-                b.addEventListener("click", () => abrePredio(b.getAttribute("data-cidade")));
+                const id = b.getAttribute("data-cidade");
+                // selo de "trancado" (só nos prédios; o botão × não tem gate)
+                if (id !== "fechar" && GATES[id] !== undefined && !b.querySelector(".cidade-predio__lock")) {
+                    const selo = document.createElement("span");
+                    selo.className = "cidade-predio__lock";
+                    selo.setAttribute("aria-hidden", "true");
+                    b.appendChild(selo);
+                }
+                b.addEventListener("click", () => abrePredio(id));
             });
         }
         sincroniza();
     });
 
     window.Tapeira = window.Tapeira || {};
-    window.Tapeira.Cidade = { ANDAR_CIDADE, desbloqueada, abrir, fechar, alternar, sincroniza };
+    window.Tapeira.Cidade = { ANDAR_CIDADE, GATES, desbloqueada, travado, abrir, fechar, alternar, sincroniza };
 })();

@@ -79,8 +79,9 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
       passeando (2, em loop). Animações desligadas com `prefers-reduced-motion`.
 
 ### Fase 2 — Desbloqueio gradual dos prédios
-- [ ] Cada prédio com gate (tabela) e estado **"trancado"** mostrando o requisito.
-- [ ] Teste: gates batem com a tabela.
+- [x] Cada prédio com gate (tabela) e estado **"trancado"** (apagado + selo "🔒 Andar N";
+      clicar avisa o requisito e não abre o painel). `GATES` em `ui-cidade.js`.
+- [x] Teste: gates batem com a tabela (84/90/100/110) + trancado não abre.
 
 ### Fase 3 — 🏠 Casa
 - [ ] Níveis de conforto (upgrades) aplicados no `progresso-offline.js` (ponto único).
