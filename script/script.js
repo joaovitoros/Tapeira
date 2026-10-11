@@ -489,10 +489,8 @@ function EhPortaoEsmeralda(piso){
 }
 
 function VoltaAndar(){
-	console.log("ENTROU NO VOLTA ANDAR");
 	// reset livre a partir do andar 20; portão de reset quando andar >= andarVolta
 	if(andar>=Math.min(andarVolta, 20)){
-		console.log("PODE VOLTAR");
 		const andarAnterior = andar;
 		const ehPortao = andar >= andarVolta;
 		// bônus de dano: cada portão >= 35 paga +5% uma vez só (com acumulado)
@@ -501,7 +499,6 @@ function VoltaAndar(){
 		const danoRecebido = ehPortao ? PagaDanoReset(andar) : 0;
 		let esmeraldasRecebidas = 0;
 		if(ehPortaoEsmeralda && andar>=maxAndar){
-			console.log(numVoltas);
 			numVoltas++;
 			esmeraldasRecebidas = numVoltas;
 			esmeraldas = esmeraldas+numVoltas;
@@ -543,7 +540,6 @@ function VoltaAndar(){
 		
 		andar=1;
 		qtdInimigosAndar=1;
-		console.log("1 "+mulGoldInicial);
 		mulGold = mulGoldInicial;
 		mulGold = mulGold*1.25;
 

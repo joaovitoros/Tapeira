@@ -511,20 +511,49 @@ test("telas: ESC (FechaJanelasAbertas) fecha tudo", async () => {
             const vis = id => document.getElementById(id)?.style.visibility;
             AbreLoja(false);
             UI.showSkillUpgradePanel();
-            const antes = { loja: vis("Loja"), skills: !!document.getElementById("skillUpgradeModal") };
+            UI.showItensBuild(); // tela de leitura dos itens da build
+            const antes = {
+                loja: vis("Loja"),
+                skills: !!document.getElementById("skillUpgradeModal"),
+                build: !!document.getElementById("modalItensBuildView"),
+                classe: document.body.classList.contains("itens-build-tela-aberta")
+            };
             const fechou = FechaJanelasAbertas();
             return {
                 antes,
                 fechou,
                 loja: vis("Loja"),
-                skills: !!document.getElementById("skillUpgradeModal")
+                skills: !!document.getElementById("skillUpgradeModal"),
+                build: !!document.getElementById("modalItensBuildView"),
+                classe: document.body.classList.contains("itens-build-tela-aberta")
             };
         });
         assert.equal(r.antes.loja, "visible");
         assert.equal(r.antes.skills, true);
+        assert.equal(r.antes.build, true);
+        assert.equal(r.antes.classe, true);
         assert.equal(r.fechou, true);
         assert.equal(r.loja, "hidden");
         assert.equal(r.skills, false);
+        assert.equal(r.build, false);
+        assert.equal(r.classe, false);
+        assert.deepEqual(pageErrors, []);
+    } finally { await context.close(); }
+});
+
+test("telas: ESC na tela de itens da build fecha sem abrir a pausa", async () => {
+    const { context, page, pageErrors } = await openPage();
+    try {
+        await page.evaluate(() => UI.showItensBuild());
+        await page.waitForSelector("#modalItensBuildView");
+        await page.keyboard.press("Escape");
+        await page.waitForFunction(() => !document.getElementById("modalItensBuildView"));
+        const r = await page.evaluate(() => ({
+            classe: document.body.classList.contains("itens-build-tela-aberta"),
+            pausado: document.getElementById("game-root")?.classList.contains("game-paused") || !!document.getElementById("pauseOverlay")
+        }));
+        assert.equal(r.classe, false);
+        assert.equal(r.pausado, false);
         assert.deepEqual(pageErrors, []);
     } finally { await context.close(); }
 });

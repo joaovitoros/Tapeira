@@ -194,32 +194,44 @@ body{
 @media (prefers-reduced-motion: reduce) {
 	.buff-alquimista { animation: none; }
 }
+/* Ícone do "Dano automático": item da fileira #container-Habilidades, com o
+   mesmo tamanho do ícone das skills de combate (.combat-skill__icon). */
 .habilidade1{
-	position: absolute;
-	height: 100px;
-	width: 100px;
-	left: 290px;
-	top: 520px;
+	flex: 0 0 auto;
+	align-self: center;
+	width: clamp(34px, 4vw, 52px);
+	height: clamp(34px, 4vw, 52px);
 }
 .habilidade1:hover{
 	cursor: pointer;
 }
+/* Barra do "Dano automático": item da fileira #container-Habilidades, com o
+   mesmo visual da barra das skills de combate (.combat-skill__meter). */
 #BaraQTDHab1{
-	position: Absolute;
-	background-color: #00a;
-    left: 3px;
-	top: 1px;
-    height: 7vw;
-    width: 3vw;	
+	position: absolute;
+	left: 1px;
+	bottom: 1px;
+	width: calc(100% - 2px);
+	height: 0;
+	background: linear-gradient(180deg, #77c7ff, #3578ff 55%, #1946c2);
+	border-radius: 0 0 4px 4px;
+	box-shadow: 0 0 8px rgba(69, 145, 255, 0.5);
+	transition: height 180ms ease;
 }
 
 #BaraQTDHab1Borda{
-	position: Absolute;
-	background-color: #003;
-    left: 380px;
-	top: 510px;
-    height: 7.5vw;
-    width: 3.6vw;
+	position: relative;
+	flex: 0 0 auto;
+	align-self: flex-end;
+	box-sizing: border-box;
+	width: clamp(18px, 2vw, 26px);
+	height: clamp(76px, 10vh, 120px);
+	padding: 1px;
+	overflow: hidden;
+	background: linear-gradient(180deg, rgba(15, 21, 35, 0.96), rgba(5, 9, 18, 0.96));
+	border: 1px solid rgba(137, 177, 255, 0.58);
+	border-radius: 6px;
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 12px rgba(67, 126, 255, 0.2);
 }
 /* ------------------------------ INIMIGOS ------------------------------ */
 .inimigo1, .inimigo2, .inimigo3, .inimigo4{
@@ -528,11 +540,65 @@ tr, td, th{
 	bottom: auto;
 	width: 100%;
 	min-width: 0;
+	height: auto;
+	max-height: none;
+	overflow: visible;
 	padding: 0;
 	background: transparent;
 	border: 0;
 	box-shadow: none;
 	z-index: auto;
+}
+
+/* Ajustes (config): linhas com toggle */
+.config-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.8em;
+	padding: 0.5em 0;
+	border-bottom: 1px solid rgba(120, 160, 255, 0.12);
+	cursor: pointer;
+}
+
+.config-item:last-child {
+	border-bottom: 0;
+}
+
+.config-item__texto {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.25;
+}
+
+.config-item__texto b {
+	color: #e6edf3;
+	font-size: 0.95em;
+}
+
+.config-item__texto span {
+	color: #9aa7bd;
+	font-size: 0.82em;
+	font-weight: 400;
+}
+
+.config-item input[type="checkbox"] {
+	flex: none;
+	width: 1.15em;
+	height: 1.15em;
+	accent-color: #4da6ff;
+	cursor: pointer;
+}
+
+/* "Reduzir movimento" (Ajustes): desliga as animações — equivale ao
+   prefers-reduced-motion, mas por escolha do jogador. */
+html.config-sem-movimento *,
+html.config-sem-movimento *::before,
+html.config-sem-movimento *::after {
+	animation-duration: 1ms !important;
+	animation-iteration-count: 1 !important;
+	transition-duration: 1ms !important;
+	scroll-behavior: auto !important;
 }
 
 /* TITULOS */
@@ -1579,6 +1645,9 @@ body {
 	justify-items: center;
 	gap: 18px;
 	width: min(360px, calc(100vw - 40px));
+	/* content-box: desconta o padding (28px×2) além da folga do overlay (40px) */
+	max-height: calc(100dvh - 96px);
+	overflow-y: auto;
 	padding: 28px;
 	border: 1px solid rgba(229, 183, 96, 0.68);
 	border-radius: 14px;
@@ -1748,29 +1817,21 @@ body {
 	display: none;
 }
 
-#BaraQTDHab1Borda {
-	position: absolute;
-	top: auto;
-	bottom: 1rem;
-	left: 12rem;
-	box-sizing: border-box;
-	width: clamp(30px, 3vw, 44px);
-	height: clamp(76px, 10vh, 120px);
-}
-
-#BaraQTDHab1 {
-	top: auto;
-	bottom: 3px;
-	left: 3px;
-	width: calc(100% - 6px);
-	height: 100%;
-}
-
-.skill-unlock-panel {
+/* Fileira das habilidades: âncora fixa no rodapé. O ícone do "Dano
+   automático", a barra de carga e o painel de skills de combate são itens
+   desta mesma fileira — assim todos compartilham posição e tamanho. */
+#container-Habilidades {
 	position: fixed;
 	bottom: 1rem;
 	left: 22rem;
 	z-index: 15;
+	display: flex;
+	align-items: flex-end;
+	gap: 5px;
+	pointer-events: auto;
+}
+
+.skill-unlock-panel {
 	display: flex;
 	align-items: flex-end;
 	gap: 5px;
@@ -1891,14 +1952,6 @@ body {
 .combat-skill:focus-visible {
 	outline: 2px solid #ffd36b;
 	outline-offset: 2px;
-}
-
-.habilidade1 {
-	top: auto;
-	bottom: 1rem;
-	left: 15rem;
-	width: clamp(60px, 5vw, 88px);
-	height: clamp(60px, 5vw, 88px);
 }
 
 #container-Loja {
@@ -2919,23 +2972,6 @@ html.crit-shake {
 
 #container-Botoes button:active {
 	transform: translateX(1px) translateY(1px);
-}
-
-#BaraQTDHab1Borda {
-	padding: 3px;
-	background: linear-gradient(180deg, rgba(15, 21, 35, 0.96), rgba(5, 9, 18, 0.96));
-	border: 1px solid rgba(137, 177, 255, 0.58);
-	border-radius: 7px;
-	box-shadow:
-		0 4px 14px rgba(0, 0, 0, 0.4),
-		0 0 12px rgba(67, 126, 255, 0.2);
-	overflow: hidden;
-}
-
-#BaraQTDHab1 {
-	background: linear-gradient(180deg, #77c7ff, #3578ff 55%, #1946c2);
-	border-radius: 3px;
-	box-shadow: 0 0 12px rgba(69, 145, 255, 0.5);
 }
 
 .player,
@@ -4333,22 +4369,6 @@ input:focus-visible {
 		transform: none;
 	}
 
-	#BaraQTDHab1Borda {
-		right: 8px;
-		bottom: calc(62px + env(safe-area-inset-bottom));
-		left: auto;
-		width: 30px;
-		height: 72px;
-	}
-
-	.habilidade1 {
-		right: 48px;
-		bottom: calc(62px + env(safe-area-inset-bottom));
-		left: auto;
-		width: 52px;
-		height: 52px;
-	}
-
 	#container-Loja {
 		top: auto;
 		right: 12px;
@@ -4670,24 +4690,6 @@ input:focus-visible {
 		height: 44px;
 		min-height: 44px;
 		touch-action: manipulation;
-	}
-
-	#BaraQTDHab1Borda,
-	.habilidade1 {
-		bottom: max(6px, env(safe-area-inset-bottom));
-	}
-
-	#BaraQTDHab1Borda {
-		right: 140px;
-		left: auto;
-		height: 54px;
-	}
-
-	.habilidade1 {
-		right: 184px;
-		left: auto;
-		width: 42px;
-		height: 42px;
 	}
 
 	#container-Loja,
@@ -5246,28 +5248,10 @@ input:focus-visible {
 	}
 
 	/* Neste intervalo a linha de botões ocupa a faixa inferior (#container-opcoes em
-	   bottom: 12px com botões de 50px, ou seja, topo em y = altura - 62). A barra de
-	   carga e a espada da habilidade de dano precisam ficar ACIMA dessa linha
-	   (bottom: 70px) e alinhadas à base (12rem/15rem), senão ficam por baixo dos
-	   botões (z-index) e impossíveis de clicar. O painel de skills de combate sobe
-	   junto, mantendo a ordem base: barra -> espada -> painel. */
-	#BaraQTDHab1Borda {
-		right: auto;
-		bottom: 70px;
-		left: 12rem;
-		width: 36px;
-		height: 78px;
-	}
-
-	.habilidade1 {
-		right: auto;
-		bottom: 70px;
-		left: 15rem;
-		width: 58px;
-		height: 58px;
-	}
-
-	.skill-unlock-panel {
+	   bottom: 12px com botões de 50px, ou seja, topo em y = altura - 62). A fileira
+	   de habilidades sobe acima dessa linha (bottom: 70px) para não ficar por baixo
+	   dos botões (z-index). */
+	#container-Habilidades {
 		bottom: 70px;
 		left: 22rem;
 	}
@@ -5397,7 +5381,7 @@ input:focus-visible {
 		top: calc(64px + env(safe-area-inset-top));
 	}
 
-	.skill-unlock-panel {
+	#container-Habilidades {
 		right: 100px;
 		bottom: calc(62px + env(safe-area-inset-bottom));
 		left: auto;
@@ -5408,13 +5392,19 @@ input:focus-visible {
 		height: 72px;
 	}
 
-	.combat-skill__icon {
+	.combat-skill__icon,
+	.habilidade1 {
 		width: 40px;
 		height: 40px;
 	}
 
-	.combat-skill__meter {
+	.combat-skill__meter,
+	#BaraQTDHab1Borda {
 		width: 18px;
+	}
+
+	#BaraQTDHab1Borda {
+		height: 72px;
 	}
 }
 
@@ -5432,7 +5422,7 @@ input:focus-visible {
 		top: 6px;
 	}
 
-	.skill-unlock-panel {
+	#container-Habilidades {
 		bottom: max(6px, env(safe-area-inset-bottom));
 		right: auto;
 		left: 22rem;
@@ -5443,13 +5433,19 @@ input:focus-visible {
 		height: 54px;
 	}
 
-	.combat-skill__icon {
+	.combat-skill__icon,
+	.habilidade1 {
 		width: 34px;
 		height: 34px;
 	}
 
-	.combat-skill__meter {
+	.combat-skill__meter,
+	#BaraQTDHab1Borda {
 		width: 18px;
+	}
+
+	#BaraQTDHab1Borda {
+		height: 54px;
 	}
 }
 
@@ -5648,24 +5644,6 @@ input:focus-visible {
 		transform: none;
 	}
 
-	#BaraQTDHab1Borda {
-		right: 12px;
-		/* Acima da nav (que vai até 62px do rodapé) — antes bottom:12 ficava
-		   boa parte dela embaixo dos botões (z-index 30). */
-		bottom: calc(68px + env(safe-area-inset-bottom));
-		left: auto;
-		width: 34px;
-		height: 78px;
-	}
-
-	.habilidade1 {
-		right: 58px;
-		bottom: calc(68px + env(safe-area-inset-bottom));
-		left: auto;
-		width: 52px;
-		height: 52px;
-	}
-
 	#container-Loja,
 	#container-Status,
 	#container-SalvaCarrega {
@@ -5710,7 +5688,7 @@ input:focus-visible {
 		overflow: auto;
 	}
 
-	.skill-unlock-panel {
+	#container-Habilidades {
 		right: 116px;
 		bottom: calc(68px + env(safe-area-inset-bottom));
 		left: auto;
@@ -5721,13 +5699,19 @@ input:focus-visible {
 		height: 78px;
 	}
 
-	.combat-skill__icon {
+	.combat-skill__icon,
+	.habilidade1 {
 		width: 42px;
 		height: 42px;
 	}
 
-	.combat-skill__meter {
+	.combat-skill__meter,
+	#BaraQTDHab1Borda {
 		width: 20px;
+	}
+
+	#BaraQTDHab1Borda {
+		height: 78px;
 	}
 }
 

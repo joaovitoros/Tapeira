@@ -88,7 +88,9 @@ function PausarJogo() {
     panel.appendChild(acoes);
     overlay.appendChild(panel);
     document.getElementById("game-root")?.appendChild(overlay);
-    resume.focus();
+    // preventScroll: com o painel agora rolável, focar o botão jogaria a
+    // rolagem pro fim e esconderia o título ao abrir.
+    resume.focus({ preventScroll: true });
 }
 
 function AlternaPausa() {
@@ -204,6 +206,16 @@ function FechaJanelasAbertas() {
             fechou = true;
         }
     });
+
+    // Telas de itens da build (leitura pelo Status ou escolha do baú de build):
+    // fecham pelo método próprio pra também soltar a classe do <body>.
+    if (document.getElementById("modalItensBuild")) {
+        UI.fechaEscolhaItensBuild();
+        fechou = true;
+    } else if (document.getElementById("modalItensBuildView")) {
+        UI.fechaItensBuildTela();
+        fechou = true;
+    }
 
     // Celebração de reset (banner temporário)
     const celebracao = document.getElementById("celebracaoReset");

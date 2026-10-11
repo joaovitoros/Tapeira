@@ -23,8 +23,6 @@ function Carregar(saveData, calculaOffline = false) {
 	inimigosDerrotados = save.inimigosDerrotados ?? 0;
 	limiteInimigos = save.limiteInimigos ?? 1;
 
-	console.log("1 " + save.gold, save.totalGold);
-
 	// 🔥 GARANTIA ABSOLUTA
 	gold = GoldNumber.fromMantissaExponent(
 		save.gold?.m ?? 0,

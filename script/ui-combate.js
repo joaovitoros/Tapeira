@@ -6,6 +6,8 @@
 Object.assign(UI, {
     showDamageNumber(target, damage, critical) {
         if (!target) return;
+        // preferência "Números de dano" desligada suprime os números flutuantes
+        if (window.Tapeira?.Config && !window.Tapeira.Config.ativo("numerosDano")) return;
 
         const rect = target.getBoundingClientRect();
         const marker = document.createElement("div");
@@ -306,19 +308,20 @@ Object.assign(UI, {
     spawnSkill() {
         const habilidade = document.createElement("img");
 
-        habilidade.src = "imagens/espada-habilidade.svg";
+        habilidade.src = ICONE_SKILL.damage;
         habilidade.className = "habilidade1";
         habilidade.id = "habilidade1";
         habilidade.addEventListener("click", () => UsaHabilidadeDano());
 
-        document.body.appendChild(habilidade);
+        const containerHabilidades = document.getElementById("container-Habilidades");
+        (containerHabilidades || document.body).prepend(habilidade);
 
         ChamaSom("audio7");
     },
 
     removeSkill() {
         const el = document.getElementById("habilidade1");
-        if (el) document.body.removeChild(el);
+        if (el) el.remove();
     },
 
     // =========================

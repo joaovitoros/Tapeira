@@ -424,6 +424,8 @@ function Avancar() {
 // a tela a cada golpe quando a chance de crítico está alta.
 let ultimoFeedbackCriticoMs = 0;
 function FeedbackCritico() {
+	// preferência "Tremor no crítico" desligada
+	if (window.Tapeira?.Config && !window.Tapeira.Config.ativo("tremerCritico")) return;
 	const agora = Date.now();
 	if (agora - ultimoFeedbackCriticoMs < 600) return;
 	ultimoFeedbackCriticoMs = agora;
@@ -447,6 +449,8 @@ function FeedbackCritico() {
 }
 
 function animarImpacto(el, critico, eletrico = false) {
+	// preferência "Efeitos de impacto" desligada
+	if (window.Tapeira?.Config && !window.Tapeira.Config.ativo("efeitosImpacto")) return;
 	const rect = el.getBoundingClientRect();
 	const recuoBase = eletrico ? 18 : 12;
 	const recuo = rect.left + rect.width / 2 < window.innerWidth / 2 ? -recuoBase : recuoBase;

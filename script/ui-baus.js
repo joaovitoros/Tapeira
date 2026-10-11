@@ -10,6 +10,8 @@ Object.assign(UI, {
     chestOpeningTimeout: null,
 
     showChestOpening(chestKind, rewardKind, title, detail, accentColor = "#ffd34f") {
+        // preferência "Avisos de baú" desligada suprime a tela de abertura
+        if (window.Tapeira?.Config && !window.Tapeira.Config.ativo("avisosBau")) return;
         this.removeChestOpening();
         // Chuva de meteoros: nenhuma tela de abertura de baú — o overlay
         // escurece a arena por 3,5s e esconde os fragmentos no chão. A

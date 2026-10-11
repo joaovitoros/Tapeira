@@ -86,7 +86,7 @@ function VerificaHabilidade(){
 		att2 = document.createAttribute("class");
 		att3 = document.createAttribute("id");
 		att4 = document.createAttribute("onClick");
-		att1.value = "imagens/espada-habilidade.svg";
+		att1.value = ICONE_SKILL.damage;
 		att2.value = "habilidade1";
 		att3.value = "habilidade1";
 		att4.value = "UsaHabilidadeDano()";
@@ -94,7 +94,8 @@ function VerificaHabilidade(){
 		habilidade.setAttributeNode(att2);
 		habilidade.setAttributeNode(att3);
 		habilidade.setAttributeNode(att4);
-		document.body.appendChild(habilidade);
+		const containerHabilidades = document.getElementById("container-Habilidades");
+		(containerHabilidades || document.body).prepend(habilidade);
 		ChamaSom('audio7');
 	}
 	if(qtdCarregaHabilidade>abateshabilidadeDano){
@@ -104,11 +105,12 @@ function VerificaHabilidade(){
 
 function AtualizaQTDHabildiade1(){
 
-	aux = abateshabilidadeDano;
-	aux = aux-qtdCarregaHabilidade;
+	// Barra igual às skills de combate: começa vazia e enche conforme carrega
+	// (antes era invertida: cheia e esvaziando).
+	porcentagem = abateshabilidadeDano > 0
+		? qtdCarregaHabilidade * 100 / abateshabilidadeDano
+		: 0;
 
-	porcentagem = aux * 100 / abateshabilidadeDano;
-	
 	document.getElementById("BaraQTDHab1").style.height=Math.max(0, Math.min(100, porcentagem))+"%";
 	document.getElementById("QTDTempoHab1").innerHTML=qtdCarregaHabilidade;
 	document.getElementById("BaraQTDHab1").style.color="#fff";

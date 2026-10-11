@@ -250,7 +250,6 @@ function AutoSaveLocal() {
 			JSON.stringify(save)
 		);
 
-		console.log("Auto Save realizado");
 		return true;
 
 	} catch (e) {
@@ -268,7 +267,6 @@ function CarregarAutoSave() {
 		const save = localStorage.getItem("autoSaveCaverna");
 
 		if (!save) {
-			console.log("Nenhum Auto Save encontrado");
 			MostraInfos();
 			return false;
 		}
@@ -293,6 +291,4 @@ function LimparAutoSave() {
 
 	localStorage.removeItem("autoSaveCaverna");
 	autoSaveBloqueadoPorIncompatibilidade = false;
-
-	console.log("Auto Save removido");
 }

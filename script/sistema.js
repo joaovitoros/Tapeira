@@ -501,7 +501,6 @@ function Resetar() {
 	if (document.getElementById("skillUpgradeModal")) UI.showSkillUpgradePanel();
 
 	mulGoldInicial = mulGold;
-	console.log("2 " + mulGoldInicial);
 
 	////
 	if (danoBonus != 0 && !isNaN(danoBonus)) {

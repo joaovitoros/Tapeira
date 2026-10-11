@@ -99,6 +99,8 @@ const UI = {
     },
 
     showMilestone(title, message) {
+        // preferência "Anúncios de marco" desligada suprime os banners
+        if (window.Tapeira?.Config && !window.Tapeira.Config.ativo("anunciosMarco")) return;
         this.milestoneQueue.push({ title, message });
         if (!this.milestoneTimeout) this.displayNextMilestone();
     },
