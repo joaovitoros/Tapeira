@@ -9689,67 +9689,134 @@ img.ramos-tree-no__tile {
 	border-color: rgba(255, 224, 160, 0.8);
 }
 
+/* ===================== CIDADE — CENA (vila 2.5D) =====================
+   Inspirada na arte-base: prédios ao redor de uma praça central com a fonte
+   de cristal (Casa no topo-centro, Mercado/Pesquisa nas laterais de cima,
+   Fábrica/Fazenda embaixo). Posicionamento absoluto por porcentagem, com
+   "profundidade" — os prédios de baixo (mais perto) ficam um pouco maiores. */
 .cidade-cena {
 	position: relative;
 	z-index: 0;
 	flex: 1 1 auto;
-	display: flex;
-	align-items: center;
-	align-content: center;
-	justify-content: center;
-	flex-wrap: wrap;
-	gap: clamp(4px, 1.2vw, 16px);
-	padding: clamp(10px, 2vw, 28px) clamp(8px, 2vw, 24px);
-	background:
-		radial-gradient(130% 80% at 50% 120%, rgba(255, 190, 73, 0.14), transparent 62%),
-		linear-gradient(180deg, rgba(19, 25, 37, 0.92), rgba(8, 11, 17, 0.99));
+	min-height: 0;
+	overflow: hidden;
+	padding: 0;
 	border: 1px solid rgba(255, 255, 255, 0.06);
 	border-radius: 14px;
-	overflow: hidden;
+	background:
+		radial-gradient(120% 90% at 50% 14%, rgba(43, 63, 112, 0.55), transparent 58%),
+		radial-gradient(150% 90% at 50% 118%, rgba(255, 190, 73, 0.12), transparent 60%),
+		linear-gradient(180deg, #0a0f18, #05070c);
 }
 
-/* ---- Decoração da cena (props de natureza/luz/estruturas) ----------------
-   A decoração vem ANTES dos prédios no HTML, então fica atrás deles por ordem
-   de pintura (não precisa de z-index negativo). O chão é uma faixa que começa
-   na linha de base dos prédios; os props "sentam" nessa linha (ancorados pelo
-   centro-embaixo com translate(-50%, -100%)). */
+/* brilho de fundo (profundidade da caverna) */
+.cidade-fundo {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	background:
+		radial-gradient(45% 35% at 50% 52%, rgba(70, 140, 255, 0.16), transparent 70%),
+		radial-gradient(70% 55% at 50% 88%, rgba(60, 90, 60, 0.18), transparent 70%);
+	pointer-events: none;
+}
+
+/* cristais incrustados nas bordas */
+.cidade-cristal {
+	position: absolute;
+	z-index: 0;
+	height: clamp(28px, 4vw, 66px);
+	width: auto;
+	opacity: 0.9;
+	filter: drop-shadow(0 0 10px rgba(60, 170, 255, 0.55));
+	pointer-events: none;
+}
+
+.cidade-cristal--1 { left: 6%;  top: 8%;  height: clamp(30px, 4.4vw, 72px); }
+.cidade-cristal--2 { left: 92%; top: 12%; height: clamp(26px, 3.6vw, 58px); }
+.cidade-cristal--3 { left: 3%;  top: 60%; height: clamp(24px, 3.4vw, 54px); }
+.cidade-cristal--4 { left: 95%; top: 66%; height: clamp(30px, 4.2vw, 66px); }
+
+/* praça central (piso) + fonte de cristal */
+.cidade-praca {
+	position: absolute;
+	left: 50%;
+	top: 55%;
+	width: 40%;
+	aspect-ratio: 1 / 0.62;
+	transform: translate(-50%, -50%);
+	z-index: 0;
+	border-radius: 50%;
+	background:
+		radial-gradient(60% 60% at 50% 42%, rgba(120, 150, 190, 0.35), rgba(70, 90, 120, 0.18) 55%, transparent 72%),
+		radial-gradient(80% 80% at 50% 60%, rgba(40, 55, 80, 0.5), transparent 70%);
+	box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+	pointer-events: none;
+}
+
+.cidade-fonte {
+	position: absolute;
+	left: 50%;
+	top: 54%;
+	width: 13%;
+	transform: translate(-50%, -50%);
+	z-index: 2;
+	pointer-events: none;
+}
+
+.cidade-fonte img {
+	display: block;
+	width: 100%;
+	height: auto;
+	filter: drop-shadow(0 0 20px rgba(60, 170, 255, 0.6)) drop-shadow(0 12px 16px rgba(0, 0, 0, 0.55));
+	animation: cidadeFonteBrilha 3.4s ease-in-out infinite alternate;
+}
+
+@keyframes cidadeFonteBrilha {
+	from { filter: drop-shadow(0 0 14px rgba(60, 170, 255, 0.45)) drop-shadow(0 12px 16px rgba(0, 0, 0, 0.55)); }
+	to   { filter: drop-shadow(0 0 26px rgba(90, 200, 255, 0.85)) drop-shadow(0 12px 16px rgba(0, 0, 0, 0.55)); }
+}
+
+/* ---- Chão e decoração da cena (props) ----
+   A decoração vem ANTES dos prédios no HTML: fica atrás deles por ordem de
+   pintura. Os props "sentam" no ponto informado (centro-embaixo). */
 .cidade-chao {
 	position: absolute;
-	left: 0;
-	right: 0;
-	top: 54%;
-	bottom: 0;
+	left: -6%;
+	right: -6%;
+	top: 42%;
+	bottom: -12%;
 	z-index: 0;
+	border-radius: 50% 50% 0 0 / 20% 20% 0 0;
 	background: linear-gradient(180deg,
-		rgba(76, 130, 64, 0) 0%,
-		rgba(64, 112, 54, 0.5) 12%,
-		rgba(38, 72, 32, 0.88) 52%,
-		rgba(16, 32, 15, 0.98) 100%);
+		rgba(74, 112, 60, 0) 0%,
+		rgba(58, 94, 48, 0.42) 20%,
+		rgba(38, 62, 32, 0.68) 58%,
+		rgba(18, 28, 16, 0.82) 100%);
 	pointer-events: none;
 }
 
 .cidade-decor {
 	position: absolute;
-	z-index: 0;
-	height: clamp(40px, 5.4vw, 88px);
+	z-index: 1;
+	height: clamp(34px, 4.6vw, 76px);
 	width: auto;
 	pointer-events: none;
 	transform: translate(-50%, -100%);
 	filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.45));
 }
 
-.cidade-decor--moita-esq    { left: 5%;  top: 55%; height: clamp(46px, 6vw, 100px); }
-.cidade-decor--pedras-esq   { left: 12.5%; top: 57%; height: clamp(28px, 3.4vw, 52px); }
-.cidade-decor--poste-esq    { left: 9%;  top: 55%; height: clamp(74px, 9.4vw, 154px); }
-.cidade-decor--carrinho-dir { left: 91%; top: 56%; height: clamp(54px, 6.6vw, 110px); }
-.cidade-decor--barril-dir   { left: 84.5%; top: 57%; height: clamp(40px, 5vw, 82px); }
-.cidade-decor--moita-dir    { left: 96%; top: 56%; height: clamp(42px, 5.4vw, 88px); }
+.cidade-decor--moita-esq    { left: 30%; top: 47%; height: clamp(38px, 5vw, 84px); }
+.cidade-decor--pedras-esq   { left: 39%; top: 49%; height: clamp(24px, 3vw, 46px); }
+.cidade-decor--poste-esq    { left: 33%; top: 63%; height: clamp(66px, 8.4vw, 138px); }
+.cidade-decor--carrinho-dir { left: 67%; top: 64%; height: clamp(46px, 5.8vw, 96px); }
+.cidade-decor--barril-dir   { left: 61%; top: 50%; height: clamp(34px, 4.4vw, 72px); }
+.cidade-decor--moita-dir    { left: 70%; top: 47%; height: clamp(36px, 4.8vw, 78px); }
 
 /* Lanternas penduradas: pendem do topo por uma corrente (::before) */
 .cidade-decor--lanterna {
 	top: 0;
-	width: clamp(30px, 3.4vw, 54px);
-	height: clamp(96px, 12vw, 190px);
+	width: clamp(26px, 3vw, 48px);
+	height: clamp(80px, 10vw, 160px);
 	transform: translateX(-50%);
 	background: url("../imagens/cidade/decor/lanterna-pend.png") center bottom / contain no-repeat;
 }
@@ -9765,19 +9832,18 @@ img.ramos-tree-no__tile {
 	background: linear-gradient(180deg, #6b5230, #453320);
 }
 
-.cidade-decor--lanterna-esq { left: 15%; }
-.cidade-decor--lanterna-dir { left: 85%; }
+.cidade-decor--lanterna-esq { left: 26%; }
+.cidade-decor--lanterna-dir { left: 74%; }
 
-/* Enfeites no campo (abaixo da linha dos prédios) */
-.cidade-decor--campo-cogumelos { left: 30%; top: 66%; height: clamp(34px, 4.2vw, 70px); }
-.cidade-decor--campo-flores    { left: 70%; top: 71%; height: clamp(36px, 4.4vw, 74px); }
+/* Enfeites no campo */
+.cidade-decor--campo-cogumelos { left: 44%; top: 71%; height: clamp(30px, 3.8vw, 62px); }
+.cidade-decor--campo-flores    { left: 57%; top: 73%; height: clamp(32px, 4vw, 66px); }
 
 /* Ursinhos passeando: andam da esquerda pra direita e reentram pela esquerda
-   (o "salto" do loop acontece fora da tela). O corpo balança (bob) pra dar
-   ideia de passos. */
+   (o "salto" do loop acontece fora da tela). O corpo balança (bob). */
 .cidade-decor--urso {
-	top: 61%;
-	height: clamp(44px, 5.6vw, 92px);
+	top: 67%;
+	height: clamp(40px, 5vw, 84px);
 	animation: cidadeUrsoAnda 34s linear infinite;
 }
 
@@ -9789,8 +9855,8 @@ img.ramos-tree-no__tile {
 }
 
 .cidade-decor--urso2 {
-	top: 67%;
-	height: clamp(36px, 4.6vw, 76px);
+	top: 73%;
+	height: clamp(34px, 4.2vw, 70px);
 	animation-duration: 46s;
 	animation-delay: -12s;
 }
@@ -9809,64 +9875,77 @@ img.ramos-tree-no__tile {
 	.cidade-decor--urso { animation: none; left: 28%; }
 	.cidade-decor--urso2 { left: 72%; }
 	.cidade-decor--urso img { animation: none; }
+	.cidade-fonte img { animation: none; }
 }
 
+/* Prédios: posicionados em volta da praça (2.5D), com banner-placa acima */
 .cidade-predio {
-	position: relative;
-	z-index: 1;
-	display: grid;
-	justify-items: center;
-	align-content: end;
-	gap: 2px;
-	min-width: 0;
+	position: absolute;
+	z-index: 3;
+	display: block;
 	padding: 0;
 	border: 0;
 	background: transparent;
 	color: #eaf1fc;
 	font: inherit;
 	cursor: pointer;
-	transition: transform 140ms ease, filter 140ms ease;
+	width: var(--largura, 28%);
+	transform: translate(-50%, -50%) scale(var(--escala, 1));
+	transition: translate 140ms ease, filter 140ms ease;
 }
 
-/* profundidade: ímpares sobem um pouco (leitura de vila) */
-.cidade-predio:nth-child(odd) {
-	transform: translateY(clamp(-34px, -3vh, -10px));
-}
+.cidade-predio--casa     { left: 50%; top: 24%; --largura: 24%; --escala: 1; }
+.cidade-predio--mercado  { left: 18%; top: 38%; --largura: 23%; --escala: 0.96; }
+.cidade-predio--pesquisa { left: 82%; top: 38%; --largura: 23%; --escala: 0.96; }
+.cidade-predio--fabrica  { left: 19%; top: 80%; --largura: 25%; --escala: 1.05; }
+.cidade-predio--fazenda  { left: 81%; top: 80%; --largura: 25%; --escala: 1.05; }
 
 .cidade-predio__img {
 	display: block;
-	width: clamp(130px, 15vw, 220px);
+	width: 100%;
 	height: auto;
 	filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55));
 }
 
 .cidade-predio:hover {
-	transform: translateY(calc(clamp(-34px, -3vh, -10px) - 6px));
+	translate: 0 -8px;
 	filter: brightness(1.08);
-}
-
-.cidade-predio:nth-child(even):hover {
-	transform: translateY(-6px);
 }
 
 .cidade-predio:focus-visible {
 	outline: 2px solid #ffe0a0;
-	outline-offset: 4px;
-	border-radius: 10px;
+	outline-offset: 6px;
+	border-radius: 12px;
+}
+
+/* Banner-placa acima do prédio — como na arte-base */
+.cidade-predio__banner {
+	position: absolute;
+	left: 50%;
+	top: 0;
+	transform: translate(-50%, -78%);
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 14px;
+	border-radius: 999px;
+	background: linear-gradient(180deg, rgba(34, 26, 14, 0.97), rgba(15, 11, 6, 0.97));
+	border: 2px solid rgba(229, 183, 96, 0.9);
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6), inset 0 0 8px rgba(255, 200, 90, 0.18);
+	white-space: nowrap;
+	z-index: 2;
+}
+
+.cidade-predio__icone {
+	font-size: clamp(13px, 1.5vw, 20px);
+	line-height: 1;
 }
 
 .cidade-predio__nome {
-	margin-top: 4px;
 	color: #ffe2a0;
-	font-size: clamp(13px, 1.2vw, 17px);
+	font-size: clamp(11px, 1.15vw, 16px);
 	font-weight: 800;
-	text-align: center;
-	text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
-}
-
-.cidade-predio__abre {
-	color: #9aa7bd;
-	font-size: clamp(10px, 0.85vw, 12px);
+	letter-spacing: 0.02em;
 }
 
 /* Prédio trancado (gate por andar máximo): apagado + selo com o requisito */
@@ -9878,20 +9957,19 @@ img.ramos-tree-no__tile {
 	filter: grayscale(0.9) brightness(0.45) drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55));
 }
 
-.cidade-predio.is-travado .cidade-predio__nome,
-.cidade-predio.is-travado .cidade-predio__abre {
-	opacity: 0.5;
+.cidade-predio.is-travado .cidade-predio__banner {
+	opacity: 0.6;
 }
 
-.cidade-predio.is-travado:hover,
-.cidade-predio.is-travado:nth-child(even):hover {
+.cidade-predio.is-travado:hover {
 	filter: none;
+	translate: 0 0;
 }
 
 .cidade-predio__lock {
 	position: absolute;
-	top: 38%;
 	left: 50%;
+	top: 46%;
 	transform: translate(-50%, -50%);
 	display: none;
 	padding: 3px 10px;
@@ -9903,55 +9981,42 @@ img.ramos-tree-no__tile {
 	font-weight: 800;
 	white-space: nowrap;
 	pointer-events: none;
+	z-index: 3;
 }
 
 .cidade-predio.is-travado .cidade-predio__lock {
 	display: block;
 }
 
+/* ---- Celular: mantém a vila, ajustando posições/tamanhos pro retrato ---- */
 @media (max-width: 700px) {
-	.cidade-cena {
-		gap: 8px 6px;
-		padding: 12px 8px;
-	}
+	.cidade-predio { width: var(--largura-cel, 40%); }
 
-	.cidade-predio__img {
-		width: clamp(84px, 25vw, 140px);
-	}
+	.cidade-predio--casa     { left: 50%; top: 24%; --largura-cel: 44%; }
+	.cidade-predio--mercado  { left: 24%; top: 42%; --largura-cel: 40%; }
+	.cidade-predio--pesquisa { left: 76%; top: 42%; --largura-cel: 40%; }
+	.cidade-predio--fabrica  { left: 26%; top: 76%; --largura-cel: 44%; }
+	.cidade-predio--fazenda  { left: 74%; top: 76%; --largura-cel: 44%; }
 
-	.cidade-predio:nth-child(odd) {
-		transform: translateY(-10px);
-	}
+	.cidade-predio__nome { font-size: 11px; }
+	.cidade-predio__banner { padding: 4px 9px; gap: 4px; }
 
-	.cidade-predio:hover {
-		transform: translateY(-16px);
-	}
+	.cidade-fonte { width: 22%; top: 56%; }
+	.cidade-praca { width: 56%; }
 
-	.cidade-predio:nth-child(even):hover {
-		transform: translateY(-6px);
-	}
-
-	/* Decoração: no celular os prédios quebram em 2 fileiras (3+2), então a
-	   faixa de chão fica sob a fileira de baixo e só sobra espaço nas bordas. */
-	.cidade-chao {
-		top: 62%;
-	}
-
-	.cidade-decor--moita-esq  { left: 7%;  top: 63%; height: 62px; }
-	.cidade-decor--pedras-esq { left: 52%; top: 64%; height: 30px; }
-	.cidade-decor--poste-esq  { left: 92%; top: 62%; height: 96px; }
-	.cidade-decor--lanterna   { width: 30px; height: 96px; }
-	.cidade-decor--campo-cogumelos { left: 30%; top: 72%; height: 44px; }
-	.cidade-decor--campo-flores    { left: 72%; top: 77%; height: 46px; }
-	.cidade-decor--urso            { top: 68%; height: 56px; }
-	.cidade-decor--urso2           { top: 74%; height: 46px; }
-
-	.cidade-decor--carrinho-dir,
-	.cidade-decor--barril-dir,
-	.cidade-decor--moita-dir,
-	.cidade-decor--lanterna-dir {
-		display: none;
-	}
+	.cidade-decor--moita-esq  { left: 50%; top: 48%; height: 44px; }
+	.cidade-decor--pedras-esq { left: 14%; top: 58%; height: 26px; }
+	.cidade-decor--poste-esq  { left: 88%; top: 60%; height: 76px; }
+	.cidade-decor--carrinho-dir { left: 60%; top: 66%; height: 50px; }
+	.cidade-decor--barril-dir { left: 40%; top: 60%; height: 38px; }
+	.cidade-decor--moita-dir  { left: 86%; top: 48%; height: 40px; }
+	.cidade-decor--campo-cogumelos { left: 40%; top: 84%; height: 34px; }
+	.cidade-decor--campo-flores    { left: 62%; top: 86%; height: 36px; }
+	.cidade-decor--lanterna { width: 28px; height: 92px; }
+	.cidade-decor--lanterna-esq { left: 16%; }
+	.cidade-decor--lanterna-dir { left: 84%; }
+	.cidade-decor--urso  { top: 88%; height: 44px; }
+	.cidade-decor--urso2 { top: 93%; height: 38px; }
 }
 
 /* ===================== CASA (painel da Cidade) =====================
