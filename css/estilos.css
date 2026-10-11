@@ -9885,32 +9885,38 @@ img.ramos-tree-no__tile {
 .cidade-decor--campo-cogumelos { left: 44%; top: 71%; height: clamp(30px, 3.8vw, 62px); }
 .cidade-decor--campo-flores    { left: 57%; top: 73%; height: clamp(32px, 4vw, 66px); }
 
-/* Ursinhos passeando: andam da esquerda pra direita e reentram pela esquerda
-   (o "salto" do loop acontece fora da tela). O corpo balança (bob). */
+/* Ursinhos: parados como na arte-base, só com a animação de "idle" (o corpo
+   balança de leve, respirando). */
 .cidade-decor--urso {
+	left: 38%;
 	top: 67%;
 	height: clamp(40px, 5vw, 84px);
-	animation: cidadeUrsoAnda 34s linear infinite;
 }
 
 .cidade-decor--urso img {
 	display: block;
 	height: 100%;
 	width: auto;
-	animation: cidadeUrsoBob 0.55s ease-in-out infinite alternate;
+	animation: cidadeUrsoBob 1.8s ease-in-out infinite alternate;
 }
 
 .cidade-decor--urso2 {
-	top: 73%;
+	left: 61%;
+	top: 71%;
 	height: clamp(34px, 4.2vw, 70px);
-	animation-duration: 46s;
-	animation-delay: -12s;
 }
 
-@keyframes cidadeUrsoAnda {
-	from { left: -7%; }
-	to   { left: 107%; }
+.cidade-decor--urso2 img {
+	animation-delay: -0.9s;
 }
+
+/* mais ursinhos espalhados pela vila (parados, com idle) */
+.cidade-decor--urso3 { left: 33%; top: 56%; height: clamp(30px, 3.8vw, 62px); }
+.cidade-decor--urso4 { left: 67%; top: 54%; height: clamp(30px, 3.8vw, 62px); }
+.cidade-decor--urso5 { left: 44%; top: 76%; height: clamp(38px, 4.8vw, 80px); }
+.cidade-decor--urso6 { left: 57%; top: 63%; height: clamp(34px, 4.2vw, 70px); }
+.cidade-decor--urso7 { left: 40%; top: 59%; height: clamp(30px, 3.8vw, 62px); }
+.cidade-decor--urso8 { left: 53%; top: 74%; height: clamp(36px, 4.4vw, 74px); }
 
 @keyframes cidadeUrsoBob {
 	from { transform: translateY(0); }
@@ -9918,8 +9924,6 @@ img.ramos-tree-no__tile {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.cidade-decor--urso { animation: none; left: 28%; }
-	.cidade-decor--urso2 { left: 72%; }
 	.cidade-decor--urso img { animation: none; }
 	.cidade-fonte img { animation: none; }
 }
@@ -10085,19 +10089,7 @@ img.ramos-tree-no__tile {
 		align-self: stretch;
 	}
 
-	.cidade-decor--moita-esq  { left: 50%; top: 48%; height: 44px; }
-	.cidade-decor--pedras-esq { left: 14%; top: 58%; height: 26px; }
-	.cidade-decor--poste-esq  { left: 88%; top: 60%; height: 76px; }
-	.cidade-decor--carrinho-dir { left: 60%; top: 66%; height: 50px; }
-	.cidade-decor--barril-dir { left: 40%; top: 60%; height: 38px; }
-	.cidade-decor--moita-dir  { left: 86%; top: 48%; height: 40px; }
-	.cidade-decor--campo-cogumelos { left: 40%; top: 84%; height: 34px; }
-	.cidade-decor--campo-flores    { left: 62%; top: 86%; height: 36px; }
-	.cidade-decor--lanterna { width: 28px; height: 92px; }
-	.cidade-decor--lanterna-esq { left: 16%; }
-	.cidade-decor--lanterna-dir { left: 84%; }
-	.cidade-decor--urso  { top: 88%; height: 44px; }
-	.cidade-decor--urso2 { top: 93%; height: 38px; }
+	/* A decoração usa as MESMAS posições do PC — a cena é 3:2 nos dois. */
 }
 
 /* ===================== CASA (painel da Cidade) =====================
