@@ -989,7 +989,7 @@ test("eventos restantes aplicam o bônus do próprio tipo e encerram corretament
                 eventoVeiaQtd = 0;
 
                 eventoAtivo = "veia";
-                Math.random = () => 0.04; // dentro da chance (5%): todo abate solta
+                Math.random = () => 0.02; // dentro da chance (2,5%): todo abate solta
                 EventoAbateVeia(4);
                 const comChance = { esmeraldas, eventoVeiaQtd };
 
@@ -998,7 +998,7 @@ test("eventos restantes aplicam o bônus do próprio tipo e encerram corretament
                 const semChance = { esmeraldas, eventoVeiaQtd };
 
                 eventoAtivo = null;
-                Math.random = () => 0.04;
+                Math.random = () => 0.02;
                 EventoAbateVeia(4);
                 const foraDoEvento = { esmeraldas, eventoVeiaQtd };
 
