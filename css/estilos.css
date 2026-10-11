@@ -1076,9 +1076,14 @@ tr, td, th{
 	overflow: hidden;
 }
 
-/* Opção "Registros transparentes" (Ajustes): o histórico de logs abre
-   translúcido, deixando a caverna visível atrás dele. A marcadora
-   gameModal--logs entra só no modal de Logs (ui.js). */
+/* Opção "Registros transparentes" (Ajustes): deixa os registros mais
+   translúcidos, com o jogo visível atrás — o painel "Registro" da arena
+   (#logAvisos) e o histórico de logs. O painel reage direto à classe do
+   <html>; a marcadora gameModal--logs entra só no modal de Logs (ui.js). */
+html.config-logs-transparente #logAvisos {
+	background: linear-gradient(180deg, rgba(4, 6, 10, 0), rgba(4, 6, 10, 0.22) 45%, rgba(4, 6, 10, 0.35));
+}
+
 html.config-logs-transparente #gameModal.gameModal--logs {
 	background: rgba(0, 0, 0, 0.25);
 }
@@ -10042,13 +10047,16 @@ img.ramos-tree-no__tile {
 
 /* ---- Celular: mantém a vila, ajustando posições/tamanhos pro retrato ---- */
 @media (max-width: 700px) {
-	.cidade-predio { width: var(--largura-cel, 40%); }
+	/* no celular a cena é ampliada (preenche a altura), então os prédios
+	   precisam ser menores pra não parecerem gigantes na tela do aparelho.
+	   As POSIÇÕES são as mesmas do PC (a cena é 3:2 nos dois). */
+	.cidade-predio { width: var(--largura-cel, 12%); }
 
-	.cidade-predio--casa     { left: 50%; top: 24%; --largura-cel: 44%; }
-	.cidade-predio--mercado  { left: 21%; top: 43%; --largura-cel: 39%; }
-	.cidade-predio--pesquisa { left: 79%; top: 43%; --largura-cel: 39%; }
-	.cidade-predio--fabrica  { left: 25%; top: 76%; --largura-cel: 44%; }
-	.cidade-predio--fazenda  { left: 75%; top: 76%; --largura-cel: 44%; }
+	.cidade-predio--casa     { --largura-cel: 13%; }
+	.cidade-predio--mercado  { --largura-cel: 12%; }
+	.cidade-predio--pesquisa { --largura-cel: 12%; }
+	.cidade-predio--fabrica  { --largura-cel: 13%; }
+	.cidade-predio--fazenda  { --largura-cel: 13%; }
 
 	.cidade-predio__nome { font-size: 10px; }
 	.cidade-predio__banner { padding: 4px 8px; gap: 3px; }
