@@ -9848,6 +9848,35 @@ img.ramos-tree-no__tile {
 	to   { opacity: 0.85; transform: translate(-50%, -50%) scale(1.1); }
 }
 
+/* Brilho quente dos lampiões (tremula como chama) */
+.cidade-lampiao {
+	position: absolute;
+	width: 6%;
+	aspect-ratio: 1;
+	transform: translate(-50%, -50%);
+	z-index: 2;
+	pointer-events: none;
+	border-radius: 50%;
+	background: radial-gradient(50% 50% at 50% 50%,
+		rgba(255, 220, 140, 0.6) 0%,
+		rgba(255, 176, 70, 0.24) 48%,
+		transparent 74%);
+	mix-blend-mode: screen;
+	animation: cidadeLampiao 2.6s ease-in-out infinite alternate;
+}
+
+.cidade-lampiao--1 { left: 39%; top: 41%; }
+.cidade-lampiao--2 { left: 61%; top: 41%; animation-delay: -0.6s; }
+.cidade-lampiao--3 { left: 39%; top: 55%; animation-delay: -1.3s; }
+.cidade-lampiao--4 { left: 61%; top: 55%; animation-delay: -1.9s; }
+.cidade-lampiao--5 { left: 4%;  top: 23%; animation-delay: -0.9s; }
+.cidade-lampiao--6 { left: 53%; top: 88%; animation-delay: -1.6s; }
+
+@keyframes cidadeLampiao {
+	from { opacity: 0.6; transform: translate(-50%, -50%) scale(0.88); }
+	to   { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
+}
+
 .cidade-fumaca {
 	position: absolute;
 	z-index: 3;
@@ -9920,6 +9949,7 @@ img.ramos-tree-no__tile {
 
 @media (prefers-reduced-motion: reduce) {
 	.cidade-fogo { animation: none; }
+	.cidade-lampiao { animation: none; }
 	.cidade-fumaca span { animation: none; opacity: 0; }
 	.cidade-particulas span { display: none; }
 }
