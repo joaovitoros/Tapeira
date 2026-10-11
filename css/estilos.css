@@ -9749,7 +9749,7 @@ img.ramos-tree-no__tile {
 	border: 1px solid rgba(255, 255, 255, 0.06);
 	border-radius: 14px;
 	background:
-		url("../imagens/cidade/cidade background.png") center / contain no-repeat,
+		url("../imagens/cidade/cidade background.png") center / cover no-repeat,
 		#070a10;
 }
 
