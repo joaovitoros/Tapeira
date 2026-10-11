@@ -469,8 +469,9 @@ test("progressão: Mago do Relógio ativa a Pausa da fuga (+50%) ao encher", asy
             AtivaHabilidadeCombate("escape");
             const manual = segundosPausaFuga;
 
-            // tudo cheio: o mago prefere a Pausa da fuga pra ligar a passiva
-            abateshabilidadeDano = 10; qtdCarregaHabilidade = 10;
+            // Todas as de COMBATE cheias (a de Dano NÃO entra na validação):
+            // o mago foca na Pausa da fuga pra ligar a passiva.
+            abateshabilidadeDano = 10; qtdCarregaHabilidade = 0; // Dano ainda com espaço
             abatesCorrenteEletrica = TetoSkill("electric");
             abatesBonusGoldAtaque = TetoSkill("gold");
             abatesFrenesi = TetoSkill("frenzy");

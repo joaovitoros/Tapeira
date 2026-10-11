@@ -444,7 +444,7 @@ function Resetar() {
 	sobeGold = 0.3;
 	lvlGold = 1;
 
-	precoAvan = 80;
+	precoAvan = 160;
 	sobeAvanco = 0.01;
 	lvlAvan = 0;
 
@@ -456,7 +456,7 @@ function Resetar() {
 	sobeCCrit = 0.02;
 	lvlCCrit = 1;
 
-	precoQTDAvanco = 200;
+	precoQTDAvanco = 400;
 	lvlQTDAvanco = 1;
 
 	precoVidaInimigo = 150;

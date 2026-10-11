@@ -154,7 +154,7 @@ function Carregar(saveData, calculaOffline = false) {
 	sobeGold = 0.3; // mult gold fixo em 0.3 em todo save (nerf médio pedido pelo jogador)
 	lvlGold = save.lvlGold ?? 1;
 
-	precoAvan = save.precoAvan ?? 80;
+	precoAvan = save.precoAvan ?? 160;
 	sobeAvanco = save.sobeAvanco ?? 0.01;
 	lvlAvan = save.lvlAvan ?? 0;
 
@@ -212,7 +212,7 @@ function Carregar(saveData, calculaOffline = false) {
 	mulGoldInicial = save.mulGoldInicial ?? mulGold;
 	danoBonus = save.danoBonus ?? 0;
 
-	precoQTDAvanco = save.precoQTDAvanco ?? 200;
+	precoQTDAvanco = save.precoQTDAvanco ?? 400;
 	lvlQTDAvanco = save.lvlQTDAvanco ?? 1;
 
 	precoVidaInimigo = save.precoVidaInimigo ?? 150;

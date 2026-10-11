@@ -203,7 +203,7 @@ var precoGold = 100;
 var sobeGold = 0.3;
 var lvlGold = 1;
 
-var precoAvan = 80;
+var precoAvan = 160;
 var sobeAvanco = 0.01;
 var lvlAvan = 0;
 
@@ -215,7 +215,7 @@ var precoCCrit = 250;
 var sobeCCrit = 0.02; //passo da chance crítica (cresce ×1,1 por compra; de 30% em diante só metade é aplicada)
 var lvlCCrit = 1;
 
-var precoQTDAvanco = 200;
+var precoQTDAvanco = 400;
 var lvlQTDAvanco = 1;
 
 var precoVidaInimigo = 150;

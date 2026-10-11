@@ -106,8 +106,9 @@ const CHANCE_VENENO_ASSASSINO = 0.01;
 const VENENO_ASSASSINO_PCT = 0.03;
 
 // Mago do Relógio: enche uma fatia da barra de uma skill aleatória.
-// Considera só as skills desbloqueadas e que ainda não estão cheias. Se TODAS
-// estiverem cheias, ele prefere a Pausa da fuga — pra ligar a passiva dele
+// Considera as skills desbloqueadas e que ainda não estão cheias. Se todas as
+// skills DE COMBATE estiverem cheias (a de Dano, de ataque automático, NÃO
+// entra nesta validação), ele foca na Pausa da fuga — pra ligar a passiva dele
 // (a skill ativa sozinha e dura 50% a mais).
 function CarregaSkillAleatoriaMago() {
 	if (jogoPausado || fugaEmAndamento) return;
@@ -122,10 +123,14 @@ function CarregaSkillAleatoriaMago() {
 		if (atual < skill.killsRequired) candidatas.push(skill.id);
 	});
 
-	// Tudo cheio: mira na Pausa da fuga (só se ela puder ativar agora).
-	if (candidatas.length === 0) {
+	// Todas as de COMBATE cheias (ignora a de Dano): foca na Pausa da fuga.
+	const combateTudoCheio = habilidadesCombate.every(skill =>
+		maxAndar < skill.unlockFloor || ContagemSkill(skill.id) >= skill.killsRequired
+	);
+	if (combateTudoCheio) {
 		const escape = habilidadesCombate.find(s => s.id === "escape");
 		if (escape && maxAndar >= escape.unlockFloor && segundosPausaFuga === 0 && !fugaEmAndamento) {
+			candidatas.length = 0;
 			candidatas.push("escape");
 		}
 	}
