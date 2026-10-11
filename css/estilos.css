@@ -1805,28 +1805,17 @@ body {
 	filter: drop-shadow(0 0 4px rgba(105, 205, 255, 0.55));
 }
 
+/* Ícones ilustrados (PNG): o brilho é por skill (as cores já vêm da arte) */
 .combat-skill__icon--gold {
-	fill: #f2bd42;
-	stroke: #704315;
-	stroke-width: 1.6px;
-	filter: drop-shadow(0 0 4px rgba(255, 194, 65, 0.55));
+	filter: drop-shadow(0 0 5px rgba(255, 194, 65, 0.6));
 }
 
 .combat-skill__icon--escape {
-	fill: rgba(56, 145, 214, 0.18);
-	stroke: #94d8ff;
-	stroke-linecap: round;
-	stroke-linejoin: round;
-	stroke-width: 2.3px;
+	filter: drop-shadow(0 0 5px rgba(120, 200, 255, 0.6));
 }
 
 .combat-skill__icon--frenzy {
-	fill: rgba(255, 122, 44, 0.2);
-	stroke: #ffab5e;
-	stroke-linecap: round;
-	stroke-linejoin: round;
-	stroke-width: 2.3px;
-	filter: drop-shadow(0 0 4px rgba(255, 130, 60, 0.55));
+	filter: drop-shadow(0 0 5px rgba(255, 130, 60, 0.6));
 }
 
 /* Ícone some enquanto a skill carrega: o botão fica só com a barra
