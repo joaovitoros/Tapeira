@@ -369,8 +369,8 @@
 				const nosPerk = [...doc.querySelectorAll("#skillUpgradeModal .skill-no--perk")].length;
 				const caminhos = [...doc.querySelectorAll("#skillUpgradeModal .skill-caminho")].length;
 				const nosRamo = [...doc.querySelectorAll("#skillUpgradeModal .skill-caminho .skill-ramo-no")].length;
-				check("árvore tem 5 troncos, 5 perks e 10 caminhos com 2 nós",
-					troncos === 5 && nosPerk === 5 && caminhos === 10 && nosRamo === 20,
+				check("árvore tem 5 troncos, 0 perks (foram pro painel Ramos) e 10 caminhos com 2 nós",
+					troncos === 5 && nosPerk === 0 && caminhos === 10 && nosRamo === 20,
 					`troncos=${troncos} perks=${nosPerk} caminhos=${caminhos} nós=${nosRamo}`);
 				// o nó do ramo escolhido aparece ativo na árvore
 				const noEscolhido = doc.querySelectorAll("#skillUpgradeModal .skill-ramo-no--ativo").length;

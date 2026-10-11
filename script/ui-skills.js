@@ -291,62 +291,9 @@ Object.assign(UI, {
                 return linha;
             };
 
-            if (perk) {
-                const semPontoPerk = PontosPerkDisponiveis() <= 0;
-                const perkPronto = unlocked && !perkNoMaximo && !semPontoPerk;
-                const estadoPerk = !unlocked
-                    ? { texto: `✕ Desbloqueia no andar ${skill.pisoDesbloqueio}`, classe: "skill-no-estado--bloqueado" }
-                    : perkNoMaximo
-                        ? { texto: "✓ Perk no máximo", classe: "skill-no-estado--ok" }
-                        : semPontoPerk
-                            ? { texto: "✕ Sem pontos de perk", classe: "skill-no-estado--bloqueado" }
-                            : { texto: "● Pronto para aplicar", classe: "skill-no-estado--ok" };
-
-                // nó filho: o perk da skill (pontos de perk, não de habilidade)
-                const noPerk = document.createElement(perkPronto ? "button" : "div");
-                noPerk.className = "skill-no skill-no--perk"
-                    + (perkPronto ? " skill-no--pronto" : perkNoMaximo ? " skill-no--maximo" : unlocked ? " skill-no--neutro" : " skill-no--travado");
-                if (perkPronto) {
-                    noPerk.type = "button";
-                    noPerk.setAttribute("data-focus-key", `perk:${skill.id}`);
-                    noPerk.addEventListener("click", () => {
-                        if (CompraPerk(perk.skillId)) this.showSkillUpgradePanel();
-                    });
-                }
-                const perkGlifo = document.createElement("span");
-                perkGlifo.className = "skill-no-glifo";
-                perkGlifo.setAttribute("aria-hidden", "true");
-                perkGlifo.textContent = "◆";
-                const perkCorpo = document.createElement("div");
-                perkCorpo.className = "skill-no-corpo";
-                const perkTopo = document.createElement("div");
-                perkTopo.className = "skill-no-linha";
-                const perkNome = document.createElement("strong");
-                perkNome.className = "skill-no-nome";
-                perkNome.textContent = "Perk";
-                const perkBadge = document.createElement("span");
-                perkBadge.className = "skill-no-nivel";
-                perkBadge.textContent = `Nv ${perkNivel}/${perk.maximo}`;
-                perkTopo.append(perkNome, perkBadge);
-                const perkEfeito = document.createElement("p");
-                perkEfeito.className = "skill-no-desc";
-                perkEfeito.textContent = perk.efeito;
-                const perkPe = document.createElement("div");
-                perkPe.className = "skill-no-linha skill-no-pe";
-                const perkEstado = document.createElement("span");
-                perkEstado.className = `skill-no-estado ${estadoPerk.classe}`;
-                perkEstado.textContent = estadoPerk.texto;
-                const perkCusto = document.createElement("span");
-                perkCusto.className = "skill-no-custo";
-                perkCusto.textContent = perkNoMaximo ? "Sem níveis pendentes" : "1 ponto de perk por nível";
-                perkPe.append(perkEstado, perkCusto);
-                perkCorpo.append(perkTopo, perkEfeito, perkPe);
-                noPerk.append(perkGlifo, perkCorpo);
-                noPerk.setAttribute("aria-label", perkPronto
-                    ? `Aplicar perk em ${perk.nome} — ${perkNivel}/${perk.maximo} por 1 ponto de perk`
-                    : `Perk de ${skill.nome}, ${perkNivel} de ${perk.maximo} — ${estadoPerk.texto}`);
-                corpoTronco.append(conector(), noPerk);
-            }
+            // O nó do perk saiu daqui: a "Árvore de ramos" (#btnRamos) cobre
+            // níveis + perk + ramos, então a compra do perk vive lá. O resumo
+            // do tronco acima continua mostrando o progresso do perk.
 
             // fork dos ramos no nível 5: dois caminhos, cada um lido na
             // vertical (nó 5 → nó 10). Em telas largas ficam lado a lado.
