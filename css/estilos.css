@@ -8683,8 +8683,8 @@ button.skill-ramo-no:focus-visible {
 }
 
 .ramos-tree-trilha__icone {
-	width: 24px;
-	height: 24px;
+	width: 26px;
+	height: 26px;
 	object-fit: contain;
 }
 
@@ -8694,8 +8694,21 @@ button.skill-ramo-no:focus-visible {
 }
 
 .ramos-tree-trilha__btn--travada {
-	filter: grayscale(0.8);
-	opacity: 0.55;
+	opacity: 0.7;
+}
+
+.ramos-tree-trilha__btn--travada .ramos-tree-trilha__icone {
+	opacity: 0.65;
+}
+
+.ramos-tree-trilha__btn--travada::after {
+	content: "🔒";
+	position: absolute;
+	right: -5px;
+	bottom: -5px;
+	font-size: 11px;
+	line-height: 1;
+	filter: none;
 }
 
 .ramos-tree-trilha__btn--pronta::after {

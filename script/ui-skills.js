@@ -605,11 +605,12 @@ Object.assign(UI, {
         const focoAnterior = document.activeElement instanceof HTMLElement
             ? document.activeElement.dataset.focusKey
             : null;
+        const reRenderizacao = !!document.getElementById("ramosTreeModal");
         document.getElementById("ramosTreeModal")?.remove();
 
         const overlay = document.createElement("div");
         overlay.id = "ramosTreeModal";
-        overlay.className = "ant-collection-overlay ramos-tree-overlay";
+        overlay.className = "ant-collection-overlay ramos-tree-overlay" + (reRenderizacao ? " sem-entrada" : "");
         overlay.setAttribute("role", "dialog");
         overlay.setAttribute("aria-modal", "true");
         overlay.setAttribute("aria-labelledby", "ramos-tree-title");
@@ -658,6 +659,7 @@ Object.assign(UI, {
             btn.className = "ramos-tree-trilha__btn";
             btn.style.setProperty("--acento", acento);
             btn.setAttribute("aria-label", skill.nome);
+            btn.dataset.skillId = skill.id;
             btn.setAttribute("data-focus-key", `trilha:${skill.id}`);
             btn.title = skill.nome;
             const icone = document.createElement("img");
@@ -668,10 +670,19 @@ Object.assign(UI, {
             btn.append(icone);
             if (skill.id === this.ramosTreeAtiva) btn.classList.add("ramos-tree-trilha__btn--ativo");
             if (!this.SkillUnlocked(skill.id)) btn.classList.add("ramos-tree-trilha__btn--travada");
-            else if (this.SkillTemAcao(skill.id)) btn.classList.add("ramos-tree-trilha__btn--pronta");
-            btn.addEventListener("click", () => {
+            else if (this.SkillTemAcao(skill.id)) btn.classList.add("ramos-tree-trilha__btn--pronta");            btn.addEventListener("click", () => {
                 this.ramosTreeAtiva = this.ramosTreeAtiva === skill.id ? null : skill.id;
-                this.showRamosTreePanel();
+                const modal = document.getElementById("ramosTreeModal");
+                if (!modal) { this.showRamosTreePanel(); return; }
+                // troca SÓ a seção e o destaque da trilha — o overlay não é recriado,
+                // então o painel não "fecha e abre" ao navegar entre skills
+                const exibida = this.ramosTreeAtiva
+                    || (SKILLS_UPGRADE[0] ? SKILLS_UPGRADE[0].id : null);
+                const secaoEl = modal.querySelector(".ramos-tree-secao");
+                if (secaoEl) { secaoEl.scrollTop = 0; this.montarSecaoSkill(secaoEl, exibida); }
+                modal.querySelectorAll(".ramos-tree-trilha__btn").forEach(b => {
+                    b.classList.toggle("ramos-tree-trilha__btn--ativo", b.dataset.skillId === exibida);
+                });
             });
             trilha.appendChild(btn);
         }
@@ -860,7 +871,7 @@ Object.assign(UI, {
                 nomeRamo.textContent = ramo.nome;
                 card.appendChild(nomeRamo);
                 card.appendChild(this.noRamo(
-                    tilesRamo, `Nv ${RAMO_NIVEL_ESCOLHA}`, ramo.efeito5,
+                    `Nv ${RAMO_NIVEL_ESCOLHA}`, ramo.efeito5,
                     ehEscolhido ? "ramos-tree-no--escolhido"
                         : outroSelado ? "ramos-tree-no--selado"
                         : disponivel ? "ramos-tree-no--pronto" : "ramos-tree-no--pendente",
@@ -872,7 +883,7 @@ Object.assign(UI, {
                 fio.setAttribute("aria-hidden", "true");
                 card.appendChild(fio);
                 card.appendChild(this.noRamo(
-                    tilesRamo, `Nv ${RAMO_NIVEL_CONCLUSAO}`, ramo.efeito10,
+                    `Nv ${RAMO_NIVEL_CONCLUSAO}`, ramo.efeito10,
                     ehEscolhido
                         ? (skillLevel >= RAMO_NIVEL_CONCLUSAO ? "ramos-tree-no--max" : "ramos-tree-no--pendente")
                         : outroSelado ? "ramos-tree-no--selado" : "ramos-tree-no--pendente"
@@ -896,20 +907,10 @@ Object.assign(UI, {
     },
 
     // nó de ramo (nível 5 ou 10); com `acao` vira botão que aplica e re-renderiza
-    noRamo(tile, titulo, desc, classe, acao, selo) {
+    noRamo(titulo, desc, classe, acao, selo) {
         const no = document.createElement(acao ? "button" : "div");
         no.type = acao ? "button" : undefined;
         no.className = "ramos-tree-no " + (classe || "");
-        const usaImagem = /\.(svg|png|webp)$/i.test(String(tile));
-        const t = document.createElement(usaImagem ? "img" : "span");
-        t.className = "ramos-tree-no__tile" + (usaImagem ? " ramos-tree-no__icone" : "");
-        if (usaImagem) {
-            t.src = String(tile);
-            t.alt = "";
-            t.setAttribute("aria-hidden", "true");
-        } else {
-            t.textContent = tile;
-        }
         const txt = document.createElement("span");
         txt.className = "ramos-tree-no__txt";
         const b = document.createElement("b");
@@ -917,7 +918,7 @@ Object.assign(UI, {
         const d = document.createElement("span");
         d.textContent = desc;
         txt.append(b, d);
-        no.append(t, txt);
+        no.append(txt);
         if (selo) {
             const s = document.createElement("span");
             s.className = "ramos-tree-selo";
