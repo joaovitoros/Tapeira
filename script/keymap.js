@@ -231,14 +231,8 @@ function FechaJanelasAbertas() {
         fechou = true;
     }
 
-    // Animação de abertura de baú
-    const chest = document.getElementById("chestOpening");
-    if (chest) {
-        clearTimeout(UI.chestOpeningTimeout);
-        UI.chestOpeningTimeout = null;
-        chest.remove();
-        fechou = true;
-    }
+    // (O antigo cartão de abertura de baú saiu — o aviso vai para o log, que
+    // é histórico e não deve ser fechado no ESC.)
 
     // Balão de descrição do rastreador do baú dourado (ícone de info)
     const descBauDourado = document.getElementById("golden-chest-desc");

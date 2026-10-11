@@ -9,86 +9,27 @@ Object.assign(UI, {
 
     chestOpeningTimeout: null,
 
-    showChestOpening(chestKind, rewardKind, title, detail, accentColor = "#ffd34f") {
-        // preferência "Avisos de baú" desligada suprime a tela de abertura
+    // O antigo cartão central de abertura de baú saiu. Agora o aviso vira uma
+    // linha no log (#logAvisos), com cor pelo tipo de recompensa — nada cobre a
+    // arena nem escurece a tela. A assinatura é mantida para os chamadores.
+    showChestOpening(chestKind, rewardKind, title, detail) {
+        // preferência "Avisos de baú" desligada suprime o aviso
         if (window.Tapeira?.Config && !window.Tapeira.Config.ativo("avisosBau")) return;
-        this.removeChestOpening();
-        // Chuva de meteoros: nenhuma tela de abertura de baú — o overlay
-        // escurece a arena por 3,5s e esconde os fragmentos no chão. A
-        // recompensa já foi creditada pelo chamador e cada ramo tem o próprio
-        // aviso (showInfo/milestone/showCurrencyReward), então só a tela some.
+        // Chuva de meteoros: nada de aviso de baú (o baú nem fica na arena);
+        // cada ramo ainda tem o próprio aviso (showInfo/showMilestone).
         if (eventoAtivo === "meteoro") return;
 
-        const opening = document.createElement("div");
-        opening.id = "chestOpening";
-        opening.className = `chest-opening chest-opening--${chestKind} chest-opening--reward-${rewardKind}`;
-        opening.setAttribute("role", "status");
-        opening.setAttribute("aria-live", "polite");
-        opening.style.setProperty(
-            "--chest-accent",
-            chestKind === "golden" ? "#ffd34f" : accentColor
-        );
-        opening.style.setProperty("--reward-accent", accentColor);
-
-        const card = document.createElement("div");
-        card.className = "chest-opening__card";
-        const label = document.createElement("span");
-        label.className = "chest-opening__label";
-        label.textContent = chestKind === "golden" ? "Baú dourado aberto" : "Baú encontrado";
-
-        const stage = document.createElement("div");
-        stage.className = "chest-opening__stage";
-        const chest = document.createElement("img");
-        chest.className = "chest-opening__chest";
-        chest.src = chestKind === "golden" ? "imagens/bau-dourado.svg" : "imagens/bau-aventura.svg";
-        chest.alt = "";
-        stage.appendChild(chest);
-
-        const reward = document.createElement("div");
-        reward.className = "chest-opening__reward";
-        if (rewardKind === "gold") {
-            const icon = document.createElement("span");
-            icon.className = "chest-opening__reward-icon chest-opening__reward-icon--gold";
-            icon.setAttribute("aria-hidden", "true");
-            icon.textContent = "G";
-            reward.appendChild(icon);
-        } else if (rewardKind === "emerald") {
-            const icon = document.createElement("img");
-            icon.className = "chest-opening__reward-icon";
-            icon.src = "imagens/esmeralda-recompensa.svg";
-            icon.alt = "";
-            reward.appendChild(icon);
-        } else if (rewardKind === "ant") {
-            reward.appendChild(this.createAntSprite(accentColor));
-        } else {
-            const icon = document.createElement("span");
-            icon.className = "chest-opening__reward-icon chest-opening__reward-icon--skills";
-            icon.setAttribute("aria-hidden", "true");
-            icon.textContent = "✦";
-            reward.appendChild(icon);
-        }
-
-        const rewardTitle = document.createElement("strong");
-        rewardTitle.className = "chest-opening__title";
-        rewardTitle.textContent = title;
-        const rewardDetail = document.createElement("span");
-        rewardDetail.className = "chest-opening__detail";
-        rewardDetail.textContent = detail;
-        reward.append(rewardTitle, rewardDetail);
-        card.append(label, stage, reward);
-        opening.appendChild(card);
-        document.body.appendChild(opening);
-
-        this.chestOpeningTimeout = setTimeout(() => {
-            opening.remove();
-            this.chestOpeningTimeout = null;
-        }, 3500);
+        const rotulo = chestKind === "golden" ? "Baú dourado" : "Baú encontrado";
+        const tipo = rewardKind === "emerald" ? "bau"
+            : rewardKind === "skills" ? "skills"
+            : rewardKind === "gold" ? "gold"
+            : "bau";
+        const conteudo = detail || title || "recompensa recebida";
+        this.logAviso(tipo, `${rotulo}: ${conteudo}`);
     },
 
     removeChestOpening() {
-        document.getElementById("chestOpening")?.remove();
-        clearTimeout(this.chestOpeningTimeout);
-        this.chestOpeningTimeout = null;
+        // Sem cartão na tela — o aviso do baú agora vai para o log (#logAvisos).
     },
 
     updateGoldenChestProgress() {
@@ -217,60 +158,52 @@ Object.assign(UI, {
 	spawnBauBuild() {
 		this.removeBauBuild();
 		const quantidade = Tapeira.ItensBuild.quantidadeBausPendentes();
-		const bau = document.createElement("img");
+		// O baú de itens da build agora é um CHIP na coluna esquerda do HUD
+		// (#container-Metas > .coluna-rail), ao lado do Objetivo/Missão —
+		// substitui o antigo baú solto na arena. Sem a coluna (ex.: menu) não
+		// há onde mostrar.
+		const rail = document.querySelector("#container-Metas > .coluna-rail");
+		if (!rail) return;
 
-        bau.src = "imagens/bau-aventura.svg";
-        bau.className = "bau bau-build";
-        bau.id = "bauBuild";
-        bau.alt = "";
-        bau.setAttribute("role", "button");
-        bau.setAttribute("tabindex", "0");
-		bau.setAttribute("aria-label", quantidade === 1
+		const chip = document.createElement("button");
+		chip.type = "button";
+		chip.id = "bauBuild";
+		chip.className = "itens-chip";
+		chip.setAttribute("aria-label", quantidade === 1
 			? "Abrir baú de itens da build"
 			: `Abrir ${quantidade} baús de itens da build`);
-		bau.title = quantidade === 1
+		chip.title = quantidade === 1
 			? "Baú de itens da build: escolha 1 de 3"
 			: `${quantidade} baús de itens da build pendentes: escolha 1 de 3 por baú`;
-        bau.addEventListener("click", () => Tapeira.ItensBuild.abreEscolha());
-		bau.addEventListener("keydown", event => {
+
+		const icone = document.createElement("img");
+		icone.src = "imagens/bau-aventura.svg";
+		icone.alt = "";
+
+		const selo = document.createElement("span");
+		selo.id = "bauBuild-selo";
+		selo.setAttribute("aria-hidden", "true");
+		selo.textContent = quantidade > 1 ? `ITENS ×${quantidade}` : "ITENS";
+
+		chip.appendChild(icone);
+		chip.appendChild(selo);
+
+		chip.addEventListener("click", () => Tapeira.ItensBuild.abreEscolha());
+		chip.addEventListener("keydown", event => {
 			if (event.key === "Enter" || event.key === " ") {
 				event.preventDefault();
 				if (event.repeat) return;
 				Tapeira.ItensBuild.abreEscolha();
 			}
-        });
+		});
 
-        document.body.appendChild(bau);
+		rail.appendChild(chip);
+	},
 
-        const selo = document.createElement("span");
-        selo.id = "bauBuild-selo";
-        selo.className = "bau-build-selo";
-        selo.setAttribute("aria-hidden", "true");
-		selo.textContent = quantidade > 1 ? `ITENS ×${quantidade}` : "ITENS";
-        document.body.appendChild(selo);
-
-        const posicionaSelo = () => {
-            if (!bau.isConnected || !selo.isConnected) return;
-            const rect = bau.getBoundingClientRect();
-            selo.style.left = `${rect.left + rect.width / 2}px`;
-            selo.style.top = `${rect.top - 4}px`;
-        };
-        if (this.bauBuildResizeHandler) {
-            window.removeEventListener("resize", this.bauBuildResizeHandler);
-        }
-        this.bauBuildResizeHandler = posicionaSelo;
-        window.addEventListener("resize", posicionaSelo);
-        posicionaSelo();
-    },
-
-    removeBauBuild() {
-        if (this.bauBuildResizeHandler) {
-            window.removeEventListener("resize", this.bauBuildResizeHandler);
-            this.bauBuildResizeHandler = null;
-        }
-        document.getElementById("bauBuild")?.remove();
-        document.getElementById("bauBuild-selo")?.remove();
-    },
+	removeBauBuild() {
+		document.getElementById("bauBuild")?.remove();
+		document.getElementById("bauBuild-selo")?.remove();
+	},
 
     // =========================
     // COMPANHEIROS (VISUAL)
@@ -446,4 +379,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	if (claim) claim.addEventListener("click", () => ColetaBauDourado());
 	const info = document.getElementById("golden-chest-info");
 	if (info) info.addEventListener("click", () => UI.toggleGoldenChestInfo());
+	// cabeçalho do log de avisos: recolhe/expande (sem onclick inline)
+	const cabecaLog = document.getElementById("logAvisosCabeca");
+	if (cabecaLog) cabecaLog.addEventListener("click", () => UI.toggleLogAvisos());
 });
