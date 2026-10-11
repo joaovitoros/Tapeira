@@ -62,6 +62,22 @@ const path = require('path');
         check("ícone do dano fica à esquerda da própria barra",
             rIcon.right <= rBar.left + 1, `${Math.round(rIcon.right)} <= ${Math.round(rBar.left)}`);
 
+        // Cor da barra por skill: cada uma tem o seu gradiente (puxado do ícone)
+        const fundo = sel => {
+            const el = document.querySelector(sel);
+            return el ? getComputedStyle(el).backgroundImage : null;
+        };
+        const fundos = [
+            fundo("#BaraQTDHab1"),
+            fundo("#skill-electric .combat-skill__meter-fill"),
+            fundo("#skill-gold .combat-skill__meter-fill"),
+            fundo("#skill-escape .combat-skill__meter-fill"),
+            fundo("#skill-frenzy .combat-skill__meter-fill")
+        ];
+        check("cada barra tem cor própria (dano + 4 skills)", new Set(fundos).size === 5,
+            fundos.map(s => (s || "-").slice(0, 22)).join(" | "));
+        check("barra do dano não é o azul padrão", fundos[0] !== fundos[1], fundos[0]);
+
         // Barra do dano: começa VAZIA e enche conforme carrega (igual às outras).
         abateshabilidadeDano = 20;
         qtdCarregaHabilidade = 0;

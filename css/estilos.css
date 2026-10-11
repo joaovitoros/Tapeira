@@ -213,9 +213,10 @@ body{
 	bottom: 1px;
 	width: calc(100% - 2px);
 	height: 0;
-	background: linear-gradient(180deg, #77c7ff, #3578ff 55%, #1946c2);
+	/* Dourado do ícone do "Dano automático" */
+	background: linear-gradient(180deg, #ffe08a, #d9a02a 55%, #8a5a0f);
 	border-radius: 0 0 4px 4px;
-	box-shadow: 0 0 8px rgba(69, 145, 255, 0.5);
+	box-shadow: 0 0 8px rgba(191, 144, 28, 0.55);
 	transition: height 180ms ease;
 }
 
@@ -1971,6 +1972,37 @@ body {
 	filter: drop-shadow(0 0 5px rgba(255, 130, 60, 0.6));
 }
 
+/* Cores das barras por skill — puxadas da cor dominante de cada ícone
+   (damage/gold dourado, electric/escape azul, frenzy laranja). A .combat-skill__meter-fill
+   lê estas variáveis; o dano automático usa o dourado direto no #BaraQTDHab1. */
+#skill-electric {
+	--meter-top: #8fe0ff;
+	--meter-mid: #1c8fc3;
+	--meter-low: #0c4f70;
+	--meter-glow: rgba(28, 143, 195, 0.55);
+}
+
+#skill-gold {
+	--meter-top: #ffe7a2;
+	--meter-mid: #d99a12;
+	--meter-low: #8a5a0f;
+	--meter-glow: rgba(211, 142, 8, 0.55);
+}
+
+#skill-escape {
+	--meter-top: #a8f0ff;
+	--meter-mid: #15a0d8;
+	--meter-low: #0a5578;
+	--meter-glow: rgba(21, 148, 207, 0.55);
+}
+
+#skill-frenzy {
+	--meter-top: #ffcf9a;
+	--meter-mid: #e07a12;
+	--meter-low: #8a3d05;
+	--meter-glow: rgba(219, 112, 11, 0.55);
+}
+
 /* Ícone some enquanto a skill carrega: o botão fica só com a barra
    (a classe is-charging é alternada em AtualizaHabilidadesCombate) */
 .combat-skill.is-charging .combat-skill__icon {
@@ -2020,9 +2052,9 @@ body {
 	display: block;
 	width: calc(100% - 2px);
 	height: 0;
-	background: linear-gradient(180deg, #77c7ff, #3578ff 55%, #1946c2);
+	background: linear-gradient(180deg, var(--meter-top, #77c7ff), var(--meter-mid, #3578ff) 55%, var(--meter-low, #1946c2));
 	border-radius: 0 0 4px 4px;
-	box-shadow: 0 0 8px rgba(69, 145, 255, 0.5);
+	box-shadow: 0 0 8px var(--meter-glow, rgba(69, 145, 255, 0.5));
 	transition: height 180ms ease;
 }
 
