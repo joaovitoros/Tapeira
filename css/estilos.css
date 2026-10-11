@@ -520,6 +520,21 @@ tr, td, th{
 	z-index: 9999;
 }
 
+/* Dentro do menu de pause (ESC/P) o Config vira conteúdo normal do painel:
+   ele era fixed na tela, aqui entra no fluxo. */
+.pause-panel #container-SalvaCarrega {
+	position: static;
+	right: auto;
+	bottom: auto;
+	width: 100%;
+	min-width: 0;
+	padding: 0;
+	background: transparent;
+	border: 0;
+	box-shadow: none;
+	z-index: auto;
+}
+
 /* TITULOS */
 #container-SalvaCarrega .tituloConfig{
 	font-size: 1vw;

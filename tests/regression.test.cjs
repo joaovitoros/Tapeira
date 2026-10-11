@@ -191,24 +191,19 @@ test("navegação lateral usa delegação registrada (sem onclick inline)", asyn
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
         await page.waitForFunction(() =>
-            document.getElementById("btn-Config") && typeof window.SobeStatus === "function");
+            document.getElementById("btnStatus") && typeof window.SobeStatus === "function");
         const result = await page.evaluate(() => {
-            const ids = ["btnStatus", "btn-Loja", "btn-Config", "btnSkills", "btnRamos"];
+            const ids = ["btnStatus", "btn-Loja", "btnSkills", "btnRamos"];
             const inline = ids.filter(id => document.getElementById(id)?.hasAttribute("onclick"));
-
-            const config = document.getElementById("container-SalvaCarrega");
-            document.getElementById("btn-Config").click();
-            const configAberta = config.style.visibility;
 
             const status = document.getElementById("DivStatus");
             document.getElementById("btnStatus").click();
             const statusAberto = status.style.visibility;
 
-            return { inline, configAberta, statusAberto };
+            return { inline, statusAberto };
         });
 
         assert.deepEqual(result.inline, []);
-        assert.equal(result.configAberta, "visible", "btn-Config abre o painel de configuração");
         assert.equal(result.statusAberto, "visible", "btnStatus abre o painel de status");
         assert.deepEqual(pageErrors, []);
     } finally {

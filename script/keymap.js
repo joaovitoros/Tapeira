@@ -9,6 +9,8 @@ function keyPressed(evt){
 let attackInterval = null;
 let attackPointerId = null;
 let jogoPausado = false;
+// De onde o painel de Config veio (ele é MOVIDO pro menu de pause e volta aqui)
+let pausaConfigOrigem = null;
 
 function AtualizaEstadoPausa(pausado) {
     jogoPausado = pausado;
@@ -26,6 +28,13 @@ function AtualizaEstadoPausa(pausado) {
     }
 
     if (!pausado) {
+        // devolve o painel de Config (movido pro menu de pause) ao lugar de origem
+        const config = document.getElementById("container-SalvaCarrega");
+        if (config && pausaConfigOrigem) {
+            config.style.visibility = "hidden";
+            pausaConfigOrigem.appendChild(config);
+            pausaConfigOrigem = null;
+        }
         document.getElementById("game-root")?.classList.remove("game-paused");
         document.getElementById("pauseOverlay")?.remove();
     }
@@ -49,13 +58,34 @@ function PausarJogo() {
     title.id = "pauseTitle";
     title.textContent = "Jogo pausado";
 
+    // O conteúdo do Config (salvar/carregar/volumes/tela) vem pra cá: o painel
+    // #container-SalvaCarrega é MOVIDO (preserva os listeners registrados) e
+    // devolvido ao lugar de origem no resume (AtualizaEstadoPausa(false)).
+    const config = document.getElementById("container-SalvaCarrega");
+    if (config) {
+        pausaConfigOrigem = config.parentElement;
+        config.style.visibility = "visible";
+    }
+
     const resume = document.createElement("button");
     resume.type = "button";
     resume.className = "btn-Padrao";
     resume.textContent = "Continuar";
     resume.addEventListener("click", () => AtualizaEstadoPausa(false));
 
-    panel.append(title, resume);
+    const sair = document.createElement("button");
+    sair.type = "button";
+    sair.className = "btn-Padrao";
+    sair.textContent = "Voltar ao menu";
+    sair.addEventListener("click", () => AbrirConfirmacaoSaida());
+
+    const acoes = document.createElement("div");
+    acoes.className = "pause-actions";
+    acoes.append(resume, sair);
+
+    panel.append(title);
+    if (config) panel.appendChild(config);
+    panel.appendChild(acoes);
     overlay.appendChild(panel);
     document.getElementById("game-root")?.appendChild(overlay);
     resume.focus();
@@ -230,8 +260,10 @@ document.addEventListener("keydown", function(evt) {
         return;
     }
     if (evt.code === "Escape" && !evt.repeat) {
+        // ESC abre o menu de pause (que agora carrega o Config); o "voltar ao
+        // menu" vive dentro dele. O capture handler acima já fechou as janelas.
         evt.preventDefault();
-        AbrirConfirmacaoSaida();
+        PausarJogo();
         return;
     }
     if (evt.code === "KeyP" && !evt.repeat) {

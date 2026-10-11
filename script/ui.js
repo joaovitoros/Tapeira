@@ -271,7 +271,6 @@ const UI = {
             ["btn-Loja", ["Loja", "LojaEsm", "LojaCM"].some(id =>
                 document.getElementById(id)?.style.visibility === "visible"
             )],
-            ["btn-Config", document.getElementById("container-SalvaCarrega")?.style.visibility === "visible"],
             ["btnSkills", !!document.getElementById("feitosModal")],
             ["btnRamos", !!document.getElementById("ramosTreeModal")]
         ];
@@ -897,10 +896,6 @@ document.addEventListener("click", (e) => {
     }
     if (e.target.closest("#btn-Loja")) {
         AbreLoja(true);
-        return;
-    }
-    if (e.target.closest("#btn-Config")) {
-        AbreConfig();
         return;
     }
     if (e.target.closest("#btnSkills")) {
