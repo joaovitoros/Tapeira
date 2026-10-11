@@ -126,13 +126,29 @@
     }
 
     // Arrastar a cena pra explorar a cidade (tipo um mapa): move o scroll do
-    // container. Um arrasto não dispara o clique do prédio (engole o clique
-    // que viria logo depois do arrasto).
+    // container. SEM setPointerCapture — ele redirecionava o "click" pro
+    // container e o clique no prédio não chegava; o arrasto acompanha o
+    // ponteiro por listeners na janela. Um arrasto engole o clique seguinte.
     function habilitaArrastarCena() {
         const cena = document.querySelector(".cidade-cena");
         const container = painel();
         if (!cena || !container) return;
         let arrastando = false, moveu = false, iniX = 0, iniY = 0, sTop = 0, sLeft = 0;
+
+        const aoMover = e => {
+            if (!arrastando) return;
+            const dx = e.clientX - iniX;
+            const dy = e.clientY - iniY;
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moveu = true;
+            container.scrollTop = sTop - dy;
+            container.scrollLeft = sLeft - dx;
+        };
+        const aoSoltar = () => {
+            arrastando = false;
+            window.removeEventListener("pointermove", aoMover);
+            window.removeEventListener("pointerup", aoSoltar);
+            window.removeEventListener("pointercancel", aoSoltar);
+        };
 
         cena.addEventListener("pointerdown", e => {
             if (e.button !== 0) return;
@@ -140,23 +156,12 @@
             moveu = false;
             iniX = e.clientX; iniY = e.clientY;
             sTop = container.scrollTop; sLeft = container.scrollLeft;
-            try { cena.setPointerCapture(e.pointerId); } catch (erro) { /* ignora */ }
+            window.addEventListener("pointermove", aoMover);
+            window.addEventListener("pointerup", aoSoltar);
+            window.addEventListener("pointercancel", aoSoltar);
         });
 
-        cena.addEventListener("pointermove", e => {
-            if (!arrastando) return;
-            const dx = e.clientX - iniX;
-            const dy = e.clientY - iniY;
-            if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moveu = true;
-            container.scrollTop = sTop - dy;
-            container.scrollLeft = sLeft - dx;
-        });
-
-        const solta = () => { arrastando = false; };
-        cena.addEventListener("pointerup", solta);
-        cena.addEventListener("pointercancel", solta);
-        cena.addEventListener("lostpointercapture", solta);
-
+        // se arrastou, engole o clique que viria em seguida (não abre o prédio)
         cena.addEventListener("click", e => {
             if (moveu) {
                 e.preventDefault();
