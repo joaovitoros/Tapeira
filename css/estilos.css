@@ -10353,17 +10353,3 @@ img.ramos-tree-no__tile {
 		animation: none;
 	}
 }
-
-/* ===== DIAGNÓSTICO TEMPORÁRIO — ver só o fundo da Cidade (REMOVER DEPOIS) =====
-   Esconde prédios/decoração e estica a imagem de fundo na tela inteira. */
-.cidade-predio,
-.cidade-decor,
-.cidade-fonte,
-.cidade-fundo,
-.cidade-chao {
-	display: none !important;
-}
-
-.cidade-cena {
-	background-size: 100% 100% !important;
-}
