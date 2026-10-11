@@ -462,12 +462,16 @@ test("progressão: Mago do Relógio ativa a Pausa da fuga (+50%) ao encher", asy
             abatesPausaFuga = 0;
             AdicionaCargaSkill("escape", TetoSkill("escape"));
             const mago = { segundos: segundosPausaFuga, carga: abatesPausaFuga };
+            // efeito visual do Mago: classe no botão da skill
+            const magoEfeito = document.getElementById("skill-escape")?.classList.contains("skill-mago");
 
-            // a ativação MANUAL (botão) não leva o bônus
+            // a ativação MANUAL (botão) não leva o bônus nem o efeito do mago
             segundosPausaFuga = 0;
             abatesPausaFuga = TetoSkill("escape");
+            document.getElementById("skill-escape")?.classList.remove("skill-mago");
             AtivaHabilidadeCombate("escape");
             const manual = segundosPausaFuga;
+            const manualEfeito = document.getElementById("skill-escape")?.classList.contains("skill-mago");
 
             // Skills de combate todas cheias, mas o Dano ainda tem espaço:
             // o Dano continua valendo e a Pausa da fuga (cheia) também entra
@@ -483,21 +487,26 @@ test("progressão: Mago do Relógio ativa a Pausa da fuga (+50%) ao encher", asy
             // força o sorteio a pegar a Pausa da fuga (última da lista)
             const randOriginal = Math.random;
             Math.random = () => 0.999;
+            document.getElementById("skill-escape")?.classList.remove("skill-mago");
             CarregaSkillAleatoriaMago();
             Math.random = randOriginal;
             const magoLiga = segundosPausaFuga;
+            const magoLigaEfeito = document.getElementById("skill-escape")?.classList.contains("skill-mago");
 
             // agora o Dano também cheio: a Pausa da fuga vira a única opção
             qtdCarregaHabilidade = abateshabilidadeDano;
             segundosPausaFuga = 0;
             const soEscape = CandidatasMago();
 
-            return { duracao, mago, manual, candidatas, magoLiga, soEscape };
+            return { duracao, mago, manual, magoEfeito, manualEfeito, candidatas, magoLiga, magoLigaEfeito, soEscape };
         });
         assert.equal(r.duracao, 20, "duração base 20s no nível 5");
         assert.equal(r.mago.segundos, 30, "mago: +50% (20 -> 30)");
         assert.equal(r.mago.carga, 0, "a carga zera ao ativar");
+        assert.equal(r.magoEfeito, true, "o mago aplica o efeito visual no botão da skill");
         assert.equal(r.manual, 20, "ativação manual não tem o bônus");
+        assert.equal(r.manualEfeito, false, "ativação manual não aplica o efeito do mago");
+        assert.equal(r.magoLigaEfeito, true, "o efeito aparece quando o mago liga a Pausa da fuga");
         assert.deepEqual(r.candidatas, ["dano", "escape"], "Dano continua valendo e a Pausa da fuga entra mesmo cheia");
         assert.equal(r.magoLiga, 30, "o mago ainda liga a Pausa da fuga (+50%) mesmo cheia");
         assert.deepEqual(r.soEscape, ["escape"], "com o Dano cheio, a Pausa da fuga é a única opção");

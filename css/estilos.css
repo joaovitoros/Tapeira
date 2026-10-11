@@ -1933,6 +1933,7 @@ body {
 }
 
 .combat-skill {
+	position: relative;
 	display: flex;
 	flex: 0 0 auto;
 	flex-direction: row;
@@ -2071,6 +2072,74 @@ body {
 .combat-skill:focus-visible {
 	outline: 2px solid #ffd36b;
 	outline-offset: 2px;
+}
+
+/* Mago do Relógio: quando ele ativa a skill sozinho, o botão dá um pulso
+   dourado/arcano. A classe é alternada em EfeitoAtivacaoMago (progressao.js)
+   e sai no fim da animação. */
+@keyframes skillMagoPulso {
+	0% {
+		filter: drop-shadow(0 0 0 rgba(255, 214, 120, 0)) brightness(1);
+		transform: scale(1);
+	}
+	25% {
+		filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px rgba(255, 236, 170, 1)) drop-shadow(0 0 24px rgba(255, 190, 73, 0.95)) brightness(1.6);
+		transform: scale(1.16);
+	}
+	60% {
+		filter: drop-shadow(0 0 6px rgba(255, 214, 120, 0.85)) brightness(1.2);
+		transform: scale(1.05);
+	}
+	100% {
+		filter: drop-shadow(0 0 0 rgba(255, 214, 120, 0)) brightness(1);
+		transform: scale(1);
+	}
+}
+
+.combat-skill.skill-mago {
+	animation: skillMagoPulso 1100ms ease-out;
+}
+
+/* Onda mágica: anel dourado que expande a partir do ícone. Fica centrado no
+   ícone (o 1º filho do botão), então usa a mesma largura do ícone no left. */
+@keyframes skillMagoAnel {
+	0% {
+		opacity: 0;
+		transform: translate(-50%, -50%) scale(0.55);
+	}
+	30% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		transform: translate(-50%, -50%) scale(1.9);
+	}
+}
+
+.combat-skill.skill-mago::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: calc(clamp(34px, 4vw, 52px) / 2);
+	width: clamp(34px, 4vw, 52px);
+	height: clamp(34px, 4vw, 52px);
+	border: 3px solid rgba(255, 232, 168, 1);
+	border-radius: 50%;
+	box-shadow: 0 0 22px rgba(255, 200, 80, 1), inset 0 0 14px rgba(255, 224, 140, 0.85);
+	pointer-events: none;
+	animation: skillMagoAnel 1100ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.combat-skill.skill-mago {
+		animation: none;
+		outline: 2px solid #ffd36b;
+		outline-offset: 2px;
+	}
+
+	.combat-skill.skill-mago::after {
+		display: none;
+	}
 }
 
 #container-Loja {

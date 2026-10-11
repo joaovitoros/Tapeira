@@ -444,6 +444,18 @@ function RegistraToqueFrenesi() {
 	AtualizaHabilidadesCombate();
 }
 
+// Efeito visual na skill ativada pelo Mago do Relógio: um pulso dourado/arcano
+// no botão (classe + animação CSS). A classe sai no fim da animação — sem
+// timer órfão. Chamado só quando a ativação vem da passiva do Mago.
+function EfeitoAtivacaoMago(id) {
+	const botao = document.getElementById(`skill-${id}`);
+	if (!botao) return;
+	botao.classList.remove("skill-mago");
+	void botao.offsetWidth; // reinicia a animação se disparar de novo
+	botao.classList.add("skill-mago");
+	botao.addEventListener("animationend", () => botao.classList.remove("skill-mago"), { once: true });
+}
+
 function AtivaHabilidadeCombate(id, opcoes = {}) {
 	const skill = habilidadesCombate.find(item => item.id === id);
 	if (!skill || maxAndar < skill.unlockFloor) return;
@@ -468,6 +480,7 @@ function AtivaHabilidadeCombate(id, opcoes = {}) {
 		const bonusFuga = Math.max(1, Number(opcoes.bonusFuga) || 1);
 		segundosPausaFuga = Math.round(DuracaoPausaFuga() * bonusFuga);
 		ChamaSom("audio7");
+		if (bonusFuga > 1) EfeitoAtivacaoMago("escape");
 		UI.showInfo(bonusFuga > 1
 			? `Mago do Relógio: fuga pausada por ${segundosPausaFuga} segundos (+50%)!`
 			: `Relógio de fuga pausado por ${segundosPausaFuga} segundos!`);
