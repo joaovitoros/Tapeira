@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<!--
+  ESBOCO (mockup estático) — v3 do HUD do TAPeira.
+  NÃO faz parte do jogo: sem script, sem save, não é carregado por
+  index.html nem Caverna.html.
+
+  v3 (feedback): orçamento vertical de tela —
+    topo        ~25%   (Andar/Pausar/Recursos + card de objetivo)
+    arena       60%    (LIVRE de painéis)
+    navegação   ~15%   (pílula do baú + nav por ícones)
+  O baú saiu de "faixa própria" e entrou na faixa de navegação, então não
+  rouba altura da arena. Card de objetivo mais enxuto.
+-->
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Esboço — HUD (v3)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --hud-bg: linear-gradient(145deg, rgba(14, 18, 27, .92), rgba(22, 25, 31, .82));
+    --hud-border: 1px solid rgba(229, 183, 96, .42);
+    --hud-radius: 9px;
+    --accent-gold: #ffd36b;
+    --text-muted: #b9c3d3;
+    --font: "Segoe UI", "Roboto", sans-serif;
+    /* faixas (px de conteúdo; a tela tem 780 - 20 de borda = 760) */
+    --band-top: 185px;   /* ~25% */
+    --band-arena-bottom: 644px; /* 185 + 459 (arena) = 60% */
+  }
+
+  body {
+    min-height: 100vh;
+    padding: 28px 18px 60px;
+    background: radial-gradient(ellipse at 50% 0%, #1b212e, #0a0d12 70%);
+    color: #e6edf3;
+    font-family: var(--font);
+  }
+
+  .doc-head { max-width: 980px; margin: 0 auto 24px; text-align: center; }
+  .doc-head h1 { font-size: clamp(20px, 2.6vw, 30px); color: var(--accent-gold); letter-spacing: .02em; }
+  .doc-head p { max-width: 680px; margin: 8px auto 0; color: var(--text-muted); font-size: 14px; line-height: 1.5; }
+
+  .layout { display: flex; flex-wrap: wrap; gap: 34px; align-items: flex-start; justify-content: center; max-width: 1010px; margin: 0 auto; }
+
+  /* ---------------------------------------------------------------- PHONE */
+  .phone {
+    position: relative; flex: 0 0 auto;
+    width: 390px; height: 780px;
+    border: 10px solid #05070b; border-radius: 42px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .7), 0 0 0 2px rgba(229, 183, 96, .18);
+    background: #0a0d12;
+  }
+
+  .scene {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(0, 0, 0, .28), rgba(0, 0, 0, .5)), url("../imagens/background cristal.png");
+    background-size: cover; background-position: center;
+  }
+  .sprite { position: absolute; object-fit: contain; user-select: none; }
+  .player { left: 50%; top: 52%; width: 128px; transform: translateX(-50%); filter: drop-shadow(0 7px 5px rgba(0,0,0,.4)); }
+  .inimigo { width: 92px; filter: drop-shadow(0 6px 4px rgba(0,0,0,.4)); }
+  .i1 { left: 8%;  top: 40%; }
+  .i2 { left: 12%; top: 57%; }
+  .i3 { right: 8%; top: 40%; }
+  .i4 { right: 10%; top: 57%; }
+  .bau { left: 50%; top: 70%; width: 74px; transform: translateX(-50%); filter: drop-shadow(0 0 8px rgba(255, 190, 54, .5)); }
+
+  /* Linhas-guia das faixas (só do esboço) */
+  .guide { position: absolute; left: 0; right: 0; z-index: 6; height: 0;
+           border-top: 1px dashed rgba(120, 200, 255, .5); pointer-events: none; }
+  .guide__label {
+    position: absolute; right: 3px; top: 0; transform: translateY(-50%);
+    padding: 1px 5px; border-radius: 4px; background: rgba(6, 12, 20, .82);
+    color: #8fd0ff; font-size: 8.5px; font-weight: 700; letter-spacing: .04em;
+    border: 1px solid rgba(120, 200, 255, .45);
+  }
+
+  /* ======================= FAIXA TOPO (~25%) ======================= */
+  /* (1) 3 conjuntos como hoje, alinhados na mesma faixa */
+  .toprow {
+    position: absolute; top: 10px; left: 10px; right: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 6px; height: 48px;
+  }
+  .hud-floor {
+    display: flex; align-items: center; gap: 6px;
+    height: 100%; min-width: 0; padding: 0 7px;
+    background: var(--hud-bg); border: var(--hud-border); border-radius: var(--hud-radius);
+    box-shadow: 0 6px 20px rgba(0,0,0,.38), inset 0 1px rgba(255,238,192,.08);
+    backdrop-filter: blur(6px);
+  }
+  /* ANDAR / MANTER / VOLTAR: rótulos em caixa alta, mesmo tamanho */
+  .hud-item { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
+  .hud-lbl {
+    font-size: 10px; line-height: 1; letter-spacing: .03em;
+    text-transform: uppercase; color: var(--text-muted); white-space: nowrap;
+  }
+  .floor-val { font-size: 15px; font-weight: 800; line-height: 1; color: var(--accent-gold); text-shadow: 0 0 10px rgba(255,190,73,.35); }
+  .hud-sep { width: 1px; height: 30px; margin: 0 6px; background: rgba(255,255,255,.12); }
+  .hud-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: #f0b64a; }
+  /* Voltar andar: botão compacto, mas com TEXTO grande (caixa alta, vermelho) */
+  .btn-voltar {
+    display: grid; place-items: center; flex: 0 0 auto;
+    height: 30px; padding: 0 5px; margin-left: 4px; border-radius: 7px;
+    background: linear-gradient(to bottom, #e44d6e 5%, #ec9c9c 100%);
+    border: 1px solid #d14931; color: #fff;
+    font-family: inherit; font-size: 10.5px; font-weight: 800;
+    letter-spacing: .04em; text-transform: uppercase;
+    text-shadow: 0 1px 2px rgba(60, 8, 18, .7);
+    box-shadow: 0 3px 0 #8c2137, inset 0 1px rgba(255,255,255,.35);
+    cursor: pointer;
+  }
+
+  /* Pausar: mesma altura dos cards ao lado (alinhado) */
+  .pause {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    height: 100%; flex: 0 0 auto; padding: 0 10px;
+    border: 1px solid #ffe4a0; border-radius: 10px;
+    background: linear-gradient(145deg, #ffd66f, #e79432 58%, #b85d25);
+    color: #26170a; font-weight: 800; font-size: 14px;
+    box-shadow: 0 3px 0 #75401b, 0 0 16px rgba(255,173,55,.5), inset 0 1px rgba(255,250,220,.7);
+  }
+
+  /* Gold/Esmeraldas como no JOGO: card escuro (borda dourada) com duas
+     linhas — gold em cima, esmeraldas embaixo — cada uma com o ícone à
+     esquerda e o valor à direita. */
+  .hud-res {
+    display: flex; flex-direction: column;
+    align-items: stretch; justify-content: center;
+    gap: 2px;
+    height: 100%; padding: 3px 4px;
+    background: var(--hud-bg); border: var(--hud-border); border-radius: var(--hud-radius);
+    box-shadow: 0 6px 20px rgba(0,0,0,.38), inset 0 1px rgba(255,238,192,.08);
+    backdrop-filter: blur(6px);
+  }
+  .res {
+    flex: 1 1 0; min-height: 0; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 4px; padding: 0 7px;
+    background: rgba(255,255,255,.035);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 6px;
+    font-weight: 800; font-variant-numeric: tabular-nums; font-size: 14px;
+  }
+  .res img { width: 16px; height: 16px; }
+  .res--gold { color: #ffd84a; }
+  .res--gem  { color: #4dff88; }
+  .res-sep { width: 1px; height: 22px; background: rgba(255,255,255,.12); }
+
+  /* (3) Fuga contextual — fina, flutua logo abaixo do topo */
+  .escape {
+    position: absolute; top: 62px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 7px;
+    width: 208px; height: 20px; padding: 0 9px;
+    background: linear-gradient(145deg, rgba(40,22,14,.92), rgba(24,18,16,.92));
+    border: 1px solid rgba(255,150,90,.5); border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.4);
+    font-size: 10px; color: #ffd9b8; letter-spacing: .04em;
+  }
+  .escape b { color: #ff9a5a; font-variant-numeric: tabular-nums; }
+  .escape .bar { flex: 1 1 auto; }
+
+  /* Linha do meio do topo: baú (esquerda) + Objetivo/Missão (direita).
+     align-items: stretch → os dois cards ficam com a MESMA altura (alinhados). */
+  .midband {
+    position: absolute; top: 88px; left: 10px; right: 10px;
+    z-index: 3;
+    display: flex; align-items: stretch; justify-content: space-between; gap: 6px;
+    pointer-events: none;
+  }
+  .midband > * { pointer-events: auto; }
+
+  /* (2) Objetivo — card completo, estreito e alinhado à direita */
+  .aim {
+    flex: 1 1 auto; min-width: 0;
+    padding: 6px 12px;
+    display: grid; gap: 2px;
+    background: var(--hud-bg); border: var(--hud-border); border-radius: var(--hud-radius);
+    box-shadow: 0 6px 20px rgba(0,0,0,.34), inset 0 1px rgba(255,238,192,.08);
+    backdrop-filter: blur(6px);
+  }
+  .aim__eyebrow { font-size: 8.5px; letter-spacing: .12em; text-transform: uppercase; }
+  .aim__eyebrow--gold { color: #e5c47e; }
+  .aim__eyebrow--blue { color: #9bc8e5; }
+  .aim__row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .aim__desc { font-weight: 700; font-size: 13px; }
+  .aim__count { font-size: 10.5px; color: #c6cfdd; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .aim__bar { height: 7px; border-radius: 999px; overflow: hidden; background: rgba(5,8,14,.85); border: 1px solid rgba(255,255,255,.12); }
+  .aim__bar > i { display: block; height: 100%; border-radius: inherit; }
+  .fill--gold { width: 0%; background: linear-gradient(90deg, #d89537, #ffd36b); box-shadow: 0 0 10px rgba(255,190,73,.4); }
+  .fill--blue { width: 15%; background: linear-gradient(90deg, #4983ae, #9ed8ff); box-shadow: 0 0 9px rgba(105,183,235,.34); }
+  .aim__div { height: 1px; margin: 2px 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent); }
+
+  .bar { height: 6px; border-radius: 999px; overflow: hidden; background: rgba(5,8,14,.85); border: 1px solid rgba(255,255,255,.1); }
+  .bar > i { display: block; height: 100%; width: 0; border-radius: inherit; }
+  .escape .bar > i { width: 62%; background: linear-gradient(90deg, #ff7a4a, #ffb066); }
+
+  /* (4) BAÚ DOURADO — como no jogo: card quadrado no vão à esquerda do
+     Objetivo/Missão. Linha de cima: ícone + tempo; linha de baixo: info + auto. */
+  .golden-chest {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    display: flex; flex-direction: column; justify-content: center; gap: 8px;
+    width: 88px;
+    padding: 6px;
+    border: 1px solid rgba(255, 204, 77, .62); border-radius: 12px;
+    background: linear-gradient(145deg, rgba(49, 39, 19, .97), rgba(19, 20, 24, .97));
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .55), 0 0 14px rgba(255, 190, 54, .14);
+    color: #fff4d5; font: 12px/1.3 var(--font);
+  }
+  .golden-chest__main {
+    display: flex; align-items: center; justify-content: space-between; gap: 5px;
+    padding: 2px 3px; border: 0; border-radius: 7px; background: none;
+    color: #fff4d5; font-family: inherit; cursor: pointer;
+  }
+  .golden-chest__icon { width: 34px; height: 29px; flex: none; filter: drop-shadow(0 0 6px rgba(255, 196, 52, .62)); }
+  .golden-chest__time { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .golden-chest__bottom { display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; }
+  .golden-chest__info {
+    display: grid; place-items: center; flex: none;
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1px solid rgba(255, 224, 138, .55); background: rgba(0, 0, 0, .5);
+    color: #ffe08a; font-size: 11px; font-weight: 800;
+  }
+  .golden-chest__auto {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+    font-size: 10px; line-height: 1; letter-spacing: .06em;
+    text-transform: uppercase; color: #d8cba9;
+  }
+  .golden-chest__auto input { width: 15px; height: 15px; margin: 0; accent-color: #72e7c1; }
+
+  /* ======================= FAIXA NAVEGAÇÃO ======================= */
+
+  /* (6) Nav por ícones */
+  .bottomnav {
+    position: absolute; left: 10px; right: 10px; bottom: 10px;
+    display: flex; gap: 6px; padding: 6px;
+    background: var(--hud-bg); border: var(--hud-border); border-radius: var(--hud-radius);
+    box-shadow: 0 8px 24px rgba(0,0,0,.42), inset 0 1px rgba(255,238,192,.07);
+    backdrop-filter: blur(6px);
+  }
+  .nav-btn {
+    flex: 1 1 0; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    height: 50px; border-radius: 8px;
+    background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07);
+    color: #e9dcc0; font-size: 8.5px; letter-spacing: .03em; font-weight: 700;
+  }
+  .nav-btn img, .nav-btn svg { width: 20px; height: 20px; }
+  .nav-btn img { filter: invert(82%) sepia(31%) saturate(694%) hue-rotate(354deg) brightness(103%) contrast(92%); }
+  .nav-btn__dot { position: absolute; top: 4px; right: 8px; width: 9px; height: 9px; border-radius: 999px; background: #d94c32; box-shadow: 0 0 6px rgba(255,126,76,.9); border: 1px solid #fff1b8; }
+
+  /* ------------------------------------------------------------- PINOS */
+  .pin { position: absolute; z-index: 7; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: #d94c32; border: 2px solid #ffe6c4; color: #fff; font-size: 12px; font-weight: 900; box-shadow: 0 3px 10px rgba(0,0,0,.6); }
+
+  /* ------------------------------------------------------------- LEGENDA */
+  .legend { flex: 1 1 320px; max-width: 440px; display: grid; gap: 10px; }
+  .legend h2 { font-size: 15px; color: var(--accent-gold); letter-spacing: .04em; }
+  .legend .bands { display: grid; gap: 6px; padding: 12px; border: 1px solid rgba(120,200,255,.28); border-radius: 9px; background: rgba(120,200,255,.05); font-size: 12.5px; color: #cfe6ff; }
+  .legend .bands b { color: #fff; }
+  .legend .bands .row { display: flex; justify-content: space-between; gap: 10px; }
+  .legend ol { list-style: none; display: grid; gap: 8px; }
+  .legend li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; padding: 10px 12px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 9px; font-size: 13px; line-height: 1.45; color: #dbe3ee; }
+  .legend li b { color: #fff; }
+  .legend .num { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: #d94c32; color: #fff; font-size: 12px; font-weight: 900; }
+  .legend .tag-ok { color: #7dffb0; font-weight: 700; }
+  .legend .removed { margin-top: 4px; padding: 12px; border-left: 3px solid #d94c32; background: rgba(217,76,50,.08); border-radius: 8px; font-size: 13px; line-height: 1.5; color: #f3d9d2; }
+</style>
+</head>
+
+<body>
+  <div class="doc-head">
+    <h1>Esboço — HUD (v3)</h1>
+    <p>Orçamento vertical de tela: <b>topo ~25%</b> · <b>arena 60%+ livre</b> · <b>navegação ~10%</b>.
+       O baú dourado foi para o vão à esquerda do Objetivo/Missão, então nada mais come altura da arena.
+       As linhas tracejadas azuis marcam os limites das faixas.</p>
+  </div>
+
+  <div class="layout">
+    <!-- ============================== MOCKUP ============================== -->
+    <div class="phone">
+      <div class="scene">
+        <img class="sprite inimigo i1" src="../imagens/inimigo.png" alt="">
+        <img class="sprite inimigo i2" src="../imagens/inimigo.png" alt="">
+        <img class="sprite inimigo i3" src="../imagens/inimigo.png" alt="">
+        <img class="sprite inimigo i4" src="../imagens/inimigo.png" alt="">
+        <img class="sprite player" src="../imagens/player.png" alt="">
+        <img class="sprite bau" src="../imagens/bau.png" alt="">
+      </div>
+
+      <!-- (1) TOPO: 3 conjuntos separados, alinhados -->
+      <div class="toprow">
+        <div class="hud-floor">
+          <div class="hud-item">
+            <span class="hud-lbl">Andar</span>
+            <span class="floor-val">17</span>
+          </div>
+          <span class="hud-sep"></span>
+          <div class="hud-item">
+            <span class="hud-lbl">Manter</span>
+            <input type="checkbox" aria-label="Manter no andar">
+          </div>
+          <button type="button" class="btn-voltar" title="Voltar andar">Voltar</button>
+        </div>
+
+        <span class="pause">Ⅱ Pausar</span>
+
+        <div class="hud-res">
+          <div class="res res--gold"><img src="../imagens/gold.png" alt="Gold:"><span>80.48K</span></div>
+          <div class="res res--gem"><img src="../imagens/gem.png" alt="Esmeraldas:"><span>2</span></div>
+        </div>
+      </div>
+
+      <!-- (3) FUGA contextual -->
+      <div class="escape">
+        <span>Fuga <b>121s</b></span>
+        <span class="bar"><i></i></span>
+      </div>
+
+      <!-- (2)+(4) LINHA DO MEIO: baú dourado (esquerda) + Objetivo/Missão (direita) -->
+      <div class="midband">
+        <!-- (4) BAÚ DOURADO: no vão à esquerda do Objetivo/Missão (como no jogo) -->
+        <section class="golden-chest" aria-label="Baú dourado">
+          <button type="button" class="golden-chest__main">
+            <img src="../imagens/bau-dourado.svg" class="golden-chest__icon" alt="">
+            <span class="golden-chest__time">9:18</span>
+          </button>
+          <div class="golden-chest__bottom">
+            <span class="golden-chest__info" title="Sobre o baú dourado">i</span>
+            <label class="golden-chest__auto">auto<input type="checkbox" checked></label>
+          </div>
+        </section>
+
+        <!-- (2) OBJETIVO: card completo e enxuto -->
+        <div class="aim">
+          <span class="aim__eyebrow aim__eyebrow--gold">Objetivo do andar</span>
+          <div class="aim__row">
+            <span class="aim__desc">Limpa a caverna</span>
+            <span class="aim__count">0 / 8 inimigos derrotados</span>
+          </div>
+          <span class="aim__bar"><i class="fill--gold"></i></span>
+
+          <span class="aim__div"></span>
+
+          <span class="aim__eyebrow aim__eyebrow--blue">Missão atual</span>
+          <div class="aim__row">
+            <span class="aim__desc">Coleta de Gold</span>
+            <span class="aim__count">77.08 / 500.00 Gold</span>
+          </div>
+          <span class="aim__bar"><i class="fill--blue"></i></span>
+        </div>
+      </div>
+
+      <!-- (6) NAVEGAÇÃO por ícones -->
+      <nav class="bottomnav">
+        <span class="nav-btn"><img src="../imagens/account_circle-24px.svg" alt="">Status</span>
+        <span class="nav-btn"><img src="../imagens/store-24px.svg" alt="">Loja</span>
+        <span class="nav-btn">
+          <svg viewBox="0 0 24 24" fill="#e9dcc0"><path d="m12 2 1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9L12 2Z"/></svg>
+          Skills<span class="nav-btn__dot"></span>
+        </span>
+        <span class="nav-btn"><span style="font-size:19px">🌿</span>Ramos</span>
+        <span class="nav-btn"><img src="../imagens/settings-black-18dp.svg" alt="">Config</span>
+      </nav>
+
+      <!-- Linhas-guia das faixas -->
+      <span class="guide" style="top:189px"><span class="guide__label">topo ≈25%</span></span>
+      <span class="guide" style="top:686px"><span class="guide__label">arena ≈65% (acima)</span></span>
+
+      <!-- Pinos -->
+      <span class="pin" style="top:18px; right:12px;">1</span>
+      <span class="pin" style="top:150px; right:14px;">2</span>
+      <span class="pin" style="top:52px; left:14px;">3</span>
+      <span class="pin" style="top:92px; left:74px;">4</span>
+      <span class="pin" style="top:420px; left:50%; transform:translateX(-50%);">5</span>
+      <span class="pin" style="bottom:30px; right:16px;">6</span>
+    </div>
+
+    <!-- ============================== LEGENDA ============================= -->
+    <aside class="legend">
+      <h2>Orçamento de espaço</h2>
+      <div class="bands">
+        <div class="row"><b>Topo</b><span>≈25% — 3 conjuntos + card de objetivo</span></div>
+        <div class="row"><b>Arena</b><span>≈65% — livre de painéis</span></div>
+        <div class="row"><b>Navegação</b><span>≈10% — nav por ícones</span></div>
+      </div>
+
+      <h2>O que cada mudança resolve</h2>
+      <ol>
+        <li><span class="num">1</span><span><b>Topo alinhado, não unificado.</b> Andar/Manter/Voltar, Pausar e Gold/Esmeraldas continuam separados como hoje — só alinhados na mesma altura. Voltar (vermelho, com texto) e Pausar ficaram com texto maior.</span></li>
+        <li><span class="num">2</span><span><b>Objetivo com conteúdo completo</b> (título, descrição, barra e contagem) e a missão como segunda seção — agora mais enxuto para não inflar o topo.</span></li>
+        <li><span class="num">3</span><span><b>Fuga contextual.</b> Faixa fina que só aparece quando o tempo aperta.</span></li>
+        <li><span class="num">4</span><span><b>Baú dourado no vão à esquerda do Objetivo/Missão</b> (formato do jogo: ícone + tempo em cima, info + auto embaixo).</span></li>
+        <li><span class="num">5</span><span><b>Arena livre (≈65%).</b> Esta é a mudança que devolve o "respiro".</span></li>
+        <li><span class="num">6</span><span><b>Navegação por ícones</b> no rodapé, com indicador de novidade.</span></li>
+      </ol>
+
+      <div class="removed">
+        <b>Saiu da tela:</b> a barra "Total Abatidos" (vai para o painel Status) e o
+        <code>text-shadow</code> duplicado. A mensagem "Reset disponível…" vira
+        aviso transitório (como o <code>#gameMilestone</code>), em vez de ocupar
+        linha fixa no card.
+      </div>
+    </aside>
+  </div>
+</body>
+</html>
