@@ -9761,6 +9761,12 @@ img.ramos-tree-no__tile {
 	user-select: none;
 }
 
+/* as imagens não devem ser "arrastáveis" (senão o arrasto da cena, quando
+   começa sobre um prédio, é capturado pelo drag nativo da imagem) */
+.cidade-cena img {
+	-webkit-user-drag: none;
+}
+
 .cidade-cena:active {
 	cursor: grabbing;
 }
@@ -9928,7 +9934,7 @@ img.ramos-tree-no__tile {
 .cidade-predio--casa     { left: 50%; top: 27%; --largura: 20%; --escala: 1; }
 .cidade-predio--mercado  { left: 27%; top: 38%; --largura: 19%; --escala: 0.96; }
 .cidade-predio--pesquisa { left: 73%; top: 40%; --largura: 19%; --escala: 0.96; }
-.cidade-predio--fabrica  { left: 27%; top: 79%; --largura: 21%; --escala: 1.05; z-index: 4; }
+.cidade-predio--fabrica  { left: 27%; top: 76%; --largura: 21%; --escala: 1.05; z-index: 4; }
 .cidade-predio--fazenda  { left: 73%; top: 72.5%; --largura: 21%; --escala: 1.05; z-index: 4; }
 
 .cidade-predio__img {
@@ -10378,15 +10384,4 @@ img.ramos-tree-no__tile {
 	.fazenda-panel {
 		animation: none;
 	}
-}
-
-/* ===== TEMPORÁRIO — mostrar só a imagem de fundo da Cidade (REMOVER DEPOIS) =====
-   Esconde prédios/decoração/fonte/vinheta; o fundo fica em cover (preenche sem
-   distorcer, definido na regra .cidade-cena). */
-.cidade-predio,
-.cidade-decor,
-.cidade-fonte,
-.cidade-fundo,
-.cidade-chao {
-	display: none !important;
 }

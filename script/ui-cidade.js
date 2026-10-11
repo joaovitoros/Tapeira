@@ -77,6 +77,8 @@
         if (botao) botao.setAttribute("aria-expanded", "true");
         atualizaHud();
         UI.syncScreenButtons();
+        // centraliza depois do layout (a cena já tem o tamanho final)
+        requestAnimationFrame(centralizaCena);
     }
 
     function alternar() {
@@ -112,6 +114,15 @@
             const selo = predio.querySelector(".cidade-predio__lock");
             if (selo) selo.textContent = bloqueado ? "🔒 Andar " + GATES[id] : "";
         });
+    }
+
+    // Centraliza a cena no container (a cidade abre no meio, não na ponta) —
+    // vale pro celular, onde a cena é mais larga que o visor.
+    function centralizaCena() {
+        const container = painel();
+        if (!container) return;
+        container.scrollLeft = Math.max(0, (container.scrollWidth - container.clientWidth) / 2);
+        container.scrollTop = Math.max(0, (container.scrollHeight - container.clientHeight) / 2);
     }
 
     // Arrastar a cena pra explorar a cidade (tipo um mapa): move o scroll do
