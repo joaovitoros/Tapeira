@@ -234,6 +234,9 @@ function Carregar(saveData, calculaOffline = false) {
 	// Saves antigos já passando do andar 25 nascem como "comprou": sem histórico
 	// de compras no save não dá pra provar o contrário — sem unlock de graça.
 	conquistasComp = Array.isArray(save.conquistasComp) ? save.conquistasComp.slice() : [0, 0, 0, 0, 0];
+	// Casa (Cidade): conforto e troféus exibidos — permanentes (não zeram no reset)
+	casaNivel = save.casaNivel ?? 0;
+	trofeusExibidos = save.trofeusExibidos ?? 0;
 	missoesCompletas = save.missoesCompletas ?? 0;
 	desafiosVencidos = save.desafiosVencidos ?? 0;
 	melhorGoldRun = GoldNumber.fromMantissaExponent(save.melhorGoldRun?.m ?? 0, save.melhorGoldRun?.e ?? 0);

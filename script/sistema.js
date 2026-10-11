@@ -343,6 +343,8 @@ function PreCarregamento() {
 //// Resetar
 function Resetar() {
 	EncerraEvento(true); //evento aleatório não sobrevive ao reset
+	// Casa (Cidade): casaNivel e trofeusExibidos são PERMANENTES — não zeram
+	// aqui (só no ZerarTodosSaves), como o Conhecimento Mug e seus níveis.
 	recompensasOfflinePendentes = null;
 	ultimaDataSaveOffline = Date.now();
 	numInimigosTela = 1; //usada para validar quantos inimigos e
@@ -417,6 +419,8 @@ function Resetar() {
 	segundosPausaFuga = 0;
 	abatesFrenesi = 0;
 	ataquesFrenesi = 0;
+	alvoFrenesiComp = 0;
+	danoJanelaFrenesiComp = 0;
 	andarBoss = 10; //andar atual onde aparecerão inimigos mais fortes
 	missao = Array(" ", "Coleta de Gold", "Golpes", "Caça aos Mugs", "Tempo") //vetor usado para listagem das missões
 	missaoAtual = 0; //nenhuma missao ativa ate o proximo sorteio

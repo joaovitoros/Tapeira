@@ -199,7 +199,7 @@ function FechaJanelasAbertas() {
     });
 
     // Modais removidos do DOM ao fechar
-    ["antCollectionModal", "skillUpgradeModal", "feitosModal", "infoModal", "ramosTreeModal"].forEach(id => {
+    ["antCollectionModal", "skillUpgradeModal", "feitosModal", "infoModal", "ramosTreeModal", "casaModal"].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.remove();

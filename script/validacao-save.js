@@ -230,6 +230,18 @@ function ValidarSave(save) {
 			|| save.conquistasComp.some((v, i) => !Number.isInteger(v) || v < 0 || v > CONQUISTAS_COMP[i].max))) {
 		throw new TypeError("As conquistas comportamentais do save são inválidas.");
 	}
+	// Casa (Cidade): conforto 0..CASA_MAX_NIVEL e troféus exibidos (bitmask
+	// sobre as conquistas comportamentais). Ambos numéricos (sem whitelist).
+	const casaMax = (typeof CASA_MAX_NIVEL === "number") ? CASA_MAX_NIVEL : 10;
+	if (save.casaNivel !== undefined
+		&& (!Number.isSafeInteger(save.casaNivel) || save.casaNivel < 0 || save.casaNivel > casaMax)) {
+		throw new TypeError("O nível de conforto da Casa no save é inválido.");
+	}
+	const trofeusMax = (1 << CONQUISTAS_COMP.length) - 1;
+	if (save.trofeusExibidos !== undefined
+		&& (!Number.isSafeInteger(save.trofeusExibidos) || save.trofeusExibidos < 0 || save.trofeusExibidos > trofeusMax)) {
+		throw new TypeError("Os troféus exibidos da Casa no save são inválidos.");
+	}
 	if (save.missoesCompletas !== undefined
 		&& (!Number.isSafeInteger(save.missoesCompletas) || save.missoesCompletas < 0 || save.missoesCompletas > 1000000)) {
 		throw new TypeError("O contador de missões do save é inválido.");
@@ -409,7 +421,10 @@ function ValidarSave(save) {
 		throw new TypeError("O limite de dano crítico no save é inválido.");
 	}
 	const limiteTempoSalvo = maxTempoProgressoOffline
-		+ Math.floor((save.formigasPretas ?? 0) / 5) * 2 * 60 * 1000;
+		+ Math.floor((save.formigasPretas ?? 0) / 5) * 2 * 60 * 1000
+		+ (typeof CasaBonusTempoOfflineMs === "function"
+			? CasaBonusTempoOfflineMs(save.casaNivel ?? 0)
+			: 0);
 	const limiteBausSalvo = maxBausOffline + Math.floor((save.formigasCinzas ?? 0) / 5);
 	if (save.offlineLastSavedAt !== undefined
 		&& (!Number.isFinite(save.offlineLastSavedAt) || save.offlineLastSavedAt < 0)) {
