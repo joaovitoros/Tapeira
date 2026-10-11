@@ -18,13 +18,13 @@ function FazendaRainhaValida(nivel) {
 	return Math.max(0, Math.min(FAZENDA_RAINHA_MAX, n));
 }
 
-// Custo em CM: nível base 30 (×1,45 por nível); Rainha base 60 (×1,8 por nível)
+// Custo em CM: nível base 300 (×1,45 por nível); Rainha base 600 (×1,8 por nível)
 function CustoFazendaNivel(nivel) {
-	return Math.round(30 * Math.pow(1.45, FazendaNivelValido(nivel)));
+	return Math.round(300 * Math.pow(1.45, FazendaNivelValido(nivel)));
 }
 
 function CustoFazendaRainha(nivel) {
-	return Math.round(60 * Math.pow(1.8, FazendaRainhaValida(nivel)));
+	return Math.round(600 * Math.pow(1.8, FazendaRainhaValida(nivel)));
 }
 
 // Intervalo base por nível: 90 s no nível 1, −6 s por nível (mín 30 s).
