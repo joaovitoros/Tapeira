@@ -3563,6 +3563,19 @@ body.desktop-app img {
 	letter-spacing: 0.06em;
 }
 
+/* Nome da build escolhida no cabeçalho da Loja de gold — fica visível mesmo
+   com a lista rolada (a seção de especialização vive no fim da loja). */
+.loja-especializacao {
+	color: #ffd98a;
+	font-size: 0.72em;
+	font-weight: 800;
+	letter-spacing: 0.02em;
+}
+
+.loja-especializacao:empty {
+	display: none;
+}
+
 #TabLoja th,
 #TabLojaEsm th , #TabLojaCM th {
 	padding: 9px 7px;

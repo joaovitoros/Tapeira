@@ -334,7 +334,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		}
 
 		// O cronometro continua ativo no proximo andar. Cancela-lo aqui fazia
-		// o contador reiniciar em 120 e permanecer parado.
+		// o contador reiniciar em 90 e permanecer parado.
 		tempoAvancoInimigos = TempoFugaMax();
 		UI.render();
 	}

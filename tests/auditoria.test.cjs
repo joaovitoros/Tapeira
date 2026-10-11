@@ -424,8 +424,8 @@ test("progressão: Canhão de Vidro corta 80% do tempo de fuga", async () => {
             const vidro = TempoFugaMax();
             return { base, vidro };
         });
-        assert.equal(r.base, 120);
-        assert.equal(r.vidro, 24, "120 s com −80% = 24 s");
+        assert.equal(r.base, 90);
+        assert.equal(r.vidro, 18, "90 s com −80% = 18 s");
         assert.deepEqual(pageErrors, []);
     } finally { await context.close(); }
 });

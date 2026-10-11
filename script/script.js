@@ -42,7 +42,7 @@ var avanco = 0; //variavel utilizada para calculo de probabilidade de um avanço
 var qtdAvanco = 2;////variavel que determina quantos inimigos serão derrotados noa vanço rapido
 var ValidaBater = 30; //tempo atual para que se possa executar um ataque com o espaço
 var MaxValidaBater = 30; //tempo maximo para que se possa executar um ataque com o espaço
-var tempoAvancoInimigos = 120; //tempo para que o jogar seja obrigado a recuar um andar
+var tempoAvancoInimigos = 90; //tempo para que o jogar seja obrigado a recuar um andar
 var andarBoss = 10; //andar atual onde aparecerão inimigos mais fortes
 var progressoConquistaDano = 100; //multiplicador e quantidade necessaria para premiação e conclusão da conquista atual de dano
 var progressoConquistaGold = 500; //multiplicador e quantidade necessaria para premiação e conclusão da conquista atual de gold
@@ -116,12 +116,12 @@ function BonusXPConhecimento() {
 	return 1 + cmNivelXp * 0.05;
 }
 
-// Tempo máximo do cronômetro de fuga: base 120 + 2 s por nível da loja. O
+// Tempo máximo do cronômetro de fuga: base 90 + 2 s por nível da loja. O
 // Canhão de Vidro corta 80% do teto (sobra 20%, arredondado pra baixo); como o
 // cronômetro só reabastece na troca de andar/onda, a troca de build vale a
 // partir do próximo abastecimento
 function TempoFugaMax() {
-	const base = 120 + cmNivelFuga * 2;
+	const base = 90 + cmNivelFuga * 2;
 	const tempo = especializacao === 4 ? Math.floor(base * 0.2) : base;
 	// +5 s da conquista Destemido entra por fora (sempre +5, mesmo no −80% do Canhão)
 	// Relógio de Bolso (itens da build): +10% por cópia no tempo total
