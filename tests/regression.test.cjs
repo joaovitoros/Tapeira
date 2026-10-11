@@ -2288,3 +2288,195 @@ test("árvore de ramos: 2º botão, trilha de skills e seções com descrições
     }
 });
 
+test("rodapé: botões horizontais à esquerda e habilidades abaixo do log, ao lado ou acima dos botões", async t => {
+    const abrir = async viewport => {
+        const context = await browser.newContext({ viewport });
+        await context.addInitScript(() => {
+            localStorage.setItem("volumeJogo", "0");
+            localStorage.setItem("volumeAmbienteJogo", "0");
+        });
+        const page = await context.newPage();
+        const pageErrors = [];
+        page.on("pageerror", error => pageErrors.push(error.message));
+        await page.goto(`${baseUrl}/Caverna.html`, { waitUntil: "domcontentloaded" });
+        await page.waitForFunction(() =>
+            document.getElementById("game-root")
+            && typeof window.andar === "number"
+            && typeof window.UIRodape === "object"
+            && document.getElementById("container-Habilidades")
+                .style.getPropertyValue("--rodape-hab-left") !== "",
+            undefined,
+            { timeout: 15000 });
+        return { context, page, pageErrors };
+    };
+
+    // Destrava as skills de combate para a fileira de habilidades ter a
+    // largura de jogo e devolve as medidas do rodapé.
+    const medirRodape = async (page, opcoes) => {
+        const mostrarLog = !opcoes || opcoes.mostrarLog !== false;
+        await page.evaluate(mostrar => {
+            maxAndar = 100;
+            CarregaHabilidadesDesbloqueadas(false);
+            AtualizaHabilidadesCombate();
+            UI.removeSkill();
+            UI.spawnSkill();
+            // O log só aparece quando entra uma linha; garante um estado
+            // visível e expandido pra checar a ordem log → skills → botões.
+            const log = document.getElementById("logAvisos");
+            log.hidden = !mostrar;
+            log.classList.remove("log-avisos--recolhido");
+            UIRodape.Atualiza();
+        }, mostrarLog);
+        return page.evaluate(() => {
+            const reta = el => {
+                const b = el.getBoundingClientRect();
+                return {
+                    left: Math.round(b.left), right: Math.round(b.right),
+                    top: Math.round(b.top), bottom: Math.round(b.bottom)
+                };
+            };
+            return {
+                botoes: [...document.querySelectorAll("#container-Botoes button")]
+                    .filter(b => getComputedStyle(b).display !== "none")
+                    .map(reta),
+                opcoes: reta(document.getElementById("container-opcoes")),
+                habilidades: reta(document.getElementById("container-Habilidades")),
+                log: reta(document.getElementById("logAvisos")),
+                logVisivel: (() => {
+                    const l = document.getElementById("logAvisos");
+                    return !!l && !l.hidden && getComputedStyle(l).visibility !== "hidden";
+                })(),
+                larguraTela: document.documentElement.clientWidth
+            };
+        });
+    };
+
+    const confereFileiraDeBotoes = (medidas, nome) => {
+        assert.ok(medidas.botoes.length >= 4, nome + ": botões da navegação presentes");
+        for (let i = 0; i < medidas.botoes.length; i++) {
+            assert.equal(medidas.botoes[i].top, medidas.botoes[0].top,
+                nome + ": botão " + i + " na mesma altura dos demais (fileira horizontal)");
+            if (i > 0) {
+                assert.ok(medidas.botoes[i].left > medidas.botoes[i - 1].right,
+                    nome + ": botão " + i + " à direita do anterior");
+            }
+        }
+        assert.ok(medidas.opcoes.left <= 20,
+            nome + ": navegação encostada no canto inferior esquerdo (left=" + medidas.opcoes.left + ")");
+    };
+
+    const confereEmpilhado = (medidas, nome) => {
+        assert.ok(medidas.habilidades.bottom <= medidas.botoes[0].top + 1,
+            nome + ": habilidades acima da fileira de botões (" +
+            medidas.habilidades.bottom + " <= " + medidas.botoes[0].top + ")");
+        assert.ok(Math.abs(medidas.habilidades.left - medidas.botoes[0].left) <= 2,
+            nome + ": habilidades alinhadas à esquerda com os botões");
+        assert.ok(medidas.habilidades.right <= medidas.larguraTela,
+            nome + ": fileira de habilidades cabe na tela");
+        if (medidas.logVisivel) {
+            assert.ok(medidas.habilidades.top >= medidas.log.bottom,
+                nome + ": habilidades abaixo do log de avisos (" +
+                medidas.habilidades.top + " >= " + medidas.log.bottom + ")");
+        }
+    };
+
+    const { context, page, pageErrors } = await abrir({ width: 400, height: 740 });
+    try {
+        await t.test("tela estreita: habilidades abaixo do log e acima dos botões", async () => {
+            const medidas = await medirRodape(page);
+            confereFileiraDeBotoes(medidas, "estreita");
+            assert.ok(medidas.logVisivel, "estreita: log de avisos visível");
+            confereEmpilhado(medidas, "estreita");
+        });
+
+        await t.test("log oculto: habilidades não invadem os botões", async () => {
+            await page.evaluate(() => {
+                document.getElementById("logAvisos").hidden = true;
+                UIRodape.Atualiza();
+            });
+            const medidas = await medirRodape(page, { mostrarLog: false });
+            assert.ok(!medidas.logVisivel, "log oculto: log fora de cena");
+            confereEmpilhado(medidas, "log oculto");
+        });
+
+        await t.test("tela larga: habilidades ao lado dos botões", async () => {
+            await page.setViewportSize({ width: 1920, height: 900 });
+            await page.waitForFunction(() => {
+                const hab = document.getElementById("container-Habilidades");
+                const bot = document.getElementById("container-Botoes");
+                return hab && bot
+                    && hab.getBoundingClientRect().left >= bot.getBoundingClientRect().right;
+            }, undefined, { timeout: 5000 });
+
+            const medidas = await medirRodape(page);
+            confereFileiraDeBotoes(medidas, "larga");
+            assert.ok(medidas.habilidades.left >= medidas.botoes[0].right,
+                "larga: habilidades encostadas à direita dos botões (gap=" +
+                (medidas.habilidades.left - medidas.botoes[0].right) + ")");
+            assert.equal(medidas.habilidades.bottom, medidas.botoes[0].bottom,
+                "larga: base das habilidades alinhada com a base dos botões");
+            assert.ok(medidas.habilidades.right <= medidas.larguraTela,
+                "larga: fileira de habilidades cabe na tela");
+            assert.ok(medidas.logVisivel, "larga: log de avisos visível");
+            assert.ok(medidas.habilidades.top >= medidas.log.bottom,
+                "larga: habilidades abaixo do log de avisos (" +
+                medidas.habilidades.top + " >= " + medidas.log.bottom + ")");
+        });
+
+        await t.test("voltou a ficar estreita: habilidades sobem de novo", async () => {
+            await page.setViewportSize({ width: 400, height: 740 });
+            await page.waitForFunction(() => {
+                const hab = document.getElementById("container-Habilidades");
+                const bot = document.getElementById("container-Botoes");
+                return hab && bot
+                    && hab.getBoundingClientRect().bottom <= bot.getBoundingClientRect().top;
+            }, undefined, { timeout: 5000 });
+
+            const medidas = await medirRodape(page);
+            confereFileiraDeBotoes(medidas, "estreita de volta");
+            confereEmpilhado(medidas, "estreita de volta");
+        });
+
+        await t.test("varredura de tamanhos: invariantes valem em todos", async () => {
+            const tamanhos = [
+                [1920, 1080], [1600, 900], [1440, 900], [1366, 768], [1280, 720],
+                [1100, 800], [1024, 768], [900, 520], [800, 480], [768, 1024],
+                [740, 400], [600, 900], [480, 800], [400, 740], [390, 844],
+                [360, 640], [320, 568]
+            ];
+            for (const [w, h] of tamanhos) {
+                await page.setViewportSize({ width: w, height: h });
+                await page.evaluate(() => new Promise(r => requestAnimationFrame(r)));
+                const m = await medirRodape(page);
+                const nome = `${w}x${h}`;
+                confereFileiraDeBotoes(m, nome);
+
+                // Nunca cobre os botões: ou está acima deles, ou ao lado.
+                assert.ok(m.habilidades.bottom <= m.botoes[0].top + 1 ||
+                    m.habilidades.left >= m.botoes[0].right,
+                    nome + ": habilidades não cobrem os botões (hab=" +
+                    m.habilidades.top + ".." + m.habilidades.bottom +
+                    ", bot.top=" + m.botoes[0].top + ")");
+
+                // Nunca cobre o log (quando visível): ou abaixo, ou à direita.
+                if (m.logVisivel) {
+                    assert.ok(m.habilidades.top >= m.log.bottom - 1 ||
+                        m.habilidades.left >= m.log.right,
+                        nome + ": habilidades não cobrem o log (hab.top=" +
+                        m.habilidades.top + ", log.bottom=" + m.log.bottom +
+                        ", hab.left=" + m.habilidades.left + ", log.right=" + m.log.right + ")");
+                }
+
+                // Sempre dentro da tela.
+                assert.ok(m.habilidades.right <= m.larguraTela &&
+                    m.habilidades.left >= 0 && m.habilidades.top >= 0,
+                    nome + ": fileira de habilidades dentro da tela");
+            }
+        });
+
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+

@@ -28,6 +28,7 @@ module.exports = {
         "script/ui-telas.js",
         "script/ui-feitos.js",
         "script/ui-cidade.js",
+        "script/ui-rodape.js",
         "script/missoes.js",
         "script/batalha.js",
         "script/loja.js",
