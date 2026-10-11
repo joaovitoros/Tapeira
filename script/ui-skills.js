@@ -586,6 +586,64 @@ Object.assign(UI, {
 
         const corpo = document.createElement("div");
         corpo.className = "ramos-tree-corpo";
+        // resumo do jogador compartilhado (nível, pontos de habilidade, XP,
+        // auto-gasto e bônus) — o mesmo bloco que a 1.3.0 tinha no painel
+        // único de skills. Fica entre o título e a trilha, FORA da seção,
+        // então não muda ao trocar de skill. Reusa os ids lidos por
+        // UI.updateSkillProgress() e SyncTogglesAutomacao().
+        const resumo = document.createElement("div");
+        resumo.className = "ramos-tree-resumo";
+
+        const level = document.createElement("div");
+        level.className = "skill-player-summary";
+        const levelName = document.createElement("strong");
+        levelName.id = "skill-player-level";
+        const points = document.createElement("span");
+        points.id = "skill-player-points";
+        level.append(levelName, points);
+
+        const xpTrack = document.createElement("div");
+        xpTrack.id = "skill-player-xp";
+        xpTrack.className = "skill-player-xp";
+        xpTrack.setAttribute("role", "progressbar");
+        xpTrack.setAttribute("aria-label", "Experiência para o próximo nível");
+        xpTrack.setAttribute("aria-valuemin", "0");
+        xpTrack.setAttribute("aria-describedby", "skill-player-xp-label");
+        xpTrack.appendChild(document.createElement("div"));
+        xpTrack.firstElementChild.id = "skill-player-xp-fill";
+        const xpLabel = document.createElement("span");
+        xpLabel.id = "skill-player-xp-label";
+        xpLabel.className = "skill-player-xp-label";
+        const blocoXp = document.createElement("div");
+        blocoXp.className = "skill-player-xp-bloco";
+        blocoXp.append(xpTrack, xpLabel);
+
+        const autoGastoWrap = document.createElement("label");
+        autoGastoWrap.className = "auto-toggle skill-auto-gasto";
+        autoGastoWrap.id = "autoGastoWrap";
+        const autoGastoTexto = document.createElement("span");
+        autoGastoTexto.textContent = "auto-gasto de pontos · nível aleatório";
+        const autoGastoInput = document.createElement("input");
+        autoGastoInput.type = "checkbox";
+        autoGastoInput.id = "autoGastoToggle";
+        autoGastoInput.setAttribute("aria-label", "Auto-gasto de pontos de habilidade");
+        autoGastoInput.addEventListener("change", () => {
+            AlternaAutoGasto(autoGastoInput.checked);
+            this.showRamosTreePanel();
+        });
+        autoGastoWrap.append(autoGastoTexto, autoGastoInput);
+
+        const bonus = document.createElement("div");
+        bonus.id = "skill-player-bonus";
+        bonus.className = "skill-player-bonus";
+        const perkLine = document.createElement("div");
+        perkLine.id = "skill-player-perk";
+        perkLine.className = "skill-player-bonus";
+        const perkDisp = PontosPerkDisponiveis();
+        const perkGanhos = PontosPerkGanhos();
+        perkLine.textContent = `Pontos de perk: ${perkDisp} ${perkDisp === 1 ? "disponível" : "disponíveis"} de ${perkGanhos} · +1 por portão desta run (andar 35+) · zeram no reset`;
+        resumo.append(level, blocoXp, autoGastoWrap, bonus, perkLine);
+
         const trilha = document.createElement("nav");
         trilha.className = "ramos-tree-trilha";
         trilha.setAttribute("aria-label", "Selecionar habilidade");
@@ -637,7 +695,7 @@ Object.assign(UI, {
         this.montarSecaoSkill(secao, this.ramosTreeAtiva);
 
         corpo.append(trilha, secao);
-        panel.append(header, corpo);
+        panel.append(header, resumo, corpo);
         overlay.appendChild(panel);
         overlay.addEventListener("click", event => {
             if (event.target === overlay) fechar();
@@ -673,6 +731,9 @@ Object.assign(UI, {
         const focoInicial = alvoFoco
             || trilha.querySelector(".ramos-tree-trilha__btn--ativo")
             || close;
+        // estado travado/marcado do auto-gasto + preenche nível/pontos/XP/bônus
+        SyncTogglesAutomacao();
+        this.updateSkillProgress();
         focoInicial.focus({ preventScroll: true });
     },
 

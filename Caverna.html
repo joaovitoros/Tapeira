@@ -62,36 +62,58 @@
 		<audio id="audio7" src="media/wood1.wav"></audio>
 		<audio id="audio8" src="media/switch1.wav"></audio>
 
-		<div id="container-AndarManter">
-			<div id="container-Andar">
-				<label>
-					<span class="andar-label-desktop">Andar: </span>
-					<span class="andar-label-mobile" aria-hidden="true">Andar</span>
-				</label>
-				<div class="contAndar" id="contAndar"></div>
+		<!-- Topo alinhado (esboço HUD v3): Andar/Manter/Voltar · Pausar · Gold/Esmeraldas -->
+		<div id="container-HudTopo">
+			<div id="container-AndarManter">
+				<div id="container-Andar">
+					<label>
+						<span class="andar-label-desktop">Andar: </span>
+						<span class="andar-label-mobile" aria-hidden="true">Andar</span>
+					</label>
+					<div class="contAndar" id="contAndar"></div>
+				</div>
+
+				<div id="container-ManterAndar">
+					<label id="lblManter" for="manterAndar">
+						<span class="manter-label-desktop">Manter no andar:</span>
+						<span class="manter-label-mobile" aria-hidden="true">Manter</span>
+					</label>
+					<input type="checkbox" id="manterAndar" aria-label="Manter no andar">
+				</div>
+
+				<div id="container-VoltarAndar">
+					<button type="button" id="btnAndar" class="btn-Padrao">
+						<span class="voltar-label-desktop">Voltar andar</span>
+						<span class="voltar-label-mobile" aria-hidden="true">Voltar</span>
+						<span class="voltar-seta" aria-hidden="true">
+							<svg viewBox="0 0 24 24" focusable="false">
+								<path d="M15 5 8 12l7 7" />
+							</svg>
+						</span>
+					</button>
+				</div>
 			</div>
 
-			<div id="container-ManterAndar">
-				<label id="lblManter" for="manterAndar">
-					<span class="manter-label-desktop">Manter no andar:</span>
-					<span class="manter-label-mobile" aria-hidden="true">Manter</span>
-				</label>
-				<input type="checkbox" id="manterAndar" aria-label="Manter no andar">
-			</div>
+			<button type="button" id="btnPause" class="pause-button" aria-label="Pausar jogo"
+				title="Pausar jogo">
+				<span class="pause-button-icon" aria-hidden="true">Ⅱ</span>
+				<span class="pause-button-label">Pausar</span>
+			</button>
 
-			<div id="container-VoltarAndar">
-				<button type="button" id="btnAndar" class="btn-Padrao">
-					<span class="voltar-label-desktop">Voltar andar</span>
-					<span class="voltar-label-mobile" aria-hidden="true">Voltar</span>
-					<span class="voltar-seta" aria-hidden="true">
-						<svg viewBox="0 0 24 24" focusable="false">
-							<path d="M15 5 8 12l7 7" />
-						</svg>
-					</span>
-				</button>
+			<div id="container-GoldEsmeraldas">
+				<div id="container-Gold">
+					<img class="moeda-icone" src="imagens/gold.png" alt="Gold:" />
+					<div class="contGold" id="contGold">0</div>
+				</div>
+
+				<div id="container-Esmeraldas">
+					<img class="moeda-icone" src="imagens/gem.png" alt="Esmeraldas:" />
+					<div class="contEmeraldas" id="contEmeraldas">0</div>
+				</div>
 			</div>
 		</div>
 
+		<!-- Fuga contextual: barra fina que fica logo abaixo do topo (esboço HUD v3) -->
 		<div id="container-Fugir">
 			<span class="fuga-clock" aria-hidden="true"></span>
 			<div class="fuga-label">
@@ -99,33 +121,45 @@
 				<span class="fuga-label-mobile" aria-hidden="true">Fuga em</span>
 			</div>
 			<div class="contTempo" id="contTempo" role="timer" aria-label="Tempo restante para a fuga dos inimigos"></div>
-			<button type="button" id="btnPause" class="pause-button" aria-label="Pausar jogo"
-				title="Pausar jogo">
-				<span class="pause-button-icon" aria-hidden="true">Ⅱ</span>
-				<span class="pause-button-label">Pausar</span>
-			</button>
-		</div>
-
-		<div id="container-GoldEsmeraldas">
-			<div id="container-Gold">
-				<img class="moeda-icone" src="imagens/gold.png" alt="Gold:" />
-				<div class="contGold" id="contGold">0</div>
-			</div>
-
-			<div id="container-Esmeraldas">
-				<img class="moeda-icone" src="imagens/gem.png" alt="Esmeraldas:" />
-				<div class="contEmeraldas" id="contEmeraldas">0</div>
-			</div>
-		</div>
-
-		<div id="container-DerrotouResta">
-			<div id="container-TotalAbatidos">
-				<div class="contDerrotadoslbl">Total Abatidos:</div>
-				<div class="contDerrotados" id="contDerrotados"></div>
-			</div>
 		</div>
 
 		<div id="container-Metas">
+			<!-- (4) Baú dourado no vão à esquerda do Objetivo/Missão (esboço HUD v3) -->
+			<section id="golden-chest-tracker" aria-label="Baú dourado">
+				<button type="button" id="golden-chest-claim" class="golden-chest-tracker__main" disabled>
+					<img src="imagens/bau-dourado.svg" alt="" class="golden-chest-tracker__icon">
+					<span id="golden-chest-progress-text">20:00</span>
+				</button>
+
+				<div class="golden-chest-tracker__bottom">
+					<button type="button" id="golden-chest-info" class="golden-chest-tracker__info"
+						aria-expanded="false" aria-controls="golden-chest-desc"
+						aria-label="Sobre o baú dourado" title="Sobre o baú dourado">
+						<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+							<circle cx="12" cy="12" r="9.4" />
+							<path d="M12 11.2v5.2" />
+							<circle cx="12" cy="7.8" r="1.15" class="golden-chest-tracker__info-dot" />
+						</svg>
+					</button>
+
+					<div class="golden-chest-tracker__auto">
+						<label class="auto-toggle" id="autoColetaWrap">
+							<span class="golden-chest-tracker__auto-label">auto</span>
+							<input type="checkbox" id="autoColetaToggle"
+								aria-label="Auto-coleta de baús" />
+						</label>
+					</div>
+				</div>
+
+				<div id="golden-chest-desc" class="golden-chest-tracker__desc" role="note" hidden>
+					<strong>Baú Dourado</strong>
+					<p>Receba um item aleatório entre Gold, Formiga ou Skills recarregadas.</p>
+					<p><b>No jogo:</b> a cada 20 min.</p>
+					<p><b>Fora do jogo:</b> a cada 40 min.</p>
+				</div>
+			</section>
+
+			<!-- (2) Objetivo com a missão como segunda seção do mesmo card -->
 			<div id="container-Objetivo" aria-live="polite">
 				<div id="objetivoTitulo">OBJETIVO DO ANDAR</div>
 				<div id="objetivoDescricao">Limpe a caverna</div>
@@ -139,20 +173,20 @@
 				</div>
 				<div id="objetivoContagem"></div>
 				<div id="avisoReset" class="aviso-reset"></div>
-			</div>
 
-			<div id="container-Missao" aria-live="polite" hidden>
-				<div id="missaoTitulo">MISSÃO ATUAL</div>
-				<div id="missaoDescricao"></div>
-				<div id="missaoProgresso"
-					role="progressbar"
-					aria-label="Progresso da missão"
-					aria-valuemin="0"
-					aria-valuemax="1"
-					aria-valuenow="0">
-					<div id="missaoProgressoPreenchido"></div>
+				<div id="container-Missao" aria-live="polite" hidden>
+					<div id="missaoTitulo">MISSÃO ATUAL</div>
+					<div id="missaoDescricao"></div>
+					<div id="missaoProgresso"
+						role="progressbar"
+						aria-label="Progresso da missão"
+						aria-valuemin="0"
+						aria-valuemax="1"
+						aria-valuenow="0">
+						<div id="missaoProgressoPreenchido"></div>
+					</div>
+					<div id="missaoContagem"></div>
 				</div>
-				<div id="missaoContagem"></div>
 			</div>
 		</div>
 
@@ -210,40 +244,6 @@
 		</div>
 
 		<div id="container-opcoes">
-			<section id="golden-chest-tracker" aria-label="Baú dourado">
-				<button type="button" id="golden-chest-claim" class="golden-chest-tracker__main" disabled>
-					<img src="imagens/bau-dourado.svg" alt="" class="golden-chest-tracker__icon">
-					<span id="golden-chest-progress-text">20:00</span>
-				</button>
-
-				<div class="golden-chest-tracker__bottom">
-					<button type="button" id="golden-chest-info" class="golden-chest-tracker__info"
-						aria-expanded="false" aria-controls="golden-chest-desc"
-						aria-label="Sobre o baú dourado" title="Sobre o baú dourado">
-						<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-							<circle cx="12" cy="12" r="9.4" />
-							<path d="M12 11.2v5.2" />
-							<circle cx="12" cy="7.8" r="1.15" class="golden-chest-tracker__info-dot" />
-						</svg>
-					</button>
-
-					<div class="golden-chest-tracker__auto">
-						<label class="auto-toggle" id="autoColetaWrap">
-							<span class="golden-chest-tracker__auto-label">auto</span>
-							<input type="checkbox" id="autoColetaToggle"
-								aria-label="Auto-coleta de baús" />
-						</label>
-					</div>
-				</div>
-
-				<div id="golden-chest-desc" class="golden-chest-tracker__desc" role="note" hidden>
-					<strong>Baú Dourado</strong>
-					<p>Receba um item aleatório entre Gold, Formiga ou Skills recarregadas.</p>
-					<p><b>No jogo:</b> a cada 20 min.</p>
-					<p><b>Fora do jogo:</b> a cada 40 min.</p>
-				</div>
-			</section>
-
 			<div id="container-Botoes">
 				<button type="button" id="btnStatus" class="btn-Padrao screen-nav-button screen-nav-button--status"
 					aria-controls="DivStatus" aria-expanded="false">
@@ -263,12 +263,12 @@
 						</svg>
 					</span>
 					<span>Feitos</span>
-					<span id="skill-point-badge" class="skill-point-badge" hidden aria-label="Pontos de habilidade disponíveis"></span>
 				</button>
 <button type="button" id="btnRamos" class="btn-Padrao screen-nav-button"
 					aria-expanded="false">
 					<span class="screen-nav-icon screen-nav-icon--ramos" aria-hidden="true">🌿</span>
 					<span>Ramos</span>
+					<span id="skill-point-badge" class="skill-point-badge" hidden aria-label="Pontos de habilidade disponíveis"></span>
 				</button>
 			</div>
 

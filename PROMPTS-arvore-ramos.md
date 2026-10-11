@@ -6,7 +6,7 @@ sem conectores, com detalhes sob clique). Nada de barra de recursos.
 Como usar: cole o **Prompt mestre** antes de cada prompt, ou use cada prompt sozinho
 (eles já repetem o essencial). Rode um por vez e valide antes de seguir.
 
-Referência visual: `esboco-arvore.html` (arquivo descartável, só inspiração de layout).
+Referência visual: `esbocos/esboco-arvore.html` (arquivo descartável, só inspiração de layout).
 
 ---
 
@@ -126,7 +126,7 @@ Critérios de aceite:
 ```
 Objetivo: estilizar o painel da "Árvore de ramos" em `css/estilos.css`, ANEXANDO um bloco novo
 perto do bloco do painel de skills (~linha 5776), sem alterar as classes existentes e sem
-normalizar o arquivo. Siga o esboço `esboco-arvore.html` (é a referência visual).
+normalizar o arquivo. Siga o esboço `esbocos/esboco-arvore.html` (é a referência visual).
 
 Crie as classes (prefixo `ramos-tree-` / `ramos-col-` / `ramos-cel-`):
 - Overlay: padding seguro (safe-area) como `.skill-upgrade-overlay`.

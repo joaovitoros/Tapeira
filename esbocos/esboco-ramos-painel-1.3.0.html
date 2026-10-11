@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<!--
+  ESBOÇO (descartável) — NÃO faz parte do jogo.
+
+  Objetivo: aprovar visualmente 3 mudanças pedidas para o painel `ramos-tree-panel`
+  (#btnRamos / #ramosTreeModal), tendo a release 1.3.0 (commit 0866b9f) como referência:
+
+    1) Trazer de volta para DENTRO do painel "Ramos" o bloco de informações do
+       jogador que existia no painel único da 1.3.0 (nível, pontos de habilidade,
+       XP, auto-gasto, progresso e bônus). Ele deve ficar ENTRE o título e o menu
+       de skills (a trilha de ícones) e NÃO muda ao trocar de skill.
+    2) O botão "Ramos" da HUD deve mostrar o contador (bolinha vermelha) que na
+       1.3.0 ficava no botão "Skills".
+    3) Restaurar as descrições mais completas da 1.3.0 (efeito dos perks e dos
+       ramos), que hoje estão mais curtas.
+
+  Referência do texto real: painel capturado em esboco-skills-1.3.0.html e o
+  código do commit 0866b9f (script/ui-skills.js, script/progressao.js,
+  script/ramos.js, Caverna.html).
+
+  Layout do painel segue a implementação real: header -> corpo (trilha de skills
+  à esquerda + seção da skill à direita). O bloco novo entra entre o header e o corpo.
+-->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Esboço — painel Ramos + resumo do jogador (ref. 1.3.0)</title>
+<style>
+  :root {
+    --bg: #0a0d12;
+    --linha: rgba(255,255,255,.16);
+    --texto: #e6edf3;
+    --suave: #a9bdd6;
+    --proximo: #ffd36b;
+    --ok: #9ff5c0;
+    --dano: #e0463c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    padding: 26px 18px 70px;
+    background: radial-gradient(ellipse at 50% 0%, #1b212e, var(--bg) 70%);
+    color: var(--texto);
+    font-family: "Segoe UI", "Roboto", system-ui, sans-serif;
+    font-size: 15px;
+  }
+  .doc-head { max-width: 1180px; margin: 0 auto 22px; }
+  .doc-head h1 { color: var(--proximo); font-size: clamp(20px, 2.6vw, 30px); margin: 0 0 6px; }
+  .doc-head p { color: #b9c3d3; line-height: 1.5; margin: 4px 0; max-width: 900px; }
+  .doc-head code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 4px; }
+  .aviso {
+    margin-top: 10px; padding: 10px 13px; border-radius: 9px; max-width: 900px;
+    background: rgba(255,180,80,.08); border: 1px solid rgba(255,180,80,.35);
+    color: #ffd9a6; font-size: 13px; line-height: 1.5;
+  }
+
+  .layout { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; justify-content: center; max-width: 1180px; margin: 0 auto; }
+
+  /* ===== HUD ===== */
+  .bloco-demo { flex: 1 1 620px; min-width: 320px; max-width: 780px; }
+  .titulo-bloco { font-size: 14px; color: #9ccfff; letter-spacing: .03em; margin: 0 0 10px; }
+  .hud {
+    display: flex; gap: 8px; flex-wrap: wrap; padding: 12px;
+    border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(255,255,255,.02);
+  }
+  .hud button {
+    position: relative; padding: 10px 16px; border-radius: 8px; cursor: pointer;
+    border: 1px solid #3a5c82; background: linear-gradient(145deg,#235a8c,#163a5e);
+    color: #eaf4ff; font-weight: 700; font-size: 14px;
+  }
+  /* bolinha do contador (mesma .skill-point-badge da 1.3.0) */
+  .badge {
+    position: absolute; top: -7px; right: -7px; display: grid; place-items: center;
+    min-width: 19px; height: 19px; padding: 0 4px;
+    border: 1px solid #fff1b8; border-radius: 999px; background: #d94c32;
+    box-shadow: 0 0 8px rgba(255,126,76,.8); color: #fff; font-size: 12px; line-height: 1;
+  }
+  .badge.novo { outline: 2px dashed var(--proximo); outline-offset: 3px; }
+
+  /* ===== painel ===== */
+  .overlay-demo {
+    position: relative; margin-top: 16px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px; border-radius: 14px;
+    border: 1px dashed rgba(156,207,255,.3);
+    background: rgba(3,8,14,.55);
+  }
+  .painel {
+    --ramos-linha: var(--linha);
+    --ramos-proximo: var(--proximo);
+    --ramos-ok: var(--ok);
+    --acento: var(--dano);
+    width: min(780px, 100%); max-height: 680px;
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 16px; overflow: hidden;
+    border: 1px solid #3a567c; border-radius: 14px;
+    background: linear-gradient(180deg,#14253a,#0d1826);
+    box-shadow: 0 18px 50px rgba(0,0,0,.65);
+  }
+
+  .painel__cabecalho { display: flex; align-items: center; gap: 10px; }
+  .painel__cabecalho h2 { flex: 1; min-width: 0; margin: 0; font-size: clamp(18px, 4vw, 24px); }
+  .painel__cabecalho .fechar {
+    width: 42px; height: 42px; border-radius: 50%; cursor: pointer; font-size: 18px;
+    border: 1px solid #4a7fb5; background: #1b3550; color: #dceaff;
+  }
+
+  /* ========== BLOCO NOVO: resumo do jogador (compartilhado) ========== */
+  .resumo-jogador {
+    flex: 0 0 auto; position: relative;
+    display: grid; gap: 8px;
+    padding: 11px 12px;
+    border: 1px solid rgba(255,211,107,.55); border-radius: 11px;
+    background: rgba(255,211,107,.06);
+    outline: 2px dashed rgba(255,211,107,.65); outline-offset: 3px;
+  }
+  .skill-player-summary {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 6px 10px; color: #f4e6bb;
+  }
+  .skill-player-summary strong { font-size: clamp(17px, 4.5vw, 20px); }
+  .skill-player-summary .pontos {
+    padding: 4px 9px; border: 1px solid rgba(255,211,107,.65); border-radius: 7px;
+    background: rgba(255,211,107,.12); color: #ffe09a; font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .skill-player-xp { height: 12px; overflow: hidden; border: 1px solid rgba(168,215,255,.5);
+    border-radius: 999px; background: rgba(4,10,18,.8); }
+  .skill-player-xp > div { width: 72%; height: 100%; border-radius: inherit;
+    background: linear-gradient(90deg,#3b91e8,#a8d7ff); box-shadow: 0 0 9px rgba(89,177,255,.7); }
+  .skill-player-xp-label { display: block; margin-top: 5px; color: var(--suave); font-size: 12px; text-align: right; }
+  .linha-auto {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 6px 10px; border: 1px solid rgba(255,255,255,.09); border-radius: 6px;
+    background: rgba(255,255,255,.05); font-size: 14px;
+  }
+  .linha-auto input { width: 18px; height: 18px; accent-color: #4caf50; }
+  .progresso-bonus {
+    display: grid; gap: 3px; padding: 7px 10px; border-radius: 6px;
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+    font-size: 12px; color: #cbd5e3;
+  }
+  .progresso-bonus b { color: #ffe09a; }
+
+  /* ========== corpo: trilha + seção ========== */
+  .ramos-tree-corpo { display: flex; flex: 1 1 auto; min-height: 0; }
+  .ramos-tree-trilha {
+    flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px;
+    padding: 12px 10px; border-right: 1px solid #2b4160; background: rgba(0,0,0,.18);
+  }
+  .ramos-tree-trilha__btn {
+    position: relative; width: 52px; height: 52px; display: grid; place-items: center;
+    border: 2px solid #2b4160; border-radius: 12px; background: #14263a; cursor: pointer;
+  }
+  .ramos-tree-trilha__btn--ativo { border-color: var(--acento); box-shadow: 0 0 12px color-mix(in srgb, var(--acento) 55%, transparent); }
+  .ramos-tree-trilha__btn--travada { opacity: .7; }
+  .ramos-tree-trilha__btn--travada::after { content: "🔒"; position: absolute; right: -5px; bottom: -5px; font-size: 11px; }
+  .ramos-tree-trilha__btn--pronta::after { content: ""; position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 999px; background: var(--proximo); box-shadow: 0 0 8px rgba(255,211,107,.8); }
+  .ramos-tree-trilha__icone { width: 26px; height: 26px; object-fit: contain; }
+
+  .ramos-tree-secao { flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto; padding: 16px; }
+
+  .ramos-tree-topo { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .ramos-tree-topo__icone { width: 40px; height: 40px; padding: 7px; border: 1px solid var(--acento); border-radius: 10px; background: color-mix(in srgb, var(--acento) 25%, #0d1826); object-fit: contain; }
+  .ramos-tree-topo__titulo { flex: 1; min-width: 0; }
+  .ramos-tree-topo__titulo b { display: block; font-size: 17px; }
+  .ramos-tree-topo__sub { font-size: 12px; color: #b8c6d9; }
+  .ramos-tree-topo__selo { padding: 4px 10px; border: 1px solid rgba(255,211,107,.65); border-radius: 999px; background: rgba(255,211,107,.12); color: #ffe09a; font-size: 13px; font-weight: 700; }
+  .ramos-tree-efeito { margin: 0 0 4px; color: #cbd5e1; font-size: 12px; }
+
+  .ramos-tree-bloco { margin-top: 14px; }
+  .ramos-tree-bloco__rotulo { margin-bottom: 8px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #8fa6c0; }
+  .ramos-tree-bloco__rotulo::after { content: ""; display: block; margin-top: 5px; border-top: 1px dashed rgba(255,255,255,.14); }
+  .ramos-tree-dica { margin: -2px 0 8px; font-size: 11px; color: var(--suave); }
+
+  .ramos-tree-niveis { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ramos-tree-niv {
+    position: relative; width: 34px; height: 34px; display: grid; place-items: center;
+    border: 2px solid var(--ramos-linha); border-radius: 9px;
+    background: linear-gradient(180deg,#172a40,#0f1e30); color: #9fb2c8; font-size: 13px; font-weight: 700;
+  }
+  .ramos-tree-niv--feito { border-color: var(--acento); background: color-mix(in srgb, var(--acento) 32%, #0d1826); color: #eaf1fb; }
+  .ramos-tree-niv--max { border-color: var(--ramos-ok); background: color-mix(in srgb, var(--ramos-ok) 22%, #0d1826); color: var(--ramos-ok); }
+  .ramos-tree-niv--travado { opacity: .5; }
+  .ramos-tree-niv--travado::after { content: "🔒"; position: absolute; right: -3px; top: -6px; font-size: 9px; }
+  .ramos-tree-niv--proximo { border-color: var(--ramos-proximo); color: #ffe09a; animation: pulso 1.5s ease-in-out infinite; cursor: pointer; }
+  @keyframes pulso { 0%,100% { box-shadow: 0 0 10px rgba(255,211,107,.35); } 50% { box-shadow: 0 0 20px rgba(255,211,107,.7); } }
+
+  .ramos-tree-perk {
+    display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px;
+    border: 2px solid var(--ramos-linha); border-radius: 10px; background: rgba(0,0,0,.2);
+  }
+  .ramos-tree-perk__tile { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: rgba(0,0,0,.35); font-size: 18px; }
+  .ramos-tree-perk__txt { flex: 1; min-width: 0; }
+  .ramos-tree-perk__txt b { display: block; font-size: 13px; }
+  .ramos-tree-perk__txt span { display: block; font-size: 11px; color: #b8c6d9; }
+  .ramos-tree-perk--pronto { border-color: #ffd0c4; box-shadow: 0 0 12px rgba(255,90,77,.5); cursor: pointer; }
+
+  .ramos-tree-ramos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ramos-tree-ramo { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px; border: 1px solid #2b4160; border-radius: 12px; background: rgba(0,0,0,.18); }
+  .ramos-tree-ramo__nome { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #cfe0f2; }
+  .ramos-tree-no { position: relative; display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 8px; border: 2px solid var(--ramos-linha); border-radius: 10px; background: #12213a; text-align: left; }
+  .ramos-tree-no__txt { flex: 1; min-width: 0; }
+  .ramos-tree-no__txt b { display: block; font-size: 12px; }
+  .ramos-tree-no__txt span { display: block; font-size: 10px; color: #b8c6d9; }
+  .ramos-tree-no--pronto { border-color: var(--ramos-proximo); box-shadow: 0 0 12px rgba(255,211,107,.45); cursor: pointer; }
+  .ramos-tree-no--pendente { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.05); opacity: .85; }
+  .ramos-tree-fio { width: 3px; height: 14px; background: #5b768f; }
+  .ramos-tree-selo { align-self: flex-start; padding: 1px 7px; border-radius: 999px; background: var(--proximo); color: #2a1d00; font-size: 8px; font-weight: 800; letter-spacing: .04em; }
+
+  /* ===== anotações ===== */
+  .nota-right { flex: 1 1 400px; min-width: 320px; max-width: 460px; }
+  .nota-card {
+    margin-bottom: 14px; padding: 13px 15px; border-radius: 10px;
+    border: 1px solid rgba(120,200,255,.25); background: rgba(120,200,255,.06);
+    font-size: 13px; line-height: 1.55; color: #cfe6ff;
+  }
+  .nota-card b { color: #fff; }
+  .nota-card .num {
+    display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 6px;
+    border-radius: 999px; background: var(--proximo); color: #2a1d00; font-weight: 800; font-size: 12px;
+  }
+  .tabela-desc { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  .tabela-desc th, .tabela-desc td { border-bottom: 1px solid rgba(255,255,255,.08); padding: 5px 6px; text-align: left; vertical-align: top; }
+  .tabela-desc th { color: #9ccfff; font-weight: 700; }
+  .tabela-desc .velho { color: #8ff0b0; }
+  .tabela-desc .novo { color: #ff9d9d; text-decoration: line-through; text-decoration-color: rgba(255,157,157,.5); }
+  .grupo-desc { margin-top: 12px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #8fa6c0; }
+</style>
+</head>
+<body>
+
+<div class="doc-head">
+  <h1>Esboço — painel Ramos + resumo do jogador (referência 1.3.0)</h1>
+  <p>Mostra as 3 mudanças pedidas para o painel <code>#btnRamos</code>
+     (<code>#ramosTreeModal</code> / <code>.ramos-tree-panel</code>), usando a release
+     <code>1.3.0</code> (commit <code>0866b9f</code>) como referência. O layout do painel segue a
+     implementação real: <b>header → bloco novo → trilha de skills + seção da skill</b>.</p>
+  <p class="aviso">⚠️ Observação: eu <b>não consegui visualizar a imagem anexada</b> (o modelo não lê
+     imagens). Este esboço foi montado a partir do código do commit <code>0866b9f</code> e do painel
+     real capturado em <code>esboco-skills-1.3.0.html</code>. Se algo da imagem não bater, me diga
+     qual item ajustar.</p>
+</div>
+
+<div class="layout">
+
+  <!-- ===================== ESQUERDA: HUD + painel ===================== -->
+  <div class="bloco-demo">
+    <h2 class="titulo-bloco">HUD — botão "Ramos" com contador (item 2)</h2>
+    <div class="hud">
+      <button type="button">Status</button>
+      <button type="button">Loja</button>
+      <button type="button">Config</button>
+      <button type="button">Formigas</button>
+      <button type="button">Skills</button>
+      <button type="button" class="novo" style="outline:2px dashed var(--proximo); outline-offset:3px;">
+        🌿 Ramos
+        <span class="badge novo">3</span>
+      </button>
+    </div>
+
+    <h2 class="titulo-bloco" style="margin-top:22px;">Painel — bloco novo entre o título e o menu de skills</h2>
+    <div class="overlay-demo">
+      <section class="painel" role="dialog" aria-label="Árvore de habilidades">
+
+        <header class="painel__cabecalho">
+          <h2>Árvore de habilidades</h2>
+          <button type="button" class="fechar" aria-label="Fechar">×</button>
+        </header>
+
+        <!-- ======= BLOCO NOVO (item 1): compartilhado, não muda por skill ======= -->
+        <div class="resumo-jogador">
+          <div class="skill-player-summary">
+            <strong>Nível 12</strong>
+            <span class="pontos">3 pontos de habilidade</span>
+          </div>
+          <div>
+            <div class="skill-player-xp" role="progressbar" aria-valuemin="0" aria-valuemax="50" aria-valuenow="36"><div></div></div>
+            <span class="skill-player-xp-label">36 / 50 XP para o próximo nível</span>
+          </div>
+          <label class="linha-auto">
+            <span>auto-gasto de pontos · nível aleatório</span>
+            <input type="checkbox" checked aria-label="Auto-gasto de pontos de habilidade">
+          </label>
+          <div class="progresso-bonus">
+            <span><b>Bônus atual:</b> +55% de dano · −2 inimigos para avançar</span>
+            <span><b>Perk:</b> 2 pontos disponíveis de 6 · +1 por portão desta run (andar 35+) · zeram no reset</span>
+          </div>
+        </div>
+        <!-- ====================================================================== -->
+
+        <div class="ramos-tree-corpo">
+          <nav class="ramos-tree-trilha" aria-label="Selecionar habilidade">
+            <button type="button" class="ramos-tree-trilha__btn ramos-tree-trilha__btn--ativo ramos-tree-trilha__btn--pronta" style="--acento:#e0463c" title="Dano automático">
+              <img class="ramos-tree-trilha__icone" src="../imagens/espada-habilidade.svg" alt="">
+            </button>
+            <button type="button" class="ramos-tree-trilha__btn" style="--acento:#c9a227" title="Corrente elétrica">
+              <img class="ramos-tree-trilha__icone" src="../imagens/efeito-eletrico.svg" alt="">
+            </button>
+            <button type="button" class="ramos-tree-trilha__btn ramos-tree-trilha__btn--travada" style="--acento:#e0a72e" title="Bônus de Gold">
+              <img class="ramos-tree-trilha__icone" src="../imagens/bau-dourado.svg" alt="">
+            </button>
+            <button type="button" class="ramos-tree-trilha__btn ramos-tree-trilha__btn--travada" style="--acento:#4a9be0" title="Pausa da fuga">
+              <img class="ramos-tree-trilha__icone" src="../imagens/cursor-espada.svg" alt="">
+            </button>
+            <button type="button" class="ramos-tree-trilha__btn ramos-tree-trilha__btn--travada" style="--acento:#9b6be0" title="Toque Frenético">
+              <img class="ramos-tree-trilha__icone" src="../imagens/espada-eletrica.svg" alt="">
+            </button>
+          </nav>
+
+          <div class="ramos-tree-secao">
+            <div class="ramos-tree-topo">
+              <img class="ramos-tree-topo__icone" src="../imagens/espada-habilidade.svg" alt="">
+              <span class="ramos-tree-topo__titulo">
+                <b>Dano automático</b>
+                <span class="ramos-tree-topo__sub">Nível 5/10 · cliques automáticos enquanto avança</span>
+              </span>
+              <span class="ramos-tree-topo__selo">5/10</span>
+            </div>
+            <p class="ramos-tree-efeito">Golpeia sozinho enquanto você avança. <span style="color:#8fa6c0">(efeito vivo: Duração: 55 s (+5 s por nível).)</span></p>
+
+            <div class="ramos-tree-bloco">
+              <div class="ramos-tree-bloco__rotulo">Níveis</div>
+              <p class="ramos-tree-dica">Gaste 1 ponto para subir ao próximo nível.</p>
+              <div class="ramos-tree-niveis">
+                <span class="ramos-tree-niv ramos-tree-niv--feito">1</span>
+                <span class="ramos-tree-niv ramos-tree-niv--feito">2</span>
+                <span class="ramos-tree-niv ramos-tree-niv--feito">3</span>
+                <span class="ramos-tree-niv ramos-tree-niv--feito">4</span>
+                <span class="ramos-tree-niv ramos-tree-niv--feito">5</span>
+                <button type="button" class="ramos-tree-niv ramos-tree-niv--proximo">6</button>
+                <span class="ramos-tree-niv ramos-tree-niv--travado">7</span>
+                <span class="ramos-tree-niv ramos-tree-niv--travado">8</span>
+                <span class="ramos-tree-niv ramos-tree-niv--travado">9</span>
+                <span class="ramos-tree-niv ramos-tree-niv--travado">10</span>
+              </div>
+            </div>
+
+            <div class="ramos-tree-bloco">
+              <div class="ramos-tree-bloco__rotulo">Perk</div>
+              <div class="ramos-tree-perk ramos-tree-perk--pronto">
+                <span class="ramos-tree-perk__tile" aria-hidden="true">◆</span>
+                <span class="ramos-tree-perk__txt">
+                  <b>Perk 2/4</b>
+                  <!-- item 3: texto RESTAURADO da 1.3.0 (hoje: "Mais 25% de dano por nível.") -->
+                  <span>+25% de dano por nível; no nível máximo a skill ativa sozinha quando carregada</span>
+                </span>
+                <span class="ramos-tree-selo">APLICAR</span>
+              </div>
+            </div>
+
+            <div class="ramos-tree-bloco">
+              <div class="ramos-tree-bloco__rotulo">Ramos · Nv 5 → Nv 10</div>
+              <div class="ramos-tree-ramos">
+                <div class="ramos-tree-ramo">
+                  <div class="ramos-tree-ramo__nome">Canhão</div>
+                  <div class="ramos-tree-no ramos-tree-no--pronto">
+                    <span class="ramos-tree-no__txt">
+                      <b>Nv 5</b>
+                      <!-- item 3: texto RESTAURADO da 1.3.0 (hoje: "Golpes 50% mais fortes.") -->
+                      <span>+50% de dano no hit automático</span>
+                    </span>
+                    <span class="ramos-tree-selo">ESCOLHER</span>
+                  </div>
+                  <span class="ramos-tree-fio" aria-hidden="true"></span>
+                  <div class="ramos-tree-no ramos-tree-no--pendente">
+                    <span class="ramos-tree-no__txt">
+                      <b>Nv 10</b>
+                      <span>+50% de novo (×2,25 no total)</span>
+                    </span>
+                  </div>
+                </div>
+                <div class="ramos-tree-ramo">
+                  <div class="ramos-tree-ramo__nome">Rajada</div>
+                  <div class="ramos-tree-no ramos-tree-no--pronto">
+                    <span class="ramos-tree-no__txt">
+                      <b>Nv 5</b>
+                      <span>Janela de ativação 50% mais longa</span>
+                    </span>
+                    <span class="ramos-tree-selo">ESCOLHER</span>
+                  </div>
+                  <span class="ramos-tree-fio" aria-hidden="true"></span>
+                  <div class="ramos-tree-no ramos-tree-no--pendente">
+                    <span class="ramos-tree-no__txt">
+                      <b>Nv 10</b>
+                      <span>+50% de novo (×2,25 no total)</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </div>
+
+  <!-- ===================== DIREITA: notas + descrições ===================== -->
+  <div class="nota-right">
+
+    <div class="nota-card">
+      <p><span class="num">1</span><b>Bloco compartilhado no topo do painel.</b>
+         Entra entre o título e o corpo (trilha + seção). Traz <b>nível</b>, <b>pontos de
+         habilidade</b>, <b>XP</b>, <b>auto-gasto</b> e <b>progresso/bônus</b> — o mesmo
+         conteúdo do painel único da 1.3.0. Como fica fora da seção, <b>não muda</b> ao
+         trocar de skill na trilha.</p>
+      <p style="margin-bottom:0;color:#9ccfff;">Reaproveita os ids da 1.3.0:
+         <code>skill-player-level</code>, <code>skill-player-points</code>,
+         <code>skill-player-xp</code>/<code>-fill</code>/<code>-label</code>,
+         <code>autoGastoWrap</code>/<code>autoGastoToggle</code> — assim
+         <code>UI.updateSkillProgress()</code> e <code>SyncTogglesAutomacao()</code>
+         continuam funcionando.</p>
+    </div>
+
+    <div class="nota-card">
+      <p style="margin:0;"><span class="num">2</span><b>Contador no botão "Ramos".</b>
+         Mesma bolinha vermelha da 1.3.0 (<code>id="skill-point-badge"</code>, agora movida do
+         botão "Skills" — que virou "Feitos" — para o botão "Ramos"). Mostra os
+         <b>pontos de habilidade</b> disponíveis e some quando é 0.</p>
+    </div>
+
+    <div class="nota-card">
+      <p style="margin:0;"><span class="num">3</span><b>Descrições restauradas da 1.3.0.</b>
+         Textos mais completos no perk e nos ramos (no mock, à esquerda, já aparecem os
+         textos novos). Comparativo completo abaixo.</p>
+    </div>
+
+    <div class="nota-card">
+      <p style="margin:0 0 4px;"><b>Descrições — 1.3.0 (restaurar) vs hoje</b></p>
+
+      <div class="grupo-desc">Perks (<code>PERKS[].efeito</code>)</div>
+      <table class="tabela-desc">
+        <tr><th>Skill</th><th>1.3.0 (voltar)</th><th>hoje</th></tr>
+        <tr><td>Dano</td><td class="velho">+25% de dano por nível; no nível máximo a skill ativa sozinha quando carregada</td><td class="novo">Mais 25% de dano por nível.</td></tr>
+        <tr><td>Elétrica</td><td class="velho">+1 inimigo atingido por nível</td><td class="novo">+1 inimigo por nível.</td></tr>
+        <tr><td>Gold</td><td class="velho">+25% no drop do kill feito com a skill ativa por nível; do nível 1 em diante o companheiro também usa a skill ativa</td><td class="novo">+25% de moedas por nível.</td></tr>
+        <tr><td>Fuga</td><td class="velho">10% de restaurar o tempo de fuga por nível (máx 50%)</td><td class="novo">Recupera 10% do tempo por nível.</td></tr>
+        <tr><td>Frenesi</td><td class="velho">+25% no dano do toque durante a janela por nível</td><td class="novo">+25% no toque durante a fúria.</td></tr>
+      </table>
+
+      <div class="grupo-desc">Ramos (<code>RAMOS_SKILL[].efeito5</code> / <code>efeito10</code>)</div>
+      <table class="tabela-desc">
+        <tr><th>Ramo</th><th>1.3.0 (voltar)</th><th>hoje</th></tr>
+        <tr><td>Canhão 5</td><td class="velho">+50% de dano no hit automático</td><td class="novo">Golpes 50% mais fortes.</td></tr>
+        <tr><td>Canhão 10</td><td class="velho">+50% de novo (×2,25 no total)</td><td class="novo">De novo +50%, total 2,25×.</td></tr>
+        <tr><td>Rajada 5</td><td class="velho">Janela de ativação 50% mais longa</td><td class="novo">A janela dura 50% a mais.</td></tr>
+        <tr><td>Rajada 10</td><td class="velho">+50% de novo (×2,25 no total)</td><td class="novo">De novo +50%, o dobro da janela.</td></tr>
+        <tr><td>Sobrecarga 5</td><td class="velho">+50% de dano na corrente</td><td class="novo">Choque 50% mais forte.</td></tr>
+        <tr><td>Sobrecarga 10</td><td class="velho">+50% de novo (×2,25 no total)</td><td class="novo">De novo +50%, total 2,25×.</td></tr>
+        <tr><td>Rede 5</td><td class="velho">+1 inimigo atingido pela corrente</td><td class="novo">+1 alvo na cadeia.</td></tr>
+        <tr><td>Rede 10</td><td class="velho">+1 inimigo de novo (máx +2)</td><td class="novo">+1 alvo de novo, até +2.</td></tr>
+        <tr><td>Veia 5</td><td class="velho">+50% no bônus de gold por ataque</td><td class="novo">+50% de gold por ataque.</td></tr>
+        <tr><td>Veia 10</td><td class="velho">+50% de novo (×2,25 no total)</td><td class="novo">De novo +50%, total 2,25×.</td></tr>
+        <tr><td>Fôlego 5</td><td class="velho">Carga vale 40 ataques (era 25)</td><td class="novo">A carga dura 40 ataques.</td></tr>
+        <tr><td>Fôlego 10</td><td class="velho">60 ataques no total</td><td class="novo">Agora dura 60 ataques.</td></tr>
+        <tr><td>Oportunidade 5</td><td class="velho">+15% de dano do jogador durante a pausa</td><td class="novo">+15% de dano na pausa.</td></tr>
+        <tr><td>Oportunidade 10</td><td class="velho">+15% de novo (×1,32 no total)</td><td class="novo">De novo +15%, total 1,32×.</td></tr>
+        <tr><td>Cortina 5</td><td class="velho">Pausa da fuga 50% mais longa</td><td class="novo">A pausa dura 50% mais.</td></tr>
+        <tr><td>Cortina 10</td><td class="velho">+50% de novo (×2,25 no total)</td><td class="novo">De novo +50%, total 2,25×.</td></tr>
+        <tr><td>Calor 5</td><td class="velho">+50% no dano da janela</td><td class="novo">Fúria 50% mais forte.</td></tr>
+        <tr><td>Calor 10</td><td class="velho">+50% de novo (×2,25 no total)</td><td class="novo">De novo +50%, total 2,25×.</td></tr>
+        <tr><td>Ímpeto 5</td><td class="velho">Janela 50% mais longa</td><td class="novo">Fúria 50% mais longa.</td></tr>
+        <tr><td>Ímpeto 10</td><td class="velho">+50% de novo (×2,25 no total)</td><td class="novo">De novo +50%, total 2,25×.</td></tr>
+      </table>
+    </div>
+
+    <div class="nota-card" style="border-color:rgba(255,180,80,.35); background:rgba(255,180,80,.07);">
+      <p style="margin:0;"><b>Pontos a confirmar antes de implementar:</b></p>
+      <ul style="margin:8px 0 0; padding-left:18px; line-height:1.55;">
+        <li>O "efeito vivo" da skill no mock (linha cinza) é só uma proposta: hoje a linha
+            <code>.ramos-tree-efeito</code> mostra o texto curto (<code>tagline</code>). Quer manter
+            a tagline, trocar pelo texto vivo, ou mostrar os dois?</li>
+        <li>Confirmar se as descrições a restaurar são exatamente estas (perks + ramos) ou se há
+            outra tela/trecho "em branco" na imagem que eu não vi.</li>
+        <li>O contador do botão "Ramos" conta só os pontos de <b>habilidade</b> (como era no botão
+            "Skills") ou também os pontos de <b>perk</b>?</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

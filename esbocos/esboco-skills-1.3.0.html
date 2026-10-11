@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<!--
+  ESBOÇO/RELATÓRIO — "Skills" na release 1.3.0 vs "Ramos" hoje.
+  NÃO faz parte do jogo.
+
+  Como foi feito:
+  - O painel da ESQUERDA é o HTML REAL capturado rodando o jogo no commit
+    0866b9f (release 1.3.0), com o CSS real daquela release
+    (esbocos/skills-1.3.0.css, cópia de css/estilos.css daquele commit).
+    Marcações: o overlay é fixed por padrão; aqui ele foi reancorado dentro
+    do "phone" para caber no layout do relatório (nada do visual interno mudou).
+  - A coluna da DIREITA lista as diferenças no estilo diff de pull request
+    (verde = adicionado, vermelho = removido) entre 1.3.0 e o HEAD atual.
+-->
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Esboço — Skills 1.3.0 vs Ramos (hoje)</title>
+
+<!-- CSS REAL da release 1.3.0 (cópia de css/estilos.css do commit 0866b9f).
+     Ele espera estar a 1 nível da raiz (../imagens), igual a css/. -->
+<link rel="stylesheet" href="skills-1.3.0.css" />
+
+<style>
+  /* Overrides só do relatório (não afetam o painel capturado) */
+  html, body { overflow: auto !important; width: auto !important; height: auto !important; }
+  body {
+    margin: 0 !important;
+    padding: 28px 18px 60px !important;
+    background: radial-gradient(ellipse at 50% 0%, #1b212e, #0a0d12 70%) !important;
+    color: #e6edf3;
+    font-size: 15px !important;
+    font-family: "Segoe UI", "Roboto", sans-serif !important;
+    text-shadow: none !important;
+    font-weight: 400 !important;
+  }
+
+  .doc-head { max-width: 1120px; margin: 0 auto 24px; }
+  .doc-head h1 { color: #ffd36b; font-size: clamp(20px, 2.6vw, 30px); margin: 0 0 6px; }
+  .doc-head p { color: #b9c3d3; max-width: 780px; line-height: 1.5; margin: 4px 0; }
+  .doc-head code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 4px; }
+
+  .layout {
+    display: flex; flex-wrap: wrap; gap: 30px; align-items: flex-start;
+    justify-content: center; max-width: 1120px; margin: 0 auto;
+  }
+
+  /* ---------- coluna esquerda: phone com o painel 1.3.0 ---------- */
+  .col-old { flex: 0 0 auto; }
+  .col-old h2, .col-diff h2 { font-size: 15px; color: #9ccfff; letter-spacing: .03em; margin: 0 0 10px; }
+  .col-old .tag {
+    display: inline-block; margin-bottom: 10px; padding: 3px 9px; border-radius: 999px;
+    background: rgba(255, 211, 107, .12); border: 1px solid rgba(255, 211, 107, .45);
+    color: #ffd36b; font-size: 12px; font-weight: 700;
+  }
+  .phone {
+    position: relative; width: 390px; height: 780px;
+    border: 10px solid #05070b; border-radius: 42px; overflow: hidden;
+    background: #0a0d12;
+    box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 0 2px rgba(229,183,96,.18);
+  }
+  /* reancora o overlay capturado dentro do phone (por padrão no jogo é fixed) */
+  .phone .ant-collection-overlay { position: absolute !important; inset: 0 !important; }
+
+  /* ---------- coluna direita: diff ---------- */
+  .col-diff { flex: 1 1 460px; max-width: 560px; min-width: 340px; }
+  .diff-file {
+    margin-bottom: 14px; border: 1px solid rgba(255,255,255,.10); border-radius: 9px;
+    overflow: hidden; background: rgba(255,255,255,.02);
+  }
+  .diff-file__head {
+    display: flex; justify-content: space-between; gap: 10px; align-items: baseline;
+    padding: 8px 11px; background: rgba(255,255,255,.05);
+    font-family: ui-monospace, Consolas, monospace; font-size: 12.5px;
+  }
+  .diff-file__head b { color: #e9dcc0; }
+  .diff-file__head span { color: #8fb0d6; white-space: nowrap; }
+  .diff-file pre {
+    margin: 0; padding: 8px 0; overflow-x: auto;
+    font-family: ui-monospace, Consolas, "Courier New", monospace;
+    font-size: 11.5px; line-height: 1.5; color: #cbd5e3; white-space: pre;
+  }
+  .diff-file pre span { display: block; padding: 0 11px; }
+  .diff-file pre .hunk { color: #7f9cc0; background: rgba(120,160,255,.08); }
+  .diff-file pre .add { color: #8ff0b0; background: rgba(46,160,67,.16); }
+  .diff-file pre .del { color: #ff9d9d; background: rgba(248,81,73,.16); }
+  .diff-file pre .ctx { color: #b6c2d4; }
+  .diff-note { color: #93a3b8; font-size: 12px; margin: 4px 12px 10px; }
+  .diff-summary {
+    margin-bottom: 16px; padding: 12px 14px; border-radius: 9px;
+    background: rgba(120,200,255,.06); border: 1px solid rgba(120,200,255,.25);
+    font-size: 13px; line-height: 1.55; color: #cfe6ff;
+  }
+  .diff-summary b { color: #fff; }
+  .numstat { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  .numstat td { border: 0; border-bottom: 1px solid rgba(255,255,255,.07); padding: 4px 6px; color: #cbd5e3; background: none; }
+  .numstat td:first-child { font-family: ui-monospace, monospace; }
+  .numstat .pl { color: #8ff0b0; text-align: right; }
+  .numstat .mi { color: #ff9d9d; text-align: right; }
+</style>
+</head>
+
+<body>
+  <div class="doc-head">
+    <h1>Skills na 1.3.0 → Ramos hoje</h1>
+    <p>A esquerda é o painel <b>real</b> da release <code>1.3.0</code> (commit
+       <code>0866b9f</code>), capturado rodando o jogo daquele commit com o CSS da época.
+       A direita é o <b>diff</b> (estilo pull request) contra o HEAD atual.</p>
+  </div>
+
+  <div class="layout">
+    <!-- ===================== ESQUERDA: painel 1.3.0 real ===================== -->
+    <div class="col-old">
+      <h2>Release 1.3.0 — painel único "Skills"</h2>
+      <span class="tag">commit 0866b9f · só existia 1 botão: Skills</span>
+      <div class="phone">
+        <div id="skillUpgradeModal" class="ant-collection-overlay skill-upgrade-overlay" role="dialog" aria-modal="true" aria-labelledby="skill-upgrade-title"><section class="ant-collection-panel skill-upgrade-panel"><header class="ant-collection-header"><h2 id="skill-upgrade-title">Árvore de habilidades</h2><button type="button" class="ant-collection-close" aria-label="Fechar habilidades" data-focus-key="fechar">×</button></header><div class="skill-upgrade-shortcuts"><button type="button" class="skill-upgrade-shortcut" aria-label="Abrir tela de conquistas" data-focus-key="atalho:conquistas">Conquistas</button><button type="button" class="skill-upgrade-shortcut" aria-label="Abrir tela de missões" data-focus-key="atalho:missoes">Missões</button><button type="button" class="skill-upgrade-shortcut" aria-label="Abrir tela de marcos" data-focus-key="atalho:marcos">Marcos</button></div><div class="skill-player-summary"><strong id="skill-player-level">Nível 1</strong><span id="skill-player-points">4 pontos de habilidade</span></div><div class="skill-player-xp-bloco"><div id="skill-player-xp" class="skill-player-xp" role="progressbar" aria-label="Experiência para o próximo nível" aria-valuemin="0" aria-describedby="skill-player-xp-label" aria-valuenow="0" aria-valuemax="50" aria-valuetext="0 de 50 XP"><div id="skill-player-xp-fill" style="width: 0%;"></div></div><span id="skill-player-xp-label" class="skill-player-xp-label">0 / 50 XP para o próximo nível</span></div><label class="auto-toggle skill-auto-gasto auto-toggle--locked" id="autoGastoWrap" title="Auto-gasto de pontos desbloqueia no andar 55"><span>auto-gasto de pontos · nível aleatório</span><input type="checkbox" id="autoGastoToggle" aria-label="Auto-gasto de pontos de habilidade" disabled=""></label><div class="skill-upgrade-scroll"><section class="skill-secao"><button type="button" class="skill-secao-cabecalho" aria-expanded="true" aria-controls="skill-secao-progresso-detalhes-corpo" data-focus-key="secao:progresso:detalhes"><span class="skill-secao-titulo">Progresso e bônus</span><span class="skill-secao-resumo" id="skill-player-progresso-resumo">+0% dano · 0 inimigos a menos · 7 pontos de perk</span><span class="skill-secao-seta" aria-hidden="true">▾</span></button><div class="skill-secao-corpo" id="skill-secao-progresso-detalhes-corpo"><div id="skill-player-bonus" class="skill-player-bonus">Bônus atual: +0% de dano · −0 inimigos para avançar</div><div id="skill-player-perk" class="skill-player-bonus">Pontos de perk: 7 disponíveis de 10 · +1 por portão desta run (andar 35+) · zeram no reset</div></div></section><div class="skill-tree"><section class="skill-secao skill-secao--destaque"><button type="button" class="skill-secao-cabecalho" aria-expanded="true" aria-controls="skill-secao-skill-damage-corpo" data-focus-key="secao:skill:damage"><span class="skill-secao-titulo">Dano automático</span><span class="skill-secao-resumo">Nv 6/10 · perk 2/4 · ● 1 ponto para subir</span><span class="skill-secao-seta" aria-hidden="true">▾</span></button><div class="skill-secao-corpo skill-tronco" id="skill-secao-skill-damage-corpo"><button class="skill-no skill-no--raiz skill-no--pronto" type="button" data-focus-key="melhorar:damage" aria-label="Melhorar Dano automático por 1 ponto de habilidade"><img class="skill-no-icone" src="../imagens/espada-habilidade.svg" alt="" aria-hidden="true"><div class="skill-no-corpo"><div class="skill-no-linha"><strong class="skill-no-nome">Dano automático</strong><span class="skill-no-nivel" aria-label="nível 6 de 10">Nv 6/10</span></div><p class="skill-no-desc">Duração: 60 s (+5 s por nível).</p><div class="skill-no-linha skill-no-pe"><span class="skill-no-estado skill-no-estado--ok">● Pronta para melhorar</span><span class="skill-no-custo">1 ponto por nível</span></div></div></button><span class="skill-conector" aria-hidden="true"></span><button class="skill-no skill-no--perk skill-no--pronto" type="button" data-focus-key="perk:damage" aria-label="Aplicar perk em Dano automático — 2/4 por 1 ponto de perk"><span class="skill-no-glifo" aria-hidden="true">◆</span><div class="skill-no-corpo"><div class="skill-no-linha"><strong class="skill-no-nome">Perk</strong><span class="skill-no-nivel">Nv 2/4</span></div><p class="skill-no-desc">+25% de dano por nível; no nível máximo a skill ativa sozinha quando carregada</p><div class="skill-no-linha skill-no-pe"><span class="skill-no-estado skill-no-estado--ok">● Pronto para aplicar</span><span class="skill-no-custo">1 ponto de perk por nível</span></div></div></button><span class="skill-conector" aria-hidden="true"></span><div class="skill-ramificacao"><p class="skill-ramos-hint">Escolha um caminho — mutuamente exclusivo nesta run</p><div class="skill-caminhos"><div class="skill-caminho"><div class="skill-ramo-cabecalho"><span class="skill-ramo-caminho">Canhão</span></div><button type="button" class="skill-ramo-no skill-ramo-no--escolhivel" data-focus-key="ramo:damage:1" aria-label="Escolher Canhão de Dano automático — ● Escolher"><span class="skill-ramo-nome">Nv 5</span><span class="skill-ramo-efeito">+50% de dano no hit automático</span><span class="skill-ramo-estado">● Escolher</span></button><span class="skill-conector" aria-hidden="true"></span><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Conclusão do caminho Canhão — ○ após escolher"><span class="skill-ramo-nome">Nv 10</span><span class="skill-ramo-efeito">+50% de novo (×2,25 no total)</span><span class="skill-ramo-estado">○ após escolher</span></span></div><div class="skill-caminho"><div class="skill-ramo-cabecalho"><span class="skill-ramo-caminho">Rajada</span></div><button type="button" class="skill-ramo-no skill-ramo-no--escolhivel" data-focus-key="ramo:damage:2" aria-label="Escolher Rajada de Dano automático — ● Escolher"><span class="skill-ramo-nome">Nv 5</span><span class="skill-ramo-efeito">Janela de ativação 50% mais longa</span><span class="skill-ramo-estado">● Escolher</span></button><span class="skill-conector" aria-hidden="true"></span><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Conclusão do caminho Rajada — ○ após escolher"><span class="skill-ramo-nome">Nv 10</span><span class="skill-ramo-efeito">+50% de novo (×2,25 no total)</span><span class="skill-ramo-estado">○ após escolher</span></span></div></div></div></div></section><section class="skill-secao"><button type="button" class="skill-secao-cabecalho" aria-expanded="true" aria-controls="skill-secao-skill-electric-corpo" data-focus-key="secao:skill:electric"><span class="skill-secao-titulo">Corrente elétrica</span><span class="skill-secao-resumo">Nv 3/10 · perk 0/3 · ✕ andar 15</span><span class="skill-secao-seta" aria-hidden="true">▾</span></button><div class="skill-secao-corpo skill-tronco" id="skill-secao-skill-electric-corpo"><div class="skill-no skill-no--raiz skill-no--travado" aria-label="Corrente elétrica, nível 3 de 10 — ✕ Desbloqueia no andar 15"><img class="skill-no-icone" src="../imagens/efeito-eletrico.svg" alt="" aria-hidden="true"><div class="skill-no-corpo"><div class="skill-no-linha"><strong class="skill-no-nome">Corrente elétrica</strong><span class="skill-no-nivel" aria-label="nível 3 de 10">Nv 3/10</span></div><p class="skill-no-desc">Dano encadeado: 40% em 1 alvo · bônus sem alvo próximo: 16%.</p><div class="skill-no-linha skill-no-pe"><span class="skill-no-estado skill-no-estado--bloqueado">✕ Desbloqueia no andar 15</span><span class="skill-no-custo">1 ponto por nível</span></div></div></div><span class="skill-conector" aria-hidden="true"></span><div class="skill-no skill-no--perk skill-no--travado" aria-label="Perk de Corrente elétrica, 0 de 3 — ✕ Desbloqueia no andar 15"><span class="skill-no-glifo" aria-hidden="true">◆</span><div class="skill-no-corpo"><div class="skill-no-linha"><strong class="skill-no-nome">Perk</strong><span class="skill-no-nivel">Nv 0/3</span></div><p class="skill-no-desc">+1 inimigo atingido por nível</p><div class="skill-no-linha skill-no-pe"><span class="skill-no-estado skill-no-estado--bloqueado">✕ Desbloqueia no andar 15</span><span class="skill-no-custo">1 ponto de perk por nível</span></div></div></div><span class="skill-conector" aria-hidden="true"></span><div class="skill-ramificacao"><p class="skill-ramos-hint">Ramos abrem no nível 5 da skill</p><div class="skill-caminhos"><div class="skill-caminho"><div class="skill-ramo-cabecalho"><span class="skill-ramo-caminho">Sobrecarga</span></div><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Caminho Sobrecarga de Corrente elétrica — ✕ andar 15"><span class="skill-ramo-nome">Nv 5</span><span class="skill-ramo-efeito">+50% de dano na corrente</span><span class="skill-ramo-estado">✕ andar 15</span></span><span class="skill-conector" aria-hidden="true"></span><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Conclusão do caminho Sobrecarga — ✕ nível 5"><span class="skill-ramo-nome">Nv 10</span><span class="skill-ramo-efeito">+50% de novo (×2,25 no total)</span><span class="skill-ramo-estado">✕ nível 5</span></span></div><div class="skill-caminho"><div class="skill-ramo-cabecalho"><span class="skill-ramo-caminho">Rede</span></div><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Caminho Rede de Corrente elétrica — ✕ andar 15"><span class="skill-ramo-nome">Nv 5</span><span class="skill-ramo-efeito">+1 inimigo atingido pela corrente</span><span class="skill-ramo-estado">✕ andar 15</span></span><span class="skill-conector" aria-hidden="true"></span><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Conclusão do caminho Rede — ✕ nível 5"><span class="skill-ramo-nome">Nv 10</span><span class="skill-ramo-efeito">+1 inimigo de novo (máx +2)</span><span class="skill-ramo-estado">✕ nível 5</span></span></div></div></div></div></section><section class="skill-secao"><button type="button" class="skill-secao-cabecalho" aria-expanded="true" aria-controls="skill-secao-skill-gold-corpo" data-focus-key="secao:skill:gold"><span class="skill-secao-titulo">Bônus de Gold</span><span class="skill-secao-resumo">Nv 5/10 · perk 1/4 · ✕ andar 25</span><span class="skill-secao-seta" aria-hidden="true">▾</span></button><div class="skill-secao-corpo skill-tronco" id="skill-secao-skill-gold-corpo"><div class="skill-no skill-no--raiz skill-no--travado" aria-label="Bônus de Gold, nível 5 de 10 — ✕ Desbloqueia no andar 25"><img class="skill-no-icone" src="../imagens/bau-dourado.svg" alt="" aria-hidden="true"><div class="skill-no-corpo"><div class="skill-no-linha"><strong class="skill-no-nome">Bônus de Gold</strong><span class="skill-no-nivel" aria-label="nível 5 de 10">Nv 5/10</span></div><p class="skill-no-desc">Gold extra por ataque: 90% · carga: 25 ataques.</p><div class="skill-no-linha skill-no-pe"><span class="skill-no-estado skill-no-estado--bloqueado">✕ Desbloqueia no andar 25</span><span class="skill-no-custo">1 ponto por nível</span></div></div></div><span class="skill-conector" aria-hidden="true"></span><div class="skill-no skill-no--perk skill-no--travado" aria-label="Perk de Bônus de Gold, 1 de 4 — ✕ Desbloqueia no andar 25"><span class="skill-no-glifo" aria-hidden="true">◆</span><div class="skill-no-corpo"><div class="skill-no-linha"><strong class="skill-no-nome">Perk</strong><span class="skill-no-nivel">Nv 1/4</span></div><p class="skill-no-desc">+25% no drop do kill feito com a skill ativa por nível; do nível 1 em diante o companheiro também usa a skill ativa</p><div class="skill-no-linha skill-no-pe"><span class="skill-no-estado skill-no-estado--bloqueado">✕ Desbloqueia no andar 25</span><span class="skill-no-custo">1 ponto de perk por nível</span></div></div></div><span class="skill-conector" aria-hidden="true"></span><div class="skill-ramificacao"><p class="skill-ramos-hint">Caminho selado: Veia · zerado no reset</p><div class="skill-caminhos"><div class="skill-caminho skill-caminho--ativo"><div class="skill-ramo-cabecalho"><span class="skill-ramo-caminho">Veia</span></div><span class="skill-ramo-no skill-ramo-no--ativo" aria-label="Caminho Veia de Bônus de Gold — ✓ escolhido"><span class="skill-ramo-nome">Nv 5</span><span class="skill-ramo-efeito">+50% no bônus de gold por ataque</span><span class="skill-ramo-estado">✓ escolhido</span></span><span class="skill-conector" aria-hidden="true"></span><span class="skill-ramo-no skill-ramo-no--pendente" aria-label="Conclusão do caminho Veia — ○ falta nível 10"><span class="skill-ramo-nome">Nv 10</span><span class="skill-ramo-efeito">+50% de novo (×2,25 no total)</span><span class="skill-ramo-estado">○ falta nível 10</span></span></div><div class="skill-caminho skill-caminho--selado"><div class="skill-ramo-cabecalho"><span class="skill-ramo-caminho">Fôlego</span></div><span class="skill-ramo-no skill-ramo-no--selado" aria-label="Caminho Fôlego de Bônus de Gold — ✕ selado"><span class="skill-ramo-nome">Nv 5</span><span class="skill-ramo-efeito">Carga vale 40 ataques (era 25)</span><span class="skill-ramo-estado">✕ selado</span></span><span class="skill-conector" aria-hidden="true"></span><span class="skill-ramo-no skill-ramo-no--selado" aria-label="Conclusão do caminho Fôlego — ✕ selado"><span class="skill-ramo-nome">Nv 10</span><span class="skill-ramo-efeito">60 ataques no total</span><span class="skill-ramo-estado">✕ selado</span></span></div></div></div></div></section><section class="skill-secao"><button type="button" class="skill-secao-cabecalho" aria-expanded="true" aria-controls="skill-secao-skill-escape-corpo" data-focus-key="secao:skill:escape"><span class="skill-secao-titulo">Pausa da fuga</span><span class="skill-secao-resumo">Nv 2/10 · perk 0/5 · ✕ andar 35</span><span class="skill-secao-seta" aria-hidden="true">▾</span></button><div class="skill-secao-corpo skill-tronco" id="skill-secao-skill-escape-corpo"><div class="skill-no skill-no--raiz skill-no--travado" aria-label="Pausa da fuga, nível 2 de 10 — ✕ Desbloqueia no andar 35"><img class="skill-no-icone" src="../imagens/cursor-espada.svg" alt="" aria-hidden="true"><div class="skill-no-corpo"><div class="skill-no-linha"><strong class="skill-no-nome">Pausa da fuga</strong><span class="skill-no-nivel" aria-label="nível 2 de 10">Nv 2/10</span></div><p class="skill-no-desc">Pausa da fuga: 14 s (+2 s por nível).</p><div class="skill-no-linha skill-no-pe"><span class="skill-no-estado skill-no-estado--bloqueado">✕ Desbloqueia no andar 35</span><span class="skill-no-custo">1 ponto por nível</span></div></div></div><span class="skill-conector" aria-hidden="true"></span><div class="skill-no skill-no--perk skill-no--travado" aria-label="Perk de Pausa da fuga, 0 de 5 — ✕ Desbloqueia no andar 35"><span class="skill-no-glifo" aria-hidden="true">◆</span><div class="skill-no-corpo"><div class="skill-no-linha"><strong class="skill-no-nome">Perk</strong><span class="skill-no-nivel">Nv 0/5</span></div><p class="skill-no-desc">10% de restaurar o tempo de fuga por nível (máx 50%)</p><div class="skill-no-linha skill-no-pe"><span class="skill-no-estado skill-no-estado--bloqueado">✕ Desbloqueia no andar 35</span><span class="skill-no-custo">1 ponto de perk por nível</span></div></div></div><span class="skill-conector" aria-hidden="true"></span><div class="skill-ramificacao"><p class="skill-ramos-hint">Ramos abrem no nível 5 da skill</p><div class="skill-caminhos"><div class="skill-caminho"><div class="skill-ramo-cabecalho"><span class="skill-ramo-caminho">Oportunidade</span></div><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Caminho Oportunidade de Pausa da fuga — ✕ andar 35"><span class="skill-ramo-nome">Nv 5</span><span class="skill-ramo-efeito">+15% de dano do jogador durante a pausa</span><span class="skill-ramo-estado">✕ andar 35</span></span><span class="skill-conector" aria-hidden="true"></span><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Conclusão do caminho Oportunidade — ✕ nível 5"><span class="skill-ramo-nome">Nv 10</span><span class="skill-ramo-efeito">+15% de novo (×1,32 no total)</span><span class="skill-ramo-estado">✕ nível 5</span></span></div><div class="skill-caminho"><div class="skill-ramo-cabecalho"><span class="skill-ramo-caminho">Cortina</span></div><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Caminho Cortina de Pausa da fuga — ✕ andar 35"><span class="skill-ramo-nome">Nv 5</span><span class="skill-ramo-efeito">Pausa da fuga 50% mais longa</span><span class="skill-ramo-estado">✕ andar 35</span></span><span class="skill-conector" aria-hidden="true"></span><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Conclusão do caminho Cortina — ✕ nível 5"><span class="skill-ramo-nome">Nv 10</span><span class="skill-ramo-efeito">+50% de novo (×2,25 no total)</span><span class="skill-ramo-estado">✕ nível 5</span></span></div></div></div></div></section><section class="skill-secao"><button type="button" class="skill-secao-cabecalho" aria-expanded="true" aria-controls="skill-secao-skill-frenzy-corpo" data-focus-key="secao:skill:frenzy"><span class="skill-secao-titulo">Toque Frenético</span><span class="skill-secao-resumo">Nv 1/10 · perk 0/4 · ✕ andar 45</span><span class="skill-secao-seta" aria-hidden="true">▾</span></button><div class="skill-secao-corpo skill-tronco" id="skill-secao-skill-frenzy-corpo"><div class="skill-no skill-no--raiz skill-no--travado" aria-label="Toque Frenético, nível 1 de 10 — ✕ Desbloqueia no andar 45"><img class="skill-no-icone" src="../imagens/espada-eletrica.svg" alt="" aria-hidden="true"><div class="skill-no-corpo"><div class="skill-no-linha"><strong class="skill-no-nome">Toque Frenético</strong><span class="skill-no-nivel" aria-label="nível 1 de 10">Nv 1/10</span></div><p class="skill-no-desc">Multiplicador do toque: ×2,15 · janela: 32 toques.</p><div class="skill-no-linha skill-no-pe"><span class="skill-no-estado skill-no-estado--bloqueado">✕ Desbloqueia no andar 45</span><span class="skill-no-custo">1 ponto por nível</span></div></div></div><span class="skill-conector" aria-hidden="true"></span><div class="skill-no skill-no--perk skill-no--travado" aria-label="Perk de Toque Frenético, 0 de 4 — ✕ Desbloqueia no andar 45"><span class="skill-no-glifo" aria-hidden="true">◆</span><div class="skill-no-corpo"><div class="skill-no-linha"><strong class="skill-no-nome">Perk</strong><span class="skill-no-nivel">Nv 0/4</span></div><p class="skill-no-desc">+25% no dano do toque durante a janela por nível</p><div class="skill-no-linha skill-no-pe"><span class="skill-no-estado skill-no-estado--bloqueado">✕ Desbloqueia no andar 45</span><span class="skill-no-custo">1 ponto de perk por nível</span></div></div></div><span class="skill-conector" aria-hidden="true"></span><div class="skill-ramificacao"><p class="skill-ramos-hint">Ramos abrem no nível 5 da skill</p><div class="skill-caminhos"><div class="skill-caminho"><div class="skill-ramo-cabecalho"><span class="skill-ramo-caminho">Calor</span></div><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Caminho Calor de Toque Frenético — ✕ andar 45"><span class="skill-ramo-nome">Nv 5</span><span class="skill-ramo-efeito">+50% no dano da janela</span><span class="skill-ramo-estado">✕ andar 45</span></span><span class="skill-conector" aria-hidden="true"></span><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Conclusão do caminho Calor — ✕ nível 5"><span class="skill-ramo-nome">Nv 10</span><span class="skill-ramo-efeito">+50% de novo (×2,25 no total)</span><span class="skill-ramo-estado">✕ nível 5</span></span></div><div class="skill-caminho"><div class="skill-ramo-cabecalho"><span class="skill-ramo-caminho">Ímpeto</span></div><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Caminho Ímpeto de Toque Frenético — ✕ andar 45"><span class="skill-ramo-nome">Nv 5</span><span class="skill-ramo-efeito">Janela 50% mais longa</span><span class="skill-ramo-estado">✕ andar 45</span></span><span class="skill-conector" aria-hidden="true"></span><span class="skill-ramo-no skill-ramo-no--travado" aria-label="Conclusão do caminho Ímpeto — ✕ nível 5"><span class="skill-ramo-nome">Nv 10</span><span class="skill-ramo-efeito">+50% de novo (×2,25 no total)</span><span class="skill-ramo-estado">✕ nível 5</span></span></div></div></div></div></section></div></div></section></div>
+      </div>
+    </div>
+
+    <!-- ===================== DIREITA: diff ===================== -->
+    <div class="col-diff">
+      <h2>Diff — 1.3.0 (0866b9f) → HEAD</h2>
+
+      <div class="diff-summary">
+        Em 1.3.0 havia <b>um único painel</b>, o "Skills" — e ele já se chamava
+        <b>"Árvore de habilidades"</b> e já trazia troncos, perk e ramos juntos.
+        Hoje existem <b>dois</b>: o "Skills" (ficou só com níveis + ramos e
+        <b>perdeu o nó do perk</b>) e o <b>"Ramos"</b> — também titulado
+        "Árvore de habilidades" — que cobre níveis + perk + ramos numa tela própria.
+        <table class="numstat">
+          <tr><td>script/ui-skills.js</td><td class="pl">+413</td><td class="mi">−59</td></tr>
+          <tr><td>css/estilos.css</td><td class="pl">+1039</td><td class="mi">−55</td></tr>
+          <tr><td>script/progressao.js</td><td class="pl">+64</td><td class="mi">−17</td></tr>
+          <tr><td>Caverna.html</td><td class="pl">+7</td><td class="mi">−2</td></tr>
+          <tr><td>script/ramos.js</td><td class="pl">+10</td><td class="mi">−10</td></tr>
+        </table>
+      </div>
+
+      <div class="diff-file">
+        <div class="diff-file__head"><b>Caverna.html</b><span>+7 −2</span></div>
+        <pre><span class="ctx">@@ navegação — o botão novo @@</span><span class="ctx"> 					&lt;span&gt;Skills&lt;/span&gt;</span><span class="ctx"> 				&lt;/button&gt;</span><span class="add"> +&lt;button type="button" id="btnRamos" class="btn-Padrao screen-nav-button"</span><span class="add"> +					aria-expanded="false"&gt;</span><span class="add"> +					&lt;span class="screen-nav-icon screen-nav-icon--ramos" aria-hidden="true"&gt;🌿&lt;/span&gt;</span><span class="add"> +					&lt;span&gt;Ramos&lt;/span&gt;</span><span class="add"> +				&lt;/button&gt;</span></div></pre>
+      </div>
+
+      <div class="diff-file">
+        <div class="diff-file__head"><b>script/ui-skills.js</b><span>+413 −59</span></div>
+        <pre><span class="hunk">@@ showSkillUpgradePanel() — painel "Skills" @@</span><span class="ctx"> // título do painel (continua igual nos dois):</span><span class="ctx"> title.textContent = "Árvore de habilidades";</span><span class="ctx"> </span><span class="del">- // nó filho: o perk da skill (pontos de perk, não de habilidade)</span><span class="del">- const noPerk = document.createElement(perkPronto ? "button" : "div");</span><span class="del">- noPerk.className = "skill-no skill-no--perk" + ...</span><span class="del">- corpoTronco.append(conector(), noPerk);</span><span class="add"> + // O nó do perk saiu daqui: a "Árvore de ramos" (#btnRamos) cobre</span><span class="add"> + // níveis + perk + ramos, então a compra do perk vive lá.</span><span class="ctx"> </span><span class="hunk">@@ NOVO painel "Ramos" (também titulado "Árvore de habilidades") @@</span><span class="add"> + ramosTreeSecoes: {}, ramosTreeAtiva: null,</span><span class="add"> + ramosTreeAcento: { damage:"#e0463c", electric:"#c9a227", ... },</span><span class="add"> + toggleRamosTreePanel() { ... }        // abre #ramosTreeModal</span><span class="add"> + showRamosTreePanel() { ... }          // trilha de skills + seção</span><span class="add"> + montarSecaoSkill(secao, skillId) {   // blocos Níveis / Perk / Ramos</span><span class="add"> + noRamo(titulo, desc, classe, acao, selo) { ... }</span><span class="add"> + SkillUnlocked(id) / SkillTemAcao(id) / primeiraSkillComAcao()</span><span class="add"> + function DicaNiveisSkill(id) { ... }  // dica do bloco "Níveis"</span></pre>
+        <p class="diff-note">O painel "Ramos" monta: <b>topo</b> (ícone+nome+nível) → <b>efeito</b> (tagline) → <b>Níveis</b> (pílulas) → <b>Perk</b> → <b>Ramos</b> (Nv 5 → Nv 10 lado a lado).</p>
+      </div>
+
+      <div class="diff-file">
+        <div class="diff-file__head"><b>script/progressao.js</b><span>+64 −17</span></div>
+        <pre><span class="hunk">@@ SKILLS_UPGRADE — novo campo "tagline" @@</span><span class="del">- { id:"damage", nome:"Dano automático", pisoDesbloqueio:1, ... }</span><span class="add"> + { id:"damage", nome:"Dano automático", tagline:"Golpeia sozinho enquanto você avança.", ... }</span><span class="hunk">@@ PERKS — textos encurtados @@</span><span class="del">- efeito: "+25% de dano por nível; no nível máximo a skill ativa sozinha..."</span><span class="add"> + efeito: "Mais 25% de dano por nível."</span></pre>
+      </div>
+
+      <div class="diff-file">
+        <div class="diff-file__head"><b>script/ramos.js</b><span>+10 −10</span></div>
+        <pre><span class="hunk">@@ RAMOS_SKILL — efeito5/efeito10 reescritos (frases curtas) @@</span><span class="del">- efeito5: "+50% de dano no hit automático",</span><span class="del">- efeito10: "+50% de novo (×2,25 no total)"</span><span class="add"> + efeito5: "Golpes 50% mais fortes.",</span><span class="add"> + efeito10: "De novo +50%, total 2,25×."</span></pre>
+      </div>
+
+      <div class="diff-file">
+        <div class="diff-file__head"><b>css/estilos.css</b><span>+1039 −55</span></div>
+        <pre><span class="hunk">@@ bloco novo do painel Ramos (~490 linhas) @@</span><span class="add"> + .ramos-tree-overlay / .ramos-tree-panel</span><span class="add"> + .ramos-tree-corpo / .ramos-tree-trilha / .ramos-tree-trilha__btn</span><span class="add"> + .ramos-tree-topo / .ramos-tree-efeito / .ramos-tree-bloco</span><span class="add"> + .ramos-tree-niveis / .ramos-tree-niv (+ --feito/--proximo/--travado/--max)</span><span class="add"> + .ramos-tree-perk (+ --pronto/--travado/--max)</span><span class="add"> + .ramos-tree-ramos / .ramos-tree-ramo (+ --escolhido/--selado)</span><span class="add"> + .ramos-tree-no (+ --escolhido/--pronto/--pendente/--selado/--max)</span><span class="add"> + .ramos-tree-fio / .ramos-tree-selo (+ --escolhido/--selado)</span></pre>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
