@@ -237,6 +237,9 @@ function Carregar(saveData, calculaOffline = false) {
 	// Casa (Cidade): conforto e troféus exibidos — permanentes (não zeram no reset)
 	casaNivel = save.casaNivel ?? 0;
 	trofeusExibidos = save.trofeusExibidos ?? 0;
+	// Fazenda de Formigas (Cidade): nível e Rainha — permanentes
+	fazendaNivel = save.fazendaNivel ?? 0;
+	fazendaRainha = save.fazendaRainha ?? 0;
 	missoesCompletas = save.missoesCompletas ?? 0;
 	desafiosVencidos = save.desafiosVencidos ?? 0;
 	melhorGoldRun = GoldNumber.fromMantissaExponent(save.melhorGoldRun?.m ?? 0, save.melhorGoldRun?.e ?? 0);
@@ -259,6 +262,8 @@ function Carregar(saveData, calculaOffline = false) {
 	// intervalos dos novos companheiros (Mago do Relógio e
 	// Alquimista) também iniciam no load
 	SincronizaIntervalosNovosCompanheiros();
+	// timer de produção da Fazenda (Cidade) — recriado com o nível carregado
+	SincronizaIntervaloFazenda();
 
 	RemoverInimigos();
 	AbreLoja();

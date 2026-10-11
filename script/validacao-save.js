@@ -242,6 +242,17 @@ function ValidarSave(save) {
 		&& (!Number.isSafeInteger(save.trofeusExibidos) || save.trofeusExibidos < 0 || save.trofeusExibidos > trofeusMax)) {
 		throw new TypeError("Os troféus exibidos da Casa no save são inválidos.");
 	}
+	// Fazenda de Formigas (Cidade): nível e Rainha dentro dos tetos
+	const fazendaMax = (typeof FAZENDA_MAX_NIVEL === "number") ? FAZENDA_MAX_NIVEL : 10;
+	const fazendaRainhaMax = (typeof FAZENDA_RAINHA_MAX === "number") ? FAZENDA_RAINHA_MAX : 5;
+	if (save.fazendaNivel !== undefined
+		&& (!Number.isSafeInteger(save.fazendaNivel) || save.fazendaNivel < 0 || save.fazendaNivel > fazendaMax)) {
+		throw new TypeError("O nível da Fazenda no save é inválido.");
+	}
+	if (save.fazendaRainha !== undefined
+		&& (!Number.isSafeInteger(save.fazendaRainha) || save.fazendaRainha < 0 || save.fazendaRainha > fazendaRainhaMax)) {
+		throw new TypeError("O nível da Rainha da Fazenda no save é inválido.");
+	}
 	if (save.missoesCompletas !== undefined
 		&& (!Number.isSafeInteger(save.missoesCompletas) || save.missoesCompletas < 0 || save.missoesCompletas > 1000000)) {
 		throw new TypeError("O contador de missões do save é inválido.");

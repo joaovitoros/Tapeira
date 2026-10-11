@@ -115,6 +115,8 @@ function CriarObjetoSave(incluirOffline = true) {
 		conquistasComp,
 		casaNivel,
 		trofeusExibidos,
+		fazendaNivel,
+		fazendaRainha,
 		missoesCompletas,
 		desafiosVencidos,
 		melhorGoldRun: {

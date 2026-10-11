@@ -15,7 +15,7 @@
         casa: () => Tapeira.Casa.abrir(),
         mercado: () => AbreLoja(false),
         pesquisa: () => UI.showRamosTreePanel(),
-        fazenda: () => UI.showAntCollection(),
+        fazenda: () => Tapeira.Fazenda.abrir(),
         fabrica: () => UI.showItensBuild()
     };
 

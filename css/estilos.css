@@ -2565,6 +2565,39 @@ caption {
 	100% { opacity: 0; transform: translate(-50%, -50%) scale(1.4); }
 }
 
+/* Frenesi do companheiro de dano: anel pulsante no inimigo marcado.
+   A div é posicionada pelo JS (companheiros.js) no mesmo padrão do anel
+   de surgimento; fica atrás do sprite e é só indicador (pointer-events none). */
+.inimigo-frenesi-anel {
+	position: fixed;
+	z-index: 5;
+	transform: translate(-50%, -50%);
+	border: 3px solid rgba(255, 58, 40, 0.95);
+	border-radius: 50%;
+	pointer-events: none;
+	box-shadow:
+		0 0 12px rgba(255, 45, 30, 0.85),
+		inset 0 0 8px rgba(255, 45, 30, 0.55);
+	animation: inimigo-frenesi-anel 800ms ease-in-out infinite;
+}
+
+@keyframes inimigo-frenesi-anel {
+	0%, 100% { opacity: 0.45; transform: translate(-50%, -50%) scale(0.9); }
+	50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+}
+
+/* Frenesi: flash vermelho em quem sofre o dano bônus do splash (filter
+   só — não mexe no transform do impacto normal). */
+.inimigo--frenesi-dano {
+	animation: inimigo-frenesi-dano 300ms ease-out;
+}
+
+@keyframes inimigo-frenesi-dano {
+	0% { filter: none; }
+	30% { filter: sepia(1) saturate(6) hue-rotate(-30deg) brightness(1.35) drop-shadow(0 0 12px rgba(255, 40, 20, 0.95)); }
+	100% { filter: none; }
+}
+
 .enemy-hit-eyes span {
 	position: absolute;
 	top: 49.5%;
@@ -9703,10 +9736,9 @@ img.ramos-tree-no__tile {
 }
 
 /* ===================== CIDADE — CENA (vila 2.5D) =====================
-   Inspirada na arte-base: prédios ao redor de uma praça central com a fonte
-   de cristal (Casa no topo-centro, Mercado/Pesquisa nas laterais de cima,
-   Fábrica/Fazenda embaixo). Posicionamento absoluto por porcentagem, com
-   "profundidade" — os prédios de baixo (mais perto) ficam um pouco maiores. */
+   Chão isométrico (imagem de fundo) + prédios ao redor da fonte central.
+   Posicionamento absoluto por porcentagem, com "profundidade" — os prédios
+   de baixo (mais perto) ficam um pouco maiores. */
 .cidade-cena {
 	position: relative;
 	z-index: 0;
@@ -9717,52 +9749,20 @@ img.ramos-tree-no__tile {
 	border: 1px solid rgba(255, 255, 255, 0.06);
 	border-radius: 14px;
 	background:
-		radial-gradient(120% 90% at 50% 14%, rgba(43, 63, 112, 0.55), transparent 58%),
-		radial-gradient(150% 90% at 50% 118%, rgba(255, 190, 73, 0.12), transparent 60%),
-		linear-gradient(180deg, #0a0f18, #05070c);
+		url("../imagens/cidade/cidade background.png") center / cover no-repeat,
+		#070a10;
 }
 
-/* brilho de fundo (profundidade da caverna) */
+/* Vinheta por cima do chão: escurece as bordas pra casar a imagem clara com a
+   UI escura e dar foco no centro. */
 .cidade-fundo {
 	position: absolute;
 	inset: 0;
 	z-index: 0;
-	background:
-		radial-gradient(45% 35% at 50% 52%, rgba(70, 140, 255, 0.16), transparent 70%),
-		radial-gradient(70% 55% at 50% 88%, rgba(60, 90, 60, 0.18), transparent 70%);
-	pointer-events: none;
-}
-
-/* cristais incrustados nas bordas */
-.cidade-cristal {
-	position: absolute;
-	z-index: 0;
-	height: clamp(28px, 4vw, 66px);
-	width: auto;
-	opacity: 0.9;
-	filter: drop-shadow(0 0 10px rgba(60, 170, 255, 0.55));
-	pointer-events: none;
-}
-
-.cidade-cristal--1 { left: 6%;  top: 8%;  height: clamp(30px, 4.4vw, 72px); }
-.cidade-cristal--2 { left: 92%; top: 12%; height: clamp(26px, 3.6vw, 58px); }
-.cidade-cristal--3 { left: 3%;  top: 60%; height: clamp(24px, 3.4vw, 54px); }
-.cidade-cristal--4 { left: 95%; top: 66%; height: clamp(30px, 4.2vw, 66px); }
-
-/* praça central (piso) + fonte de cristal */
-.cidade-praca {
-	position: absolute;
-	left: 50%;
-	top: 55%;
-	width: 40%;
-	aspect-ratio: 1 / 0.62;
-	transform: translate(-50%, -50%);
-	z-index: 0;
-	border-radius: 50%;
-	background:
-		radial-gradient(60% 60% at 50% 42%, rgba(120, 150, 190, 0.35), rgba(70, 90, 120, 0.18) 55%, transparent 72%),
-		radial-gradient(80% 80% at 50% 60%, rgba(40, 55, 80, 0.5), transparent 70%);
-	box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+	background: radial-gradient(125% 100% at 50% 42%,
+		rgba(5, 9, 16, 0.18) 0%,
+		rgba(4, 6, 12, 0.55) 72%,
+		rgba(3, 4, 9, 0.86) 100%);
 	pointer-events: none;
 }
 
@@ -9791,48 +9791,20 @@ img.ramos-tree-no__tile {
 	to   { filter: drop-shadow(0 0 26px rgba(90, 200, 255, 0.85)) drop-shadow(0 12px 16px rgba(0, 0, 0, 0.55)); }
 }
 
-/* ---- Chão e decoração da cena (props) ----
+/* ---- Decoração da cena (props) ----
    A decoração vem ANTES dos prédios no HTML: fica atrás deles por ordem de
-   pintura. Os props "sentam" no ponto informado (centro-embaixo). */
+   pintura. Os props "sentam" no ponto informado (centro-embaixo).
+   O .cidade-chao agora é só uma vinheta de base (o piso é a imagem de fundo). */
 .cidade-chao {
 	position: absolute;
-	left: -6%;
-	right: -6%;
-	top: 42%;
-	bottom: -12%;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 24%;
 	z-index: 0;
-	border-radius: 50% 50% 0 0 / 20% 20% 0 0;
-	background: linear-gradient(180deg,
-		rgba(74, 112, 60, 0) 0%,
-		rgba(58, 94, 48, 0.42) 20%,
-		rgba(38, 62, 32, 0.68) 58%,
-		rgba(18, 28, 16, 0.82) 100%);
+	background: linear-gradient(180deg, rgba(4, 6, 12, 0), rgba(4, 6, 12, 0.55));
 	pointer-events: none;
 }
-
-/* Trilhas de terra ligando os prédios à praça central: cada trilha sai do
-   centro e aponta pro prédio (giro fixo por prédio; o ângulo depende da
-   proporção da cena, então há um ajuste por breakpoint mais abaixo). */
-.cidade-trilha {
-	position: absolute;
-	left: 50%;
-	top: 55%;
-	height: clamp(30px, 4vw, 62px);
-	width: 30%;
-	translate: 0 -50%;
-	transform-origin: 0 50%;
-	border-radius: 999px;
-	background: linear-gradient(90deg, rgba(146, 110, 68, 0.62), rgba(146, 110, 68, 0.14) 78%, rgba(146, 110, 68, 0));
-	filter: blur(2px);
-	z-index: 0;
-	pointer-events: none;
-}
-
-.cidade-trilha--casa     { transform: rotate(-90deg);  width: 21%; }
-.cidade-trilha--mercado  { transform: rotate(-163deg); width: 32%; }
-.cidade-trilha--pesquisa { transform: rotate(-17deg);  width: 32%; }
-.cidade-trilha--fabrica  { transform: rotate(155deg);  width: 32%; }
-.cidade-trilha--fazenda  { transform: rotate(25deg);   width: 32%; }
 
 .cidade-decor {
 	position: absolute;
@@ -9935,17 +9907,32 @@ img.ramos-tree-no__tile {
 	transition: translate 140ms ease, filter 140ms ease;
 }
 
-.cidade-predio--casa     { left: 50%; top: 24%; --largura: 24%; --escala: 1; }
-.cidade-predio--mercado  { left: 18%; top: 38%; --largura: 23%; --escala: 0.96; }
-.cidade-predio--pesquisa { left: 82%; top: 38%; --largura: 23%; --escala: 0.96; }
-.cidade-predio--fabrica  { left: 19%; top: 80%; --largura: 25%; --escala: 1.05; z-index: 4; }
-.cidade-predio--fazenda  { left: 81%; top: 80%; --largura: 25%; --escala: 1.05; z-index: 4; }
+.cidade-predio--casa     { left: 50%; top: 26%; --largura: 21%; --escala: 1; }
+.cidade-predio--mercado  { left: 22%; top: 40%; --largura: 20%; --escala: 0.96; }
+.cidade-predio--pesquisa { left: 78%; top: 40%; --largura: 20%; --escala: 0.96; }
+.cidade-predio--fabrica  { left: 23%; top: 79%; --largura: 22%; --escala: 1.05; z-index: 4; }
+.cidade-predio--fazenda  { left: 77%; top: 79%; --largura: 22%; --escala: 1.05; z-index: 4; }
 
 .cidade-predio__img {
 	display: block;
 	width: 100%;
 	height: auto;
 	filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55));
+}
+
+/* Sombra de contato: "aterra" o prédio no chão (sem ela parecia flutuar) */
+.cidade-predio::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: 8%;
+	width: 80%;
+	height: 9%;
+	transform: translate(-50%, 42%);
+	border-radius: 50%;
+	background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, 0.52), rgba(0, 0, 0, 0.22) 55%, transparent 74%);
+	pointer-events: none;
+	z-index: -1;
 }
 
 .cidade-predio:hover {
@@ -10044,16 +10031,7 @@ img.ramos-tree-no__tile {
 	.cidade-predio__icone { font-size: 12px; }
 
 	.cidade-fonte { width: 22%; top: 57%; }
-	.cidade-praca { width: 56%; top: 57%; }
-
-	/* ângulos das trilhas pro retrato (a cena é alta: os prédios ficam mais
-	   "na vertical") */
-	.cidade-trilha { top: 57%; }
-	.cidade-trilha--casa     { transform: rotate(-90deg);  width: 24%; }
-	.cidade-trilha--mercado  { transform: rotate(-132deg); width: 34%; }
-	.cidade-trilha--pesquisa { transform: rotate(-48deg);  width: 34%; }
-	.cidade-trilha--fabrica  { transform: rotate(120deg);  width: 34%; }
-	.cidade-trilha--fazenda  { transform: rotate(60deg);   width: 34%; }
+	.cidade-cena { background-position: center 42%; }
 
 	.cidade-decor--moita-esq  { left: 50%; top: 48%; height: 44px; }
 	.cidade-decor--pedras-esq { left: 14%; top: 58%; height: 26px; }
@@ -10242,6 +10220,130 @@ img.ramos-tree-no__tile {
 @media (prefers-reduced-motion: reduce) {
 	.casa-overlay,
 	.casa-panel {
+		animation: none;
+	}
+}
+
+/* ===================== FAZENDA DE FORMIGAS (painel da Cidade) =============
+   Reusa .ant-collection-overlay/.ant-collection-panel (mesmo modal dos
+   painéis Feitos/Casa); aqui vai só o conteúdo. */
+.fazenda-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.fazenda-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid rgba(229, 183, 96, 0.35);
+}
+
+.fazenda-header h2 {
+	flex: 1 1 auto;
+	margin: 0;
+	color: #ffe2a0;
+	font-size: clamp(20px, 2.2vw, 28px);
+	font-weight: 800;
+	letter-spacing: 0.03em;
+}
+
+.fazenda-fechar {
+	flex: 0 0 auto;
+	width: 36px;
+	height: 36px;
+	border: 1px solid rgba(229, 183, 96, 0.55);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #3c4658, #252c39);
+	color: #ffe0a0;
+	font-size: 20px;
+	font-weight: 800;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.fazenda-fechar:hover {
+	filter: brightness(1.15);
+	border-color: rgba(255, 224, 160, 0.8);
+}
+
+.fazenda-corpo {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.fazenda-secao {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.fazenda-secao__titulo {
+	margin: 0;
+	color: #ffe2a0;
+	font-size: clamp(16px, 1.6vw, 20px);
+	font-weight: 800;
+}
+
+.fazenda-secao__desc {
+	margin: 0;
+	color: #aeb9cc;
+	font-size: clamp(12px, 1.05vw, 14px);
+	line-height: 1.45;
+}
+
+.fazenda-status {
+	margin: 0;
+	color: #e6edf3;
+	font-weight: 700;
+}
+
+.fazenda-max {
+	margin: 0;
+	color: #7ee0a0;
+	font-weight: 800;
+}
+
+.fazenda-compra {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.fazenda-prox {
+	color: #b9c8da;
+	font-size: clamp(12px, 1.05vw, 14px);
+}
+
+.fazenda-comprar {
+	flex: 0 0 auto;
+	padding: 9px 16px;
+	border: 1px solid rgba(229, 183, 96, 0.6);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #d99a12, #a06a0d);
+	color: #1b1206;
+	font: inherit;
+	font-weight: 800;
+	cursor: pointer;
+}
+
+.fazenda-comprar:hover {
+	filter: brightness(1.1);
+}
+
+.fazenda-comprar:disabled {
+	filter: saturate(0.4) brightness(0.7);
+	cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.fazenda-overlay,
+	.fazenda-panel {
 		animation: none;
 	}
 }

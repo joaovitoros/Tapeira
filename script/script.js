@@ -67,6 +67,11 @@ var maxBausOffline = 2;
 // Resetar (só no ZerarTodosSaves), como o Conhecimento Mug.
 var casaNivel = 0;
 var trofeusExibidos = 0;
+// Fazenda de Formigas (Cidade): nível = velocidade da produção passiva;
+// Rainha = multiplica a produção. Permanentes (não zeram no reset).
+var fazendaNivel = 0;
+var fazendaRainha = 0;
+var intervaloFazenda = null; // handle do timer de produção da Fazenda
 const TEMPO_BAU_DOURADO_JOGO = 20 * 60 * 1000;
 const TEMPO_BAU_DOURADO_OFFLINE = 40 * 60 * 1000;
 var progressoBauDourado = 0;

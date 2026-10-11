@@ -39,7 +39,7 @@ const path = require('path');
                 const el = document.getElementById(id);
                 if (el) el.style.visibility = "hidden";
             });
-            ["ramosTreeModal", "antCollectionModal", "modalItensBuildView", "feitosModal", "skillUpgradeModal", "casaModal"].forEach(id => {
+            ["ramosTreeModal", "antCollectionModal", "modalItensBuildView", "feitosModal", "skillUpgradeModal", "casaModal", "fazendaModal"].forEach(id => {
                 document.getElementById(id)?.remove();
             });
         };
@@ -53,6 +53,7 @@ const path = require('path');
                 status: document.getElementById("DivStatus")?.style.visibility === "visible",
                 loja: ["Loja", "LojaEsm", "LojaCM"].some(x => document.getElementById(x)?.style.visibility === "visible"),
                 ramos: !!document.getElementById("ramosTreeModal"),
+                fazenda: !!document.getElementById("fazendaModal"),
                 formigas: !!document.getElementById("antCollectionModal"),
                 itens: !!document.getElementById("modalItensBuildView")
             };
@@ -132,7 +133,7 @@ const path = require('path');
     check("Casa abre o painel da Casa", r.casa.casa && r.casa.cidadeFechada, JSON.stringify(r.casa));
     check("Mercado abre a Loja", r.mercado.loja && r.mercado.cidadeFechada, JSON.stringify(r.mercado));
     check("Pesquisa abre Ramos", r.pesquisa.ramos && r.pesquisa.cidadeFechada, JSON.stringify(r.pesquisa));
-    check("Fazenda abre as Formigas", r.fazenda.formigas && r.fazenda.cidadeFechada, JSON.stringify(r.fazenda));
+    check("Fazenda abre o painel da Fazenda", r.fazenda.fazenda && r.fazenda.cidadeFechada, JSON.stringify(r.fazenda));
     check("Fábrica abre os itens da build", r.fabrica.itens && r.fabrica.cidadeFechada, JSON.stringify(r.fabrica));
     check("fecha pelo ×", r.fechouPeloX === true);
     check("cena tem chão", r.chao === true);

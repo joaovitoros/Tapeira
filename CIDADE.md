@@ -99,9 +99,14 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
 - [x] Teste `test-casa.js`: multiplicadores, compra, troféus, gold, save/validação e reset.
 
 ### Fase 4 — 🐜 Fazenda de Formigas
-- [ ] Timer de produção (reusa o drop de formiga de `recompensas.js`) + **Rainha**.
-- [ ] **Save**: `fazendaNivel`, `fazendaRainha`.
-- [ ] Teste: gera formiga no ciclo; rainha multiplica; persiste; timer limpo no reset/pausa.
+- [x] **Produção passiva**: timer gera 1 formiga aleatória por ciclo, reusando o MESMO drop
+      (`ConcedeFormigaColecao`). Nível (`fazendaNivel`, 0..10) encurta o intervalo (90 s → 36 s);
+      a **Rainha** (`fazendaRainha`, 0..5) multiplica a produção (+30% por nível). Pagos em CM.
+- [x] **Save** (5 passos): `fazendaNivel` + `fazendaRainha` (permanentes — não zeram no `Resetar`).
+- [x] Painel próprio (`script/fazenda.js` + `#fazendaModal`), com Produção + Rainha + a coleção
+      de formigas (reusa `UI.criaConteudoFormigas`). Timer gerenciado (load/reset/compra).
+- [x] Teste `test-fazenda.js`: intervalos, multiplicador da Rainha, compras, produção (pausa),
+      save/validação e reset.
 
 ### Fase 5 — 🔬 Centro de Pesquisa
 - [ ] Pesquisa por item (multiplicador no efeito do item) + Análise de inimigos.
