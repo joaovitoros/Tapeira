@@ -574,7 +574,7 @@ const UI = {
 						: ""))
 				: "desbloqueia no andar 100"],
             ["Bônus XP", "+" + BonusXPLoja()],
-            ["XP por inimigo", (XPPorInimigo() * BonusXPConhecimento()).toFixed(2)],
+            ["XP por inimigo", formatNumber(XPPorInimigo() * BonusXPConhecimento())],
             // total do bônus do CM: +5% por nível
             ["Conhecimento gold", "+" + (cmNivelGold * 5) + "%"],
             ["Conhecimento XP", "+" + (cmNivelXp * 5) + "%"],
@@ -660,36 +660,46 @@ const UI = {
 
             <div class="infoModalConteudo">
 
+                <div class="infoSecao">Objetivo</div>
+
                 <div class="infoLinha">
-                    Clique nos cogumelos para destruí-los e conseguir gold
+                    Destrua os cogumelos para ganhar <b>gold</b> e subir de andar. A cada 10 andares um <b>guardião</b> bloqueia o caminho.
+                </div>
+
+                <div class="infoSecao">Atacar</div>
+
+                <div class="infoLinha">
+                    <b>No PC:</b> segure <b>Espaço</b> — ou clique/segure em qualquer lugar da cena.
                 </div>
 
                 <div class="infoLinha">
-                    Aperte L para abrir a Loja
+                    <b>No celular:</b> toque em qualquer lugar da tela para dar um golpe; <b>segure</b> para atacar sem parar.
                 </div>
 
                 <div class="infoLinha">
-                    Aperte S para abrir seu Status
+                    Os golpes vão sempre no inimigo de <b>número maior</b> (o mais forte da tela).
+                </div>
+
+                <div class="infoSecao">Telas e atalhos</div>
+
+                <div class="infoLinha">
+                    <b>Loja</b> (L) — itens comprados com gold · <b>Status</b> (S) — dano, itens e habilidades.
                 </div>
 
                 <div class="infoLinha">
-                    Aperte C para abrir as Conquistas e bônus permanentes
+                    <b>Feitos</b> (C) — conquistas e bônus permanentes · <b>Missões</b> (M) · <b>Ramos</b> — árvore de habilidades.
                 </div>
 
                 <div class="infoLinha">
-                    Aperte M para ver as missões atuais
+                    <b>Cidade</b> — hub de progresso permanente, destrava a partir do andar 80.
                 </div>
 
                 <div class="infoLinha">
-                    Segure Espaço ou clique no personagem para atacar inimigos próximos
+                    <b>ESC</b> ou <b>P</b> — pausa (salvar, carregar, volumes, sair) · <b>I</b> — esta tela.
                 </div>
 
                 <div class="infoLinha">
-                    Aperte I para rever os controles
-                </div>
-
-                <div class="infoLinha">
-                    Aperte Esc para salvar e voltar ao menu
+                    No celular, as telas ficam nos <b>botões do rodapé</b>.
                 </div>
 
                 <div class="infoLinha destaqueInfo">

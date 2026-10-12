@@ -1280,6 +1280,16 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
     background: linear-gradient(145deg, rgba(255, 216, 74, 0.12), rgba(255, 255, 255, 0.02));
 }
 
+/* Título de seção dentro do "Como jogar" */
+.infoSecao{
+    margin-top: 0.3em;
+    color: #9ccfff;
+    font-weight: 800;
+    font-size: clamp(11px, 0.95vw, 15px);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
 .btn-FecharModal{
     margin-top: 1.2em;
     width: 100%;
