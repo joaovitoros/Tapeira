@@ -30,3 +30,5 @@ cloudflared.exe
 .vscode/
 .idea/
 *.iml
+visual-shots/*
+visual-shots-loja/*

@@ -2110,6 +2110,55 @@ test("loja usa data-* e listeners registrados (compra, navegação, especializa�
     }
 });
 
+test("btn-Loja fecha a loja a partir de QUALQUER aba (não reabre o Gold)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.AbreLoja === "function" &&
+            document.getElementById("btn-Loja"));
+        const result = await page.evaluate(() => {
+            const vis = id => document.getElementById(id)?.style.visibility || "hidden";
+            const snap = () => [vis("Loja"), vis("LojaEsm"), vis("LojaCM")];
+            const btnLoja = document.getElementById("btn-Loja");
+            const aba = sel => document.querySelector(sel)?.click();
+
+            // fecha modais de boas-vindas que cobririam o clique no botão
+            document.querySelectorAll("#infoModal, .modal, #gameModal").forEach(m => m.remove());
+
+            const out = {};
+
+            // fluxo reportado: abre, vai pro Conhecimento, tenta fechar
+            btnLoja.click();                        // abre Gold
+            out.goldAberta = snap();
+            aba('[data-loja="conhecimento"]');      // vai pra aba do Conhecimento
+            out.abaCM = snap();
+            btnLoja.click();                        // "fechar"
+            out.fechadaDoCM = snap();
+
+            // de novo: fecha, reabre Gold, e também fecha a partir da Esmeralda
+            btnLoja.click();                        // reabre Gold
+            out.goldReaberta = snap();
+            aba('[data-loja="esmeralda"]');         // vai pra aba de Esmeralda
+            out.abaEsm = snap();
+            btnLoja.click();                        // "fechar"
+            out.fechadaDaEsm = snap();
+
+            return out;
+        });
+
+        assert.deepEqual(result.goldAberta, ["visible", "hidden", "hidden"], "abre a loja de Gold");
+        assert.deepEqual(result.abaCM, ["hidden", "hidden", "visible"], "aba do Conhecimento abre");
+        assert.deepEqual(result.fechadaDoCM, ["hidden", "hidden", "hidden"],
+            "btn-Loja FECHA a partir da aba do Conhecimento (não reabre o Gold)");
+        assert.deepEqual(result.goldReaberta, ["visible", "hidden", "hidden"], "fechada, btn-Loja reabre o Gold");
+        assert.deepEqual(result.abaEsm, ["hidden", "visible", "hidden"], "aba de Esmeralda abre");
+        assert.deepEqual(result.fechadaDaEsm, ["hidden", "hidden", "hidden"],
+            "btn-Loja FECHA a partir da aba de Esmeralda também");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("loja v2: cabeçalho + carteira + abas, sem sobrepor o rodapé/HUD", async t => {
     const abrir = async viewport => {
         const context = await browser.newContext({ viewport });
@@ -2131,7 +2180,7 @@ test("loja v2: cabeçalho + carteira + abas, sem sobrepor o rodapé/HUD", async 
 
     // Abre sempre o painel pedido (não alterna): libera as skills para o pior
     // caso de largura do rodapé e espera a loja ficar acima da navegação
-    // (--rodape-top é medido por ui-rodape.js, então a altura pode ajustar
+    // (--rodape-banda-top é medido por ui-rodape.js, então a altura pode ajustar
     // depois do clique — esperar por isso evita corrida).
     const abrirLoja = async (page, alvo) => {
         await page.evaluate(alvo => {
@@ -2210,13 +2259,16 @@ test("loja v2: cabeçalho + carteira + abas, sem sobrepor o rodapé/HUD", async 
         assert.ok(m.painel.left >= 0 && m.painel.top >= 0
             && m.painel.right <= m.larguraTela && m.painel.bottom <= m.alturaTela + 1,
             nome + ": painel da loja dentro da tela");
+        assert.ok(m.painel.right - m.painel.left <= 1300.5
+            && m.painel.bottom - m.painel.top <= 850.5,
+            nome + ": painel da loja limitado a 1300x850");
         assert.ok(m.cabecalho.top >= m.painel.top - 1 && m.cabecalho.bottom <= m.painel.bottom + 1,
             nome + ": cabeçalho dentro do painel");
         assert.ok(m.abas.bottom <= m.painel.bottom + 1,
             nome + ": abas dentro do painel");
         assert.ok(!cruza(m.painel, m.opcoes), nome + ": loja não sobrepõe o #container-opcoes");
-        // A loja ocupa a tela toda e cobre a fileira de habilidades de
-        // propósito: z-index da loja acima do da fileira.
+        // A loja (limitada a 1300x850, centralizada) cobre a fileira de
+        // habilidades de propósito: z-index da loja acima do da fileira.
         assert.ok(m.painelZ > m.habilidadesZ,
             nome + ": loja acima das habilidades (z " + m.painelZ + " > " + m.habilidadesZ + ")");
     };
@@ -4001,8 +4053,11 @@ test("batalha-fantasma: cartão de batalha monta, valida e importa sem tocar no 
         assert.ok(depois.temExportar, "ficha tem o botão de exportar meu cartão");
         assert.ok(depois.semInline, "sem onclick inline na tela do duelo");
 
-        // o aviso "cartão recebido" abre por cima — fecha ele e depois o duelo
-        await page.click("#infoModal [data-info-fechar]");
+        // o duelo (z 999999) abre por CIMA de qualquer modal já aberto — o
+        // botão de fechar do "Como jogar" fica inalcançável pelo clique.
+        // Remove o modal direto na página (determinístico, sem depender de
+        // quem cobre quem).
+        await page.evaluate(() => document.getElementById("infoModal")?.remove());
         await page.click("[data-pvp-fechar]");
         const fechada = await page.evaluate(() => !document.getElementById("pvpDuelo"));
         assert.ok(fechada, "botão Fechar fecha a tela do duelo");
@@ -4440,6 +4495,10 @@ test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado n
 
         // (b) vitória: +2 esmeraldas e o id entra na lista de usados
         const abertura = await page.evaluate(() => {
+            // Página nova nasce com dano 1 — o "Fraco" (danoGolpe 1) viraria
+            // EMPATE exato e a moeda do empate decide (flaky). Dá um build de
+            // verdade ao jogador pra o cartão fraco ser fraco MESMO.
+            danoJogador = 1000; danoCritJogador = 500; chanceCrit = 0.25;
             const meu = PvpFantasma.MontaCartaoBatalha();
             const fraco = {
                 ...meu, nome: "Fraco",
@@ -4453,10 +4512,9 @@ test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado n
         });
         assert.equal(abertura.ok, true, "cartão assinado (mais fraco) é aceito");
         assert.ok(abertura.temTela, "ficha do duelo abriu");
-        try {
-            await page.waitForSelector("#infoModal [data-info-fechar]", { timeout: 2000 });
-            await page.click("#infoModal [data-info-fechar]");
-        } catch (erro) { /* sem aviso por cima */ }
+        // o duelo cobre qualquer modal aberto (z maior) — remove o "Como
+        // jogar" direto na página; o botão dele ficaria inalcançável pelo clique
+        await page.evaluate(() => document.getElementById("infoModal")?.remove());
         await page.click("[data-pvp-lutar]");
         await page.waitForSelector("[data-pvp-resultado]:not([hidden])", { timeout: 9000 });
         const vitoria = await page.evaluate(() => ({
@@ -4504,10 +4562,9 @@ test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado n
             return { forte, antes, ok };
         });
         assert.equal(derrota.ok, true, "segundo cartão (mais forte) é aceito");
-        try {
-            await page.waitForSelector("#infoModal [data-info-fechar]", { timeout: 2000 });
-            await page.click("#infoModal [data-info-fechar]");
-        } catch (erro) { /* sem aviso por cima */ }
+        // o duelo cobre qualquer modal aberto (z maior) — remove o "Como
+        // jogar" direto na página; o botão dele ficaria inalcançável pelo clique
+        await page.evaluate(() => document.getElementById("infoModal")?.remove());
         await page.click("[data-pvp-lutar]");
         await page.waitForSelector("[data-pvp-resultado]:not([hidden])", { timeout: 9000 });
         const fimDerrota = await page.evaluate(() => ({

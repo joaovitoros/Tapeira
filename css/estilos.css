@@ -1,3 +1,15 @@
+/* Encode Sans (variável, pesos 100–900, OFL) — fonte única da interface.
+   Empacotada em css/fontes/ (junto do CSS) para funcionar OFFLINE nas 3
+   plataformas (navegador, Electron e Android). Não usar CDN. */
+@font-face {
+	font-family: "Encode Sans";
+	font-style: normal;
+	font-weight: 100 900;
+	font-stretch: 100%;
+	font-display: swap;
+	src: url("fontes/EncodeSans.woff2") format("woff2");
+}
+
 html, body {
     width: 100%;
     height: 100%;
@@ -11,11 +23,11 @@ html, body {
   }
 body{
 	font-size: 1.7vw;
-	font-family: 'Segoe UI', 'Roboto', sans-serif;
+	font-family: var(--fonte-ui, 'Segoe UI', 'Roboto', sans-serif);
 	margin: 10px 10px;
 	text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
 	color: #e6edf3;
-	font-weight: bold;
+	font-weight: 900;
 
 	/* base escura sob as camadas .fundo-camada (a arte mora nelas) */
 	background-color: #0a0d12;
@@ -57,7 +69,7 @@ body{
 	border-radius: 8px;
 	box-sizing: border-box;
 
-	font-family: 'Segoe UI', sans-serif;
+	font-family: var(--fonte-ui, 'Segoe UI', sans-serif);
 	font-weight: 700;
 
 	color:#ffffff;
@@ -872,7 +884,8 @@ html.config-sem-movimento *::after {
 /* Transição de abrir/fechar dos painéis (Status, Config e as 3 lojas). Eles são
    ligados por visibility inline no JS, então a regra casa pelo atributo style.
    Ao abrir, opacity/transform animam; ao fechar, o visibility só aplica depois
-   (transition-delay) pra o fade-out aparecer. */
+   (transition-delay) pra o fade-out aparecer — EXCETO a loja, que fecha seca
+   (ver regra logo abaixo do estado visível). */
 #DivStatus,
 #container-SalvaCarrega,
 #Loja,
@@ -897,6 +910,16 @@ html.config-sem-movimento *::after {
 		opacity 160ms ease,
 		transform 160ms ease,
 		visibility 0s;
+}
+
+/* A LOJA fecha com corte seco (sem fade-out): o estado oculto da loja não
+   anima opacity/transform, então ao fechar ela some na hora. O fade-in (ao
+   abrir) continua, porque a regra do estado visível acima tem especificidade
+   maior. Status e Salvar/Carregar mantêm o fade-out normal. */
+#Loja,
+#LojaEsm,
+#LojaCM {
+	transition: visibility 0s;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1627,6 +1650,8 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
 :root {
 	--game-unit: clamp(8px, min(1vw, 1.75vh), 18px);
 	--ui-text: clamp(12px, 0.95vw, 16px);
+	/* Fonte única da interface (ver @font-face no topo do arquivo). */
+	--fonte-ui: "Encode Sans", 'Segoe UI', 'Roboto', sans-serif;
 }
 
 html,
@@ -2195,22 +2220,6 @@ body {
 	max-width: none;
 	font-size: var(--ui-text);
 	margin: 0;
-}
-
-/* A loja é um painel fixo no canto inferior DIREITO; a navegação
-   (#container-opcoes) fica no canto inferior ESQUERDO. Em telas que não
-   sobram largura, os dois se cruzavam e a loja (z-index 10) cobria os botões.
-   Com a loja aberta, a fileira de botões encolhe até caber à esquerda dela:
-   o painel principal (a loja) fica intacto e o rodapé continua visível.
-   No celular o rodapé é outro layout (loja ACIMA dele) — por isso a regra
-   fica presa a paisagem com 701px+; e o teto de 1430px é exatamente a faixa
-   em que a loja chegaria ao rodapé (acima disso já não há encontro). */
-@media (min-width: 701px) and (max-width: 1430px) and (orientation: landscape) {
-	body:has(#Loja[style*="visible"]) #container-Botoes,
-	body:has(#LojaEsm[style*="visible"]) #container-Botoes,
-	body:has(#LojaCM[style*="visible"]) #container-Botoes {
-		max-width: calc(100vw - min(45vw, 600px) - 76px);
-	}
 }
 
 #btnStatus,
@@ -4062,7 +4071,7 @@ body:has(#menu-container) {
 	border-radius: 9px;
 	box-shadow: 0 5px 0 #69401f, 0 10px 24px rgba(198, 123, 43, 0.25);
 	color: #21170c;
-	font-family: "Segoe UI", sans-serif;
+	font-family: var(--fonte-ui, "Segoe UI", sans-serif);
 	font-size: clamp(17px, 1.35vw, 22px);
 	font-weight: 800;
 	text-shadow: none;
@@ -4097,7 +4106,7 @@ body:has(#menu-container) {
 	border: 1px solid rgba(222, 176, 137, 0.5);
 	border-radius: 9px;
 	color: #f0d8c5;
-	font-family: "Segoe UI", sans-serif;
+	font-family: var(--fonte-ui, "Segoe UI", sans-serif);
 	font-size: clamp(14px, 1vw, 17px);
 	font-weight: 700;
 	cursor: pointer;
@@ -4457,7 +4466,7 @@ input:focus-visible {
 		0 7px 17px rgba(0, 0, 0, 0.38),
 		inset 0 1px rgba(255, 244, 216, 0.08);
 	color: #f2e5ca;
-	font-family: "Segoe UI", sans-serif;
+	font-family: var(--fonte-ui, "Segoe UI", sans-serif);
 	font-weight: 700;
 	letter-spacing: 0.02em;
 	text-align: left;
@@ -7931,7 +7940,7 @@ button.skill-ramo-no:focus-visible {
 	border: 1px solid #6b5836;
 	border-radius: 8px;
 	background: rgba(0, 0, 0, 0.25);
-	font-family: "Segoe UI", sans-serif;
+	font-family: var(--fonte-ui, "Segoe UI", sans-serif);
 }
 
 .especializacao__cabecalho {
@@ -13617,18 +13626,23 @@ input[type="checkbox"]:disabled {
 }
 
 /* ==========================================================================
-   LOJA EM TELA CHEIA
-   A loja ocupa a tela toda (com uma margem fina) e termina acima da navegação
-   #container-opcoes — que fica descoberta abaixo dela. As habilidades ficam
-   POR BAIXO da loja: z-index 16 > 15 da fileira, então a loja as cobre. O topo
-   da navegação é medido por script/ui-rodape.js e publicado em --rodape-top.
-   Vale para todos os layouts — sobrepõe as regras antigas de painel lateral
-   (desktop) e de painel na base (celular/tablet).
+   LOJA (overlay + painel)
+   O #container-Loja delimita a ÁREA DO PAINEL: centraliza o painel da loja
+   (Gold/Esmeralda/Conhecimento, máx. 1300x850) acima da faixa inferior —
+   navegação + habilidades. O fade PRETO de tela cheia é um ::before fixo
+   (abaixo), então alcança também a navegação #container-opcoes, que sobe para
+   z-index 25 com o painel aberto (ver .hud-painel-aberto).
+   As habilidades ficam POR BAIXO da loja (z-index 16 > 15) e NÃO se movem ao
+   abrir a loja (script/ui-rodape.js não considera mais a loja ao decidir
+   "ao lado" vs "empilhada").
+   O topo da faixa inferior é medido por script/ui-rodape.js e publicado em
+   --rodape-banda-top. Vale para todos os layouts — sobrepõe as regras antigas
+   de painel lateral (desktop) e de painel na base (celular/tablet).
    ========================================================================== */
 #container-Loja {
 	top: clamp(8px, 1.1vw, 16px);
 	right: clamp(8px, 1.1vw, 16px);
-	bottom: calc(100vh - var(--rodape-top, calc(100vh - 5rem)) + clamp(6px, 0.9vw, 12px));
+	bottom: calc(100vh - var(--rodape-banda-top, calc(100vh - 5rem)) + clamp(6px, 0.9vw, 12px));
 	left: clamp(8px, 1.1vw, 16px);
 	width: auto;
 	max-width: none;
@@ -13637,6 +13651,49 @@ input[type="checkbox"]:disabled {
 	margin: 0;
 	transform: none;
 	z-index: 16;
+	/* centraliza o painel da loja na área acima da faixa inferior */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Fade preto de tela cheia. É FIXO: posiciona-se pela viewport, então não sofre
+   o recorte (overflow) do container nem da #game-root e cobre também a faixa
+   da navegação. Só pinta com a loja aberta; fechada, fica transparente. */
+#container-Loja::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: -1;
+}
+
+#container-Loja:has(> #Loja[style*="visible"])::before,
+#container-Loja:has(> #LojaEsm[style*="visible"])::before,
+#container-Loja:has(> #LojaCM[style*="visible"])::before {
+	background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.78) 100%);
+}
+
+/* Painel da loja: no máximo 1300x850, centralizado. */
+#container-Loja > #Loja {
+	width: 100%;
+	max-width: 1300px;
+	height: 100%;
+	max-height: 850px;
+}
+
+/* As outras moedas sobrepõem o painel (position:absolute) — alinha igual. */
+#container-Loja > #LojaEsm,
+#container-Loja > #LojaCM {
+	top: 50%;
+	left: 50%;
+	right: auto;
+	bottom: auto;
+	width: 100%;
+	max-width: 1300px;
+	height: 100%;
+	max-height: 850px;
+	transform: translate(-50%, -50%);
 }
 
 /* =========================

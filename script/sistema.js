@@ -273,6 +273,44 @@ function SalvarEVoltarMenu() {
 
 let intervalos = [];
 
+// Tick único de 1s do jogo: consolidado no PreCarregamento, que antes criava 8
+// setInterval de 1s em paralelo (avanço, baú dourado, automação, seção da
+// loja, Cidade, buff do Alquimista, gold dos companheiros e habilidade de
+// dano). A cadência e a ordem de execução são as mesmas — o que cai é o número
+// de wake-ups do navegador por segundo.
+//
+// Cada tick roda isolado: antes cada um tinha o próprio setInterval, então um
+// erro num não derrubava os outros. O try/catch por tick preserva isso (e o
+// console.error evita falha silenciosa).
+function ExecutaTick(rotulo, tick) {
+	try {
+		tick();
+	} catch (erro) {
+		console.error("Tick de 1s falhou (" + rotulo + "):", erro);
+	}
+}
+
+// Cidade: a aba só aparece no andar 80 (gate derivado do maxAndar, que muda no
+// avanço) — reflete a cada 1s, como a seção da loja.
+function TickCidade() {
+	window.Tapeira?.Cidade?.sincroniza?.();
+}
+
+function TickUmSegundo() {
+	ExecutaTick("avanço", AvancoInimigos);
+	ExecutaTick("baú dourado", TickBauDourado);
+	// automação: primeiro coleta (o prêmio entra antes da auto-compra)
+	ExecutaTick("automação", TickAutomacao);
+	// seção de especialização da loja: leitura barata de DOM, como os toggles
+	// (load, reset e zerada se refletem sozinhos)
+	ExecutaTick("seção da loja", SyncSecaoEspecializacao);
+	ExecutaTick("cidade", TickCidade);
+	// selo do buff do Alquimista: contagem regressiva e limpeza ao expirar
+	ExecutaTick("buff do alquimista", AtualizaBuffAlquimistaUI);
+	ExecutaTick("gold dos companheiros", GoldCompanheiros);
+	ExecutaTick("habilidade de dano", HabilidadeDano);
+}
+
 function PreCarregamento() {
 	PrepararDesktop();
 	RegistraEventosAudioJogo();
@@ -307,16 +345,11 @@ function PreCarregamento() {
 	intervalos.forEach(clearInterval);
 	intervalos = [];
 	if (avancoInterval) clearInterval(avancoInterval);
-	avancoInterval = setInterval(AvancoInimigos, 1000);
+	// O handle continua em avancoInterval (os testes o usam como sinal de
+	// "jogo inicializado"), mas agora ele dispara o tick único de 1s.
+	avancoInterval = setInterval(TickUmSegundo, 1000);
+	intervalos.push(avancoInterval);
 	intervalos.push(setInterval(AutoSaveLocal, 30000));
-	intervalos.push(setInterval(TickBauDourado, 1000));
-	intervalos.push(setInterval(TickAutomacao, 1000));
-	// seção de especialização da loja: estado refletido a cada 1s (leitura
-	// barata de DOM, como os toggles — load, reset e zerada se refletem sozinhos)
-	intervalos.push(setInterval(SyncSecaoEspecializacao, 1000));
-	// Cidade: a aba só aparece no andar 80 (gate derivado do maxAndar, que muda
-	// no avanço) — reflete a cada 1s, como a seção da loja.
-	intervalos.push(setInterval(() => window.Tapeira?.Cidade?.sincroniza?.(), 1000));
 
 	// tick do companheiro com intervalo dinâmico (Velocidade do Companheiro):
 	// o handle gerenciado é limpo aqui (o intervalos[] não o contém) e recriado
@@ -335,10 +368,8 @@ function PreCarregamento() {
 	// buff do Alquimista não sobrevive ao reset
 	buffAtivo = null;
 	AtualizaBuffAlquimistaUI();
-	// selo do buff: contagem regressiva e limpeza ao expirar (1s)
-	intervalos.push(setInterval(AtualizaBuffAlquimistaUI, 1000));
-	intervalos.push(setInterval(GoldCompanheiros, 1000));
-	intervalos.push(setInterval(HabilidadeDano, 1000));
+	// (o selo do buff, o gold dos companheiros e a habilidade de dano são
+	// atualizados pelo tick único de 1s — ver TickUmSegundo)
 
 	if (!saveCarregado) Batalha();
 }
