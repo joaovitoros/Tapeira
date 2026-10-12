@@ -2717,6 +2717,10 @@ caption {
 	display: none;
 }
 
+.player__chapeu.is-espelhado {
+	transform: translate(-50%, -100%) scaleX(-1);
+}
+
 /* Seção "Aparência" (Casa): preview ao vivo + grade de chapéus */
 .aparencia-preview {
 	width: 150px;

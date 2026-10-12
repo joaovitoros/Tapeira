@@ -20,6 +20,9 @@ const PLAYER = path.join(DIR_IMG, "personagens", "player.png");
 
 const numeros = String(process.argv[2] || "012").split(",").map(s => s.trim()).filter(Boolean);
 const YS = String(process.argv[4] || 40).split(",").map(Number);
+const ROTS = String(process.argv[7] || 0).split(",").map(Number);
+const ROT = ROTS[0];
+const FLIP = Number(process.argv[8] || 1);
 const ANCHOR = {
     x: Number(process.argv[3] || 50),
     y: YS[0],
@@ -47,11 +50,13 @@ const DIR_CHAPEUS = path.join(DIR_IMG, "personagens", "chapeus");
 
     const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
-    const url = await page.evaluate(async ({ playerUrl, pecas, anchor, camada, ys }) => {
+    const url = await page.evaluate(async ({ playerUrl, pecas, anchor, camada, ys, rots, flip }) => {
         const carrega = u => new Promise((ok, e) => { const i = new Image(); i.onload = () => ok(i); i.onerror = e; i.src = u; });
         const player = await carrega(playerUrl);
         const itens = [];
-        if (ys && ys.length > 1) {
+        if (rots && rots.length > 1) {
+            for (const r of rots) itens.push({ nome: "rot=" + r, img: await carrega(pecas[0].url), rot: r });
+        } else if (ys && ys.length > 1) {
             for (const y of ys) itens.push({ nome: "y=" + y, img: await carrega(pecas[0].url), y });
         } else {
             for (const p of pecas) itens.push({ nome: p.nome, img: await carrega(p.url) });
@@ -64,12 +69,17 @@ const DIR_CHAPEUS = path.join(DIR_IMG, "personagens", "chapeus");
         const cx = cv.getContext("2d");
         cx.imageSmoothingQuality = "high";
 
-        const desenhaPeca = (img, painelX, yBase) => {
+        const desenhaPeca = (img, painelX, yBase, rot, flip) => {
             const w = LARG * anchor.largura / 100;
             const h = w * (img.naturalHeight / img.naturalWidth);
             const x = painelX + LARG * anchor.x / 100 - w / 2;
             const y = H * yBase / 100 - h;   // y = BASE da peça (igual ao jogo)
-            cx.drawImage(img, x, y, w, h);
+            cx.save();
+            cx.translate(x + w / 2, y + h);          // pivô = base-centro
+            cx.rotate((rot || 0) * Math.PI / 180);
+            cx.scale(flip || 1, 1);                   // espelha na horizontal
+            cx.drawImage(img, -w / 2, -h, w, h);
+            cx.restore();
             // contorno tracejado da caixa da peça
             cx.save();
             cx.setLineDash([4, 3]);
@@ -84,9 +94,9 @@ const DIR_CHAPEUS = path.join(DIR_IMG, "personagens", "chapeus");
             cx.translate(i * LARG, 0);
             cx.fillStyle = i % 2 ? "#22303f" : "#1a2230";
             cx.fillRect(0, 0, LARG, H);
-            if (camada === "tras") desenhaPeca(it.img, 0, it.y ?? anchor.y);
+            if (camada === "tras") desenhaPeca(it.img, 0, it.y ?? anchor.y, it.rot ?? rots[0], flip);
             cx.drawImage(player, 0, 0, LARG, H);
-            if (camada !== "tras") desenhaPeca(it.img, 0, it.y ?? anchor.y);
+            if (camada !== "tras") desenhaPeca(it.img, 0, it.y ?? anchor.y, it.rot ?? rots[0], flip);
             // grade de % (linhas a cada 10%) por cima
             cx.strokeStyle = "rgba(255,255,255,0.16)";
             cx.fillStyle = "rgba(255,226,160,0.9)";
@@ -106,7 +116,7 @@ const DIR_CHAPEUS = path.join(DIR_IMG, "personagens", "chapeus");
             cx.restore();
         });
         return cv.toDataURL("image/png");
-    }, { playerUrl: lêB64(PLAYER), pecas, anchor: ANCHOR, camada: CAMADA, ys: YS });
+    }, { playerUrl: lêB64(PLAYER), pecas, anchor: ANCHOR, camada: CAMADA, ys: YS, rots: ROTS, flip: FLIP });
 
     const saida = path.join(process.env.TEMP || ".", "opencode", "provar-acessorio.png");
     fs.mkdirSync(path.dirname(saida), { recursive: true });

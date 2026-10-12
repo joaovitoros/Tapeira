@@ -16,16 +16,17 @@
 const APARENCIA_ANCORA_CHAPEU = { x: 50, y: 30, largura: 53 };
 
 // id, nome e arquivo (imagens/personagens/chapeus/). "nenhum" = sem chapéu.
+// flip = espelha na horizontal (a arte é 3/4; só o de palha é simétrico).
 const APARENCIA_CHAPEUS = [
     { id: "nenhum", nome: "Sem chapéu" },
-    { id: "amarelo", nome: "Capacete amarelo", arquivo: "chapeu-01.png" },
-    { id: "escuro", nome: "Capacete escuro", arquivo: "chapeu-02.png" },
-    { id: "vermelho", nome: "Capacete vermelho", arquivo: "chapeu-03.png" },
-    { id: "verde", nome: "Capacete verde", arquivo: "chapeu-04.png" },
-    { id: "viking", nome: "Capacete viking", arquivo: "chapeu-05.png" },
-    { id: "mago", nome: "Chapéu de mago", arquivo: "chapeu-06.png" },
+    { id: "amarelo", nome: "Capacete amarelo", arquivo: "chapeu-01.png", flip: true },
+    { id: "escuro", nome: "Capacete escuro", arquivo: "chapeu-02.png", flip: true },
+    { id: "vermelho", nome: "Capacete vermelho", arquivo: "chapeu-03.png", flip: true },
+    { id: "verde", nome: "Capacete verde", arquivo: "chapeu-04.png", flip: true },
+    { id: "viking", nome: "Capacete viking", arquivo: "chapeu-05.png", flip: true },
+    { id: "mago", nome: "Chapéu de mago", arquivo: "chapeu-06.png", flip: true },
     { id: "palha", nome: "Chapéu de palha", arquivo: "chapeu-07.png" },
-    { id: "pirata", nome: "Chapéu de pirata", arquivo: "chapeu-08.png" }
+    { id: "pirata", nome: "Chapéu de pirata", arquivo: "chapeu-08.png", flip: true }
 ];
 
 const APARENCIA_CHAPEUS_DIR = "imagens/personagens/chapeus/";
@@ -56,6 +57,7 @@ function AplicaAparenciaEm(raiz) {
         img.style.left = a.x + "%";
         img.style.top = a.y + "%";
         img.style.width = a.largura + "%";
+        img.classList.toggle("is-espelhado", !!chapeu.flip);
     });
 }
 
