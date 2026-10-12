@@ -121,6 +121,8 @@ function CriarObjetoSave(incluirOffline = true) {
 		pesquisaItens,
 		pesquisaInimigos,
 		trofeus,
+		ofertasDia,
+		ofertasDiaCompradas,
 		reputacao,
 		fabricaNivel,
 		cristalNivel,

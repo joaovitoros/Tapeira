@@ -86,6 +86,12 @@ var cristalNivel = 0;
 // de Mugs (os pontos de habilidade que sobram). Permanente (não zera no
 // reset). Objeto { trofeuId: nível } — ver trofeus.js.
 var trofeus = {};
+// Mercado (Cidade): Ofertas do dia. `ofertasDia` é o stamp do dia local da
+// última rotação (ano*10000+mês*100+dia) e `ofertasDiaCompradas` é um bitmask
+// das ofertas já compradas (bit i = oferta i). Giram à meia-noite; não zeram
+// no reset (ver mercado.js).
+var ofertasDia = 0;
+var ofertasDiaCompradas = 0;
 const TEMPO_BAU_DOURADO_JOGO = 20 * 60 * 1000;
 const TEMPO_BAU_DOURADO_OFFLINE = 40 * 60 * 1000;
 var progressoBauDourado = 0;

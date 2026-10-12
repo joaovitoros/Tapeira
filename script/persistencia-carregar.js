@@ -254,6 +254,11 @@ function Carregar(saveData, calculaOffline = false) {
 	// { trofeuId: nível }; valores inválidos caem no default.
 	trofeus = (save.trofeus && typeof save.trofeus === "object" && !Array.isArray(save.trofeus))
 		? Object.assign({}, save.trofeus) : {};
+	// Mercado (Cidade): ofertas do dia — stamp do dia + bitmask de compradas.
+	// Gira à meia-noite (o sync zera o bitmask se o save for de outro dia).
+	ofertasDia = save.ofertasDia ?? 0;
+	ofertasDiaCompradas = save.ofertasDiaCompradas ?? 0;
+	if (typeof SincronizaOfertasDia === "function") SincronizaOfertasDia();
 	// Mercado (Cidade): reputação (desconto nas lojas) — permanente
 	reputacao = save.reputacao ?? 0;
 	// Fábrica (Cidade): nível da linha de montagem — permanente

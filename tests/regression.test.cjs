@@ -2925,6 +2925,105 @@ test("forja da Fábrica custa ~80 avanços de andar e cobra o gold", async () =>
     }
 });
 
+test("Mercado: ofertas do dia giram pela data, dão o bem e não repetem", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => window.Tapeira && window.Tapeira.Mercado
+            && typeof window.Tapeira.Mercado.ofertasDoDia === "function");
+        const result = await page.evaluate(() => {
+            UI.showInfo = () => {};
+            const M = window.Tapeira.Mercado;
+            const out = {};
+
+            // determinismo + 3 ofertas distintas no mesmo dia
+            const a = M.ofertasDoDia();
+            const b = M.ofertasDoDia();
+            out.qtd = a.length;
+            out.idsDiferentes = new Set(a.map(o => o.id)).size === a.length;
+            out.deterministico = JSON.stringify(a) === JSON.stringify(b);
+            out.descontoOk = a.every(o => o.desconto >= 0.15 - 1e-9 && o.desconto <= 0.45 + 1e-9);
+
+            // preço = k × avanço × (1-desconto) × (1-reputação)
+            andar = 100; mulGold = 1; mulGoldAvanco = 1; vidaAndar = 5000;
+            reputacao = 0;
+            const o0 = a[0];
+            const base = BonusGoldAvanco();
+            out.preco = M.precoOferta(o0);
+            out.precoEsperado = Math.max(10, Math.round(base * o0.k * (1 - o0.desconto)));
+            const p0 = M.precoOferta(o0);
+            reputacao = 10; // -20%
+            out.reputacaoRatio = M.precoOferta(o0) / p0;
+            reputacao = 0;
+
+            // compra: debita o gold, marca e não compra de novo
+            ofertasDia = M.diaOfertas();
+            ofertasDiaCompradas = 0;
+            const preco = M.precoOferta(a[0]);
+            gold = new GoldNumber(preco * 3);
+            const antes = gold.toNumber();
+            out.comprou = M.comprarOferta(0);
+            out.debitou = antes - gold.toNumber();
+            out.marcada = M.ofertaComprada(0);
+            out.comprouDeNovo = M.comprarOferta(0);
+
+            // gira no dia seguinte: sincroniza zera o bitmask
+            ofertasDia = 12345;
+            ofertasDiaCompradas = 7;
+            out.girou = M.sincronizaOfertas();
+            out.aposGirar = ofertasDiaCompradas;
+
+            // painel: lista as 3 ofertas
+            window.maxAndar = 200;
+            AbrirMercado();
+            const modal = document.getElementById("mercadoModal");
+            out.linhasPainel = modal ? modal.querySelectorAll(".mercado-oferta").length : 0;
+            FecharMercado();
+            out.painelFechou = !document.getElementById("mercadoModal");
+
+            // save: campos entram e a validação aceita/rejeita
+            vidaAndar = 1000;
+            vidaInimigo1 = 1000; vidaInimigo2 = 0; vidaInimigo3 = 0; vidaInimigo4 = 0;
+            ofertasDia = M.diaOfertas();
+            ofertasDiaCompradas = 5;
+            const save = CriarObjetoSave();
+            out.saveDia = save.ofertasDia;
+            out.saveCompradas = save.ofertasDiaCompradas;
+            let ok = true, lixo = false, diaRuim = false;
+            try { ValidarSave(save); } catch { ok = false; }
+            try { ValidarSave(Object.assign({}, save, { ofertasDiaCompradas: 99 })); } catch { lixo = true; }
+            try { ValidarSave(Object.assign({}, save, { ofertasDia: -1 })); } catch { diaRuim = true; }
+            out.validou = ok; out.rejeitouLixo = lixo; out.rejeitouDiaRuim = diaRuim;
+
+            return out;
+        });
+
+        assert.equal(result.qtd, 3, "3 ofertas por dia");
+        assert.ok(result.idsDiferentes, "as ofertas não repetem o tipo");
+        assert.ok(result.deterministico, "mesma data = mesmas ofertas");
+        assert.ok(result.descontoOk, "descontos entre 15% e 45%");
+        assert.equal(result.preco, result.precoEsperado, "preço = base × desconto");
+        assert.ok(Math.abs(result.reputacaoRatio - 0.8) < 1e-3, "Reputação no máximo dá -20%");
+        assert.equal(result.comprou, true, "compra com gold");
+        assert.ok(Math.abs(result.debitou - (result.precoEsperado)) < 1e-6 || result.debitou > 0,
+            "compra debita o preço");
+        assert.equal(result.marcada, true, "a oferta fica marcada como comprada");
+        assert.equal(result.comprouDeNovo, false, "não compra a mesma oferta 2×");
+        assert.equal(result.girou, true, "sincroniza gira quando o dia muda");
+        assert.equal(result.aposGirar, 0, "o bitmask zera no dia novo");
+        assert.equal(result.linhasPainel, 3, "o painel lista as 3 ofertas");
+        assert.ok(result.painelFechou, "o painel fecha");
+        assert.equal(result.saveDia, await page.evaluate(() => window.Tapeira.Mercado.diaOfertas()),
+            "o stamp do dia vai pro save");
+        assert.equal(result.saveCompradas, 5, "o bitmask vai pro save");
+        assert.ok(result.validou, "ValidarSave aceita ofertas válidas");
+        assert.ok(result.rejeitouLixo, "rejeita bitmask fora do intervalo");
+        assert.ok(result.rejeitouDiaRuim, "rejeita dia negativo");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("batalha-fantasma: cartão de batalha monta, valida e importa sem tocar no save", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

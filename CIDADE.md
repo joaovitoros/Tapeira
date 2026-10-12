@@ -31,6 +31,9 @@
 | 🔬 **Centro de Pesquisa** | 110 | |
 | 💎 **Cristal central** | 120 | liga a Cidade à profundidade do reset |
 
+> **Loja de Troféus** (bônus fora do plano original): prédio extra no andar 80 que gasta os
+> **Tickets de Caçador de Mugs** em troféus com níveis (ver `IDEIAS.md` / `script/trofeus.js`).
+
 > Os gates são por **andar máximo** (o padrão do jogo: skills, automação e especializações
 > também usam `maxAndar`/`pisoDesbloqueio`). O mapa completo dos desbloqueios atuais está em
 > `IDEIAS-FUTURAS.md`/histórico; a janela escolhida foi **80+**, que estava vazia.
@@ -127,7 +130,11 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
 - [x] Painel próprio (`script/mercado.js` + `#mercadoModal`), aberto pelo prédio Mercado.
 - [x] Teste `test-mercado.js`: desconto aplica; venda credita e sobra só os conjuntos;
       save/validação e reset.
-- [ ] (adiado) **Ofertas rotativas** (`ofertasDia`) — não entrou nesta rodada.
+- [x] **Ofertas do dia**: 3 ofertas sorteadas do pool (esmeralda, CM, baú comum, baú
+      dourado, recarga) que **giram à meia-noite** (data real) — determinísticas pela data
+      (mesmo dia = mesmas ofertas) e com **desconto do dia** (15–45%) + o da Reputação. Preço
+      em gold (`k × BonusGoldAvanco`), 1 de cada por dia. **Save**: `ofertasDia` (stamp do dia)
+      + `ofertasDiaCompradas` (bitmask 0..7) — permanentes, giram sozinhos.
 
 ### Fase 7 — ⚙️ Fábrica
 - [x] **Forja**: junta 2 cópias iguais em 1 "melhorada" (mesmo efeito, 1 slot a menos).

@@ -277,6 +277,19 @@ function ValidarSave(save) {
 	const trofeuMax = (typeof TROFEU_NIVEL_MAX === "number") ? TROFEU_NIVEL_MAX : 1000;
 	const idsTrofeus = (typeof TROFEUS !== "undefined" ? TROFEUS : []).map(t => t.id);
 	validaMapaPesquisa(save.trofeus, idsTrofeus, trofeuMax, "troféus");
+	// Mercado (Cidade): Ofertas do dia — stamp do dia (inteiro ≥ 0) e o bitmask
+	// de compradas dentro do número de ofertas. Campos numéricos (sem whitelist).
+	if (save.ofertasDia !== undefined
+		&& (!Number.isSafeInteger(save.ofertasDia) || save.ofertasDia < 0)) {
+		throw new TypeError("As ofertas do dia do save são inválidas.");
+	}
+	const ofertasMax = (typeof OFERTAS_QTD === "number" && OFERTAS_QTD >= 0)
+		? (1 << OFERTAS_QTD) - 1 : 7;
+	if (save.ofertasDiaCompradas !== undefined
+		&& (!Number.isInteger(save.ofertasDiaCompradas) || save.ofertasDiaCompradas < 0
+			|| save.ofertasDiaCompradas > ofertasMax)) {
+		throw new TypeError("As ofertas do dia do save são inválidas.");
+	}
 	// Mercado (Cidade): reputação (desconto nas lojas) dentro do teto
 	const reputacaoMax = (typeof REPUTACAO_MAX === "number") ? REPUTACAO_MAX : 10;
 	if (save.reputacao !== undefined
