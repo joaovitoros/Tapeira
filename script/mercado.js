@@ -56,7 +56,7 @@ function FormigasExcedentes() {
 	const excedentes = [];
 	FORMIGAS.forEach(formiga => {
 		const total = QuantidadeFormigas(formiga.id);
-		const resto = total % 5;
+		const resto = total % FORMIGAS_POR_CONJUNTO;
 		if (resto > 0) excedentes.push({ formiga, qtd: resto });
 	});
 	return excedentes;
@@ -211,7 +211,7 @@ function MercadoSecaoExcedentes() {
 
 	const desc = document.createElement("p");
 	desc.className = "mercado-secao__desc";
-	desc.textContent = "Vende as cópias extras dos itens da build (mantém 1 de cada) e as formigas que sobraram fora dos conjuntos de 5. Vira gold.";
+	desc.textContent = "Vende as cópias extras dos itens da build (mantém 1 de cada) e as formigas que sobraram fora dos conjuntos de " + FORMIGAS_POR_CONJUNTO + ". Vira gold.";
 
 	const itens = ItensExcedentes();
 	const formigas = FormigasExcedentes().reduce((t, e) => t + e.qtd, 0);

@@ -54,9 +54,9 @@ function TentaPuloExplorador() {
 // ============================================================
 // Quando a janela do Frenesi ativa, o companheiro de dano marca um inimigo
 // aleatório (1 ou 2, só os vivos) e cada hit DURANTE a janela acumula dano
-// real. Se o marcado morrer — a qualquer momento — 25% do acumulado
-// explode em todos os inimigos vivos. Estado de janela: não é salvo;
-// zera no reset e a cada nova ativação (uma explosão por marca).
+// real. Quando a janela TERMINA, 25% do acumulado explode em todos os inimigos
+// vivos. A passiva só existe a partir do nível 5 do companheiro. Estado de
+// janela: não é salvo; zera no reset e a cada nova ativação.
 var alvoFrenesiComp = 0;       // id do inimigo marcado (0 = sem marca)
 var danoJanelaFrenesiComp = 0; // dano acumulado durante a janela ativa
 
@@ -112,7 +112,7 @@ function MarcaAlvoFrenesiComp() {
 	alvoFrenesiComp = 0;
 	danoJanelaFrenesiComp = 0;
 	RemoveAnelFrenesiComp(marcaAnterior); // reativação troca o anel de alvo
-	if (N(lvlComp1) <= 0) return 0;
+	if (N(lvlComp1) < 5) return 0;
 	const elegiveis = [1, 2].filter(id => N(window["vidaInimigo" + id]) > 0);
 	if (elegiveis.length === 0) return 0;
 	alvoFrenesiComp = elegiveis[Math.floor(Math.random() * elegiveis.length)];
@@ -129,10 +129,10 @@ function RegistraDanoFrenesiComp(dano, naJanela = ataquesFrenesi > 0) {
 	}
 }
 
-// Explode 25% do acumulado contra todos os inimigos vivos quando o alvo
-// marcado morre. Limpa a marca (uma explosão por marca) e retorna os ids
-// abatidos pela explosão — o chamador os insere no mesmo fluxo de
-// recompensas do abate normal (batalha.js).
+// Explode 25% do acumulado contra todos os inimigos vivos quando a janela do
+// Frenesi TERMINA (não precisa mais matar o alvo marcado). Limpa a marca (uma
+// explosão por marca) e retorna os ids abatidos pela explosão — o chamador os
+// insere no mesmo fluxo de recompensas do abate normal (batalha.js).
 function SplashFrenesiComp() {
 	if (alvoFrenesiComp <= 0) return [];
 	const marca = alvoFrenesiComp;

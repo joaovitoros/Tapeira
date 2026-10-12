@@ -269,10 +269,11 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		if (window["vidaInimigo" + alvo.id] <= 0) derrotados.push(alvo.id);
 	}
 
-	// Companheiro de dano + Frenesi: o alvo marcado morreu → 25% do dano
-	// acumulado na janela explode em todos os inimigos vivos; os abates da
-	// explosão entram em derrotados e seguem o mesmo fluxo de recompensas
-	if (alvoFrenesiComp > 0 && derrotados.includes(alvoFrenesiComp)) {
+	// Companheiro de dano + Frenesi: quando a JANELA TERMINA (o último toque
+	// consumiu a janela), 25% do dano acumulado explode em todos os inimigos
+	// vivos — não precisa mais matar o alvo marcado. Os abates da explosão
+	// entram em derrotados e seguem o mesmo fluxo de recompensas
+	if (janelaFrenesiAtiva && ataquesFrenesi === 0) {
 		for (const id of SplashFrenesiComp()) derrotados.push(id);
 	}
 

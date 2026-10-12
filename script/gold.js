@@ -120,8 +120,11 @@ class GoldNumber {
 
         const suffixes = [
             "", "K", "M", "B", "T",
-            "Qa", "Qi", "Sx", "Sp", "Oc",
-            "No", "Dc"
+            "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc",
+            "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod",
+            "Vg", "Uvg", "Dvg", "Tvg", "Qavg", "Qivg", "Sxvg", "Spvg", "Ocvg", "Novg",
+            "Tg", "Utg", "Dtg", "Ttg", "Qatg", "Qitg", "Sxtg", "Sptg", "Octg", "Notg",
+            "Qig", "Uqig", "Dqig", "Tqig", "Qaqig", "Qiqig", "Sxqig", "Spqig", "Ocqig", "Noqig"
         ];
 
         const index = Math.floor(this.e / 3);
@@ -157,7 +160,11 @@ function FormatarGold(valor) {
     const sufixos = [
         "K", "M", "B", "T",
         "Qa", "Qi", "Sx", "Sp",
-        "Oc", "No", "Dc"
+        "Oc", "No", "Dc",
+        "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod",
+        "Vg", "Uvg", "Dvg", "Tvg", "Qavg", "Qivg", "Sxvg", "Spvg", "Ocvg", "Novg",
+        "Tg", "Utg", "Dtg", "Ttg", "Qatg", "Qitg", "Sxtg", "Sptg", "Octg", "Notg",
+        "Qig", "Uqig", "Dqig", "Tqig", "Qaqig", "Qiqig", "Sxqig", "Spqig", "Ocqig", "Noqig"
     ];
 
     let index = -1;

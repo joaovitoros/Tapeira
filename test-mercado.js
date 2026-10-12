@@ -47,13 +47,13 @@ const path = require('path');
         conhecimentoMug = 1e9;
         res.noMax = CompraReputacao(); // false
 
-        // ---- excedentes (formigas fora dos conjuntos) ----
-        formigasVermelhas = 7; formigasAmarelas = 3; formigasMarrons = 0; formigasPretas = 0; formigasCinzas = 0;
-        res.excedentes = FormigasExcedentes().reduce((t, e) => t + e.qtd, 0); // 2 + 3 = 5
+        // ---- excedentes (formigas fora dos conjuntos de 10) ----
+        formigasVermelhas = 17; formigasAmarelas = 3; formigasMarrons = 0; formigasPretas = 0; formigasCinzas = 0;
+        res.excedentes = FormigasExcedentes().reduce((t, e) => t + e.qtd, 0); // 7 + 3 = 10
         andar = 82; mulGold = 1; vidaAndar = 0;
         const venda = VenderExcedentes();
-        res.vendaOk = venda.formigas === 5 && venda.gold > 0;
-        res.restoVermelhas = formigasVermelhas; // 5
+        res.vendaOk = venda.formigas === 10 && venda.gold > 0;
+        res.restoVermelhas = formigasVermelhas; // 10
         res.restoAmarelas = formigasAmarelas;   // 0
 
         // ---- vender sem excedentes ----
@@ -90,9 +90,9 @@ const path = require('path');
     check("compra sem CM falha", r.semCM === false);
     check("compra com CM funciona", r.ok === true && r.nivel === 1, r.nivel);
     check("reputação no máximo falha", r.noMax === false);
-    check("formigas fora do conjunto contam", r.excedentes === 5, r.excedentes);
+    check("formigas fora do conjunto contam", r.excedentes === 10, r.excedentes);
     check("vender excedentes credita gold e sobra só os conjuntos", r.vendaOk === true, JSON.stringify({ restoV: r.restoVermelhas, restoA: r.restoAmarelas }));
-    check("sobra 5 vermelhas (1 conjunto) e 0 amarelas", r.restoVermelhas === 5 && r.restoAmarelas === 0);
+    check("sobra 10 vermelhas (1 conjunto) e 0 amarelas", r.restoVermelhas === 10 && r.restoAmarelas === 0);
     check("vender sem excedentes não credita", r.vazio === true);
     check("sem build não há itens excedentes", r.itensExcedentes === 0 && r.vendeuItens === 0);
     check("save grava reputacao", r.saveRep === 4, r.saveRep);

@@ -1654,8 +1654,9 @@ test("companheiro de dano + Frenesi: marca alvo (1 ou 2) e estoura 25% do dano d
         const result = await page.evaluate(() => {
             UI.showInfo = () => {};
             const out = {};
-            // cenário: janela do Frenesi pronta e companheiro de dano comprado
-            lvlComp1 = 1;
+            // cenário: janela do Frenesi pronta e companheiro de dano no nível 5
+            // (a passiva só existe a partir do nível 5)
+            lvlComp1 = 5;
             maxAndar = 60;
             andar = 60;
             avanco = 0; qtdAvanco = 1; // Avancar() sempre devolve 1
@@ -1672,6 +1673,7 @@ test("companheiro de dano + Frenesi: marca alvo (1 ou 2) e estoura 25% do dano d
             AtivaHabilidadeCombate("frenzy");
             out.janelaAtivou = ataquesFrenesi > 0;
             out.marca = alvoFrenesiComp;
+            out.anelMarcado = !!document.getElementById("frenesi-anel-" + out.marca);
 
             // só hits da janela acumulam
             RegistraDanoFrenesiComp(400, true);
@@ -1679,24 +1681,28 @@ test("companheiro de dano + Frenesi: marca alvo (1 ou 2) e estoura 25% do dano d
             RegistraDanoFrenesiComp(999, false); // fora da janela: ignora
             out.acumulado = danoJanelaFrenesiComp;
 
-            // mata o marcado com um golpe real → a explosão sai na hora
+            // último toque da janela: ao consumir a janela, o dano acumulado é
+            // distribuído (não precisa mais matar o alvo marcado)
             const marca = out.marca;
             const outro1 = marca === 1 ? 2 : 1;
             const vidaAntes1 = window["vidaInimigo" + outro1];
             const vidaAntes3 = vidaInimigo3;
             window["vidaInimigo" + marca] = 1;
+            ataquesFrenesi = 1; // o próximo toque do jogador encerra a janela
             danoJogador = 100;
             danoCritJogador = 100;
-            Bater(marca, true, false);
+            Bater(marca, true, true);
 
             out.marcaMorta = window["vidaInimigo" + marca] <= 0;
             out.splashOutro1 = vidaAntes1 - window["vidaInimigo" + outro1];
             out.splashInimigo3 = vidaAntes3 - vidaInimigo3;
             out.marcaLimpa = alvoFrenesiComp === 0;
             out.acumuladoLimpo = danoJanelaFrenesiComp === 0;
+            out.anelRemovido = !document.querySelector(".inimigo-frenesi-anel");
+            out.flashSplash = document.querySelectorAll(".inimigo--frenesi-dano").length;
 
-            // sem companheiro de dano não há marca nem acumulado
-            lvlComp1 = 0;
+            // sem o nível 5 do companheiro não há marca nem acumulado
+            lvlComp1 = 4;
             ataquesFrenesi = 0;
             abatesFrenesi = skill.killsRequired;
             AtivaHabilidadeCombate("frenzy");
@@ -1715,7 +1721,63 @@ test("companheiro de dano + Frenesi: marca alvo (1 ou 2) e estoura 25% do dano d
         assert.ok(Math.abs(result.splashInimigo3 - 150.25) < 1e-9,
             "splash de 150,25 no inimigo 3 (veio " + result.splashInimigo3 + ")");
         assert.ok(result.marcaLimpa && result.acumuladoLimpo, "marca e acumulado zerados após a explosão");
+        assert.ok(result.anelMarcado, "anel pulsante no inimigo marcado");
+        assert.ok(result.anelRemovido, "anel some quando a marca explode");
+        assert.equal(result.flashSplash, 2, "flash vermelho nas duas vítimas do splash");
         assert.ok(result.semCompanheiro, "sem companheiro de dano não marca");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("opção Registros transparentes marca só o modal de Logs", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            !!(window.Tapeira?.Config?.ITENS || []).find(i => i.id === "logsTransparentes"));
+        const result = await page.evaluate(() => {
+            UI.showInfo = () => {};
+            const out = {};
+            out.item = Tapeira.Config.ITENS.find(i => i.id === "logsTransparentes").nome;
+            out.padrao = Tapeira.Config.ativo("logsTransparentes");
+            out.classeInicial = document.documentElement.classList.contains("config-logs-transparente");
+            out.checkbox = !!document.getElementById("config-logsTransparentes");
+            out.painelRegistros = !!document.getElementById("logAvisos");
+
+            // ligar: classe no <html> (CSS aplica ao vivo) + checkbox espelhado
+            Tapeira.Config.define("logsTransparentes", true);
+            out.classeLigada = document.documentElement.classList.contains("config-logs-transparente");
+            out.checkboxLigado = document.getElementById("config-logsTransparentes")?.checked === true;
+
+            // o modal de Logs recebe a marcadora gameModal--logs
+            Tapeira.Logs.adiciona("mensagem de teste");
+            UI.showLogs();
+            out.modalLogs = document.getElementById("gameModal")?.classList.contains("gameModal--logs") || false;
+            out.temLista = !!document.querySelector("#gameModalBody .logs-linha");
+
+            // um modal qualquer não herda a marcadora (alterna e reabre)
+            UI.showModal("Outro", "<p>x</p>"); // fecha o de logs
+            UI.showModal("Outro", "<p>x</p>"); // cria outro, sem marcadora
+            out.modalOutro = document.getElementById("gameModal")?.classList.contains("gameModal--logs") || false;
+
+            // desligar ao vivo remove a classe do <html>
+            Tapeira.Config.define("logsTransparentes", false);
+            out.classeDesligada = !document.documentElement.classList.contains("config-logs-transparente");
+            return out;
+        });
+
+        assert.equal(result.item, "Registros transparentes");
+        assert.equal(result.padrao, false, "padrão desligado");
+        assert.equal(result.classeInicial, false, "sem classe antes de ligar");
+        assert.ok(result.checkbox, "checkbox montado no painel de config");
+        assert.ok(result.painelRegistros, "painel Registro da arena presente (alvo da opção)");
+        assert.ok(result.classeLigada, "define(true) liga a classe no <html>");
+        assert.ok(result.checkboxLigado, "checkbox espelha o valor");
+        assert.ok(result.modalLogs, "modal de Logs leva a marcadora gameModal--logs");
+        assert.ok(result.temLista, "lista de logs montada no modal");
+        assert.equal(result.modalOutro, false, "outro modal não leva a marcadora");
+        assert.ok(result.classeDesligada, "desligar remove a classe ao vivo");
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();
@@ -1794,6 +1856,11 @@ test("baú de builds desbloqueia a cada 5 andares, acumula e consome por escolha
                 selo: document.getElementById("bauBuild-selo")?.textContent,
                 ariaLabel: document.getElementById("bauBuild")?.getAttribute("aria-label")
             };
+            const visuais = {
+                arena: !!document.getElementById("bauBuild-arena"),
+                seloArena: document.getElementById("bauBuild-arena-selo")?.textContent || "",
+                chip: !!document.getElementById("bauBuild")
+            };
 
             build.abreEscolha();
             const opcoes = [...document.querySelectorAll("#modalItensBuild [data-item]")]
@@ -1830,6 +1897,7 @@ test("baú de builds desbloqueia a cada 5 andares, acumula e consome por escolha
                 desbloqueada: build.desbloqueada(),
                 foraDoMarco,
                 acumulados,
+                visuais,
                 opcoes,
                 aposEspaco,
                 aposDescartar,
@@ -1841,6 +1909,7 @@ test("baú de builds desbloqueia a cada 5 andares, acumula e consome por escolha
                 pendente: build.pendente(),
                 modalFechado: !document.getElementById("modalItensBuild"),
                 seloFinal: document.getElementById("bauBuild-selo")?.textContent,
+                arenaFinal: !!document.getElementById("bauBuild-arena"),
                 resumoNoStatus,
                 save: JSON.parse(localStorage.getItem("autoSaveCaverna"))
             };
@@ -1856,6 +1925,9 @@ test("baú de builds desbloqueia a cada 5 andares, acumula e consome por escolha
             selo: "ITENS ×2",
             ariaLabel: "Abrir 2 baús de itens da build"
         });
+        assert.ok(result.visuais.arena, "baú na arena criado (visual de PC/tablet)");
+        assert.equal(result.visuais.seloArena, "ITENS ×2", "selo da arena acompanha a quantidade");
+        assert.ok(result.visuais.chip, "chip do HUD criado (visual do celular)");
         assert.equal(result.opcoes.length, 3);
         assert.equal(new Set(result.opcoes).size, 3, "as três opções devem ser distintas");
         assert.deepEqual(result.aposEspaco, result.opcoes, "Espaço com o modal aberto não pode rerrolar opções");
@@ -1872,6 +1944,7 @@ test("baú de builds desbloqueia a cada 5 andares, acumula e consome por escolha
         assert.equal(result.pendente, true);
         assert.equal(result.modalFechado, true);
         assert.equal(result.seloFinal, "ITENS");
+        assert.ok(result.arenaFinal, "baú da arena continua com o baú pendente restante");
         assert.match(result.resumoNoStatus, /baú\(s\) pendente\(s\)/);
         assert.ok(result.resumoNoStatus.includes(result.nomeEscolhido),
             "o Status mostra o item escolhido");
