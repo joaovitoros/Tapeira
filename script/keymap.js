@@ -9,6 +9,28 @@ function keyPressed(evt){
 let attackInterval = null;
 let attackPointerId = null;
 let jogoPausado = false;
+
+// Controles que NÃO devem iniciar ataque quando tocados/clicados (botões,
+// painéis, modais, rodapé, cidade, pausa). Tocar fora deles dá um hit.
+const SELETOR_SEM_ATAQUE = [
+    "button", "a", "input", "select", "textarea", "label",
+    "[role='button']", "[role='dialog']",
+    "#container-opcoes", "#container-Habilidades", "#logAvisos",
+    "#pauseOverlay", "#container-Cidade", "#gameModal",
+    "[id$='Modal']", "[id^='container-']"
+].join(",");
+
+// Efeito visual de toque/clique (anel que expande e some). Só um efeito de
+// DOM; a classe sai sozinha no fim da animação (sem timer órfão).
+function MostraEfeitoToque(x, y) {
+    const efeito = document.createElement("div");
+    efeito.className = "toque-efeito";
+    efeito.setAttribute("aria-hidden", "true");
+    efeito.style.left = x + "px";
+    efeito.style.top = y + "px";
+    document.body.appendChild(efeito);
+    efeito.addEventListener("animationend", () => efeito.remove(), { once: true });
+}
 // De onde o painel de Config veio (ele é MOVIDO pro menu de pause e volta aqui)
 let pausaConfigOrigem = null;
 
@@ -299,15 +321,21 @@ document.addEventListener("keyup", function(evt) {
 document.addEventListener("pointerdown", function(evt) {
     const player = evt.target instanceof Element ? evt.target.closest(".player") : null;
     // Eventos de toque nÃ£o possuem um botÃ£o do mouse confiÃ¡vel em todos os WebViews.
-    if (!player || (evt.pointerType === "mouse" && evt.button !== 0)) return;
+    // ataca tocando/clicando em qualquer lugar da cena, EXCETO em controles
+    // (botões/painéis/modais): o toque fora deles dá um hit
+    const emControle = !player && evt.target instanceof Element
+        && !!evt.target.closest(SELETOR_SEM_ATAQUE);
+    if (emControle || (evt.pointerType === "mouse" && evt.button !== 0)) return;
 
     evt.preventDefault();
     if (attackInterval !== null) return;
     if (evt.pointerId !== undefined) {
         attackPointerId = evt.pointerId;
-        player.setPointerCapture?.(evt.pointerId);
+        player?.setPointerCapture?.(evt.pointerId);
     }
     startPlayerAttack();
+    // efeito de toque (anel) no ponto tocado — só no toque (modo Android)
+    if (evt.pointerType === "touch") MostraEfeitoToque(evt.clientX, evt.clientY);
 });
 
 window.addEventListener("pointerup", function(evt) {
