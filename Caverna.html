@@ -98,6 +98,17 @@
 				</div>
 			</div>
 
+			<!-- Fuga contextual: agora dentro do topo, logo ABAIXO do Andar/Manter
+			     (mesma coluna). Antes era uma barra absoluta centralizada. -->
+			<div id="container-Fugir">
+				<span class="fuga-clock" aria-hidden="true"></span>
+				<div class="fuga-label">
+					<span class="fuga-label-desktop">Tempo para fugir</span>
+					<span class="fuga-label-mobile" aria-hidden="true">Fuga em</span>
+				</div>
+				<div class="contTempo" id="contTempo" role="timer" aria-label="Tempo restante para a fuga dos inimigos"></div>
+			</div>
+
 			<button type="button" id="btnPause" class="pause-button" aria-label="Pausar jogo"
 				title="Pausar jogo">
 				<span class="pause-button-icon" aria-hidden="true">Ⅱ</span>
@@ -114,17 +125,12 @@
 					<img class="moeda-icone" src="imagens/gem.png" alt="Esmeraldas:" />
 					<div class="contEmeraldas" id="contEmeraldas">0</div>
 				</div>
-			</div>
-		</div>
 
-		<!-- Fuga contextual: barra fina que fica logo abaixo do topo (esboço HUD v3) -->
-		<div id="container-Fugir">
-			<span class="fuga-clock" aria-hidden="true"></span>
-			<div class="fuga-label">
-				<span class="fuga-label-desktop">Tempo para fugir</span>
-				<span class="fuga-label-mobile" aria-hidden="true">Fuga em</span>
+				<div id="container-Conhecimento">
+					<img class="moeda-icone" src="imagens/conhecimento-limpo.png" alt="Conhecimento:" />
+					<div class="contConhecimento" id="contConhecimento">0</div>
+				</div>
 			</div>
-			<div class="contTempo" id="contTempo" role="timer" aria-label="Tempo restante para a fuga dos inimigos"></div>
 		</div>
 
 		<div id="container-Metas">

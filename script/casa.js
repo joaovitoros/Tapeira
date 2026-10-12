@@ -75,6 +75,7 @@ function CompraConfortoCasa() {
 		return false;
 	}
 	conhecimentoMug = N(conhecimentoMug) - preco;
+	AtualizaHUDConhecimento();
 	casaNivel = nivel + 1;
 	UI.showInfo("Casa melhorada! Conforto nível " + casaNivel + ".");
 	AutoSaveLocal();

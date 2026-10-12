@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- MOEDA - mesma familia visual de imagens/gold.png (flat, 3 tons + brilho).
+       Tokens trocados por scripts/gerar-icone.cjs:
+         __CLARO__  __MEDIO__  __ESCURO__  __BRILHO__
+       Geometria medida no original: disco r=171 (conteudo 342px = 67% do
+       canvas, centralizado), anel escuro r 111..134, nucleo claro r=111 e
+       cunha clara no quadrante superior esquerdo (divisoria na diagonal de
+       45 graus que passa pelo centro). -->
+  <defs>
+    <clipPath id="disco-moeda">
+      <circle cx="256" cy="256" r="171" />
+    </clipPath>
+  </defs>
+
+  <!-- disco externo (tom medio) -->
+  <circle cx="256" cy="256" r="171" fill="__MEDIO__" />
+
+  <!-- cunha clara: meia-plano x + y <= 512 (luz vinda de cima-esquerda),
+       recortada pelo disco -->
+  <g clip-path="url(#disco-moeda)">
+    <polygon points="-944,1456 -944,-944 1456,-944" fill="__CLARO__" />
+  </g>
+
+  <!-- anel escuro -->
+  <circle cx="256" cy="256" r="134" fill="__ESCURO__" />
+
+  <!-- nucleo claro -->
+  <circle cx="256" cy="256" r="111" fill="__CLARO__" />
+
+  <!-- brilho: estrela de 4 pontas no alto-direita (sobre o anel) -->
+  <path d="M352 112 L360 140 L388 148 L360 156 L352 184 L344 156 L316 148 L344 140 Z"
+    fill="__BRILHO__" />
+</svg>

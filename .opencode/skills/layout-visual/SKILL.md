@@ -97,6 +97,7 @@ hardcode posição em media query para elementos cuja largura muda com o jogo
 (a fileira de habilidades cresce a cada desbloqueio) — foi o erro original.
 
 Detalhes e invariantes do rodapé: `references/rodape.md`.
+Detalhes e invariantes do topo do HUD: `references/hud-topo.md`.
 
 ## Passo 3 — Interpretar pedidos (ambiguidade que já custou retrabalho)
 

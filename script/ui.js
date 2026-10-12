@@ -32,6 +32,7 @@ const UI = {
         document.getElementById("contAndar").innerHTML = andar;
         document.getElementById("contGold").innerHTML = FormatGold(gold);
         document.getElementById("contEmeraldas").innerHTML = esmeraldas;
+        AtualizaHUDConhecimento();
         document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
         this.updateResetAviso();
         this.updateObjective();
@@ -476,6 +477,7 @@ const UI = {
     updateResources() {
         document.getElementById("contGold").innerHTML = FormatGold(gold);
         document.getElementById("contEmeraldas").innerHTML = esmeraldas;
+        AtualizaHUDConhecimento();
         document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
         this.updateMission();
     },
@@ -939,6 +941,15 @@ document.addEventListener("click", (e) => {
 
 function MostraStatus() {
     UI.showStatus();
+}
+
+// Saldo de Conhecimento Mug no HUD (#container-GoldEsmeraldas, terceira
+// fileira). Fica numa função única para o saldo não ficar velho: quem mexe em
+// conhecimentoMug (loja, casa, eventos, reset, load) chama daqui, além do
+// UI.render()/UI.updateResources().
+function AtualizaHUDConhecimento() {
+    const el = document.getElementById("contConhecimento");
+    if (el) el.innerHTML = FormatCM(conhecimentoMug);
 }
 
 function SobeStatus() {

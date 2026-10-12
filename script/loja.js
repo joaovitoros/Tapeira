@@ -338,6 +338,7 @@ function CompraCM(tipo) {
 
 	ChamaSom('audio6');
 	AtualizaLojaCM();
+	AtualizaHUDConhecimento();
 	document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
 	MostraStatus();
 	AutoSaveLocal();

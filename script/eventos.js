@@ -73,6 +73,7 @@ var EVENTO_OFERTAS_POOL = [
 		id: "cm", nome: "Página do grimório", desc: "+15 de Conhecimento Mug", k: 120,
 		comprar() {
 			conhecimentoMug = N(conhecimentoMug) + 15;
+			AtualizaHUDConhecimento();
 			MostraStatus?.();
 		}
 	}
@@ -601,6 +602,7 @@ function EventoAbateCM(avancoAbates) {
 
 	conhecimentoMug = N(conhecimentoMug) + ganho;
 	eventoCM += ganho;
+	AtualizaHUDConhecimento();
 	FloatCM(ganho);
 }
 

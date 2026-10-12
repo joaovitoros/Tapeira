@@ -52,6 +52,7 @@ function Carregar(saveData, calculaOffline = false) {
 	andarMaxRun = PicoRunDoSave(save);
 	// Conhecimento Mug: moeda e níveis permanentes (não zeram no reset)
 	conhecimentoMug = save.conhecimentoMug ?? 0;
+	AtualizaHUDConhecimento();
 	derrotadosRun = save.derrotadosRun ?? 0;
 	cmNivelDano = save.cmNivelDano ?? 0;
 	cmNivelGold = save.cmNivelGold ?? 0;

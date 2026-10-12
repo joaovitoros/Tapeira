@@ -351,6 +351,13 @@ body{
 	text-shadow: 1px 1px 2px black;
 }
 
+/* Conhecimento Mug usa a mesma cor da moeda CM já usada na Loja do Conhecimento
+   (#TabLojaCM td:nth-child(2)), para o saldo do HUD e o preço combinarem. */
+.contConhecimentolbl, .contConhecimento{
+	color: #ffe0a0;
+	text-shadow: 1px 1px 2px black;
+}
+
 .moeda-icone{
 	height: 1em;
 	width: auto;
@@ -1792,13 +1799,20 @@ body {
 	line-height: 1;
 }
 
+.contConhecimentolbl,
+.contConhecimento {
+	font-size: clamp(9px, calc((6.25vh - 13px) / 2), 26px);
+	line-height: 1;
+}
+
 #container-GoldEsmeraldas *,
 #container-DerrotouResta * {
 	margin: 0;
 }
 
 #container-Gold,
-#container-Esmeraldas {
+#container-Esmeraldas,
+#container-Conhecimento {
 	gap: 6px;
 	margin: 0;
 }
@@ -3089,8 +3103,12 @@ html.crit-shake {
 }
 
 #container-Gold,
-#container-Esmeraldas {
-	flex: 1 1 0;
+#container-Esmeraldas,
+#container-Conhecimento {
+	/* flex-basis auto (e não 0): a altura do painel passa a ser a soma das
+	   fileiras, então uma fileira nova (Conhecimento) faz o painel crescer em
+	   vez de espremer as existentes. */
+	flex: 1 1 auto;
 	min-height: 0;
 	box-sizing: border-box;
 	justify-content: space-between; /* ícone à esquerda, valor à direita */
@@ -3102,7 +3120,8 @@ html.crit-shake {
 }
 
 .contGold,
-.contEmeraldas {
+.contEmeraldas,
+.contConhecimento {
 	font-variant-numeric: tabular-nums;
 }
 
@@ -4327,8 +4346,9 @@ input:focus-visible {
 	}
 
 	#container-Gold,
-	#container-Esmeraldas {
-		flex: 1 1 0;
+	#container-Esmeraldas,
+	#container-Conhecimento {
+		flex: 1 1 auto;
 		min-width: 0;
 		flex-direction: row;
 		align-items: center;
@@ -4341,7 +4361,9 @@ input:focus-visible {
 	#container-Gold .contGoldlbl,
 	#container-Gold .contGold,
 	#container-Esmeraldas .contEmeraldaslbl,
-	#container-Esmeraldas .contEmeraldas {
+	#container-Esmeraldas .contEmeraldas,
+	#container-Conhecimento .contConhecimentolbl,
+	#container-Conhecimento .contConhecimento {
 		font-size: inherit;
 		max-width: 100%;
 	}
@@ -10122,4 +10144,84 @@ img.ramos-tree-no__tile {
 	.casa-panel {
 		animation: none;
 	}
+}
+
+/* ======================================================================
+   HUD v4 — a fuga entra no topo, logo abaixo do Andar/Manter
+   #container-Fugir deixou de ser uma barra absoluta centralizada na tela e
+   passou a viver DENTRO de #container-HudTopo, abaixo do Andar/Manter. O topo
+   virou uma grade de 2 linhas:
+
+     [ Andar/Manter ] [ Pausar ] [ Gold/Esmeraldas/CM ]
+     [ Fuga         ] [        ] [                     ]
+
+   As peças do topo ficam alinhadas pelo TOPO (align-items: start). O Pausar
+   continua centralizado na tela no desktop (absoluto, como antes).
+   Estas regras ficam no FIM do arquivo: vencem as media queries antigas
+   (mesma especificidade) por ordem de origem.
+   ====================================================================== */
+#container-HudTopo {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	grid-template-rows: auto auto;
+	align-items: start;
+	justify-items: start;
+	column-gap: 8px;
+	row-gap: 6px;
+}
+
+#container-HudTopo > #container-AndarManter {
+	grid-column: 1;
+	grid-row: 1;
+}
+
+/* a fuga vira item da grade: mesma coluna do Andar/Manter, linha de baixo */
+#container-HudTopo > #container-Fugir {
+	grid-column: 1;
+	grid-row: 2;
+	position: static;
+	top: auto;
+	left: auto;
+	right: auto;
+	bottom: auto;
+	transform: none;
+	margin: 0;
+	/* um pouco mais baixa que a pílula antiga: o topo agora tem 2 linhas e
+	   precisa caber antes do Objetivo/Missão (padding-block só mexe na
+	   vertical; o horizontal de cada breakpoint continua valendo). */
+	padding-block: 2px;
+}
+
+#container-HudTopo > #container-GoldEsmeraldas {
+	grid-column: 3;
+	grid-row: 1 / span 2;
+}
+
+/* No desktop o Pausar é absoluto (centralizado na tela) e fica fora da grade;
+   no celular ele é item da grade, na coluna do meio. Em ambos fica alinhado
+   pelo TOPO e com a altura própria (não estica até o fim do bloco). */
+#container-HudTopo > #btnPause {
+	grid-column: 2;
+	grid-row: 1 / span 2;
+	align-self: start;
+}
+
+@media (min-width: 701px) {
+	#container-HudTopo > #btnPause {
+		grid-column: auto;
+		grid-row: auto;
+		bottom: auto;
+	}
+}
+
+@media (max-width: 700px) {
+	/* No celular o Andar/Manter ocupa a sobra da linha (era flex: 1 1 0). */
+	#container-HudTopo {
+		grid-template-columns: minmax(0, 1fr) auto auto;
+	}
+}
+
+/* O ícone do Conhecimento um pouco maior que o das outras moedas. */
+#container-Conhecimento .moeda-icone {
+	height: 1.45em;
 }

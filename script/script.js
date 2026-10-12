@@ -535,6 +535,7 @@ function VoltaAndar(){
 			// AQUI, antes do Resetar zerar pontosHabilidade
 			cmRecebido = Math.round(derrotadosRun * MultiplicadorCM() * BonusCMPontosSobra());
 			conhecimentoMug = conhecimentoMug + cmRecebido;
+			AtualizaHUDConhecimento();
 		}
 		// Reset curto: reset feito PERTO do recorde — até 10 andares antes
 		// dele (recorde 97, reset no 88 = 9 andares → conta; no 20 → não) —

@@ -1,0 +1,16 @@
+{
+  "_comentario": "Paletas dos icones. Cada esquema tem 3 tons (claro, medio, escuro) no mesmo espirito dos originais: imagens/gold.png (#F6D555/#EFB217/#D79511) e imagens/gem.png (#69E6C3/#5ACCA6/#4AB591). Usado por scripts/recolorir-icone.ps1 e scripts/gerar-icone.cjs.",
+  "ouro": ["F6D555", "EFB217", "D79511"],
+  "prata": ["EDF1F5", "C2CAD2", "949EA8"],
+  "bronze": ["E5B380", "C1874A", "8E5C2B"],
+  "cobre": ["F0B48C", "CC7A4A", "96482A"],
+  "esmeralda": ["69E6C3", "5ACCA6", "4AB591"],
+  "rubi": ["FF9AA6", "E0455F", "A92B47"],
+  "rosa": ["FFB4DE", "F271BC", "B23F85"],
+  "safira": ["A9D4FF", "4A90E2", "245FA8"],
+  "ametista": ["D0B0FF", "9B6FE0", "6A3FB0"],
+  "obsidiana": ["9A9AB4", "61617A", "33334A"],
+  "sangue": ["FF8A7A", "D33B2E", "8F1F16"],
+  "osso": ["FFF6E0", "E3D5B8", "B0A085"],
+  "veneno": ["C6F26B", "93C22F", "5E7F14"]
+}

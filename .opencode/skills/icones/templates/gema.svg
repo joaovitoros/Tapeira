@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- GEMA - mesma familia visual de imagens/gem.png (flat isometrico, 3 tons
+       + brilho). Tokens trocados por scripts/gerar-icone.cjs:
+         __CLARO__  __MEDIO__  __ESCURO__  __BRILHO__
+       Geometria medida no original: conteudo 324x495px (63% x 97% do canvas),
+       topo em ponta (255,14), laterais em x 96..412, base em ponta (255,500);
+       corpo em 3 faixas verticais - face esquerda (medio, 96..152), face
+       frontal (claro, 152..356), face direita (escuro, 356..412) - mais a
+       faceta do tampo (escura) a esquerda. O contorno usa o truque do
+       stroke-linejoin round para arredondar os cantos como no original. -->
+  <g>
+    <!-- silhueta: hexagono vertical (tom medio, cantos arredondados) -->
+    <path d="M255 14 L412 104 L412 408 L255 500 L96 408 L96 104 Z"
+      fill="__MEDIO__" stroke="__MEDIO__" stroke-width="16" stroke-linejoin="round" />
+
+    <!-- faceta do tampo, lado esquerdo (escura). O vertice esquerdo fica sobre
+         a aresta da silhueta (255,14)-(96,104): em y=96 a aresta passa em x=110. -->
+    <path d="M255 14 L110 96 L152 120 L255 69 Z" fill="__ESCURO__" />
+
+    <!-- face direita (escura), descendo ate a ponta inferior -->
+    <path d="M356 120 L412 104 L412 408 L255 500 L255 441 L356 392 Z" fill="__ESCURO__" />
+
+    <!-- face frontal (clara), com chevron em cima e embaixo -->
+    <path d="M255 69 L356 120 L356 392 L255 441 L152 392 L152 120 Z" fill="__CLARO__" />
+
+    <!-- brilho: dois riscos arredondados no alto da face frontal -->
+    <g stroke="__BRILHO__" stroke-width="14" stroke-linecap="round" fill="none">
+      <line x1="196" y1="156" x2="252" y2="118" />
+      <line x1="210" y1="186" x2="272" y2="144" />
+    </g>
+  </g>
+</svg>

@@ -2628,3 +2628,120 @@ test("rodapé: botões horizontais à esquerda e habilidades abaixo do log, ao l
     }
 });
 
+test("HUD: Conhecimento Mug aparece ao lado de gold e esmeraldas", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof AtualizaHUDConhecimento === "function",
+            undefined, { timeout: 15000 });
+
+        // o painel tem as três fileiras, na ordem, com o ícone novo
+        const estrutura = await page.evaluate(() => ({
+            fileiras: [...document.getElementById("container-GoldEsmeraldas").children].map(el => el.id),
+            icone: document.querySelector("#container-Conhecimento img.moeda-icone")?.getAttribute("src"),
+            classeValor: document.getElementById("contConhecimento")?.className
+        }));
+        assert.deepEqual(estrutura.fileiras,
+            ["container-Gold", "container-Esmeraldas", "container-Conhecimento"],
+            "o painel mostra gold, esmeraldas e conhecimento");
+        assert.equal(estrutura.icone, "imagens/conhecimento-limpo.png",
+            "usa o ícone de conhecimento (versão sem badge)");
+        assert.equal(estrutura.classeValor, "contConhecimento");
+
+        // o valor usa FormatCM e é atualizado por quem mexe no CM
+        const valores = await page.evaluate(() => {
+            const ler = () => document.getElementById("contConhecimento").textContent.trim();
+            conhecimentoMug = 0; AtualizaHUDConhecimento();
+            const zero = ler();
+            conhecimentoMug = 980; AtualizaHUDConhecimento();
+            const pequeno = ler();
+            conhecimentoMug = 98765; UI.render();
+            const grande = ler();
+            conhecimentoMug = 2500000; UI.updateResources();
+            const enorme = ler();
+            return {
+                lidos: [zero, pequeno, grande, enorme],
+                esperado: [FormatCM(0), FormatCM(980), FormatCM(98765), FormatCM(2500000)]
+            };
+        });
+        assert.deepEqual(valores.lidos, valores.esperado,
+            "o saldo do HUD segue FormatCM e acompanha a mudança do CM");
+
+        // as três fileiras cabem no painel e o painel não invade o de baixo
+        const encaixe = await page.evaluate(() => {
+            const hud = document.getElementById("container-GoldEsmeraldas");
+            const painel = hud.getBoundingClientRect();
+            const metas = document.getElementById("container-Metas").getBoundingClientRect();
+            return {
+                fileiras: [...hud.children].map(el => {
+                    const r = el.getBoundingClientRect();
+                    const rv = el.querySelector("div").getBoundingClientRect();
+                    return {
+                        id: el.id,
+                        dentro: r.top >= painel.top - 1 && r.bottom <= painel.bottom + 1,
+                        // estrito: se a fileira for espremida, o valor fica mais
+                        // alto que ela (foi o bug da terceira fileira)
+                        valorCabe: rv.height <= r.height
+                    };
+                }),
+                semSobreposicao: painel.bottom <= metas.top
+            };
+        });
+        for (const f of encaixe.fileiras) {
+            assert.ok(f.dentro, f.id + ": fileira dentro do painel");
+            assert.ok(f.valorCabe, f.id + ": valor não estoura a fileira (fileira espremida)");
+        }
+        assert.ok(encaixe.semSobreposicao, "o painel do HUD não invade o Objetivo/Missão");
+
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("HUD: a fuga fica dentro do topo, abaixo do Andar/Manter, e o ícone de CM é maior", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof UI !== "undefined" && typeof UI.render === "function",
+            undefined, { timeout: 15000 });
+
+        const medidas = await page.evaluate(() => {
+            const hud = document.getElementById("container-HudTopo");
+            const r = el => {
+                const b = el.getBoundingClientRect();
+                return { t: Math.round(b.top), b: Math.round(b.bottom), l: Math.round(b.left), r: Math.round(b.right), h: Math.round(b.height) };
+            };
+            return {
+                fugirEhFilho: document.getElementById("container-Fugir").parentElement === hud,
+                filhos: [...hud.children].map(el => el.id),
+                andar: r(document.getElementById("container-AndarManter")),
+                fugir: r(document.getElementById("container-Fugir")),
+                pausar: r(document.getElementById("btnPause")),
+                gold: r(document.getElementById("container-GoldEsmeraldas")),
+                metas: r(document.getElementById("container-Metas")),
+                iconeCM: r(document.querySelector("#container-Conhecimento .moeda-icone")),
+                iconeGold: r(document.querySelector("#container-Gold .moeda-icone"))
+            };
+        });
+
+        assert.ok(medidas.fugirEhFilho, "a fuga está DENTRO de #container-HudTopo");
+        assert.deepEqual(medidas.filhos,
+            ["container-AndarManter", "container-Fugir", "btnPause", "container-GoldEsmeraldas"],
+            "ordem das peças do topo");
+        assert.ok(medidas.fugir.t >= medidas.andar.b - 1,
+            "a fuga fica ABAIXO do Andar/Manter (" + medidas.fugir.t + " >= " + medidas.andar.b + ")");
+        assert.ok(Math.abs(medidas.fugir.l - medidas.andar.l) <= 1,
+            "a fuga está alinhada à esquerda com o Andar/Manter");
+        assert.equal(medidas.andar.t, medidas.gold.t, "Andar/Manter e os recursos alinhados pelo topo");
+        assert.equal(medidas.pausar.t, medidas.andar.t, "Pausar alinhado pelo topo");
+        assert.ok(medidas.fugir.b <= medidas.metas.t,
+            "o topo (com a fuga) não invade o Objetivo/Missão");
+        assert.ok(medidas.iconeCM.h > medidas.iconeGold.h,
+            "o ícone de Conhecimento é maior que o do Gold (" +
+            medidas.iconeCM.h + " > " + medidas.iconeGold.h + ")");
+
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+

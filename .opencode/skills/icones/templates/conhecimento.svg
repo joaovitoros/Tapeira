@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- CONHECIMENTO (Conhecimento Mug / CM) - cerebro com chevron de subida,
+       dentro de um badge escuro com borda (como o anexo). Sem o "!" (removido
+       a pedido); a cor sai da paleta (--esquema rosa, por exemplo).
+       Mesma disciplina de cor dos outros icones: 3 tons + brilho.
+       Tokens trocados por scripts/gerar-icone.cjs:
+         __CLARO__ __MEDIO__ __ESCURO__ __BRILHO__   (paleta)
+         __FUNDO__ __BORDA__ __TINTA__               (badge; --token NOME=HEX)
+       Sem badge (icone "solto" para o HUD): --token FUNDO=none --token BORDA=none -->
+  <g>
+    <!-- badge -->
+    <rect x="16" y="16" width="480" height="480" rx="62"
+      fill="__FUNDO__" stroke="__BORDA__" stroke-width="11" />
+
+    <!-- cerebro (base media) -->
+    <path d="M160 356
+             C 124 348 104 316 114 282
+             C 96 252 106 212 136 198
+             C 138 164 170 142 204 148
+             C 220 118 262 108 292 126
+             C 328 118 362 140 368 174
+             C 398 190 408 228 388 256
+             C 402 288 384 326 350 336
+             C 332 362 292 372 264 356
+             C 232 372 186 372 160 356 Z"
+      fill="__MEDIO__" />
+
+    <!-- luz no alto-esquerda -->
+    <ellipse cx="205" cy="212" rx="64" ry="50" transform="rotate(-24 205 212)"
+      fill="__CLARO__" />
+
+    <!-- sulcos do cerebro -->
+    <g stroke="__ESCURO__" stroke-width="13" fill="none" stroke-linecap="round">
+      <path d="M196 302 C 214 280 214 246 200 224" />
+      <path d="M254 322 C 270 296 268 256 250 236" />
+      <path d="M306 314 C 324 288 322 250 304 230" />
+    </g>
+
+    <!-- chevron de subida, com halo escuro para destacar do cerebro -->
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M306 318 L 366 258 L 426 318" stroke="__TINTA__" stroke-width="68" />
+      <path d="M306 318 L 366 258 L 426 318" stroke="__CLARO__" stroke-width="44" />
+    </g>
+  </g>
+</svg>
