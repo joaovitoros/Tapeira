@@ -22,12 +22,12 @@ const APARENCIA_SLOTS = [
         vazio: "Sem chapéu",
         ancora: { x: 50, y: 30, largura: 53 },
         itens: [
-            { id: "amarelo", nome: "Capacete amarelo", arquivo: "chapeu-01.png", flip: true, tras: true },
+            { id: "amarelo", nome: "Capacete amarelo", arquivo: "chapeu-01.png", flip: true },
             { id: "escuro", nome: "Capacete escuro", arquivo: "chapeu-02.png", flip: true },
             { id: "vermelho", nome: "Capacete vermelho", arquivo: "chapeu-03.png", flip: true },
             { id: "verde", nome: "Capacete verde", arquivo: "chapeu-04.png", flip: true },
-            { id: "viking", nome: "Capacete viking", arquivo: "chapeu-05.png", flip: true, tras: true },
-            { id: "mago", nome: "Chapéu de mago", arquivo: "chapeu-06.png", flip: true, tras: true },
+            { id: "viking", nome: "Capacete viking", arquivo: "chapeu-05.png", flip: true },
+            { id: "mago", nome: "Chapéu de mago", arquivo: "chapeu-06.png", flip: true },
             { id: "palha", nome: "Chapéu de palha", arquivo: "chapeu-07.png" },
             { id: "pirata", nome: "Chapéu de pirata", arquivo: "chapeu-08.png", flip: true }
         ]
