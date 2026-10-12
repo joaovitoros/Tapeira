@@ -62,6 +62,9 @@ const path = require('path');
         const secao = A.secaoCasa();
         res.secaoOk = secao.classList.contains("casa-secao");
         res.botoes = secao.querySelectorAll(".aparencia-chapeu").length;
+        res.temPreview = !!secao.querySelector(".aparencia-preview .player__base");
+        const pv = secao.querySelector(".aparencia-preview .player__chapeu");
+        res.previewChapeu = !!(pv && !pv.hidden && /chapeu-05\.png$/.test(pv.getAttribute("src") || ""));
 
         // Resetar NÃO mexe no chapéu (permanente)
         chapeuEquipado = "mago";
@@ -86,6 +89,8 @@ const path = require('path');
     check("load restaura o chapéu", r.carregou === "viking", r.carregou);
     check("seção Aparência é uma casa-secao", r.secaoOk === true);
     check("seção lista as 9 opções", r.botoes === 9, r.botoes);
+    check("seção tem preview da toupeira", r.temPreview === true);
+    check("preview mostra o chapéu equipado", r.previewChapeu === true);
     check("Resetar NÃO zera o chapéu", r.aposReset === "mago", r.aposReset);
 
     await browser.close();

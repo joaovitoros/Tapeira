@@ -38,23 +38,34 @@ function AparenciaChapeuIdAtual() {
     return (typeof chapeuEquipado === "string") ? chapeuEquipado : "nenhum";
 }
 
-// Aplica o chapéu equipado no sprite do player. Chamado no load e ao trocar.
-function AplicaChapeuJogador() {
-    const img = document.querySelector(".player__chapeu");
-    if (!img) return;
+// Aplica as camadas equipadas em todos os sprites de aparência dentro de `raiz`
+// (o documento inteiro, ou uma seção ainda fora do DOM).
+function AplicaAparenciaEm(raiz) {
+    const camadas = raiz.querySelectorAll(".player__chapeu");
+    if (!camadas.length) return;
     const chapeu = AparenciaChapeu(AparenciaChapeuIdAtual());
-    if (!chapeu.arquivo) {
-        img.hidden = true;
-        img.removeAttribute("src");
-        return;
-    }
     const a = Object.assign({}, APARENCIA_ANCORA_CHAPEU, chapeu.ancora || {});
-    img.src = APARENCIA_CHAPEUS_DIR + chapeu.arquivo;
-    img.hidden = false;
-    img.style.left = a.x + "%";
-    img.style.top = a.y + "%";
-    img.style.width = a.largura + "%";
+    camadas.forEach(img => {
+        if (!chapeu.arquivo) {
+            img.hidden = true;
+            img.removeAttribute("src");
+            return;
+        }
+        img.src = APARENCIA_CHAPEUS_DIR + chapeu.arquivo;
+        img.hidden = false;
+        img.style.left = a.x + "%";
+        img.style.top = a.y + "%";
+        img.style.width = a.largura + "%";
+    });
 }
+
+// Aplica em tudo (o sprite do jogo e o preview da Casa).
+function AplicaAparencia() {
+    AplicaAparenciaEm(document);
+}
+
+// Compatibilidade: o load (persistencia-carregar) chama AplicaChapeuJogador.
+function AplicaChapeuJogador() { AplicaAparencia(); }
 
 function EquipaChapeu(id) {
     if (!APARENCIA_CHAPEUS.some(c => c.id === id)) return false;
@@ -76,6 +87,22 @@ function CasaSecaoAparencia() {
     const desc = document.createElement("p");
     desc.className = "casa-secao__desc";
     desc.textContent = "Deixe a toupeira com a sua cara. Por enquanto: chapéus (mais itens vindo).";
+
+    // Preview ao vivo: a mesma montagem do player (base + camadas), só que parada.
+    const preview = document.createElement("div");
+    preview.className = "aparencia-preview";
+    const arte = document.createElement("div");
+    arte.className = "player__arte";
+    const baseImg = document.createElement("img");
+    baseImg.className = "player__base";
+    baseImg.src = "imagens/personagens/player.png";
+    baseImg.alt = "";
+    const chapeuImg = document.createElement("img");
+    chapeuImg.className = "player__chapeu";
+    chapeuImg.alt = "";
+    chapeuImg.hidden = true;
+    arte.append(baseImg, chapeuImg);
+    preview.appendChild(arte);
 
     const lista = document.createElement("div");
     lista.className = "aparencia-chapeus";
@@ -112,7 +139,9 @@ function CasaSecaoAparencia() {
         lista.appendChild(item);
     }
 
-    secao.append(titulo, desc, lista);
+    secao.append(titulo, desc, preview, lista);
+    // reflete o estado atual no preview (a seção pode ainda não estar no DOM)
+    AplicaAparenciaEm(secao);
     return secao;
 }
 
@@ -123,6 +152,6 @@ window.Tapeira.Aparencia = {
     chapeu: AparenciaChapeu,
     chapeuAtual: AparenciaChapeuIdAtual,
     equiparChapeu: EquipaChapeu,
-    aplica: AplicaChapeuJogador,
+    aplica: AplicaAparencia,
     secaoCasa: CasaSecaoAparencia
 };

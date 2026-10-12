@@ -2717,7 +2717,20 @@ caption {
 	display: none;
 }
 
-/* Seção "Aparência" (Casa): grade de chapéus */
+/* Seção "Aparência" (Casa): preview ao vivo + grade de chapéus */
+.aparencia-preview {
+	width: 150px;
+	height: 190px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 12px;
+	border: 1px solid rgba(137, 177, 255, 0.28);
+	background: radial-gradient(circle at 50% 35%, #2b3a4f, #121822 70%);
+	overflow: hidden;
+	margin-bottom: 10px;
+}
+
 .aparencia-chapeus {
 	display: flex;
 	flex-wrap: wrap;
@@ -11985,6 +11998,17 @@ img.ramos-tree-no__tile {
 	box-shadow: inset 0 -30px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(126, 240, 184, 0.05);
 }
 
+.pvpMiniCaverna__bg {
+	position: absolute;
+	inset: 0;
+	background-size: cover;
+	background-position: center;
+	opacity: 0.35;
+	filter: brightness(0.7) saturate(1.2);
+	z-index: 0;
+	pointer-events: none;
+}
+
 .pvpMiniCaverna--meu { border-color: rgba(80, 176, 255, 0.4); }
 .pvpMiniCaverna--fantasma { border-color: rgba(201, 155, 255, 0.4); }
 
@@ -11996,6 +12020,7 @@ img.ramos-tree-no__tile {
 	height: 28px;
 	background: linear-gradient(180deg, rgba(30, 40, 30, 0.6), rgba(15, 25, 20, 0.9));
 	border-top: 1px solid rgba(126, 240, 184, 0.1);
+	z-index: 1;
 }
 
 .pvpMiniCaverna__entidade {
@@ -12003,25 +12028,27 @@ img.ramos-tree-no__tile {
 	bottom: 28px;
 	transition: transform 0.1s linear;
 	filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+	z-index: 2;
+}
+
+.pvpMiniSprite {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	image-rendering: pixelated;
+	animation: pvpMiniRespirar 1.2s ease-in-out infinite;
 }
 
 .pvpMiniCaverna__tapiera {
 	left: 18%;
-	width: 48px;
-	height: 48px;
-}
-.pvpMiniCaverna__boss {
-	right: 12%;
-	width: 72px;
-	height: 72px;
+	width: 52px;
+	height: 52px;
 }
 
-.pvpMiniCaverna__tapiera img,
-.pvpMiniCaverna__boss img {
-	width: 100%;
-	height: 100%;
-	object-fit: contain;
-	animation: pvpMiniRespirar 1.2s ease-in-out infinite;
+.pvpMiniCaverna__boss {
+	right: 12%;
+	width: 80px;
+	height: 80px;
 }
 
 @keyframes pvpMiniRespirar {
@@ -12029,21 +12056,21 @@ img.ramos-tree-no__tile {
 	50% { transform: scale(1.03); }
 }
 
-.pvpMiniCaverna__tapiera.atacando img {
+.pvpMiniCaverna__tapiera.atacando .pvpMiniSprite {
 	animation: pvpMiniGolpe 0.22s ease-out;
 }
 @keyframes pvpMiniGolpe {
 	0% { transform: translateX(0) scale(1); }
-	30% { transform: translateX(8px) scale(1.08); }
+	30% { transform: translateX(10px) scale(1.1); }
 	100% { transform: translateX(0) scale(1); }
 }
 
-.pvpMiniCaverna__boss.levandoDano img {
+.pvpMiniCaverna__boss.levandoDano .pvpMiniSprite {
 	animation: pvpMiniDano 0.15s ease-out;
 }
 @keyframes pvpMiniDano {
 	0% { filter: brightness(1) drop-shadow(0 4px 8px rgba(0,0,0,0.6)); }
-	50% { filter: brightness(1.6) hue-rotate(-10deg) drop-shadow(0 4px 8px rgba(0,0,0,0.6)); }
+	50% { filter: brightness(1.8) hue-rotate(-15deg) drop-shadow(0 4px 8px rgba(0,0,0,0.6)); }
 	100% { filter: brightness(1) drop-shadow(0 4px 8px rgba(0,0,0,0.6)); }
 }
 
