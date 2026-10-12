@@ -300,11 +300,7 @@ body{
 	text-align: center;
 }
 
-#manterAndar{
-	height: 20px;
-	width: 20px;
-	border-radius: 25%;
-}
+/* #manterAndar usa o desenho global de checkbox (trilha + bolinha). */
 #btnAndar{
 	top:70px;
 	background: linear-gradient(to bottom, #e44d6e 5%, #ec9c9c 100%);
@@ -594,10 +590,7 @@ tr, td, th{
 }
 
 .config-item input[type="checkbox"] {
-	flex: none;
-	width: 1.15em;
-	height: 1.15em;
-	accent-color: #4da6ff;
+	/* tamanho/aparência vêm da regra global de checkbox (trilha + bolinha) */
 	cursor: pointer;
 }
 
@@ -3676,9 +3669,7 @@ body:has(#menu-container) {
 }
 
 .desktop-fullscreen-row input {
-	width: 20px;
-	height: 20px;
-	accent-color: #e5b760;
+	/* tamanho/aparência vêm da regra global de checkbox (trilha + bolinha) */
 }
 
 body.desktop-app {
@@ -4389,10 +4380,7 @@ input:focus-visible {
 		font-size: 9px;
 	}
 
-	#manterAndar {
-		width: 16px;
-		height: 16px;
-	}
+	/* #manterAndar mantém o tamanho global do toggle (trilha + bolinha). */
 
 	#btnAndar {
 		min-height: 29px;
@@ -5065,51 +5053,8 @@ input:focus-visible {
 	white-space: nowrap;
 }
 
-#manterAndar {
-	appearance: none;
-	box-sizing: border-box;
-	display: inline-grid;
-	flex: 0 0 22px;
-	place-items: center;
-	width: 22px;
-	height: 22px;
-	margin: 0;
-	background: linear-gradient(145deg, rgba(7, 10, 16, 0.95), rgba(24, 29, 39, 0.95));
-	border: 1px solid rgba(199, 211, 228, 0.54);
-	border-radius: 6px;
-	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.28);
-	color: #1a160e;
-	cursor: pointer;
-	transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
-}
-
-#manterAndar::after {
-	content: "";
-	width: 5px;
-	height: 9px;
-	border: solid currentColor;
-	border-width: 0 2px 2px 0;
-	opacity: 0;
-	transform: translateY(-1px) rotate(45deg) scale(0.7);
-	transition: opacity 120ms ease, transform 120ms ease;
-}
-
-#manterAndar:checked {
-	background: linear-gradient(145deg, #ffe49a, #d99a3f);
-	border-color: #ffe6a5;
-	box-shadow: 0 0 10px rgba(255, 196, 85, 0.34), inset 0 1px rgba(255, 255, 255, 0.42);
-}
-
-#manterAndar:checked::after {
-	opacity: 1;
-	transform: translateY(-1px) rotate(45deg) scale(1);
-}
-
-#manterAndar:focus-visible {
-	outline: 2px solid #ffe0a0;
-	outline-offset: 3px;
-}
-
+/* #manterAndar usa o desenho global de checkbox (trilha + bolinha). O destaque
+   do container quando marcado continua abaixo. */
 #container-AndarManter:has(#manterAndar:checked) #container-ManterAndar {
 	background: linear-gradient(145deg, rgba(229, 183, 96, 0.16), rgba(88, 57, 27, 0.16));
 	border-color: rgba(255, 211, 107, 0.54);
@@ -5281,11 +5226,7 @@ input:focus-visible {
 		font-size: 9px;
 	}
 
-	#manterAndar {
-		flex-basis: 18px;
-		width: 18px;
-		height: 18px;
-	}
+	/* #manterAndar mantém o tamanho global do toggle (trilha + bolinha). */
 
 	#btnAndar {
 		min-height: 29px;
@@ -5379,8 +5320,8 @@ input:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
 	#container-ManterAndar,
-	#manterAndar,
-	#manterAndar::after,
+	input[type="checkbox"],
+	input[type="checkbox"]::after,
 	#btnAndar {
 		transition: none;
 	}
@@ -7326,7 +7267,6 @@ button.skill-ramo-no:focus-visible {
 
 .auto-toggle input {
 	margin: 0;
-	accent-color: #72e7c1;
 	cursor: inherit;
 }
 
@@ -7556,10 +7496,9 @@ button.skill-ramo-no:focus-visible {
    na regra #container-Botoes input (18vw × 4vw / font 25px) — devolve o
    tamanho normal. */
 #golden-chest-tracker .auto-toggle input {
-	width: 15px;
-	height: 15px;
+	/* tamanho/aparência vêm da regra global de checkbox; max-width protege
+	   contra a regra larga de #container-Botoes se o card voltar pra lá. */
 	max-width: none;
-	font-size: inherit;
 }
 
 #golden-chest-tracker.is-ready {
@@ -7662,10 +7601,8 @@ button.skill-ramo-no:focus-visible {
 }
 
 .game-dev-tools__repeat input {
-	width: 16px;
-	height: 16px;
+	/* tamanho/aparência vêm da regra global de checkbox (trilha + bolinha) */
 	margin: 0;
-	accent-color: #77aaff;
 }
 
 .game-dev-tools__readout {
@@ -8492,10 +8429,7 @@ button.skill-ramo-no:focus-visible {
 		line-height: 1;
 	}
 
-	#manterAndar {
-		width: 18px;
-		height: 18px;
-	}
+	/* #manterAndar mantém o tamanho global do toggle (trilha + bolinha). */
 
 	/* "Voltar" com a seta para trás embaixo do texto */
 	#btnAndar {
@@ -11387,8 +11321,7 @@ img.ramos-tree-no__tile {
 }
 
 .loja-painel .auto-toggle input {
-	width: 15px;
-	height: 15px;
+	/* tamanho/aparência vêm da regra global de checkbox (trilha + bolinha) */
 }
 
 /* fechar fixo no canto superior direito do cabeçalho (sai do fluxo, então
@@ -11662,6 +11595,64 @@ img.ramos-tree-no__tile {
 	border: 1px solid rgba(255, 211, 107, 0.4);
 }
 
+/* ---------------- checkboxes (trilha + bolinha) ----------------
+   Todos os <input type="checkbox"> do jogo usam o mesmo desenho do toggle de
+   auto-compra por item da loja (`.auto-item-loja__trilha`): trilha escura com
+   bolinha que desliza ao marcar. Depende de `appearance: none` — suportado
+   pelo Chromium (navegador, Electron e Android WebView). Dentro da loja os
+   acentos seguem a moeda do painel (--loja-ring/--loja-tint); fora dela caem
+   no dourado. Os blocos abaixo (manter no andar, auto-coleta/compra/gasto,
+   tela cheia, ajustes e dev-tools) só existem via esta regra. */
+input[type="checkbox"] {
+	appearance: none;
+	-webkit-appearance: none;
+	position: relative;
+	flex: none;
+	box-sizing: border-box;
+	width: 34px;
+	height: 18px;
+	margin: 0;
+	padding: 0;
+	border-radius: 999px;
+	background: #0e1219;
+	border: 1px solid #39414f;
+	cursor: pointer;
+	vertical-align: middle;
+	transition: background 0.15s, border-color 0.15s;
+}
+
+input[type="checkbox"]::after {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: #6b7484;
+	transition: transform 0.15s, background 0.15s;
+}
+
+input[type="checkbox"]:checked {
+	background: var(--loja-tint, #342c20);
+	border-color: var(--loja-ring, #e0b62b);
+}
+
+input[type="checkbox"]:checked::after {
+	transform: translateX(16px);
+	background: var(--loja-ring, #e0b62b);
+}
+
+input[type="checkbox"]:focus-visible {
+	outline: 2px solid #ffe0a0;
+	outline-offset: 2px;
+}
+
+input[type="checkbox"]:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
 /* ---------------- auto-compra por item (loja de gold) ---------------- */
 .loja-item__auto {
 	flex: 0 0 48px;
@@ -11670,6 +11661,15 @@ img.ramos-tree-no__tile {
 }
 
 .auto-item-loja {
+	/* O checkbox "escondido" é `position: absolute` sem insets: sem um
+	   ancestral posicionado, o bloco de contenção vira o #Loja (que é
+	   position: relative) e cada input é posicionado nas coordenadas do
+	   próprio painel — o do último item cai além do clientHeight. Ao focar
+	   (clicar/tabular), o navegador rola o #Loja (overflow:hidden ainda é
+	   rolável por foco) para revelar o input: o cabeçalho e a lista sobem e
+	   as abas descolam do fundo do painel. Ancorar o input aqui mantém a
+	   posição dele na própria linha, então focar não rola mais o painel. */
+	position: relative;
 	display: inline-flex;
 	flex-direction: column;
 	align-items: center;

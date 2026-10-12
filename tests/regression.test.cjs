@@ -2135,6 +2135,34 @@ test("loja v2: cabeçalho + carteira + abas, sem sobrepor o rodapé/HUD", async 
             }
         });
 
+        await t.test("focar o toggle de auto-compra não rola o painel (abas no fundo)", async () => {
+            await page.setViewportSize({ width: 1366, height: 768 });
+            await abrirLoja(page, "Loja");
+            const r = await page.evaluate(() => {
+                const painel = document.getElementById("Loja");
+                const lista = painel.querySelector(".loja-lista");
+                const abas = painel.querySelector(".loja-abas");
+                MontaCheckboxesAutoLoja();
+                SyncCheckboxesAutoLoja();
+                // pior caso: lista rolada até o fim, foca o toggle do ÚLTIMO item
+                lista.scrollTop = lista.scrollHeight;
+                const ultimo = document.getElementById("autoItemLoja-" + (ITENS_AUTO_COMPRA.length - 1));
+                ultimo.focus();
+                const pb = painel.getBoundingClientRect();
+                const ab = abas.getBoundingClientRect();
+                return {
+                    scrollTop: painel.scrollTop,
+                    folgaAba: Math.round(pb.bottom - ab.bottom),
+                    focado: document.activeElement === ultimo
+                };
+            });
+            assert.ok(r.focado, "o último toggle recebe foco");
+            assert.equal(r.scrollTop, 0,
+                "focar o toggle não rola o painel (o input fica ancorado na própria linha)");
+            assert.ok(r.folgaAba <= 2,
+                "as abas continuam coladas no fundo do painel (folga " + r.folgaAba + "px)");
+        });
+
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();
