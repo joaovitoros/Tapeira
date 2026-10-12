@@ -294,12 +294,28 @@
 		}
 
 		// ---- borracha (apaga pixels do item) ----
+		// Mapeia o cursor pro pixel do canvas DESFAZENDO a transformação da camada
+		// (translate(-50%,-100%) + espelho + rotação) — senão o pincel sai deslocado.
+		function pontoCanvas(ev, cv) {
+			var dd = d();
+			var ar = arte.getBoundingClientRect();
+			var w = ar.width * dd.largura / 100;
+			var h = w * (cv.height / cv.width);
+			var ex = ar.left + ar.width * dd.x / 100;
+			var ey = ar.top + ar.height * dd.y / 100;
+			var dx = ev.clientX - (ex + w / 2);
+			var dy = ev.clientY - (ey + h);
+			dx += w / 2; dy += h;                       // desfaz translate(-50%,-100%)
+			if (dd.flip) dx *= -1;                      // desfaz o espelho
+			var a = -(dd.rot || 0) * Math.PI / 180;     // desfaz a rotação
+			var rx = dx * Math.cos(a) - dy * Math.sin(a);
+			var ry = dx * Math.sin(a) + dy * Math.cos(a);
+			var escala = cv.width / w;
+			return { x: (w / 2 + rx) * escala, y: (h + ry) * escala, escala: escala };
+		}
 		function apagarEm(ev, cv) {
-			var r = cv.getBoundingClientRect();
-			var escala = cv.width / r.width;
-			var x = (ev.clientX - r.left) * escala;
-			var y = (ev.clientY - r.top) * escala;
-			var raio = (borracha.tam / 2) * escala;
+			var p = pontoCanvas(ev, cv);
+			var raio = (borracha.tam / 2) * p.escala;
 			var ctx = cv.getContext("2d");
 			ctx.save();
 			ctx.globalCompositeOperation = "destination-out";
@@ -309,15 +325,15 @@
 				ctx.lineWidth = raio * 2;
 				ctx.beginPath();
 				ctx.moveTo(borracha.ultimo.x, borracha.ultimo.y);
-				ctx.lineTo(x, y);
+				ctx.lineTo(p.x, p.y);
 				ctx.stroke();
 			} else {
 				ctx.beginPath();
-				ctx.arc(x, y, raio, 0, Math.PI * 2);
+				ctx.arc(p.x, p.y, raio, 0, Math.PI * 2);
 				ctx.fill();
 			}
 			ctx.restore();
-			borracha.ultimo = { x: x, y: y };
+			borracha.ultimo = { x: p.x, y: p.y };
 		}
 		function iniciarBorracha(ev) {
 			ev.preventDefault();
