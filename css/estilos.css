@@ -2681,12 +2681,26 @@ caption {
 }
 
 /* Aparência (customização): a caixa do player tem a BASE + as camadas (hoje o
-   chapéu). As camadas usam % da caixa, então seguem o idle e a investida. */
+   chapéu). Tudo vive numa caixa na PROPORÇÃO da arte (1166x1536) — assim o
+   chapéu (âncora em %) fica alinhado em QUALQUER tela, sem depender da
+   proporção da caixa do player. */
+.player {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.player__arte {
+	position: relative;
+	aspect-ratio: 1166 / 1536;
+	height: 100%;
+	max-width: 100%;
+}
+
 .player__base {
 	display: block;
 	width: 100%;
 	height: 100%;
-	object-fit: contain;
 	pointer-events: none;
 }
 
