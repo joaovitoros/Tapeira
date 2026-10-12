@@ -83,7 +83,7 @@ const APARENCIA_SLOTS = [
         vazio: "Sem cinto",
         ancora: { x: 41.9, y: 71.6, largura: 40 },
         itens: [
-            { id: "cinto-01", nome: "Bolsa azul", arquivo: "cinto-01.png", ancora: { x: 45.6, y: 79.9, largura: 47.5 } },
+            { id: "cinto-01", nome: "Bolsa azul", arquivo: "cinto-01.png", oculto: true },
             { id: "cinto-02", nome: "Bolsa creme", arquivo: "cinto-02.png", oculto: true },
             { id: "cinto-03", nome: "Bolsa escura", arquivo: "cinto-03.png", oculto: true },
             { id: "cinto-04", nome: "Cinto de couro", arquivo: "cinto-04.png", ancora: { x: 42.2, y: 80.9, largura: 52 } },

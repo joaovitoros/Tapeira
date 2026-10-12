@@ -104,7 +104,7 @@ const path = require('path');
     check("load restaura os dois slots", r.carregouChapeu === "viking" && r.carregouCachecol === "roxo", r.carregouChapeu + "/" + r.carregouCachecol);
     check("seção Aparência é uma casa-secao", r.secaoOk === true);
     check("seção tem um bloco por slot", r.blocos === 5, r.blocos);
-    check("seção lista todos os itens visíveis (9+7+18+4+8)", r.itensLista === 46, r.itensLista);
+    check("seção lista todos os itens visíveis (9+7+18+3+8)", r.itensLista === 45, r.itensLista);
     check("preview mostra chapéu e cachecol", r.previewChapeu === true && r.previewCachecol === true);
     check("Resetar NÃO zera a aparência", r.aposResetChapeu === "mago" && r.aposResetCachecol === "azul");
 
