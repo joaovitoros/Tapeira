@@ -1340,6 +1340,42 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
 	font-size: clamp(11px, 0.85vw, 15px);
 }
 
+/* Celular (<=700px): o "Como jogar" virava uma coluna fina e altíssima
+   (38vw de largura) que estourava a tela em cima e em baixo, escondendo
+   o título e o botão Fechar. Agora: quase tela cheia, com rolagem interna
+   no conteúdo e o Fechar sempre visível embaixo. */
+@media (max-width: 700px) {
+	.infoModalBox{
+		width: min(92vw, 520px);
+		max-height: 86vh;
+		display: flex;
+		flex-direction: column;
+		font-size: 13px;
+		padding: 1em;
+	}
+	.infoModalTitulo{
+		font-size: 16px;
+		margin-bottom: 0.7em;
+		flex-shrink: 0;
+	}
+	.infoModalConteudo{
+		overflow-y: auto;
+		min-height: 0;
+		gap: 0.5em;
+		-webkit-overflow-scrolling: touch;
+	}
+	.infoLinha{
+		font-size: 13px;
+	}
+	.infoSecao{
+		font-size: 12px;
+	}
+	.btn-FecharModal{
+		font-size: 13px;
+		flex-shrink: 0;
+	}
+}
+
 /* Layout fluido para resolucoes desktop: referencia aproximada de 1366x768. */
 :root {
 	--game-unit: clamp(8px, min(1vw, 1.75vh), 18px);
@@ -9826,9 +9862,82 @@ img.ramos-tree-no__tile {
 
 .cidade-hud {
 	flex: 1 1 auto;
-	color: #b9c8da;
-	font-size: clamp(12px, 1.1vw, 16px);
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	font-size: clamp(12px, 1.05vw, 15px);
 	font-variant-numeric: tabular-nums;
+}
+
+/* Cada valor do cabeçalho é um "chip" com ícone e cor própria. */
+.cidade-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 11px 4px 8px;
+	border-radius: 999px;
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	background: rgba(255, 255, 255, 0.05);
+	font-weight: 800;
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.cidade-chip__icone {
+	width: 18px;
+	height: 18px;
+	object-fit: contain;
+	animation: cidade-chip-flutua 3s ease-in-out infinite;
+}
+
+.cidade-chip__valor {
+	letter-spacing: 0.01em;
+}
+
+.cidade-chip--andar {
+	border-color: rgba(120, 180, 255, 0.4);
+	background: linear-gradient(145deg, rgba(90, 150, 255, 0.18), rgba(255, 255, 255, 0.03));
+	color: #cfe4ff;
+}
+
+.cidade-chip--gold {
+	border-color: rgba(240, 200, 90, 0.45);
+	background: linear-gradient(145deg, rgba(240, 200, 90, 0.2), rgba(255, 255, 255, 0.03));
+	color: #ffe6a0;
+	animation: cidade-chip-brilho 2.6s ease-in-out infinite;
+}
+
+.cidade-chip--ticket {
+	border-color: rgba(200, 140, 255, 0.5);
+	background: linear-gradient(145deg, rgba(180, 120, 255, 0.22), rgba(255, 255, 255, 0.03));
+	color: #e6d2ff;
+	animation: cidade-chip-brilho 2.6s ease-in-out infinite;
+}
+
+.cidade-chip--ticket .cidade-chip__icone {
+	animation: cidade-chip-ticket 2s ease-in-out infinite;
+}
+
+@keyframes cidade-chip-flutua {
+	0%, 100% { transform: translateY(0); }
+	50% { transform: translateY(-1.5px); }
+}
+
+@keyframes cidade-chip-ticket {
+	0%, 100% { transform: rotate(0deg) scale(1); }
+	45% { transform: rotate(-9deg) scale(1.08); }
+	70% { transform: rotate(6deg) scale(1.04); }
+}
+
+@keyframes cidade-chip-brilho {
+	0%, 100% { box-shadow: 0 0 0 rgba(255, 220, 120, 0); }
+	50% { box-shadow: 0 0 12px rgba(255, 220, 120, 0.28); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cidade-chip,
+	.cidade-chip__icone { animation: none; }
 }
 
 .cidade-fechar {

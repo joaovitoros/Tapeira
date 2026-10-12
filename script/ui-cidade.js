@@ -42,18 +42,41 @@
         return !!el && !el.hidden;
     }
 
+    // Um "chip" do cabeçalho: ícone + valor, com cor própria por tipo.
+    function chipCidade(classe, icone, texto) {
+        const chip = document.createElement("span");
+        chip.className = "cidade-chip cidade-chip--" + classe;
+        if (icone) {
+            const img = document.createElement("img");
+            img.className = "cidade-chip__icone";
+            img.src = icone;
+            img.alt = "";
+            img.setAttribute("aria-hidden", "true");
+            chip.appendChild(img);
+        }
+        const valor = document.createElement("span");
+        valor.className = "cidade-chip__valor";
+        valor.textContent = texto;
+        chip.appendChild(valor);
+        return chip;
+    }
+
     function atualizaHud() {
         const hud = document.getElementById("cidadeHud");
         if (!hud) return;
         const tickets = (typeof ticketsMug !== "undefined")
             ? Math.max(0, Math.floor(N(ticketsMug) || 0))
             : 0;
-        let texto = "Andar " + andar + " · " + FormatGold(gold);
+        const chips = [
+            chipCidade("andar", "imagens/hud/andar.svg", "Andar " + andar),
+            chipCidade("gold", "imagens/hud/gold.png", FormatGold(gold))
+        ];
         // Tickets de Caçador de Mugs: no cabeçalho, só quando existe saldo
         if (tickets > 0) {
-            texto += " · " + formatNumber(tickets) + (tickets === 1 ? " ticket" : " tickets");
+            chips.push(chipCidade("ticket", "imagens/hud/ticket.svg",
+                formatNumber(tickets) + (tickets === 1 ? " ticket" : " tickets")));
         }
-        hud.textContent = texto;
+        hud.replaceChildren(...chips);
     }
 
     // A Cidade é tela cheia: fecha os painéis laterais (Status/Loja/Config) pra
