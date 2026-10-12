@@ -221,6 +221,16 @@ function ValidarSave(save) {
 		&& (!Number.isFinite(save.velAtaqueComp) || save.velAtaqueComp < 1 || save.velAtaqueComp > 2.05)) {
 		throw new TypeError("A velocidade de ataque do companheiro no save é inválida.");
 	}
+	// Vida do Inimigo: fração de redução (0 = sem redução) até o teto da
+	// patente máxima (0,90 em ★VI; tetos em loja-patentes.js). Folga float
+	// de 1e-9, igual aos outros gates por efeito — impede save editado com
+	// redução acima do teto (anti-cheat).
+	if (save.subVidaInimigo !== undefined
+		&& (!Number.isFinite(save.subVidaInimigo)
+			|| save.subVidaInimigo < 0
+			|| save.subVidaInimigo > 0.90 + 1e-9)) {
+		throw new TypeError("A redução de vida do inimigo no save é inválida.");
+	}
 
 	// Conquistas comportamentais: flags 0/1 em lista de 5, contadores inteiros
 	// e cronômetro de run dentro dos limites de um save legítimo (campos ausentes = save antigo)

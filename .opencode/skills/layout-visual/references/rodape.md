@@ -28,7 +28,7 @@ encostado no canto inferior esquerdo.
 ## Fonte da verdade
 
 - `script/ui-rodape.js` — `UIRodape.{Inicia,Atualiza,Pede}`.
-  - `ESPACO_LADO` (12), `ESPACO_CIMA` (10), `FOLGA_LADO` (16),
+  - `ESPACO_LADO` (12), `ESPACO_CIMA` (10),
     `MARGEM_ESQ` (8), `MARGEM_TOPO` (8).
   - `MedeLargura()` — largura natural (encosta em `left: 0` para não sofrer
     shrink-to-fit).
@@ -48,7 +48,13 @@ encostado no canto inferior esquerdo.
   O `min` dá **prioridade aos botões**: se não couber entre log e botões, as
   skills sobem e podem encostar no log (o log é translúcido; os botões não).
 - O teste de "cabe ao lado" é
-  `botões.left + botões.width + 12 + habilidades.width + 16 <= larguraTela`.
+  `botões.left + botões.width + 12 + habilidades.width <= larguraTela`.
+- **A loja não participa desta conta.** Abrir/fechar a loja não pode mover as
+  skills (a loja é um overlay de tela cheia: `z-index` 16 > 15, passa por cima).
+- `--rodape-banda-top` (no `<html>`) publica o topo da faixa inferior
+  (menor entre o topo da navegação e o topo das skills). É o que o CSS da loja
+  usa para o painel terminar ACIMA da faixa — o overlay não corta botões nem
+  skills.
 
 ## Histórico de erros (não repetir)
 

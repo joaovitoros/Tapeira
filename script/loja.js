@@ -235,26 +235,31 @@ function AtualizaSaldoBotoesLoja() {
 }
 
 function AbreLoja(exibirTutorial){
-	if(document.getElementById("Loja").style.visibility=="hidden"){
-		document.getElementById("Loja").style.visibility="visible";
-	}else{
-		document.getElementById("Loja").style.visibility="hidden";
+	// O botão da loja alterna sobre QUALQUER painel da loja (Gold, Esmeralda
+	// ou Conhecimento). Antes ele só olhava o #Loja: na aba do Conhecimento o
+	// ouro fica `hidden`, então "fechar" de novo REABRIA a loja de Gold em vez
+	// de fechar a loja.
+	const lojaAberta = ["Loja", "LojaEsm", "LojaCM"].some(id => {
+		const el = document.getElementById(id);
+		return el && el.style.visibility === "visible";
+	});
+
+	if (lojaAberta) {
+		document.getElementById("Loja").style.visibility = "hidden";
+	} else {
+		document.getElementById("Loja").style.visibility = "visible";
 	}
+	document.getElementById("LojaEsm").style.visibility = "hidden";
+	document.getElementById("LojaCM").style.visibility = "hidden";
 	AtualizaLojaGold();
 
-	if(document.getElementById("LojaEsm").style.visibility=="visible"){
-		document.getElementById("LojaEsm").style.visibility="hidden";
-	}
-	if(document.getElementById("LojaCM").style.visibility=="visible"){
-		document.getElementById("LojaCM").style.visibility="hidden";
-	}
-	if(document.getElementById("Loja").style.visibility=="visible"){
+	if (!lojaAberta) {
 		UI.closeOtherPanels("shop");
 	}
 	UI.syncScreenButtons();
 
 	// Tutorial do comp1: só quando o jogador abre a loja (não em chamadas internas)
-	if(exibirTutorial && document.getElementById("Loja").style.visibility=="visible"){
+	if(exibirTutorial && !lojaAberta){
 		MostraTutorialComp1();
 	}
 }

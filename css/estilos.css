@@ -1,3 +1,15 @@
+/* Encode Sans (variável, pesos 100–900, OFL) — fonte única da interface.
+   Empacotada em css/fontes/ (junto do CSS) para funcionar OFFLINE nas 3
+   plataformas (navegador, Electron e Android). Não usar CDN. */
+@font-face {
+	font-family: "Encode Sans";
+	font-style: normal;
+	font-weight: 100 900;
+	font-stretch: 100%;
+	font-display: swap;
+	src: url("fontes/EncodeSans.woff2") format("woff2");
+}
+
 html, body {
     width: 100%;
     height: 100%;
@@ -11,11 +23,11 @@ html, body {
   }
 body{
 	font-size: 1.7vw;
-	font-family: 'Segoe UI', 'Roboto', sans-serif;
+	font-family: "Encode Sans";
 	margin: 10px 10px;
 	text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
 	color: #e6edf3;
-	font-weight: bold;
+	font-weight: 900;
 
 	/* base escura sob as camadas .fundo-camada (a arte mora nelas) */
 	background-color: #0a0d12;
@@ -57,7 +69,7 @@ body{
 	border-radius: 8px;
 	box-sizing: border-box;
 
-	font-family: 'Segoe UI', sans-serif;
+	font-family: "Encode Sans";
 	font-weight: 700;
 
 	color:#ffffff;
@@ -872,7 +884,8 @@ html.config-sem-movimento *::after {
 /* Transição de abrir/fechar dos painéis (Status, Config e as 3 lojas). Eles são
    ligados por visibility inline no JS, então a regra casa pelo atributo style.
    Ao abrir, opacity/transform animam; ao fechar, o visibility só aplica depois
-   (transition-delay) pra o fade-out aparecer. */
+   (transition-delay) pra o fade-out aparecer — EXCETO a loja, que fecha seca
+   (ver regra logo abaixo do estado visível). */
 #DivStatus,
 #container-SalvaCarrega,
 #Loja,
@@ -897,6 +910,16 @@ html.config-sem-movimento *::after {
 		opacity 160ms ease,
 		transform 160ms ease,
 		visibility 0s;
+}
+
+/* A LOJA fecha com corte seco (sem fade-out): o estado oculto da loja não
+   anima opacity/transform, então ao fechar ela some na hora. O fade-in (ao
+   abrir) continua, porque a regra do estado visível acima tem especificidade
+   maior. Status e Salvar/Carregar mantêm o fade-out normal. */
+#Loja,
+#LojaEsm,
+#LojaCM {
+	transition: visibility 0s;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1627,6 +1650,8 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
 :root {
 	--game-unit: clamp(8px, min(1vw, 1.75vh), 18px);
 	--ui-text: clamp(12px, 0.95vw, 16px);
+	/* Fonte única da interface (ver @font-face no topo do arquivo). */
+	--fonte-ui: "Encode Sans";
 }
 
 html,
@@ -1899,7 +1924,7 @@ body {
 	border-radius: 10px;
 	background: linear-gradient(145deg, #ffd66f, #e79432 58%, #b85d25);
 	color: #26170a;
-	font: 800 14px/1 'Segoe UI', sans-serif;
+	font: 800 14px/1 "Encode Sans";
 	text-shadow: 0 1px rgba(255, 239, 186, 0.45);
 	box-shadow: 0 3px 0 #75401b, 0 0 16px rgba(255, 173, 55, 0.55), inset 0 1px rgba(255, 250, 220, 0.7);
 	cursor: pointer;
@@ -2195,22 +2220,6 @@ body {
 	max-width: none;
 	font-size: var(--ui-text);
 	margin: 0;
-}
-
-/* A loja é um painel fixo no canto inferior DIREITO; a navegação
-   (#container-opcoes) fica no canto inferior ESQUERDO. Em telas que não
-   sobram largura, os dois se cruzavam e a loja (z-index 10) cobria os botões.
-   Com a loja aberta, a fileira de botões encolhe até caber à esquerda dela:
-   o painel principal (a loja) fica intacto e o rodapé continua visível.
-   No celular o rodapé é outro layout (loja ACIMA dele) — por isso a regra
-   fica presa a paisagem com 701px+; e o teto de 1430px é exatamente a faixa
-   em que a loja chegaria ao rodapé (acima disso já não há encontro). */
-@media (min-width: 701px) and (max-width: 1430px) and (orientation: landscape) {
-	body:has(#Loja[style*="visible"]) #container-Botoes,
-	body:has(#LojaEsm[style*="visible"]) #container-Botoes,
-	body:has(#LojaCM[style*="visible"]) #container-Botoes {
-		max-width: calc(100vw - min(45vw, 600px) - 76px);
-	}
 }
 
 #btnStatus,
@@ -4049,7 +4058,7 @@ body:has(#menu-container) {
 #menu-title {
 	margin: 8px 0 4px;
 	color: #ffe2a0;
-	font-family: Georgia, "Times New Roman", serif;
+	font-family: "Encode Sans";
 	font-size: clamp(56px, 9vw, 92px);
 	line-height: 1;
 	letter-spacing: 0.04em;
@@ -4118,7 +4127,7 @@ body:has(#menu-container) {
 	border-radius: 9px;
 	box-shadow: 0 5px 0 #69401f, 0 10px 24px rgba(198, 123, 43, 0.25);
 	color: #21170c;
-	font-family: "Segoe UI", sans-serif;
+	font-family: "Encode Sans";
 	font-size: clamp(17px, 1.35vw, 22px);
 	font-weight: 800;
 	text-shadow: none;
@@ -4153,7 +4162,7 @@ body:has(#menu-container) {
 	border: 1px solid rgba(222, 176, 137, 0.5);
 	border-radius: 9px;
 	color: #f0d8c5;
-	font-family: "Segoe UI", sans-serif;
+	font-family: "Encode Sans";
 	font-size: clamp(14px, 1vw, 17px);
 	font-weight: 700;
 	cursor: pointer;
@@ -4513,7 +4522,7 @@ input:focus-visible {
 		0 7px 17px rgba(0, 0, 0, 0.38),
 		inset 0 1px rgba(255, 244, 216, 0.08);
 	color: #f2e5ca;
-	font-family: "Segoe UI", sans-serif;
+	font-family: "Encode Sans";
 	font-weight: 700;
 	letter-spacing: 0.02em;
 	text-align: left;
@@ -6572,7 +6581,7 @@ input:focus-visible {
 	border-radius: 10px;
 	box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55), 0 0 16px rgba(67, 126, 255, 0.18);
 	color: #edf2fa;
-	font: 13px/1.4 "Segoe UI", sans-serif;
+	font: 13px/1.4 "Encode Sans";
 }
 
 #game-dev-tools[hidden] {
@@ -6705,7 +6714,7 @@ input:focus-visible {
 	background: linear-gradient(145deg, #1a2230, #10161f);
 	box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), 0 0 24px rgba(0, 150, 255, 0.16);
 	color: #e6edf3;
-	font: 16px/1.5 "Segoe UI", sans-serif;
+	font: 16px/1.5 "Encode Sans";
 }
 
 .offline-rewards-panel h2 {
@@ -6782,7 +6791,7 @@ input:focus-visible {
 	background: linear-gradient(145deg, #1a2230, #10161f);
 	box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), 0 0 24px rgba(0, 150, 255, 0.16);
 	color: #e6edf3;
-	font: 15px/1.45 "Segoe UI", sans-serif;
+	font: 15px/1.45 "Encode Sans";
 }
 
 /* Entrada dos painéis Formigas/Skills (criados no runtime: a animação roda
@@ -7604,7 +7613,7 @@ button.skill-ramo-no:focus-visible {
 	background: linear-gradient(180deg, rgba(4, 6, 10, 0.10), rgba(4, 6, 10, 0.55) 45%, rgba(4, 6, 10, 0.72));
 	border-radius: 6px;
 	box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
-	font: 600 11.5px/1.3 "Segoe UI", sans-serif;
+	font: 600 11.5px/1.3 "Encode Sans";
 	color: #e9eef5;
 	text-shadow: 0 1px 2px #000, 0 0 3px rgba(0, 0, 0, 0.9);
 	pointer-events: none; /* overlay: não rouba o clique da arena */
@@ -7624,7 +7633,7 @@ button.skill-ramo-no:focus-visible {
 	border: 1px solid rgba(126, 240, 184, 0.55);
 	border-radius: 0.5em;
 	color: #e9eef5;
-	font: 700 14px/1.4 "Segoe UI", sans-serif;
+	font: 700 14px/1.4 "Encode Sans";
 	text-align: center;
 	box-shadow: 0 10px 34px rgba(0, 0, 0, 0.6);
 	pointer-events: none;
@@ -7743,7 +7752,7 @@ button.skill-ramo-no:focus-visible {
 	background: linear-gradient(145deg, rgba(49, 39, 19, 0.97), rgba(19, 20, 24, 0.97));
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 14px rgba(255, 190, 54, 0.14);
 	color: #fff4d5;
-	font: 12px/1.3 "Segoe UI", sans-serif;
+	font: 12px/1.3 "Encode Sans";
 }
 
 /* Nota: as media queries que fixavam o card (direita no mobile, topo no
@@ -7885,7 +7894,7 @@ button.skill-ramo-no:focus-visible {
 	border-radius: 7px;
 	background: none;
 	color: #fff4d5;
-	font-family: inherit;
+	font-family: "Encode Sans";
 	text-align: left;
 	cursor: pointer;
 }
@@ -7987,7 +7996,7 @@ button.skill-ramo-no:focus-visible {
 	border: 1px solid #6b5836;
 	border-radius: 8px;
 	background: rgba(0, 0, 0, 0.25);
-	font-family: "Segoe UI", sans-serif;
+	font-family: "Encode Sans";
 }
 
 .especializacao__cabecalho {
@@ -8028,7 +8037,7 @@ button.skill-ramo-no:focus-visible {
 	border-radius: 7px;
 	background: linear-gradient(145deg, #3a2f1e, #241c12);
 	color: #f4e5c2;
-	font: 700 12px/1.25 "Segoe UI", sans-serif;
+	font: 700 12px/1.25 "Encode Sans";
 	text-align: left;
 	cursor: pointer;
 	transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
@@ -8248,7 +8257,7 @@ button.skill-ramo-no:focus-visible {
 	background: #b8231d;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
 	color: #fff;
-	font: 700 13px/1 "Segoe UI", sans-serif;
+	font: 700 13px/1 "Encode Sans";
 	pointer-events: none;
 }
 
@@ -8274,7 +8283,7 @@ button.skill-ramo-no:focus-visible {
 	border: 1px solid rgba(255, 255, 255, 0.09);
 	border-radius: 6px;
 	color: #b9c6d8;
-	font-family: Consolas, monospace;
+	font-family: "Encode Sans";
 	font-size: 11px;
 	overflow-wrap: anywhere;
 }
@@ -8602,7 +8611,7 @@ button.skill-ramo-no:focus-visible {
 	background: linear-gradient(145deg, rgba(49, 39, 19, 0.97), rgba(19, 20, 24, 0.97));
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 14px rgba(255, 190, 54, 0.14);
 	color: #fff4d5;
-	font: 13px/1.3 "Segoe UI", sans-serif;
+	font: 13px/1.3 "Encode Sans";
 }
 
 .evento-painel__cabecalho {
@@ -8713,7 +8722,7 @@ button.skill-ramo-no:focus-visible {
 	border-radius: 7px;
 	background: linear-gradient(145deg, #a66513, #6f3b0b);
 	color: #fff4d5;
-	font: 700 11.5px/1 "Segoe UI", sans-serif;
+	font: 700 11.5px/1 "Encode Sans";
 	cursor: pointer;
 }
 
@@ -9298,7 +9307,7 @@ button.skill-ramo-no:focus-visible {
 	padding: 10px 8px;
 	cursor: pointer;
 	color: inherit;
-	font-family: inherit;
+	font-family: "Encode Sans";
 	transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
 }
 
@@ -10189,7 +10198,7 @@ img.ramos-tree-no__tile {
 	background: linear-gradient(145deg, rgba(49, 30, 74, 0.97), rgba(20, 16, 30, 0.97));
 	box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5), 0 0 14px rgba(185, 115, 255, 0.25);
 	color: #f2e6ff;
-	font-family: inherit;
+	font-family: "Encode Sans";
 	font-size: 11px;
 	font-weight: 800;
 	letter-spacing: 0.04em;
@@ -12974,7 +12983,7 @@ img.ramos-tree-no__tile {
 
 .loja-titulo {
 	margin: 0;
-	font-family: Georgia, "Times New Roman", serif;
+	font-family: "Encode Sans";
 	font-size: clamp(18px, 1.9vw, 25px);
 	font-weight: 400;
 	letter-spacing: 0.03em;
@@ -13011,7 +13020,7 @@ img.ramos-tree-no__tile {
 }
 
 .loja-saldo__val {
-	font-family: Georgia, "Times New Roman", serif;
+	font-family: "Encode Sans";
 	font-size: 14px;
 	font-weight: 700;
 	color: #efece6;
@@ -13220,7 +13229,7 @@ img.ramos-tree-no__tile {
 	border: 1px solid var(--loja-ring);
 	border-radius: 8px;
 	color: var(--loja-price);
-	font-family: inherit;
+	font-family: "Encode Sans";
 	transition: filter 120ms ease, box-shadow 120ms ease, transform 100ms ease;
 }
 
@@ -13252,7 +13261,7 @@ img.ramos-tree-no__tile {
 }
 
 .loja-item__preco {
-	font-family: Georgia, "Times New Roman", serif;
+	font-family: "Encode Sans";
 	font-size: 13px;
 	font-weight: 700;
 	letter-spacing: 0.01em;
@@ -13469,7 +13478,7 @@ input[type="checkbox"]:disabled {
 	border: 1px solid #303744;
 	border-radius: 9px;
 	color: #a6adba;
-	font-family: inherit;
+	font-family: "Encode Sans";
 	transition: border-color 120ms ease, background 120ms ease;
 }
 
@@ -13687,18 +13696,23 @@ input[type="checkbox"]:disabled {
 }
 
 /* ==========================================================================
-   LOJA EM TELA CHEIA
-   A loja ocupa a tela toda (com uma margem fina) e termina acima da navegação
-   #container-opcoes — que fica descoberta abaixo dela. As habilidades ficam
-   POR BAIXO da loja: z-index 16 > 15 da fileira, então a loja as cobre. O topo
-   da navegação é medido por script/ui-rodape.js e publicado em --rodape-top.
-   Vale para todos os layouts — sobrepõe as regras antigas de painel lateral
-   (desktop) e de painel na base (celular/tablet).
+   LOJA (overlay + painel)
+   O #container-Loja delimita a ÁREA DO PAINEL: centraliza o painel da loja
+   (Gold/Esmeralda/Conhecimento, máx. 1300x850) acima da faixa inferior —
+   navegação + habilidades. O fade PRETO de tela cheia é um ::before fixo
+   (abaixo), então alcança também a navegação #container-opcoes, que sobe para
+   z-index 25 com o painel aberto (ver .hud-painel-aberto).
+   As habilidades ficam POR BAIXO da loja (z-index 16 > 15) e NÃO se movem ao
+   abrir a loja (script/ui-rodape.js não considera mais a loja ao decidir
+   "ao lado" vs "empilhada").
+   O topo da faixa inferior é medido por script/ui-rodape.js e publicado em
+   --rodape-banda-top. Vale para todos os layouts — sobrepõe as regras antigas
+   de painel lateral (desktop) e de painel na base (celular/tablet).
    ========================================================================== */
 #container-Loja {
 	top: clamp(8px, 1.1vw, 16px);
 	right: clamp(8px, 1.1vw, 16px);
-	bottom: calc(100vh - var(--rodape-top, calc(100vh - 5rem)) + clamp(6px, 0.9vw, 12px));
+	bottom: calc(100vh - var(--rodape-banda-top, calc(100vh - 5rem)) + clamp(6px, 0.9vw, 12px));
 	left: clamp(8px, 1.1vw, 16px);
 	width: auto;
 	max-width: none;
@@ -13707,6 +13721,49 @@ input[type="checkbox"]:disabled {
 	margin: 0;
 	transform: none;
 	z-index: 16;
+	/* centraliza o painel da loja na área acima da faixa inferior */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Fade preto de tela cheia. É FIXO: posiciona-se pela viewport, então não sofre
+   o recorte (overflow) do container nem da #game-root e cobre também a faixa
+   da navegação. Só pinta com a loja aberta; fechada, fica transparente. */
+#container-Loja::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: -1;
+}
+
+#container-Loja:has(> #Loja[style*="visible"])::before,
+#container-Loja:has(> #LojaEsm[style*="visible"])::before,
+#container-Loja:has(> #LojaCM[style*="visible"])::before {
+	background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.78) 100%);
+}
+
+/* Painel da loja: no máximo 1300x850, centralizado. */
+#container-Loja > #Loja {
+	width: 100%;
+	max-width: 1300px;
+	height: 100%;
+	max-height: 850px;
+}
+
+/* As outras moedas sobrepõem o painel (position:absolute) — alinha igual. */
+#container-Loja > #LojaEsm,
+#container-Loja > #LojaCM {
+	top: 50%;
+	left: 50%;
+	right: auto;
+	bottom: auto;
+	width: 100%;
+	max-width: 1300px;
+	height: 100%;
+	max-height: 850px;
+	transform: translate(-50%, -50%);
 }
 
 /* =========================
