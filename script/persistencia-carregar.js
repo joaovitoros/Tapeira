@@ -155,8 +155,10 @@ function Carregar(saveData, calculaOffline = false) {
 	lvlGold = save.lvlGold ?? 1;
 
 	precoAvan = save.precoAvan ?? 160;
-	sobeAvanco = save.sobeAvanco ?? 0.01;
 	lvlAvan = save.lvlAvan ?? 0;
+	// nerf: o ganho por nível da "Chance de avanço" caiu à metade (base 0,005).
+	// Derivado do nível pra valer também em saves antigos (o teto continua igual).
+	sobeAvanco = 0.005 * Math.pow(1.005, Math.max(0, N(lvlAvan) | 0));
 
 	precoDCrit = save.precoDCrit ?? 150;
 	sobeDCrit = save.sobeDCrit ?? 0.1;

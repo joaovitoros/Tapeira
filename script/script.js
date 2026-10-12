@@ -227,7 +227,7 @@ var sobeGold = 0.3;
 var lvlGold = 1;
 
 var precoAvan = 160;
-var sobeAvanco = 0.01;
+var sobeAvanco = 0.005;
 var lvlAvan = 0;
 
 var precoDCrit = 150;
