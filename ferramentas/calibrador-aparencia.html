@@ -34,6 +34,10 @@
 	textarea { width: 100%; height: 170px; background: #10161f; border: 1px solid #2a3546; border-radius: 8px; padding: 8px; font-family: ui-monospace, monospace; font-size: 11px; }
 	.info { font-size: 12px; color: #ffe2a0; font-family: ui-monospace, monospace; }
 	.tag { font-size: 11px; color: #8291a8; }
+	.snaps { display: flex; flex-direction: column; gap: 4px; }
+	.snaps .snap { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 12px; background: #141b26; border: 1px solid #22303f; border-radius: 8px; padding: 4px 8px; }
+	.snaps .snap b { color: #ffe2a0; font-weight: 600; }
+	.snaps .snap .x { cursor: pointer; color: #ff9a9a; background: none; border: 0; padding: 0 4px; }
 </style>
 </head>
 <body>
@@ -77,8 +81,13 @@
 			</div>
 			<div class="info" id="info">—</div>
 			<div class="linha">
-				<button id="exportar">Exportar / Copiar JSON</button>
-				<button id="exportarTudo">Ver tudo</button>
+				<button id="exportar">Exportar TUDO (copiar)</button>
+				<button id="baixar">Baixar .json</button>
+				<button id="snapshot">+ Snapshot</button>
+			</div>
+			<div class="campo">
+				<span>Snapshots salvos (clique em × pra remover)</span>
+				<div id="snaps" class="snaps"></div>
 			</div>
 			<textarea id="saida" spellcheck="false" placeholder="O JSON aparece aqui…"></textarea>
 		</aside>
@@ -256,34 +265,80 @@
 		grade.addEventListener("change", function () { document.querySelector(".grade").style.display = grade.checked ? "" : "none"; });
 		grade.checked = true;
 
-		function geraJson(soOsSlotsCarregados) {
-			var out = {};
-			var chaves = soOsSlotsCarregados ? slots.map(function (s) { return s.id; }) : Object.keys(dados);
-			chaves.forEach(function (sid) {
-				if (!dados[sid]) return;
-				out[sid] = {};
-				Object.keys(dados[sid]).sort().forEach(function (iid) {
-					var dd = dados[sid][iid];
-					out[sid][iid] = {
-						x: +dd.x.toFixed(1), y: +dd.y.toFixed(1), largura: +dd.largura.toFixed(1),
-						flip: !!dd.flip, atras: !!dd.atras, rot: dd.rot || 0
-					};
-				});
-			});
-			return JSON.stringify(out, null, 1);
+		// ---- snapshots + exportação (junta TUDO) ----
+		var CHAVE_SNAPS = "tapeira-calibrador-snapshots";
+		var salvos = [];
+		try { salvos = JSON.parse(localStorage.getItem(CHAVE_SNAPS) || "[]"); } catch (e) { salvos = []; }
+		function gravaSnaps() { try { localStorage.setItem(CHAVE_SNAPS, JSON.stringify(salvos)); } catch (e) {} }
+
+		function normaliza(dd) {
+			return { x: +dd.x.toFixed(1), y: +dd.y.toFixed(1), largura: +dd.largura.toFixed(1), flip: !!dd.flip, atras: !!dd.atras, rot: dd.rot || 0 };
 		}
+		// junta os snapshots (mais antigo -> mais novo) + o trabalho atual por cima
+		function juntarTudo() {
+			var out = {};
+			function aplica(fonte) {
+				Object.keys(fonte || {}).forEach(function (sid) {
+					if (!out[sid]) out[sid] = {};
+					Object.keys(fonte[sid]).forEach(function (iid) { out[sid][iid] = normaliza(fonte[sid][iid]); });
+				});
+			}
+			salvos.forEach(function (s) { aplica(s.dados); });
+			aplica(dados);
+			return out;
+		}
+		function jsonTudo() { return JSON.stringify(juntarTudo(), null, 1); }
+
+		function renderSnaps() {
+			var box = document.getElementById("snaps");
+			box.replaceChildren();
+			if (!salvos.length) {
+				var v = document.createElement("span");
+				v.className = "tag"; v.textContent = "nenhum ainda";
+				box.appendChild(v);
+				return;
+			}
+			salvos.forEach(function (s, i) {
+				var linha = document.createElement("div");
+				linha.className = "snap";
+				var info = document.createElement("span");
+				var b = document.createElement("b");
+				b.textContent = s.nome;
+				var n = 0;
+				Object.keys(s.dados || {}).forEach(function (k) { n += Object.keys(s.dados[k]).length; });
+				info.append(b, document.createTextNode(" — " + n + " itens"));
+				var x = document.createElement("button");
+				x.className = "x"; x.textContent = "×"; x.title = "remover";
+				x.addEventListener("click", function () { salvos.splice(i, 1); gravaSnaps(); renderSnaps(); });
+				linha.append(info, x);
+				box.appendChild(linha);
+			});
+		}
+
+		document.getElementById("snapshot").addEventListener("click", function () {
+			var nome = prompt("Nome do snapshot (ex.: armas, capas):", new Date().toLocaleString());
+			if (nome === null) return;
+			salvos.push({ nome: nome || ("snapshot " + (salvos.length + 1)), dados: JSON.parse(JSON.stringify(dados)) });
+			gravaSnaps(); renderSnaps();
+		});
 		document.getElementById("exportar").addEventListener("click", function () {
-			saida.value = geraJson(true);
+			saida.value = jsonTudo();
 			if (navigator.clipboard) navigator.clipboard.writeText(saida.value).catch(function () {});
 		});
-		document.getElementById("exportarTudo").addEventListener("click", function () {
-			saida.value = geraJson(false);
-			if (navigator.clipboard) navigator.clipboard.writeText(saida.value).catch(function () {});
+		document.getElementById("baixar").addEventListener("click", function () {
+			var blob = new Blob([jsonTudo()], { type: "application/json" });
+			var a = document.createElement("a");
+			a.href = URL.createObjectURL(blob);
+			a.download = "aparencia-calibracao.json";
+			a.click();
+			setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
 		});
 		document.getElementById("limpar").addEventListener("click", function () {
+			if (!confirm("Limpar as pastas carregadas e o trabalho atual? (o que você já exportou/salvou em snapshot continua)")) return;
 			slots = []; equipado = {}; sel = { slot: null, item: null };
 			renderSlots(); render();
 		});
+		renderSnaps();
 
 		render();
 	})();
