@@ -9,6 +9,9 @@ function keyPressed(evt){
 let attackInterval = null;
 let attackPointerId = null;
 let jogoPausado = false;
+// Inimigo focado pelo último toque/clique (0 = automático: o de número maior).
+// Tocar num inimigo específico mantém o ataque nele (inclusive segurando).
+let alvoFocado = 0;
 
 // Controles que NÃO devem iniciar ataque quando tocados/clicados (botões,
 // painéis, modais, rodapé, cidade, pausa). Tocar fora deles dá um hit.
@@ -319,13 +322,18 @@ document.addEventListener("keyup", function(evt) {
 });
 
 document.addEventListener("pointerdown", function(evt) {
-    const player = evt.target instanceof Element ? evt.target.closest(".player") : null;
+    const alvo = evt.target instanceof Element ? evt.target : null;
+    const player = alvo ? alvo.closest(".player") : null;
     // Eventos de toque nÃ£o possuem um botÃ£o do mouse confiÃ¡vel em todos os WebViews.
     // ataca tocando/clicando em qualquer lugar da cena, EXCETO em controles
     // (botões/painéis/modais): o toque fora deles dá um hit
-    const emControle = !player && evt.target instanceof Element
-        && !!evt.target.closest(SELETOR_SEM_ATAQUE);
+    const emControle = !player && !!alvo && !!alvo.closest(SELETOR_SEM_ATAQUE);
     if (emControle || (evt.pointerType === "mouse" && evt.button !== 0)) return;
+
+    // tocar num inimigo específico foca o ataque nele; tocar em outro lugar
+    // volta pro alvo automático (o de número maior)
+    const inimigoEl = alvo ? alvo.closest("[id^='inimigo']") : null;
+    alvoFocado = inimigoEl ? (parseInt(inimigoEl.id.replace("inimigo", ""), 10) || 0) : 0;
 
     evt.preventDefault();
     if (attackInterval !== null) return;

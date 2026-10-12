@@ -376,6 +376,14 @@ function DanoAutomatico(indentificador, habilidade) {
 			indentificador = true;
 		}
 
+		// alvo focado: se o jogador tocou num inimigo específico, bate nele
+		// enquanto estiver vivo (tocar fora de inimigo volta pro automático)
+		const foco = Number(alvoFocado) | 0;
+		if (foco >= 1 && foco <= 4 && N(window["vidaInimigo" + foco]) > 0) {
+			Bater(foco, indentificador, !habilidade);
+			return;
+		}
+
 		if (andar < 5) {
 
 			if (vidaInimigo1 > 0) {
@@ -689,6 +697,12 @@ function animarMorte(el) {
 document.addEventListener("DOMContentLoaded", () => {
 	for (let id = 1; id <= 4; id++) {
 		const inimigo = document.getElementById("inimigo" + id);
-		if (inimigo) inimigo.addEventListener("click", () => Bater(id, true));
+		if (inimigo) inimigo.addEventListener("click", () => {
+			// o toque/clique já atacou este alvo (pointerdown → foco + ataque):
+			// aqui só consome o foco pra não dar um hit duplicado. Sem foco
+			// (clique sintético/teclado), bate normalmente.
+			if (alvoFocado === id) { alvoFocado = 0; return; }
+			Bater(id, true);
+		});
 	}
 });
