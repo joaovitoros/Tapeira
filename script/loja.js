@@ -154,6 +154,9 @@ function AtualizaMaximosLoja() {
 			}
 		}
 	}
+
+	// descrição do card sempre com o texto calculado do preview (nível/patente)
+	SincronizaDescricoesLoja();
 }
 
 // Carteira do cabeçalho da loja: espelha as 3 moedas do HUD em qualquer painel

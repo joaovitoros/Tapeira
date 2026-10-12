@@ -22,6 +22,7 @@ var UIRodape = (function () {
 	var ultimoLeft = null;
 	var ultimoBottom = null;
 	var ultimoTopo = null;
+	var ultimoNavTop = null;
 	var atualizando = false;
 
 	// Largura natural da fileira de skills: encosta a fileira na borda
@@ -58,6 +59,17 @@ var UIRodape = (function () {
 		if (v === ultimoTopo) return;
 		ultimoTopo = v;
 		document.documentElement.style.setProperty("--rodape-banda-top", v);
+	}
+
+	// Topo da NAVEGAÇÃO (fileira de botões). Publicado em --rodape-nav-top
+	// porque, no rodapé EMPILHADO, a loja (e os painéis Feitos/Ramos, que têm o
+	// mesmo tamanho) devem terminar AQUI — cobrindo as skills que ficam acima
+	// da navegação.
+	function AplicaTopoNav(topo) {
+		var v = Math.round(topo) + "px";
+		if (v === ultimoNavTop) return;
+		ultimoNavTop = v;
+		document.documentElement.style.setProperty("--rodape-nav-top", v);
 	}
 
 	// Topo (y de cima) da fileira de skills quando ela está EMPILHADA.
@@ -121,6 +133,10 @@ var UIRodape = (function () {
 		var rOpcoes = opcoes ? opcoes.getBoundingClientRect() : rBot;
 		var topoNav = rOpcoes.height > 0 ? rOpcoes.top : rBot.top;
 		AplicaTopoBanda(Math.min(topoNav, topoSkills));
+		AplicaTopoNav(topoNav);
+		// Rodapé empilhado = skills ACIMA dos botões. O CSS (html.rodape-empilhado)
+		// usa isto para a loja terminar acima da navegação e cobrir as skills.
+		document.documentElement.classList.toggle("rodape-empilhado", !cabeAoLado);
 	}
 
 	// Pede uma reavaliação sem criar timer: o ResizeObserver e o resize da

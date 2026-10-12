@@ -6823,12 +6823,23 @@ input:focus-visible {
 
 /* Painel "Feitos": Conquistas/Missões/Marcos embutidos (abas internas).
    Reusa .ant-collection-overlay/.ant-collection-panel; aqui vai só a
-   estrutura do painel (cabeçalho + abas + corpo rolável). */
+   estrutura do painel (cabeçalho + abas + corpo rolável).
+   O QUADRO (fundo/borda/raio/sombra) repete o da loja (#container-Loja >
+   #Loja): mesmas cores de fundo e borda dourada, mesmo raio e sombra.
+   Sobrescreve o visual azul do .ant-collection-panel (regra anterior no
+   arquivo) sem mexer nas abas nem no conteúdo.
+   LARGURA/ALTURA ficam na regra compartilhada "ÁREA DOS PAINÉIS DE NAVEGAÇÃO"
+   (junto com Ramos), que replica a área/teto da loja em qualquer tela. */
 .feitos-panel {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
 	overflow: hidden;
+	border: 1px solid rgba(229, 183, 96, 0.52);
+	border-radius: 12px;
+	background: linear-gradient(145deg, rgba(20, 24, 33, 0.97), rgba(11, 14, 21, 0.94));
+	box-shadow: 0 18px 48px rgba(0, 0, 0, 0.48), inset 0 1px rgba(255, 238, 192, 0.07);
+	backdrop-filter: blur(9px);
 }
 
 .feitos-abas {
@@ -13196,14 +13207,16 @@ img.ramos-tree-no__tile {
 }
 
 .loja-item__desc {
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
 	margin: 0;
-	overflow: hidden;
 	color: #a6adba;
 	font-size: 11.5px;
 	line-height: 1.35;
+}
+
+/* descrição que mostra o preview calculado sem saldo para pagar — espelha o
+   preview-compra--nao-pode da barra de preview */
+.loja-item__desc--nao-pode {
+	color: #ff9b9b;
 }
 
 /* ---------------- ação (comprar / selo) ---------------- */
@@ -13764,6 +13777,52 @@ input[type="checkbox"]:disabled {
 	height: 100%;
 	max-height: 850px;
 	transform: translate(-50%, -50%);
+}
+
+/* ==========================================================================
+   ÁREA DOS PAINÉIS DE NAVEGAÇÃO (Loja / Feitos / Ramos)
+   Feitos e Ramos repetem a área e o teto do painel da loja (#container-Loja >
+   #Loja): mesma margem (clamp), mesmo corte acima do rodapé e mesmos máximos
+   (1300×850) — em QUALQUER tela. Como os painéis Feitos/Ramos vivem num
+   overlay de tela cheia, a área vira o PADDING do overlay: assim o painel
+   centrado cai exatamente no retângulo do painel da loja.
+   Feitos já repete o quadro da loja; Ramos mantém o quadro próprio, só o
+   tamanho é igualado.
+   No rodapé EMPILHADO (celular) a loja termina acima da NAVEGAÇÃO (não das
+   habilidades), então o painel passa a COBRIR a fileira de skills.
+   ========================================================================== */
+:root {
+	--painel-nav-top: clamp(8px, 1.1vw, 16px);
+	--painel-nav-side: clamp(8px, 1.1vw, 16px);
+	--painel-nav-bottom: calc(100vh - var(--rodape-banda-top, calc(100vh - 5rem)) + clamp(6px, 0.9vw, 12px));
+	--painel-nav-max-w: 1300px;
+	--painel-nav-max-h: 850px;
+}
+
+/* Skills empilhadas acima dos botões: o topo da "faixa" cai na skills. Para a
+   loja cobrir as skills, ela usa o topo da NAVEGAÇÃO (--rodape-nav-top). */
+html.rodape-empilhado {
+	--painel-nav-bottom: calc(100vh - var(--rodape-nav-top, calc(100vh - 5rem)) + clamp(6px, 0.9vw, 12px));
+}
+
+html.rodape-empilhado #container-Loja {
+	bottom: var(--painel-nav-bottom);
+}
+
+/* Overlays de Feitos/Ramos: a área do painel vira o padding do overlay de
+   tela cheia (o fundo escuro continua cobrindo a tela toda). */
+.feitos-overlay,
+.ramos-tree-overlay {
+	padding: var(--painel-nav-top) var(--painel-nav-side) var(--painel-nav-bottom);
+}
+
+/* Painéis Feitos/Ramos no MESMO tamanho do painel da loja. */
+.feitos-panel,
+.ramos-tree-panel {
+	width: 100%;
+	max-width: var(--painel-nav-max-w);
+	height: 100%;
+	max-height: var(--painel-nav-max-h);
 }
 
 /* =========================

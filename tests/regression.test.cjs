@@ -2110,6 +2110,49 @@ test("loja usa data-* e listeners registrados (compra, navegação, especializa�
     }
 });
 
+test("loja: descrição do card vira o texto calculado do preview e fica vermelha sem saldo", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            typeof window.AbreLoja === "function" &&
+            typeof window.SincronizaDescricoesLoja === "function");
+        const result = await page.evaluate(() => {
+            AbreLoja(false);
+            const desc = document.querySelector('.loja-item[data-item="dano"] .loja-item__desc');
+            precoDano = 100; lvlDano = 1; danoJogador = 10; mulDano = 1;
+
+            gold = new GoldNumber(10); // não paga os 100
+            SincronizaDescricoesLoja();
+            const semSaldo = {
+                texto: desc.textContent,
+                vermelho: desc.classList.contains("loja-item__desc--nao-pode")
+            };
+
+            gold = new GoldNumber(1e9); // agora paga
+            SincronizaDescricoesLoja();
+            const comSaldo = {
+                texto: desc.textContent,
+                vermelho: desc.classList.contains("loja-item__desc--nao-pode")
+            };
+
+            // a barra de preview continua funcionando no hover (mesmo texto)
+            const btnDano = desc.closest(".loja-item").querySelector(".loja-item__comprar");
+            MostraPreviewCompra(btnDano);
+            const barra = document.querySelector("#Loja .preview-compra");
+            return { semSaldo, comSaldo, barraTexto: barra.textContent, barraVisivel: !barra.hidden };
+        });
+        assert.equal(result.semSaldo.texto, "Dano: 10.00 → 11.00 (+1.00)", "descrição mostra o preview calculado");
+        assert.equal(result.semSaldo.vermelho, true, "sem saldo a descrição fica vermelha (--nao-pode)");
+        assert.equal(result.comSaldo.texto, result.semSaldo.texto, "o texto não muda com o saldo");
+        assert.equal(result.comSaldo.vermelho, false, "com saldo a descrição volta ao normal");
+        assert.equal(result.barraTexto, result.semSaldo.texto, "barra e descrição mostram o mesmo texto");
+        assert.equal(result.barraVisivel, true, "a barra de preview segue aparecendo no hover/clique");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("btn-Loja fecha a loja a partir de QUALQUER aba (não reabre o Gold)", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

@@ -289,6 +289,7 @@ function TickAutomacao() {
 	SyncCheckboxesAutoLoja();
 	AtualizaCarteiraLoja();
 	AtualizaSaldoBotoesLoja();
+	SincronizaDescricoesLoja(); // descrição do card acompanha saldo (cor --nao-pode)
 	if (jogoPausado) return;
 
 	if (autoColeta === 1 && AutoColetaDesbloqueada()) {

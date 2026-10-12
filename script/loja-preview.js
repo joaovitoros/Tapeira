@@ -159,19 +159,13 @@ function ItemPorPrecoVar(varPreco) {
 	return null;
 }
 
-function MostraPreviewCompra(btn) {
+// Texto + estado de pagamento de um botão de compra. Serve tanto para a barra
+// de preview (hover/foco/clique) quanto para a descrição permanente do card.
+function InfoPreviewCompra(btn) {
 	const nome = NomeFuncaoCompra(btn);
 	const calc = PREVIEWS_LOJA[nome];
-	const painel = btn.closest("#Loja, #LojaEsm");
-	if (!calc || !painel) return;
+	if (!calc) return null;
 
-	const div = painel.querySelector(".preview-compra");
-	if (!div) return;
-
-	div.textContent = calc();
-	div.hidden = false;
-
-	// cor: dá para pagar?
 	let podePagar = true;
 	const linha = btn.closest(".loja-item");
 	const celulaPreco = linha ? linha.querySelector(".loja-item__preco") : null;
@@ -180,11 +174,46 @@ function MostraPreviewCompra(btn) {
 		// no teto com patente pendente a célula mostra o ingresso, não o nível
 		const item = ItemPorPrecoVar(idPreco);
 		const preco = (item && item.cfg.noTeto()) ? PrecoPatenteLoja(item.id) : window[idPreco];
-		podePagar = (painel.id === "LojaEsm")
+		const painel = btn.closest("#Loja, #LojaEsm");
+		podePagar = (painel && painel.id === "LojaEsm")
 			? N(esmeraldas) >= N(preco)
 			: GE(gold, preco);
 	}
-	div.classList.toggle("preview-compra--nao-pode", !podePagar);
+	return { texto: calc(), podePagar };
+}
+
+function MostraPreviewCompra(btn) {
+	const painel = btn.closest("#Loja, #LojaEsm");
+	if (!painel) return;
+	const div = painel.querySelector(".preview-compra");
+	if (!div) return;
+
+	const info = InfoPreviewCompra(btn);
+	if (!info) return;
+
+	div.textContent = info.texto;
+	div.hidden = false;
+	div.classList.toggle("preview-compra--nao-pode", !info.podePagar);
+}
+
+// Descrição permanente do card: mostra o MESMO texto calculado do preview
+// (ex.: "Dano: 10 → 11 (+1)") e fica vermelha quando o saldo não cobre o
+// preço — espelha o "preview-compra --nao-pode" da barra.
+function SincronizaDescricaoLoja(btn) {
+	const desc = btn.closest(".loja-item")?.querySelector(".loja-item__desc");
+	if (!desc) return;
+	const info = InfoPreviewCompra(btn);
+	if (!info) return;
+	if (desc.textContent !== info.texto) desc.textContent = info.texto;
+	desc.classList.toggle("loja-item__desc--nao-pode", !info.podePagar);
+}
+
+// Sincroniza as descrições de todos os cards (loja de gold e de esmeraldas).
+// Roda no load, na abertura da loja, após cada compra e no tick de 1s.
+function SincronizaDescricoesLoja(raiz) {
+	const base = raiz || document;
+	base.querySelectorAll("#Loja .Loja[data-compra], #LojaEsm .Loja[data-compra]")
+		.forEach(SincronizaDescricaoLoja);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -195,6 +224,8 @@ document.addEventListener("DOMContentLoaded", () => {
 		// após o clique (compra já aplicada), atualiza o preview
 		btn.addEventListener("click", mostrar);
 	});
+	// descrição permanente já nasce com o texto calculado (sem flavor text)
+	SincronizaDescricoesLoja();
 });
 
 // ============================================================

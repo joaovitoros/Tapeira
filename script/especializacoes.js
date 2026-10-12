@@ -128,15 +128,6 @@ function EscolheEspecializacao(id) {
 // PreCarregamento (só leitura de DOM, como os toggles da automação) — load,
 // reset e zerada se refletem sozinhos na tela.
 function SyncSecaoEspecializacao() {
-	// Nome da build escolhida no cabeçalho da Loja (fica visível mesmo com a
-	// lista rolada — a seção de especialização vive no fim da loja).
-	const rotulo = document.getElementById("lojaEspecializacao");
-	if (rotulo) {
-		const esp = ESPECIALIZACOES[especializacao];
-		const texto = esp && especializacao > 0 ? esp.nome + " · " : "";
-		if (rotulo.textContent !== texto) rotulo.textContent = texto;
-	}
-
 	const secao = document.getElementById("secaoEspecializacao");
 	if (!secao) return;
 

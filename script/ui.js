@@ -1017,6 +1017,40 @@ document.addEventListener("click", (e) => {
     }
 });
 
+// Clicar/tocar NA CENA fecha o painel aberto pelos botões da #container-Botoes
+// (Status, Loja, Feitos, Ramos e Cidade). A "cena" é exatamente a área que dá
+// golpe no toque: `SELETOR_SEM_ATAQUE` (keymap.js) exclui controles, painéis e
+// modais, então só o clique fora deles cai aqui. Na prática isso age sobre os
+// painéis flutuantes (Status, Loja): Feitos/Ramos e Cidade cobrem a tela — os
+// dois primeiros fecham no próprio overlay e a Cidade não tem "fora" — então
+// entram na lista como rede de segurança.
+function PaineisNavAbertos() {
+    const abertos = [];
+    const visivel = id => document.getElementById(id)?.style.visibility === "visible";
+    if (visivel("DivStatus")) abertos.push(() => UI.toggleStatus());
+    if (["Loja", "LojaEsm", "LojaCM"].some(visivel)) abertos.push(() => FechaLoja());
+    if (document.getElementById("feitosModal")) abertos.push(() => UI.fechaFeitosPanel());
+    if (document.getElementById("ramosTreeModal")) abertos.push(() => UI.toggleRamosTreePanel());
+    if (document.getElementById("container-Cidade")?.hidden === false) {
+        abertos.push(() => window.Tapeira?.Cidade?.fechar?.());
+    }
+    return abertos;
+}
+
+// Capture para rodar antes do ataque (keymap.js, pointerdown em bolha): o
+// mesmo toque que fecha o painel não vira golpe. Cliques em controles/painéis/
+// modais param em `SELETOR_SEM_ATAQUE` e seguem o fluxo normal.
+document.addEventListener("pointerdown", (evt) => {
+    if (!(evt.target instanceof Element)) return;
+    if (evt.target.closest(SELETOR_SEM_ATAQUE)) return;
+    const abertos = PaineisNavAbertos();
+    if (!abertos.length) return;
+    evt.stopPropagation();
+    evt.preventDefault();
+    for (const fechar of abertos) fechar();
+    UI.syncScreenButtons();
+}, true);
+
 function MostraStatus() {
     UI.showStatus();
 }
