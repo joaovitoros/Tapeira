@@ -36,7 +36,7 @@ Bem mais longe.
 
 ---
 
-## Tickets de Caçador de Mugs (pontos de habilidade) — design a confirmar
+## Tickets de Caçador de Mugs (pontos de habilidade) — IMPLEMENTADO (Loja de Troféus)
 
 Ideia: dar utilidade aos pontos de habilidade depois que tudo já está no máximo.
 
@@ -50,10 +50,10 @@ Ideia: dar utilidade aos pontos de habilidade depois que tudo já está no máxi
 Pontos em aberto (decidir quando for implementar):
 1. ~~Contador separado ou o mesmo?~~ **O MESMO contador** (um valor só, que muda de uso quando as skills fecham).
 2. ~~Taxa~~ **1 ponto = 1 ticket**, e só se ganha ticket **depois** de fechar todas as skills.
-3. ~~O que compra na Cidade~~ **ainda em aberto** (o usuário está pensando nas possibilidades).
+3. ~~O que compra na Cidade~~ **LOJA DE TROFÉUS** (prédio novo na Cidade, `script/trofeus.js`): 5 troféus com níveis e **custo crescente** (1, 2, 3, 4, 6, 8, 12… tickets; ×1,5 por nível) — Caçador (+5% dano/nível), Mercador (+5% gold/nível), Sábio (+5% XP/nível), Colecionador (+2% Conhecimento Mug/nível) e Sorte (+0,5% chance de crítico/nível). Tudo **permanente**.
 4. ~~Conversão manual ou automática~~ **automática**.
 
-Modelo proposto (confirmar na implementação):
+Modelo implementado:
 - Um contador visível **Tickets de Caçador de Mugs**.
 - Por run: os pontos ganhos alimentam as skills **enquanto alguma skill não
   estiver no máximo** naquela run.
