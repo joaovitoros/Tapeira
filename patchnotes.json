@@ -1,0 +1,30 @@
+{
+  "_instrucoes": "Edite este arquivo e salve — o site mostra as mudancas na proxima recarga da pagina, sem reiniciar nada. Campos por patch: versao, data (AAAA-MM-DD), titulo (opcional), itens (lista de frases). O mais recente fica no topo (o site ordena pela data).",
+  "patches": [
+    {
+      "versao": "1.6.0",
+      "data": "2026-10-12",
+      "titulo": "Android, save por Bluetooth e ajustes",
+      "itens": [
+        "Android: compartilhe seu save pela folha de compartilhamento (inclui Bluetooth/Quick Share) e abra um save recebido direto no app (Abrir com TAPeira).",
+        "Android: toque em qualquer lugar da tela para atacar e segure para dano contínuo; tocar num inimigo foca o ataque nele, com um efeito visual no ponto tocado.",
+        "Toque Frenético (companheiro de dano): o estouro acontece no fim da janela (não precisa mais matar o alvo) e a passiva só vale a partir do nível 5.",
+        "Balance: conjunto de formigas de 5 -> 10; pesquisa de itens na Cidade 5x mais cara.",
+        "Números grandes com muito mais sufixos (até Noqig) em todos os valores (loja, gold, CM).",
+        "Itens da build: itens forjados com borda dourada e o efeito final (pilha + forja) destacado.",
+        "Aba Como jogar reformulada, com instruções de PC e celular."
+      ]
+    },
+    {
+      "versao": "1.5.0",
+      "data": "2026-10-12",
+      "titulo": "Cidade, Fazenda e mais transparência",
+      "itens": [
+        "Nova área: explore a Cidade e a Fazenda além da caverna.",
+        "Mecânica de Frenesi no companheiro de dano, com efeitos visuais novos (anel pulsante no inimigo e flash nas vítimas).",
+        "Nova opção 'Registros transparentes' nas configurações, deixando o painel de Registro da arena mais leve.",
+        "O baú de itens da build volta a surgir na arena, perto do personagem, no PC e no tablet (no celular continua o atalho no HUD)."
+      ]
+    }
+  ]
+}
