@@ -386,7 +386,7 @@ function CarregarStatus(){
 // Duas camadas fixas (#fundoA/#fundoB) se cruzam (crossfade ~1,2s; corte seco
 // em reduced-motion) a cada andar vencido. Novo fundo = jogar o PNG em imagens/
 // e listar o nome aqui. Cosmético: não vai pro save.
-var FUNDOS_CAVERNA = ['background cristal.png', 'background.png'];
+var FUNDOS_CAVERNA = ['fundos/background cristal.png', 'fundos/background.png'];
 var fundoIdxAtual = 0;
 var fundoA = null, fundoB = null, fundoAtiva = null;
 

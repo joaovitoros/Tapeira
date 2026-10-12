@@ -97,7 +97,7 @@ Object.assign(UI, {
         if (eventoAtivo === "meteoro") return;
         const bau = document.createElement("img");
 
-        bau.src = "imagens/bau-aventura.svg";
+        bau.src = "imagens/hud/bau-aventura.svg";
         bau.className = "bau";
         bau.id = "bau";
         bau.addEventListener("click", () => ColetaBau());
@@ -173,7 +173,7 @@ Object.assign(UI, {
 
 		// --- baú na arena (PC/tablet) ---
 		const bau = document.createElement("img");
-		bau.src = "imagens/bau-aventura.svg";
+		bau.src = "imagens/hud/bau-aventura.svg";
 		bau.className = "bau bau-build";
 		bau.id = "bauBuild-arena";
 		bau.alt = "";
@@ -222,7 +222,7 @@ Object.assign(UI, {
 		chip.title = dica;
 
 		const icone = document.createElement("img");
-		icone.src = "imagens/bau-aventura.svg";
+		icone.src = "imagens/hud/bau-aventura.svg";
 		icone.alt = "";
 
 		const selo = document.createElement("span");

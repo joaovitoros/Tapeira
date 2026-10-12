@@ -42,7 +42,7 @@ body{
 }
 #fundoA {
 	/* primeira pintada já com a arte certa, sem esperar o JS */
-	--fundo-img: url('../imagens/background cristal.png');
+	--fundo-img: url('../imagens/fundos/background cristal.png');
 	opacity: 1;
 }
 #menu-container{
@@ -3647,7 +3647,7 @@ body:has(#menu-container) {
 }
 
 body.desktop-app {
-	cursor: url("../imagens/cursor-espada.svg") 3 3, auto;
+	cursor: url("../imagens/ui/cursor-espada.svg") 3 3, auto;
 }
 
 body.desktop-app button,
@@ -3657,7 +3657,7 @@ body.desktop-app input[type="file"],
 body.desktop-app input[type="checkbox"],
 body.desktop-app [onclick],
 body.desktop-app img {
-	cursor: url("../imagens/cursor-espada.svg") 3 3, pointer;
+	cursor: url("../imagens/ui/cursor-espada.svg") 3 3, pointer;
 }
 
 #container-Loja > #Loja,
@@ -4006,11 +4006,11 @@ input:focus-visible {
 }
 
 .screen-nav-icon--status {
-	background-image: url("../imagens/account_circle-24px.svg");
+	background-image: url("../imagens/ui/account_circle-24px.svg");
 }
 
 .screen-nav-icon--shop {
-	background-image: url("../imagens/store-24px.svg");
+	background-image: url("../imagens/ui/store-24px.svg");
 }
 
 .screen-nav-icon--skills svg {

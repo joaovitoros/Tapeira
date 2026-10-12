@@ -39,7 +39,7 @@ Object.assign(UI, {
         if (type === "emerald") {
             const icon = document.createElement("img");
             icon.className = "reward-number__icon";
-            icon.src = "imagens/esmeralda-recompensa.svg";
+            icon.src = "imagens/hud/esmeralda-recompensa.svg";
             icon.alt = "";
             marker.appendChild(icon);
         }
@@ -253,7 +253,7 @@ Object.assign(UI, {
                 console.log("CLIQUE NO INIMIGO:", i);
                 Bater(i, true);
             };
-            inimigo.src = "imagens/Inimigo.png";
+            inimigo.src = "imagens/personagens/inimigo.png";
             inimigo.className = "inimigo" + i;
             inimigo.id = "inimigo" + i;
 
@@ -376,7 +376,7 @@ function VoaMoeda(origem) {
 	const y0 = origem.top + origem.height * 0.2;
 	const moeda = document.createElement("img");
 	moeda.className = "moeda-voadora";
-	moeda.src = "imagens/gold.png";
+	moeda.src = "imagens/hud/gold.png";
 	moeda.alt = "";
 	moeda.setAttribute("aria-hidden", "true");
 	moeda.style.left = `${x0}px`;

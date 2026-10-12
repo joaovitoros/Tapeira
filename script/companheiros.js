@@ -336,7 +336,7 @@ function CriarCompanheiros(){
 		att1 = document.createAttribute("src");
 		att2 = document.createAttribute("class");
 		att3 = document.createAttribute("id");
-		att1.value = "imagens/companheiro1.png";
+		att1.value = "imagens/companheiros/companheiro1.png";
 		att2.value = "companheiro1";
 		att3.value = "companheiro1";
 		companheiro.setAttributeNode(att1);
@@ -349,7 +349,7 @@ function CriarCompanheiros(){
 		att1 = document.createAttribute("src");
 		att2 = document.createAttribute("class");
 		att3 = document.createAttribute("id");
-		att1.value = "imagens/companheiro2.png";
+		att1.value = "imagens/companheiros/companheiro2.png";
 		att2.value = "companheiro2";
 		att3.value = "companheiro2";
 		companheiro.setAttributeNode(att1);
@@ -362,7 +362,7 @@ function CriarCompanheiros(){
 		att1 = document.createAttribute("src");
 		att2 = document.createAttribute("class");
 		att3 = document.createAttribute("id");
-		att1.value = "imagens/companheiro3.png";
+		att1.value = "imagens/companheiros/companheiro3.png";
 		att2.value = "companheiro3";
 		att3.value = "companheiro3";
 		companheiro.setAttributeNode(att1);
@@ -376,7 +376,7 @@ function CriarCompanheiros(){
 		att1 = document.createAttribute("src");
 		att2 = document.createAttribute("class");
 		att3 = document.createAttribute("id");
-		att1.value = "imagens/companheiro4.png";
+		att1.value = "imagens/companheiros/companheiro4.png";
 		att2.value = "companheiro4";
 		att3.value = "companheiro4";
 		companheiro.setAttributeNode(att1);
@@ -390,7 +390,7 @@ function CriarCompanheiros(){
 		att1 = document.createAttribute("src");
 		att2 = document.createAttribute("class");
 		att3 = document.createAttribute("id");
-		att1.value = "imagens/companheiro5.png";
+		att1.value = "imagens/companheiros/companheiro5.png";
 		att2.value = "companheiro5";
 		att3.value = "companheiro5";
 		companheiro.setAttributeNode(att1);
@@ -404,7 +404,7 @@ function CriarCompanheiros(){
 		att1 = document.createAttribute("src");
 		att2 = document.createAttribute("class");
 		att3 = document.createAttribute("id");
-		att1.value = "imagens/companheiro6.png";
+		att1.value = "imagens/companheiros/companheiro6.png";
 		att2.value = "companheiro6";
 		att3.value = "companheiro6";
 		companheiro.setAttributeNode(att1);
@@ -418,7 +418,7 @@ function CriarCompanheiros(){
 		att1 = document.createAttribute("src");
 		att2 = document.createAttribute("class");
 		att3 = document.createAttribute("id");
-		att1.value = "imagens/companheiroXP.png";
+		att1.value = "imagens/companheiros/companheiroXP.png";
 		att2.value = "companheiroXP";
 		att3.value = "companheiroXP";
 		companheiro.setAttributeNode(att1);

@@ -464,7 +464,7 @@ function CriaFragmento(cont, tipo, base) {
 	el.setAttribute("tabindex", "0");
 	el.setAttribute("aria-label", tipo === "gold" ? "Fragmento de ouro do meteoro" : "Esmeralda do meteoro");
 	if (tipo === "esmeralda") {
-		el.src = "imagens/esmeralda-recompensa.svg";
+		el.src = "imagens/hud/esmeralda-recompensa.svg";
 		el.alt = "";
 	}
 
@@ -557,7 +557,7 @@ function CriaInseto() {
 	});
 	const el = document.createElement("img");
 	el.className = "evento-inseto";
-	el.src = "imagens/inimigo.png";
+	el.src = "imagens/personagens/inimigo.png";
 	el.alt = "";
 	wrap.appendChild(el);
 	cont.appendChild(wrap);

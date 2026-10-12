@@ -3,11 +3,11 @@
 
 // Ícones dos nós raízes da árvore de habilidades (assets já existentes no jogo)
 const ICONE_SKILL = {
-	damage: "imagens/skill-damage.png",
-	electric: "imagens/skill-electric.png",
-	gold: "imagens/skill-gold.png",
-	escape: "imagens/skill-escape.png",
-	frenzy: "imagens/skill-frenzy.png"
+	damage: "imagens/skills/skill-damage.png",
+	electric: "imagens/skills/skill-electric.png",
+	gold: "imagens/skills/skill-gold.png",
+	escape: "imagens/skills/skill-escape.png",
+	frenzy: "imagens/skills/skill-frenzy.png"
 };
 
 const UI = {
@@ -496,6 +496,9 @@ const UI = {
         this.showModal("Logs", entradas.length === 0
             ? `<p class="logs-vazio">Nenhum log nesta sessão.</p>`
             : `<div class="logs-lista" role="log"></div>`);
+        // marcador: o CSS da opção "Registros transparentes" age neste
+        // modal (o painel "Registro" da arena segue só a classe do <html>)
+        document.getElementById("gameModal")?.classList.add("gameModal--logs");
 
         const lista = document.querySelector("#gameModalBody .logs-lista");
         if (!lista) return;
@@ -823,7 +826,7 @@ UI.playAttackAnimation = function (inimigoElement) {
     frames.className = "attack-sprite-frame";
     frames.dataset.frame = "1";
     frames.alt = "";
-    frames.src = "imagens/ataque/frames/ataque-1.png";
+    frames.src = "imagens/animacoes/ataque/frames/ataque-1.png";
     animation.appendChild(frames);
     document.body.appendChild(animation);
 
@@ -833,7 +836,7 @@ UI.playAttackAnimation = function (inimigoElement) {
         currentFrame++;
         if (currentFrame <= 6) {
             frames.dataset.frame = String(currentFrame);
-            frames.src = `imagens/ataque/frames/ataque-${currentFrame}.png`;
+            frames.src = `imagens/animacoes/ataque/frames/ataque-${currentFrame}.png`;
         }
     }, 108); // 650ms / 6 frames ≈ 108ms per frame
 
@@ -860,7 +863,7 @@ UI.playEscapeAnimation = function () {
     const frames = document.createElement("img");
     frames.className = "escape-sprite-frame";
     frames.alt = "";
-    frames.src = "imagens/fugindo/frames/fuga-1.png";
+    frames.src = "imagens/animacoes/fugindo/frames/fuga-1.png";
     animation.appendChild(frames);
     player.classList.add("is-escaping");
     document.body.appendChild(animation);
@@ -870,7 +873,7 @@ UI.playEscapeAnimation = function () {
         let currentFrame = 1;
         const frameTimer = setInterval(() => {
             currentFrame++;
-            if (currentFrame <= 8) frames.src = `imagens/fugindo/frames/fuga-${currentFrame}.png`;
+            if (currentFrame <= 8) frames.src = `imagens/animacoes/fugindo/frames/fuga-${currentFrame}.png`;
         }, 180);
         const finish = () => {
             if (concluded) return;

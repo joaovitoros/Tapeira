@@ -566,7 +566,7 @@ function animarEfeitoEletrico(el) {
 	const rect = el.getBoundingClientRect();
 	const effect = document.createElement("img");
 	effect.className = "enemy-electric-impact";
-	effect.src = "imagens/efeito-eletrico.svg";
+	effect.src = "imagens/skills/efeito-eletrico.svg";
 	effect.alt = "";
 	effect.setAttribute("aria-hidden", "true");
 	effect.style.left = `${rect.left + window.scrollX + rect.width * 0.08}px`;
@@ -637,7 +637,7 @@ function animarMorte(el) {
 	CriaPoeiraMorte(rect);
 	const morte = document.createElement("img");
 	morte.className = "morteAnim";
-	morte.src = "imagens/morte/frame12.png";
+	morte.src = "imagens/animacoes/morte/frame12.png";
 	morte.style.left = `${rect.left}px`;
 	morte.style.top = `${rect.top}px`;
 	morte.style.width = `${rect.width}px`;
@@ -648,18 +648,18 @@ function animarMorte(el) {
 	el.style.visibility = "hidden";
 
 	const frames = [
-		"imagens/morte/frame12.png",
-		"imagens/morte/frame11.png",
-		"imagens/morte/frame10.png",
-		"imagens/morte/frame9.png",
-		"imagens/morte/frame8.png",
-		"imagens/morte/frame7.png",
-		"imagens/morte/frame6.png",
-		"imagens/morte/frame5.png",
-		"imagens/morte/frame4.png",
-		"imagens/morte/frame3.png",
-		"imagens/morte/frame2.png",
-		"imagens/morte/frame1.png"
+		"imagens/animacoes/morte/frame12.png",
+		"imagens/animacoes/morte/frame11.png",
+		"imagens/animacoes/morte/frame10.png",
+		"imagens/animacoes/morte/frame9.png",
+		"imagens/animacoes/morte/frame8.png",
+		"imagens/animacoes/morte/frame7.png",
+		"imagens/animacoes/morte/frame6.png",
+		"imagens/animacoes/morte/frame5.png",
+		"imagens/animacoes/morte/frame4.png",
+		"imagens/animacoes/morte/frame3.png",
+		"imagens/animacoes/morte/frame2.png",
+		"imagens/animacoes/morte/frame1.png"
 	];
 
 	let frame = 0;
