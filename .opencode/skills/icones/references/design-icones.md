@@ -86,6 +86,8 @@ arte (formas, antialias, transparência) e troca só a paleta.
 | `templates/moeda.svg` | moeda (círculos + cunha clara + estrela) |
 | `templates/gema.svg` | gema isométrica (hexágono + 3 faces + 2 riscos) |
 | `templates/conhecimento.svg` | Conhecimento Mug: cérebro com chevron de subida (sem `!`), dentro de um badge escuro |
+| `templates/conhecimento-livro.svg` | Conhecimento Mug: **livro aberto** (paleta `ametista`), com os mesmos tokens e badge opcional |
+| `templates/conhecimento-livro-hud.svg` | Livro aberto **sem badge e com o glifo escalado** para preencher o canvas — é a arte de `imagens/conhecimento-limpo.png` (renderiza do mesmo tamanho que gold/gem no HUD) |
 
 Além dos 4 tokens de paleta, um template pode ter tokens extras (badge/fundo),
 passados por `--token NOME=HEX`. O `conhecimento.svg` usa `__FUNDO__`,

@@ -88,6 +88,8 @@ function AtualizaLojaGold() {
 	document.getElementById("lvlVelComp").innerHTML = lvlVelComp;
 
 	AtualizaMaximosLoja();
+	AtualizaCarteiraLoja();
+	AtualizaSaldoBotoesLoja();
 }
 
 // Itens com teto: no lugar do preço exibe "Lvl Max" e esconde o botão —
@@ -113,18 +115,122 @@ function AtualizaMaximosLoja() {
 		const elPreco = document.getElementById(item.preco);
 		if (!elPreco) continue;
 		const cfg = ITENS_PATENTE[item.id];
-		// Os botões compartilham o id "btnLoja" (duplicado), então o
-		// localizamos pela linha da tabela em que o preço está.
-		const linha = elPreco.closest("tr");
-		const btn = linha ? linha.querySelector("input[type='button']") : null;
+		// Cada item vive numa linha-card (.loja-item); o botão e o selo MAX
+		// ficam na área de ação da própria linha.
+		const linha = elPreco.closest(".loja-item");
+		const btn = linha ? linha.querySelector(".loja-item__comprar") : null;
+		const rotulo = btn ? btn.querySelector(".loja-item__comprar-rotulo") : null;
+		const selo = linha ? linha.querySelector(".loja-item__selo") : null;
 		const noTeto = cfg.noTeto();
 		const proxima = noTeto && TemProximaPatente(item.id);
-		elPreco.innerHTML = !noTeto
-			? FormatGold(window[cfg.precoVar])
-			: proxima
-				? '<span class="loja-patente">★ ' + FormatGold(PrecoPatenteLoja(item.id)) + '</span>'
-				: '<span class="loja-lvl-max">Lvl Max</span>';
-		if (btn) btn.style.display = (noTeto && !proxima) ? "none" : "";
+
+		if (!noTeto) {
+			// preço normal: botão "Comprar" com o preço do próximo nível
+			elPreco.innerHTML = FormatGold(window[cfg.precoVar]);
+			if (btn) btn.style.display = "";
+			if (rotulo) rotulo.textContent = "Comprar";
+			if (selo) selo.hidden = true;
+			if (linha) linha.classList.remove("loja-item--max", "loja-item--patente");
+		} else if (proxima) {
+			// no teto com ★ pendente: o botão vira o ingresso da próxima patente
+			elPreco.innerHTML = FormatGold(PrecoPatenteLoja(item.id));
+			if (btn) btn.style.display = "";
+			if (rotulo) rotulo.textContent = "★ Patente";
+			if (selo) selo.hidden = true;
+			if (linha) {
+				linha.classList.add("loja-item--patente");
+				linha.classList.remove("loja-item--max");
+			}
+		} else {
+			// patente máxima: sem próxima compra — o botão dá lugar ao selo MAX
+			if (btn) btn.style.display = "none";
+			if (selo) {
+				selo.hidden = false;
+				selo.innerHTML = '<span class="loja-lvl-max">MAX</span>';
+			}
+			if (linha) {
+				linha.classList.add("loja-item--max");
+				linha.classList.remove("loja-item--patente");
+			}
+		}
+	}
+}
+
+// Carteira do cabeçalho da loja: espelha as 3 moedas do HUD em qualquer painel
+// aberto (os valores são marcados por data-saldo). Só leitura + textContent.
+function AtualizaCarteiraLoja() {
+	const raiz = document.getElementById("container-Loja");
+	if (!raiz) return;
+	const valores = {
+		gold: FormatGold(gold),
+		esmeralda: String(esmeraldas),
+		cm: FormatCM(conhecimentoMug)
+	};
+	raiz.querySelectorAll("[data-saldo]").forEach(el => {
+		const v = valores[el.dataset.saldo];
+		if (v !== undefined && el.textContent !== v) el.textContent = v;
+	});
+}
+
+// Estado "saldo insuficiente" por linha: apaga o botão quando não dá para
+// pagar. Roda no tick de 1s (junto da automação) e na abertura — só lê o
+// estado e troca uma classe, então o custo é desprezível.
+function AtualizaSaldoBotoesLoja() {
+	const painelGold = document.getElementById("Loja");
+	if (painelGold && painelGold.style.visibility === "visible") {
+		for (const item of ITENS_AUTO_COMPRA) {
+			const btn = painelGold.querySelector('.loja-item__comprar[data-compra="' + item.id + '"]');
+			if (!btn) continue;
+			let preco;
+			if (item.teto && ITENS_PATENTE[item.teto].noTeto()) {
+				if (!TemProximaPatente(item.teto)) {
+					btn.classList.remove("loja-item__comprar--off");
+					continue;
+				}
+				preco = PrecoPatenteLoja(item.teto);
+			} else {
+				preco = N(window[item.preco]);
+			}
+			btn.classList.toggle("loja-item__comprar--off", !GE(gold, preco));
+		}
+	}
+
+	const painelEsm = document.getElementById("LojaEsm");
+	if (painelEsm && painelEsm.style.visibility === "visible") {
+		const itens = [
+			{ id: "comp1", preco: "precoComp1" }, { id: "avgold", preco: "precoAvGold" },
+			{ id: "comp2", preco: "precoComp2" }, { id: "comp3", preco: "precoComp3" },
+			{ id: "comp4", preco: "precoComp4" }, { id: "comp5", preco: "precoComp5" },
+			{ id: "comp6", preco: "precoComp6" }, { id: "xp", preco: "precoXP" },
+			{ id: "esmcm", preco: "precoEsmCM" }
+		];
+		for (const item of itens) {
+			const btn = painelEsm.querySelector('.loja-item__comprar[data-compra="' + item.id + '"]');
+			if (!btn) continue;
+			btn.classList.toggle("loja-item__comprar--off", !(N(esmeraldas) >= N(window[item.preco])));
+		}
+		const IB = window.Tapeira && window.Tapeira.ItensBuild;
+		const btnSlot = painelEsm.querySelector("[data-compra-slot-build]");
+		if (btnSlot && IB) {
+			const noLimite = IB.slotsExtras() >= IB.LIMITE_EXTRAS;
+			btnSlot.classList.toggle("loja-item__comprar--off", noLimite || !(N(esmeraldas) >= IB.precoSlotExtra()));
+		}
+	}
+
+	const painelCM = document.getElementById("LojaCM");
+	if (painelCM && painelCM.style.visibility === "visible") {
+		const itens = [
+			{ id: "dano", nivel: cmNivelDano }, { id: "gold", nivel: cmNivelGold },
+			{ id: "xp", nivel: cmNivelXp }, { id: "fuga", nivel: cmNivelFuga },
+			{ id: "crit", nivel: cmNivelCrit }, { id: "formiga", nivel: cmNivelFormiga },
+			{ id: "duasformigas", nivel: cmNivelDuasFormigas }, { id: "comp", nivel: cmNivelComp },
+			{ id: "goldcomp2", nivel: cmNivelGoldComp2 }
+		];
+		for (const item of itens) {
+			const btn = painelCM.querySelector('.loja-item__comprar[data-compra-cm="' + item.id + '"]');
+			if (!btn) continue;
+			btn.classList.toggle("loja-item__comprar--off", !(conhecimentoMug >= PrecoLojaCM(item.nivel)));
+		}
 	}
 }
 
@@ -160,6 +266,18 @@ function FechaLoja(){
 	UI.syncScreenButtons();
 }
 
+// Abre a Loja de Gold a partir de qualquer painel (aba de moeda do rodapé)
+function LojaGold(){
+	const painel = document.getElementById("Loja");
+	if(!painel) return;
+	painel.style.visibility = "visible";
+	document.getElementById("LojaEsm").style.visibility = "hidden";
+	document.getElementById("LojaCM").style.visibility = "hidden";
+	AtualizaLojaGold();
+	UI.closeOtherPanels("shop");
+	UI.syncScreenButtons();
+}
+
 // =========================
 // COMPRAS E NAVEGAÇÃO DA LOJA (SEM onclick INLINE)
 // =========================
@@ -186,6 +304,7 @@ function CompraLojaItem(id) {
 function ExecutaLojaNavegacao(acao) {
 	const acoes = {
 		fechar: FechaLoja,
+		gold: LojaGold,
 		esmeralda: LojaEsmeralda,
 		conhecimento: LojaConhecimento,
 		"fechar-cm": FechaLojaCM
@@ -270,6 +389,9 @@ function AtualizaLojaCM() {
 		if (elPreco) elPreco.innerHTML = FormatCM(PrecoLojaCM(item.nivel));
 		if (elLvl) elLvl.innerHTML = item.nivel;
 	}
+
+	AtualizaCarteiraLoja();
+	AtualizaSaldoBotoesLoja();
 }
 
 function CompraCM(tipo) {

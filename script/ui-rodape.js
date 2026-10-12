@@ -22,6 +22,7 @@ var UIRodape = (function () {
 
 	var ultimoLeft = null;
 	var ultimoBottom = null;
+	var ultimoTopo = null;
 	var atualizando = false;
 
 	// Largura natural da fileira de skills: encosta a fileira na borda
@@ -48,6 +49,17 @@ var UIRodape = (function () {
 		hab.style.setProperty("--rodape-hab-bottom", vBottom);
 	}
 
+	// Topo da navegação (#container-opcoes). A loja em tela cheia termina acima
+	// daqui, então fica publicada em --rodape-top (no <html>) para o CSS da loja
+	// não cobrir o rodapé. As habilidades ficam POR BAIXO da loja (z-index da
+	// loja é maior), então não entram nessa medida.
+	function AplicaTopoBanda(topo) {
+		var v = Math.round(topo) + "px";
+		if (v === ultimoTopo) return;
+		ultimoTopo = v;
+		document.documentElement.style.setProperty("--rodape-top", v);
+	}
+
 	// Topo (y de cima) da fileira de skills quando ela está EMPILHADA.
 	// Regras: (a) as skills ficam sempre ABAIXO do log de avisos (#logAvisos)
 	// quando ele está visível — ordem de cima pra baixo: log, skills, botões;
@@ -63,6 +75,26 @@ var UIRodape = (function () {
 		return rLog.bottom + ESPACO_CIMA;
 	}
 
+	// Com a loja aberta, as skills precisam ficar EMPILHADAS (acima da
+	// navegação), senão elas ficariam ao lado dos botões, na mesma faixa — e a
+	// loja (que para acima da navegação) não as cobriria. Devolve a borda
+	// direita útil: quando a loja está visível, o limite cai para perto da
+	// borda esquerda e o teste "cabe ao lado" falha de propósito.
+	// Olha o visibility INLINE (o mesmo que o CSS :has usa) — o computed fica
+	// "visible" durante o fade-out.
+	function LimiteDireita() {
+		var limite = document.documentElement.clientWidth;
+		var paineis = ["Loja", "LojaEsm", "LojaCM"];
+		for (var i = 0; i < paineis.length; i++) {
+			var p = document.getElementById(paineis[i]);
+			if (!p || p.style.visibility !== "visible") continue;
+			var r = p.getBoundingClientRect();
+			if (r.width === 0 || r.height === 0) continue;
+			limite = Math.min(limite, r.left - FOLGA_LADO);
+		}
+		return limite;
+	}
+
 	function Atualiza() {
 		atualizando = false;
 		var botoes = document.getElementById("container-Botoes");
@@ -74,10 +106,10 @@ var UIRodape = (function () {
 
 		var larguraHab = MedeLargura(hab);
 		var alturaHab = hab.getBoundingClientRect().height;
-		var larguraTela = document.documentElement.clientWidth;
 		var alturaTela = document.documentElement.clientHeight;
+		var limiteDireita = LimiteDireita();
 		var cabeAoLado =
-			rBot.left + rBot.width + ESPACO_LADO + larguraHab + FOLGA_LADO <= larguraTela;
+			rBot.left + rBot.width + ESPACO_LADO + larguraHab <= limiteDireita;
 		if (cabeAoLado) {
 			// Lado a lado: base das skills alinhada com a base dos botões.
 			Aplica(hab, rBot.right + ESPACO_LADO, alturaTela - rBot.bottom);
@@ -91,6 +123,12 @@ var UIRodape = (function () {
 			topo = Math.max(MARGEM_TOPO, topo);
 			Aplica(hab, Math.max(MARGEM_ESQ, rBot.left), alturaTela - topo - alturaHab);
 		}
+
+		// A loja em tela cheia termina acima da navegação (#container-opcoes) —
+		// a fileira de skills fica por baixo da loja (a loja tem z-index maior).
+		var opcoes = document.getElementById("container-opcoes");
+		var rOpcoes = opcoes ? opcoes.getBoundingClientRect() : rBot;
+		AplicaTopoBanda(rOpcoes.height > 0 ? rOpcoes.top : rBot.top);
 	}
 
 	// Pede uma reavaliação sem criar timer: o ResizeObserver e o resize da
@@ -110,6 +148,15 @@ var UIRodape = (function () {
 			var obs = new ResizeObserver(Pede);
 			obs.observe(botoes);
 			obs.observe(hab);
+		}
+		// Abrir/fechar a loja muda o limite à direita (ver LimiteDireita): a
+		// mudança de visibility inline é o gatilho, sem timer próprio.
+		if (typeof MutationObserver === "function") {
+			var obsLoja = new MutationObserver(Pede);
+			["Loja", "LojaEsm", "LojaCM"].forEach(function (id) {
+				var p = document.getElementById(id);
+				if (p) obsLoja.observe(p, { attributes: true, attributeFilter: ["style"] });
+			});
 		}
 		window.addEventListener("resize", Pede);
 		Pede();

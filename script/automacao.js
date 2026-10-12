@@ -103,29 +103,35 @@ function MarcaAutoItemLoja(indice, marcado) {
 	AutoSaveLocal();
 }
 
-// Monta os checkboxes "auto" ao lado do nome de cada item elegível da loja
-// de gold (uma única vez — o HTML da loja é estático). O índice do checkbox
+// Monta os toggles "auto" na área de ação de cada item elegível da loja de
+// gold (uma única vez — o HTML da loja é estático). O índice do checkbox
 // é o índice na ITENS_AUTO_COMPRA (o id do item acha a linha sozinho),
-// então item novo na automação ganha checkbox sem mexer no HTML.
+// então item novo na automação ganha toggle sem mexer no HTML.
 var checkboxesAutoLojaMontados = false;
 function MontaCheckboxesAutoLoja() {
 	if (checkboxesAutoLojaMontados) return;
 	checkboxesAutoLojaMontados = true;
 	for (let idx = 0; idx < ITENS_AUTO_COMPRA.length; idx++) {
-		const botao = document.querySelector('#TabLoja [data-compra="' + ITENS_AUTO_COMPRA[idx].id + '"]');
+		const botao = document.querySelector('#Loja [data-compra="' + ITENS_AUTO_COMPRA[idx].id + '"]');
 		if (!botao) continue;
-		const linha = botao.closest("tr");
-		const celula = linha ? linha.querySelector("td") : null;
-		if (!celula) continue;
+		const linha = botao.closest(".loja-item");
+		const slot = linha ? linha.querySelector(".loja-item__auto") : null;
+		if (!slot) continue;
 		const wrap = document.createElement("label");
 		wrap.className = "auto-item-loja";
 		const chk = document.createElement("input");
 		chk.type = "checkbox";
 		chk.id = "autoItemLoja-" + idx;
-		chk.setAttribute("aria-label", "Auto-comprar " + celula.textContent.trim());
+		const nome = linha.querySelector(".loja-item__nome");
+		chk.setAttribute("aria-label", "Auto-comprar " + (nome ? nome.textContent.trim() : "item"));
 		chk.addEventListener("change", function () { MarcaAutoItemLoja(idx, chk.checked); });
-		wrap.append(chk);
-		celula.append(wrap);
+		const trilha = document.createElement("span");
+		trilha.className = "auto-item-loja__trilha";
+		const txt = document.createElement("span");
+		txt.className = "auto-item-loja__txt";
+		txt.textContent = "Auto";
+		wrap.append(chk, trilha, txt);
+		slot.append(wrap);
 	}
 	SyncCheckboxesAutoLoja();
 }
@@ -281,6 +287,8 @@ function AutoCompraMaisBarato() {
 function TickAutomacao() {
 	SyncTogglesAutomacao();
 	SyncCheckboxesAutoLoja();
+	AtualizaCarteiraLoja();
+	AtualizaSaldoBotoesLoja();
 	if (jogoPausado) return;
 
 	if (autoColeta === 1 && AutoColetaDesbloqueada()) {

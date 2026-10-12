@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- CONHECIMENTO (Conhecimento Mug / CM) - LIVRO ABERTO, versao do HUD.
+       Mesma arte de conhecimento-livro.svg, mas sem badge e com o glifo
+       ESCALADO para preencher o canvas (96.9% x 63.9%): como o HUD mostra
+       todas as moedas em `height: 1em`, o livro passa a render do mesmo
+       tamanho que a moeda de gold e a gema.
+       Gera imagens/conhecimento-limpo.png:
+         node scripts/gerar-icone.cjs --template conhecimento-livro-hud.svg \
+           --saida imagens/conhecimento-limpo.png --esquema ametista -->
+  <g transform="translate(256 256) scale(1.409) translate(-256 -280)">
+    <!-- capa/vinco: silhueta escura que emoldura as duas paginas -->
+    <path d="M256 198
+             C224 176 172 164 122 164
+             C96 164 80 174 80 194
+             L80 356
+             C80 376 96 386 122 382
+             C172 372 224 376 256 396
+             C288 376 340 372 390 382
+             C416 386 432 376 432 356
+             L432 194
+             C432 174 416 164 390 164
+             C340 164 288 176 256 198 Z"
+      fill="__ESCURO__" />
+
+    <!-- pagina esquerda (face iluminada) -->
+    <path d="M250 218
+             C222 199 176 188 130 188
+             C114 188 104 195 104 210
+             L104 342
+             C104 357 114 364 130 360
+             C176 350 222 354 250 371 Z"
+      fill="__CLARO__" />
+
+    <!-- pagina direita (face em sombra) -->
+    <path d="M262 218
+             C290 199 336 188 382 188
+             C398 188 408 195 408 210
+             L408 342
+             C408 357 398 364 382 360
+             C336 350 290 354 262 371 Z"
+      fill="__MEDIO__" />
+
+    <!-- linhas de texto -->
+    <g stroke="__ESCURO__" stroke-width="11" fill="none" stroke-linecap="round">
+      <path d="M134 250 L 214 262" />
+      <path d="M134 286 L 214 298" />
+      <path d="M134 322 L 190 331" />
+      <path d="M378 250 L 298 262" />
+      <path d="M378 286 L 298 298" />
+      <path d="M378 322 L 322 331" />
+    </g>
+
+    <!-- brilho: estrela de 4 pontas no alto-esquerda -->
+    <path d="M150 170 L 160 186 L 176 196 L 160 206 L 150 222 L 140 206 L 124 196 L 140 186 Z"
+      fill="__BRILHO__" />
+  </g>
+</svg>

@@ -449,448 +449,549 @@
 		</div>
 
 		<div id="container-Loja">
-			<div id="Loja" style="visibility:hidden">
+			<div id="Loja" class="loja-painel loja-painel--gold" style="visibility:hidden">
+				<header class="loja-cabecalho">
+					<div class="loja-cabecalho__arte" aria-hidden="true"></div>
+					<div class="loja-cabecalho__sombra" aria-hidden="true"></div>
+					<div class="loja-cabecalho__conteudo">
+						<div class="loja-apres">
+							<span class="loja-eyebrow">Loja · moeda Gold</span>
+							<h2 class="loja-titulo"><span id="lojaEspecializacao" class="loja-especializacao"></span>Loja de Gold</h2>
+						</div>
+						<div class="loja-carteira">
+							<span class="loja-saldo"><img class="loja-saldo__ico" src="imagens/hud/gold.png" alt="" /><span class="loja-saldo__col"><b class="loja-saldo__val" data-saldo="gold">0</b><small class="loja-saldo__lbl">Gold</small></span></span>
+							<span class="loja-saldo"><img class="loja-saldo__ico" src="imagens/hud/gem.png" alt="" /><span class="loja-saldo__col"><b class="loja-saldo__val" data-saldo="esmeralda">0</b><small class="loja-saldo__lbl">Esmeralda</small></span></span>
+							<span class="loja-saldo"><img class="loja-saldo__ico" src="imagens/conhecimento-limpo.png" alt="" /><span class="loja-saldo__col"><b class="loja-saldo__val" data-saldo="cm">0</b><small class="loja-saldo__lbl">Conhecimento</small></span></span>
+						</div>
+						<label class="auto-toggle auto-toggle--loja" id="autoCompraWrap"><input type="checkbox" id="autoCompraToggle" aria-label="Auto-compra da loja" /><span>Auto-compra</span></label>
+						<button type="button" class="btnLojaFechar" data-loja="fechar" aria-label="Fechar loja">×</button>
+					</div>
+				</header>
 				<div class="preview-compra" hidden></div>
-				<table id="TabLoja">
-					<caption><span id="lojaEspecializacao" class="loja-especializacao"></span>Loja<label class="auto-toggle auto-toggle--loja" id="autoCompraWrap"><input
-								type="checkbox" id="autoCompraToggle" aria-label="Auto-compra da loja" /><span>Auto-compra</span></label><button
-							type="button" class="btnLojaE btnLojaFechar"
-							data-loja="fechar" aria-label="Fechar loja">×</button></caption>
-					<thead>
-						<tr>
-							<th>Item</th>
-							<th>Preço</th>
-							<th>Nivel</th>
-							<th>Comprar</th>
-							<th>
-								<button type="button" class="btnLojaE" data-loja="esmeralda">&gt;</button>
-							</th>
-						</tr>
-					</thead>
-					<tr>
-						<td>+Dano</td>
-						<td align="center">
-							<div id="precoDano"></div>
-						</td>
-						<td align="center">
-							<div id="lvlDano"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="dano"></td>
-					</tr>
-
-					<tr>
-						<td>Chance Bau</td>
-						<td align="center">
-							<div id="precoBau"></div>
-						</td>
-						<td align="center">
-							<div id="lvlBau"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="bau"></td>
-					</tr>
-
-					<tr>
-						<td>Esmeralda no Bau</td>
-						<td align="center">
-							<div id="precoEsmBau"></div>
-						</td>
-						<td align="center">
-							<div id="lvlEsmBau"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="esmbau"></td>
-					</tr>
-
-					<tr>
-						<td>- Tempo bater(Espaço)</td>
-						<td align="center">
-							<div id="precoBEspaco"></div>
-						</td>
-						<td align="center">
-							<div id="lvlBEspaco"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="bespaco"></td>
-					</tr>
-
-					<tr>
-						<td>Mult Gold</td>
-						<td align="center">
-							<div id="precoGold"></div>
-						</td>
-						<td align="center">
-							<div id="lvlGold"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="gold"></td>
-					</tr>
-
-					<tr>
-						<td>Avanço Rapido</td>
-						<td align="center">
-							<div id="precoAvan"></div>
-						</td>
-						<td align="center">
-							<div id="lvlAvan"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="avanco"></td>
-					</tr>
-
-					<tr>
-						<td>Dano critico</td>
-						<td align="center">
-							<div id="precoDCrit"></div>
-						</td>
-						<td align="center">
-							<div id="lvlDCrit"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="dcrit"></td>
-					</tr>
-
-					<tr>
-						<td>Subtrair vida Mug</td>
-						<td align="center">
-							<div id="precoVidaInimigo"></div>
-						</td>
-						<td align="center">
-							<div id="lvlSubVida"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="subvida"></td>
-					</tr>
-
-					<tr>
-						<td>Chance critico</td>
-						<td align="center">
-							<div id="precoCCrit"></div>
-						</td>
-						<td align="center">
-							<div id="lvlCCrit"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="ccrit"></td>
-					</tr>
-
-					<tr>
-						<td>Quantidade Avanço Rapido</td>
-						<td align="center">
-							<div id="precoQTDAvan"></div>
-						</td>
-						<td align="center">
-							<div id="lvlQTDAvan"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="qtdavanco"></td>
-					</tr>
-
-					<tr>
-						<td>Velocidade Companheiro</td>
-						<td align="center">
-							<div id="precoVelComp"></div>
-						</td>
-						<td align="center">
-							<div id="lvlVelComp"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="velcomp"></td>
-					</tr>
-
-				</table>
-
-				<div id="secaoEspecializacao" class="especializacao">
-					<div class="especializacao__cabecalho">
-						<span class="especializacao__titulo">Especialização</span>
-						<span class="especializacao__status" id="espStatus">Nenhuma</span>
-					</div>
-					<div class="especializacao__cartoes">
-						<button type="button" class="esp-cartao" data-esp="1">
-							<span class="esp-cartao__nome">Força Bruta</span>
-							<span class="esp-cartao__efeito">+40% dano · −25% gold</span>
-						</button>
-						<button type="button" class="esp-cartao" data-esp="2">
-							<span class="esp-cartao__nome">Toque de Midas</span>
-							<span class="esp-cartao__efeito">+40% gold · −25% dano</span>
-						</button>
-						<button type="button" class="esp-cartao" data-esp="3">
-							<span class="esp-cartao__nome">Olho de Águia</span>
-							<span class="esp-cartao__efeito">Crítico ×1,8 · −10% dano · −15% gold</span>
-							<span class="esp-cartao__lock" hidden>Desbloqueia no andar 60</span>
-						</button>
-						<button type="button" class="esp-cartao" data-esp="4">
-							<span class="esp-cartao__nome">Canhão de Vidro</span>
-							<span class="esp-cartao__efeito">+80% dano · −80% tempo de fuga</span>
-							<span class="esp-cartao__lock" hidden>Desbloqueia no andar 70</span>
-						</button>
-						<button type="button" class="esp-cartao" data-esp="5">
-							<span class="esp-cartao__nome">Cadeia de Ataques</span>
-							<span class="esp-cartao__efeito">−50% dano · +25% por ataque no mesmo alvo (até +400%)</span>
-							<span class="esp-cartao__lock" hidden>Desbloqueia no andar 80</span>
-						</button>
-					</div>
-					<div class="especializacao__rodape">
-						<span class="especializacao__nota" id="espNota">Desbloqueia após o primeiro reset</span>
-						<span class="especializacao__preco" id="espPreco" hidden></span>
+				<div class="loja-lista">
+					<article class="loja-item" data-item="dano">
+						<span class="loja-item__emblema"><img src="imagens/itens/adaga.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">+Dano</span><span class="loja-item__nivel">Nv. <span id="lvlDano"></span></span></div>
+							<p class="loja-item__desc">Aumenta o dano dos seus ataques.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="dano">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gold.png" alt="" /><b class="loja-item__preco" id="precoDano"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+						<span class="loja-item__auto"></span>
+					</article>
+					<article class="loja-item" data-item="bau">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/bauPortatil.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Chance Baú</span><span class="loja-item__nivel">Nv. <span id="lvlBau"></span></span></div>
+							<p class="loja-item__desc">Aumenta a chance de encontrar um baú.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="bau">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gold.png" alt="" /><b class="loja-item__preco" id="precoBau"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+						<span class="loja-item__auto"></span>
+					</article>
+					<article class="loja-item" data-item="esmbau">
+						<span class="loja-item__emblema"><img src="imagens/itens/esmeralda.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Esmeralda no Baú</span><span class="loja-item__nivel">Nv. <span id="lvlEsmBau"></span></span></div>
+							<p class="loja-item__desc">Melhora a quantidade de esmeraldas obtida nos baús.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="esmbau">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gold.png" alt="" /><b class="loja-item__preco" id="precoEsmBau"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+						<span class="loja-item__auto"></span>
+					</article>
+					<article class="loja-item" data-item="bespaco">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/relogio.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">- Tempo bater (Espaço)</span><span class="loja-item__nivel">Nv. <span id="lvlBEspaco"></span></span></div>
+							<p class="loja-item__desc">Reduz o intervalo entre ataques usando a tecla Espaço.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="bespaco">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gold.png" alt="" /><b class="loja-item__preco" id="precoBEspaco"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+						<span class="loja-item__auto"></span>
+					</article>
+					<article class="loja-item" data-item="gold">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/moedas.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Mult Gold</span><span class="loja-item__nivel">Nv. <span id="lvlGold"></span></span></div>
+							<p class="loja-item__desc">Aumenta o multiplicador de Gold recebido.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="gold">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gold.png" alt="" /><b class="loja-item__preco" id="precoGold"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+						<span class="loja-item__auto"></span>
+					</article>
+					<article class="loja-item" data-item="avanco">
+						<span class="loja-item__emblema"><img src="imagens/itens/lanterna.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Avanço Rápido</span><span class="loja-item__nivel">Nv. <span id="lvlAvan"></span></span></div>
+							<p class="loja-item__desc">Melhora o avanço rápido entre andares.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="avanco">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gold.png" alt="" /><b class="loja-item__preco" id="precoAvan"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+						<span class="loja-item__auto"></span>
+					</article>
+					<article class="loja-item" data-item="dcrit">
+						<span class="loja-item__emblema"><img src="imagens/itens/pocaoRubra.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Dano crítico</span><span class="loja-item__nivel">Nv. <span id="lvlDCrit"></span></span></div>
+							<p class="loja-item__desc">Aumenta o dano causado pelos ataques críticos.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="dcrit">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gold.png" alt="" /><b class="loja-item__preco" id="precoDCrit"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+						<span class="loja-item__auto"></span>
+					</article>
+					<article class="loja-item" data-item="subvida">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/escudo.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Subtrair vida Mug</span><span class="loja-item__nivel">Nv. <span id="lvlSubVida"></span></span></div>
+							<p class="loja-item__desc">Reduz a vida do Mug.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="subvida">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gold.png" alt="" /><b class="loja-item__preco" id="precoVidaInimigo"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+						<span class="loja-item__auto"></span>
+					</article>
+					<article class="loja-item" data-item="ccrit">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/colarFormigas.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Chance crítico</span><span class="loja-item__nivel">Nv. <span id="lvlCCrit"></span></span></div>
+							<p class="loja-item__desc">Aumenta a chance de causar um ataque crítico.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="ccrit">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gold.png" alt="" /><b class="loja-item__preco" id="precoCCrit"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+						<span class="loja-item__auto"></span>
+					</article>
+					<article class="loja-item" data-item="qtdavanco">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/mapa.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Quantidade Avanço Rápido</span><span class="loja-item__nivel">Nv. <span id="lvlQTDAvan"></span></span></div>
+							<p class="loja-item__desc">Aumenta a quantidade de andares do avanço rápido.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="qtdavanco">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gold.png" alt="" /><b class="loja-item__preco" id="precoQTDAvan"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+						<span class="loja-item__auto"></span>
+					</article>
+					<article class="loja-item" data-item="velcomp">
+						<span class="loja-item__emblema"><img src="imagens/itens/pocaoVerde.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Velocidade Companheiro</span><span class="loja-item__nivel">Nv. <span id="lvlVelComp"></span></span></div>
+							<p class="loja-item__desc">Aumenta a velocidade de atuação dos companheiros.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="velcomp">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gold.png" alt="" /><b class="loja-item__preco" id="precoVelComp"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+						<span class="loja-item__auto"></span>
+					</article>
+					<div id="secaoEspecializacao" class="especializacao">
+						<div class="especializacao__cabecalho">
+							<span class="especializacao__titulo">Especialização</span>
+							<span class="especializacao__status" id="espStatus">Nenhuma</span>
+						</div>
+						<div class="especializacao__cartoes">
+							<button type="button" class="esp-cartao" data-esp="1">
+								<span class="esp-cartao__nome">Força Bruta</span>
+								<span class="esp-cartao__efeito">+40% dano · −25% gold</span>
+							</button>
+							<button type="button" class="esp-cartao" data-esp="2">
+								<span class="esp-cartao__nome">Toque de Midas</span>
+								<span class="esp-cartao__efeito">+40% gold · −25% dano</span>
+							</button>
+							<button type="button" class="esp-cartao" data-esp="3">
+								<span class="esp-cartao__nome">Olho de Águia</span>
+								<span class="esp-cartao__efeito">Crítico ×1,8 · −10% dano · −15% gold</span>
+								<span class="esp-cartao__lock" hidden>Desbloqueia no andar 60</span>
+							</button>
+							<button type="button" class="esp-cartao" data-esp="4">
+								<span class="esp-cartao__nome">Canhão de Vidro</span>
+								<span class="esp-cartao__efeito">+80% dano · −80% tempo de fuga</span>
+								<span class="esp-cartao__lock" hidden>Desbloqueia no andar 70</span>
+							</button>
+							<button type="button" class="esp-cartao" data-esp="5">
+								<span class="esp-cartao__nome">Cadeia de Ataques</span>
+								<span class="esp-cartao__efeito">−50% dano · +25% por ataque no mesmo alvo (até +400%)</span>
+								<span class="esp-cartao__lock" hidden>Desbloqueia no andar 80</span>
+							</button>
+						</div>
+						<div class="especializacao__rodape">
+							<span class="especializacao__nota" id="espNota">Desbloqueia após o primeiro reset</span>
+							<span class="especializacao__preco" id="espPreco" hidden></span>
+						</div>
 					</div>
 				</div>
-
+				<nav class="loja-abas">
+					<button type="button" class="loja-aba loja-aba--on" aria-current="true"><img src="imagens/hud/gold.png" alt="" /><span class="loja-aba__txt">Gold</span></button>
+					<button type="button" class="loja-aba" data-loja="esmeralda"><img src="imagens/hud/gem.png" alt="" /><span class="loja-aba__txt">Esmeralda</span></button>
+					<button type="button" class="loja-aba" data-loja="conhecimento"><img src="imagens/conhecimento-limpo.png" alt="" /><span class="loja-aba__txt">Conhecimento</span></button>
+				</nav>
 			</div>
-			<div id="LojaEsm" style="visibility:hidden">
+			<div id="LojaEsm" class="loja-painel loja-painel--gem" style="visibility:hidden">
+				<header class="loja-cabecalho">
+					<div class="loja-cabecalho__arte" aria-hidden="true"></div>
+					<div class="loja-cabecalho__sombra" aria-hidden="true"></div>
+					<div class="loja-cabecalho__conteudo">
+						<div class="loja-apres">
+							<span class="loja-eyebrow">Loja · moeda Esmeralda</span>
+							<h2 class="loja-titulo">Loja de Esmeraldas</h2>
+						</div>
+						<div class="loja-carteira">
+							<span class="loja-saldo"><img class="loja-saldo__ico" src="imagens/hud/gold.png" alt="" /><span class="loja-saldo__col"><b class="loja-saldo__val" data-saldo="gold">0</b><small class="loja-saldo__lbl">Gold</small></span></span>
+							<span class="loja-saldo"><img class="loja-saldo__ico" src="imagens/hud/gem.png" alt="" /><span class="loja-saldo__col"><b class="loja-saldo__val" data-saldo="esmeralda">0</b><small class="loja-saldo__lbl">Esmeralda</small></span></span>
+							<span class="loja-saldo"><img class="loja-saldo__ico" src="imagens/conhecimento-limpo.png" alt="" /><span class="loja-saldo__col"><b class="loja-saldo__val" data-saldo="cm">0</b><small class="loja-saldo__lbl">Conhecimento</small></span></span>
+						</div>
+						<button type="button" class="btnLojaFechar" data-loja="fechar" aria-label="Fechar loja">×</button>
+					</div>
+				</header>
 				<div class="preview-compra" hidden></div>
-				<table id="TabLojaEsm">
-					<caption>Loja de Esmeralda<button type="button" class="btnLojaE btnLojaFechar"
-							data-loja="fechar" aria-label="Fechar loja">×</button></caption>
-					<thead>
-						<tr>
-							<th>Bonus</th>
-							<th>Preço</th>
-							<th>Nivel</th>
-							<th>Comprar</th>
-							<th>
-								<button type="button" class="btnLojaE" data-loja="esmeralda" aria-label="Loja de gold">&lt;</button>
-								<button type="button" class="btnLojaE" data-loja="conhecimento" aria-label="Loja do Conhecimento">&gt;</button>
-							</th>
-						</tr>
-					</thead>
-					<tr>
-						<td>Companheiro 1(DPS)</td>
-						<td align="center">
-							<div id="precoComp1"></div>
-						</td>
-						<td align="center">
-							<div id="lvlComp1"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="comp1"></td>
-					</tr>
-
-					<tr>
-						<td>Avanço Gold</td>
-						<td align="center">
-							<div id="precoAvGold"></div>
-						</td>
-						<td align="center">
-							<div id="lvlAvGold"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="avgold"></td>
-					</tr>
-
-					<tr>
-						<td>Companheiro 2(GoldPS)</td>
-						<td align="center">
-							<div id="precoComp2"></div>
-						</td>
-						<td align="center">
-							<div id="lvlComp2"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="comp2"></td>
-					</tr>
-
-					<tr>
-						<td>Companheiro 3 (Mago do Relógio: carrega skill)</td>
-						<td align="center">
-							<div id="precoComp3"></div>
-						</td>
-						<td align="center">
-							<div id="lvlComp3"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="comp3"></td>
-					</tr>
-
-					<tr>
-						<td>Companheiro 4 (Alquimista: buff aleatório)</td>
-						<td align="center">
-							<div id="precoComp4"></div>
-						</td>
-						<td align="center">
-							<div id="lvlComp4"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="comp4"></td>
-					</tr>
-
-					<tr>
-						<td>Companheiro 5 (Assassino: morte instantânea)</td>
-						<td align="center">
-							<div id="precoComp5"></div>
-						</td>
-						<td align="center">
-							<div id="lvlComp5"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="comp5"></td>
-					</tr>
-
-					<tr>
-						<td>Companheiro 6 (Explorador: avança andares)</td>
-						<td align="center">
-							<div id="precoComp6"></div>
-						</td>
-						<td align="center">
-							<div id="lvlComp6"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="comp6"></td>
-					</tr>
-
-					<tr>
-						<td>Bônus de XP (+1 por nível)</td>
-						<td align="center">
-							<div id="precoXP"></div>
-						</td>
-						<td align="center">
-							<div id="lvlXP"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="xp"></td>
-					</tr>
-
-					<tr>
-						<td>CM em dobro (×2 por nível no Conhecimento Mug)</td>
-						<td align="center">
-							<div id="precoEsmCM"></div>
-						</td>
-						<td align="center">
-							<div id="lvlEsmCM"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra="esmcm"></td>
-					</tr>
-					<tr id="linhaEsmSlotBuild" hidden>
-						<td>Espaço extra de build (+5 por compra)</td>
-						<td align="center">
-							<div id="precoEsmSlotBuild"></div>
-						</td>
-						<td align="center">
-							<div id="lvlEsmSlotBuild"></div>
-						</td>
-						<td align="center"><input type="button" id="btnEsmSlotBuild" value="Evoluir" class="Loja"
-								data-compra-slot-build aria-label="Comprar espaço extra de build"></td>
-					</tr>
-				</table>
+				<div class="loja-lista">
+					<article class="loja-item" data-item="comp1">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/companheiros/companheiro1.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Companheiro 1 (DPS)</span><span class="loja-item__nivel">Nv. <span id="lvlComp1"></span></span></div>
+							<p class="loja-item__desc">Melhora o dano por segundo do companheiro 1.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="comp1">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gem.png" alt="" /><b class="loja-item__preco" id="precoComp1"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="avgold">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/moedas.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Avanço Gold</span><span class="loja-item__nivel">Nv. <span id="lvlAvGold"></span></span></div>
+							<p class="loja-item__desc">Melhora o Gold obtido no avanço.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="avgold">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gem.png" alt="" /><b class="loja-item__preco" id="precoAvGold"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="comp2">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/companheiros/companheiro2.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Companheiro 2 (GoldPS)</span><span class="loja-item__nivel">Nv. <span id="lvlComp2"></span></span></div>
+							<p class="loja-item__desc">Melhora o Gold por segundo gerado pelo companheiro 2.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="comp2">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gem.png" alt="" /><b class="loja-item__preco" id="precoComp2"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="comp3">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/companheiros/companheiro3.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Companheiro 3 (Mago do Relógio)</span><span class="loja-item__nivel">Nv. <span id="lvlComp3"></span></span></div>
+							<p class="loja-item__desc">O Mago do Relógio carrega a skill.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="comp3">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gem.png" alt="" /><b class="loja-item__preco" id="precoComp3"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="comp4">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/companheiros/companheiro4.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Companheiro 4 (Alquimista)</span><span class="loja-item__nivel">Nv. <span id="lvlComp4"></span></span></div>
+							<p class="loja-item__desc">O Alquimista concede um buff aleatório.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="comp4">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gem.png" alt="" /><b class="loja-item__preco" id="precoComp4"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="comp5">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/companheiros/companheiro5.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Companheiro 5 (Assassino)</span><span class="loja-item__nivel">Nv. <span id="lvlComp5"></span></span></div>
+							<p class="loja-item__desc">O Assassino causa morte instantânea.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="comp5">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gem.png" alt="" /><b class="loja-item__preco" id="precoComp5"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="comp6">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/companheiros/companheiro6.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Companheiro 6 (Explorador)</span><span class="loja-item__nivel">Nv. <span id="lvlComp6"></span></span></div>
+							<p class="loja-item__desc">O Explorador avança andares.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="comp6">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gem.png" alt="" /><b class="loja-item__preco" id="precoComp6"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="xp">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/companheiros/companheiroXP.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Bônus de XP (+1 por nível)</span><span class="loja-item__nivel">Nv. <span id="lvlXP"></span></span></div>
+							<p class="loja-item__desc">Adiciona +1 ao bônus de XP por nível.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="xp">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gem.png" alt="" /><b class="loja-item__preco" id="precoXP"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="esmcm">
+						<span class="loja-item__emblema"><img src="imagens/conhecimento-limpo.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">CM em dobro (×2 por nível)</span><span class="loja-item__nivel">Nv. <span id="lvlEsmCM"></span></span></div>
+							<p class="loja-item__desc">Multiplica o CM por 2 a cada nível no Conhecimento Mug.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra="esmcm">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gem.png" alt="" /><b class="loja-item__preco" id="precoEsmCM"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="slotbuild" id="linhaEsmSlotBuild" hidden>
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/grimorio.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">Espaço extra de build (+5 por compra)</span><span class="loja-item__nivel">Nv. <span id="lvlEsmSlotBuild"></span></span></div>
+							<p class="loja-item__desc">Adiciona +5 espaços de build por compra.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" id="btnEsmSlotBuild" class="loja-item__comprar Loja" data-compra-slot-build aria-label="Comprar espaço extra de build">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/hud/gem.png" alt="" /><b class="loja-item__preco" id="precoEsmSlotBuild"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+				</div>
+				<nav class="loja-abas">
+					<button type="button" class="loja-aba" data-loja="gold"><img src="imagens/hud/gold.png" alt="" /><span class="loja-aba__txt">Gold</span></button>
+					<button type="button" class="loja-aba loja-aba--on" aria-current="true"><img src="imagens/hud/gem.png" alt="" /><span class="loja-aba__txt">Esmeralda</span></button>
+					<button type="button" class="loja-aba" data-loja="conhecimento"><img src="imagens/conhecimento-limpo.png" alt="" /><span class="loja-aba__txt">Conhecimento</span></button>
+				</nav>
 			</div>
-			<div id="LojaCM" style="visibility:hidden">
-				<div class="preview-compra" hidden></div>
-				<table id="TabLojaCM">
-					<caption>Loja do Conhecimento · <span id="lojaCMsaldo">0</span> CM<button type="button"
-							class="btnLojaE btnLojaFechar" data-loja="fechar" aria-label="Fechar loja">×</button></caption>
-					<thead>
-						<tr>
-							<th>Bonus permanente</th>
-							<th>Preço</th>
-							<th>Nivel</th>
-							<th>Comprar</th>
-							<th>
-								<button type="button" class="btnLojaE" data-loja="fechar-cm" aria-label="Voltar à loja de esmeraldas">&lt;</button>
-							</th>
-						</tr>
-					</thead>
-					<tr>
-						<td>+5% de dano</td>
-						<td align="center">
-							<div id="precoCMDano"></div>
-						</td>
-						<td align="center">
-							<div id="lvlCMDano"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra-cm="dano"></td>
-					</tr>
-					<tr>
-						<td>+5% de gold</td>
-						<td align="center">
-							<div id="precoCMGold"></div>
-						</td>
-						<td align="center">
-							<div id="lvlCMGold"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra-cm="gold"></td>
-					</tr>
-					<tr>
-						<td>+5% de XP</td>
-						<td align="center">
-							<div id="precoCMXp"></div>
-						</td>
-						<td align="center">
-							<div id="lvlCMXp"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra-cm="xp"></td>
-					</tr>
-					<tr>
-						<td>+2 no tempo de fuga</td>
-						<td align="center">
-							<div id="precoCMFuga"></div>
-						</td>
-						<td align="center">
-							<div id="lvlCMFuga"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra-cm="fuga"></td>
-					</tr>
-					<tr>
-						<td>+2% de dano crítico e +0,2 no teto</td>
-						<td align="center">
-							<div id="precoCMCrit"></div>
-						</td>
-						<td align="center">
-							<div id="lvlCMCrit"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra-cm="crit"></td>
-					</tr>
-					<tr>
-						<td>+0,5% de chance de formiga aleatória (máx 25%)</td>
-						<td align="center">
-							<div id="precoCMFormiga"></div>
-						</td>
-						<td align="center">
-							<div id="lvlCMFormiga"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra-cm="formiga"></td>
-					</tr>
-					<tr>
-						<td>+1% de chance de vir 2 formigas (máx 100)</td>
-						<td align="center">
-							<div id="precoCMDuas"></div>
-						</td>
-						<td align="center">
-							<div id="lvlCMDuas"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra-cm="duasformigas"></td>
-					</tr>
-					<tr>
-						<td>+2% de dano de companheiro</td>
-						<td align="center">
-							<div id="precoCMComp"></div>
-						</td>
-						<td align="center">
-							<div id="lvlCMComp"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra-cm="comp"></td>
-					</tr>
-					<tr>
-						<td>+2% de gold do companheiro 2</td>
-						<td align="center">
-							<div id="precoCMGoldComp2"></div>
-						</td>
-						<td align="center">
-							<div id="lvlCMGoldComp2"></div>
-						</td>
-						<td align="center"><input type="button" id="btnLoja" value="Evoluir" class="Loja"
-								data-compra-cm="goldcomp2"></td>
-					</tr>
-				</table>
+			<div id="LojaCM" class="loja-painel loja-painel--cm" style="visibility:hidden">
+				<header class="loja-cabecalho">
+					<div class="loja-cabecalho__arte" aria-hidden="true"></div>
+					<div class="loja-cabecalho__sombra" aria-hidden="true"></div>
+					<div class="loja-cabecalho__conteudo">
+						<div class="loja-apres">
+							<span class="loja-eyebrow">Loja · moeda Conhecimento</span>
+							<h2 class="loja-titulo">Loja do Conhecimento</h2>
+						</div>
+						<div class="loja-carteira">
+							<span class="loja-saldo"><img class="loja-saldo__ico" src="imagens/hud/gold.png" alt="" /><span class="loja-saldo__col"><b class="loja-saldo__val" data-saldo="gold">0</b><small class="loja-saldo__lbl">Gold</small></span></span>
+							<span class="loja-saldo"><img class="loja-saldo__ico" src="imagens/hud/gem.png" alt="" /><span class="loja-saldo__col"><b class="loja-saldo__val" data-saldo="esmeralda">0</b><small class="loja-saldo__lbl">Esmeralda</small></span></span>
+							<span class="loja-saldo"><img class="loja-saldo__ico" src="imagens/conhecimento-limpo.png" alt="" /><span class="loja-saldo__col"><b class="loja-saldo__val" id="lojaCMsaldo" data-saldo="cm">0</b><small class="loja-saldo__lbl">Conhecimento</small></span></span>
+						</div>
+						<button type="button" class="btnLojaFechar" data-loja="fechar" aria-label="Fechar loja">×</button>
+					</div>
+				</header>
+				<div class="loja-lista">
+					<article class="loja-item" data-item="cmdano">
+						<span class="loja-item__emblema"><img src="imagens/itens/adaga.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">+5% de dano</span><span class="loja-item__nivel">Nv. <span id="lvlCMDano"></span></span></div>
+							<p class="loja-item__desc">Aumenta o dano em 5%.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra-cm="dano">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/conhecimento-limpo.png" alt="" /><b class="loja-item__preco" id="precoCMDano"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="cmgold">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/moedas.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">+5% de gold</span><span class="loja-item__nivel">Nv. <span id="lvlCMGold"></span></span></div>
+							<p class="loja-item__desc">Aumenta o Gold recebido em 5%.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra-cm="gold">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/conhecimento-limpo.png" alt="" /><b class="loja-item__preco" id="precoCMGold"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="cmxp">
+						<span class="loja-item__emblema"><img src="imagens/conhecimento-limpo.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">+5% de XP</span><span class="loja-item__nivel">Nv. <span id="lvlCMXp"></span></span></div>
+							<p class="loja-item__desc">Aumenta a experiência recebida em 5%.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra-cm="xp">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/conhecimento-limpo.png" alt="" /><b class="loja-item__preco" id="precoCMXp"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="cmfuga">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/relogio.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">+2 no tempo de fuga</span><span class="loja-item__nivel">Nv. <span id="lvlCMFuga"></span></span></div>
+							<p class="loja-item__desc">Adiciona +2 ao tempo de fuga.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra-cm="fuga">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/conhecimento-limpo.png" alt="" /><b class="loja-item__preco" id="precoCMFuga"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="cmcrit">
+						<span class="loja-item__emblema"><img src="imagens/itens/pocaoRubra.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">+2% de dano crítico e +0,2 no teto</span><span class="loja-item__nivel">Nv. <span id="lvlCMCrit"></span></span></div>
+							<p class="loja-item__desc">Aumenta o dano crítico em 2% e adiciona +0,2 ao teto.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra-cm="crit">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/conhecimento-limpo.png" alt="" /><b class="loja-item__preco" id="precoCMCrit"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="cmformiga">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/colarFormigas.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">+0,5% de chance de formiga aleatória</span><span class="loja-item__nivel">Nv. <span id="lvlCMFormiga"></span></span></div>
+							<p class="loja-item__desc">Aumenta a chance de formiga aleatória. Limite: 25%.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra-cm="formiga">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/conhecimento-limpo.png" alt="" /><b class="loja-item__preco" id="precoCMFormiga"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="cmduas">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/bauPortatil.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">+1% de chance de vir 2 formigas</span><span class="loja-item__nivel">Nv. <span id="lvlCMDuas"></span></span></div>
+							<p class="loja-item__desc">Aumenta a chance de vir 2 formigas em 1%.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra-cm="duasformigas">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/conhecimento-limpo.png" alt="" /><b class="loja-item__preco" id="precoCMDuas"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="cmcomp">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/companheiros/companheiro1.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">+2% de dano de companheiro</span><span class="loja-item__nivel">Nv. <span id="lvlCMComp"></span></span></div>
+							<p class="loja-item__desc">Aumenta o dano dos companheiros em 2%.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra-cm="comp">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/conhecimento-limpo.png" alt="" /><b class="loja-item__preco" id="precoCMComp"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+					<article class="loja-item" data-item="cmgoldcomp2">
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/moedas.png" alt="" /></span>
+						<div class="loja-item__info">
+							<div class="loja-item__topo"><span class="loja-item__nome">+2% de gold do companheiro 2</span><span class="loja-item__nivel">Nv. <span id="lvlCMGoldComp2"></span></span></div>
+							<p class="loja-item__desc">Aumenta o Gold gerado pelo companheiro 2 em 2%.</p>
+						</div>
+						<div class="loja-item__acao">
+							<button type="button" class="loja-item__comprar Loja" data-compra-cm="goldcomp2">
+								<span class="loja-item__comprar-rotulo">Comprar</span>
+								<span class="loja-item__custo"><img src="imagens/conhecimento-limpo.png" alt="" /><b class="loja-item__preco" id="precoCMGoldComp2"></b></span>
+							</button>
+							<span class="loja-item__selo" hidden></span>
+						</div>
+					</article>
+				</div>
+				<nav class="loja-abas">
+					<button type="button" class="loja-aba" data-loja="gold"><img src="imagens/hud/gold.png" alt="" /><span class="loja-aba__txt">Gold</span></button>
+					<button type="button" class="loja-aba" data-loja="fechar-cm"><img src="imagens/hud/gem.png" alt="" /><span class="loja-aba__txt">Esmeralda</span></button>
+					<button type="button" class="loja-aba loja-aba--on" aria-current="true"><img src="imagens/conhecimento-limpo.png" alt="" /><span class="loja-aba__txt">Conhecimento</span></button>
+				</nav>
 			</div>
 		</div>
 	</div>

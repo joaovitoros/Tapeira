@@ -1904,6 +1904,22 @@ body {
 	margin: 0;
 }
 
+/* A loja é um painel fixo no canto inferior DIREITO; a navegação
+   (#container-opcoes) fica no canto inferior ESQUERDO. Em telas que não
+   sobram largura, os dois se cruzavam e a loja (z-index 10) cobria os botões.
+   Com a loja aberta, a fileira de botões encolhe até caber à esquerda dela:
+   o painel principal (a loja) fica intacto e o rodapé continua visível.
+   No celular o rodapé é outro layout (loja ACIMA dele) — por isso a regra
+   fica presa a paisagem com 701px+; e o teto de 1430px é exatamente a faixa
+   em que a loja chegaria ao rodapé (acima disso já não há encontro). */
+@media (min-width: 701px) and (max-width: 1430px) and (orientation: landscape) {
+	body:has(#Loja[style*="visible"]) #container-Botoes,
+	body:has(#LojaEsm[style*="visible"]) #container-Botoes,
+	body:has(#LojaCM[style*="visible"]) #container-Botoes {
+		max-width: calc(100vw - min(45vw, 600px) - 76px);
+	}
+}
+
 #btnStatus,
 #btn-Loja,
 #btnSkills,
@@ -10531,10 +10547,10 @@ img.ramos-tree-no__tile {
 	}
 }
 
-/* O ícone do Conhecimento um pouco maior que o das outras moedas. */
-#container-Conhecimento .moeda-icone {
-	height: 1.45em;
-}
+/* As 3 moedas do HUD (gold, esmeralda, conhecimento) têm o MESMO tamanho.
+   O ícone do Conhecimento era 1.45em para compensar o padding vertical do
+   cérebro antigo; com o livro aberto (arte enquadrada para preencher o
+   canvas) ele renderiza do mesmo tamanho que os outros sem regra própria. */
 
 /* ===================== FAZENDA DE FORMIGAS (painel da Cidade) =============
    Reusa .ant-collection-overlay/.ant-collection-panel (mesmo modal dos
@@ -11215,4 +11231,769 @@ img.ramos-tree-no__tile {
 	.cristal-panel {
 		animation: none;
 	}
+}
+
+/* ==========================================================================
+   LOJA v2 — cabeçalho (arte + carteira) + linhas-card + abas de moeda
+   Implementa esbocos/esboco-loja-v2.html no jogo. O contrato com o JS não
+   mudou: os ids (preco* / lvl*, lojaCMsaldo) e os data-* (compra, navegação,
+   especialização, saldo) continuam iguais — só o invólucro virou card.
+   ========================================================================== */
+
+/* O painel deixa de ser o scroll (o scroll agora é a lista interna), então
+   vira uma coluna flex: cabeçalho fixo, lista rolável, abas fixas. */
+#container-Loja > #Loja,
+#container-Loja > #LojaEsm,
+#container-Loja > #LojaCM {
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	overflow: hidden;
+}
+
+/* acento por moeda (as mesmas cores do resto do estilos.css: gold #ffd84a,
+   esmeralda #4dff88, CM #ffe0a0 — o anel/título do CM usa a ametista) */
+.loja-painel {
+	--loja-ring: #e0b62b;
+	--loja-glow: rgba(224, 182, 43, 0.34);
+	--loja-tint: #342c20;
+	--loja-line: #6d5c40;
+	--loja-accent: #ffd84a;
+	--loja-price: #ffd84a;
+}
+
+.loja-painel--gem {
+	--loja-ring: #4fd39b;
+	--loja-glow: rgba(77, 255, 136, 0.26);
+	--loja-tint: #16302a;
+	--loja-line: #2f6a52;
+	--loja-accent: #4dff88;
+	--loja-price: #4dff88;
+}
+
+.loja-painel--cm {
+	--loja-ring: #b7a8ed;
+	--loja-glow: rgba(183, 168, 237, 0.28);
+	--loja-tint: #2d2941;
+	--loja-line: #5b4f86;
+	--loja-accent: #cc3efb;
+	--loja-price: #ffe0a0;
+}
+
+/* ---------------- cabeçalho ---------------- */
+.loja-cabecalho {
+	position: relative;
+	flex: 0 0 auto;
+	overflow: hidden;
+	border-bottom: 1px solid rgba(229, 183, 96, 0.32);
+}
+
+.loja-cabecalho__arte {
+	position: absolute;
+	inset: 0;
+	background: url("../imagens/ui/loja-header.png") right 38% / cover no-repeat;
+	opacity: 0.9;
+}
+
+.loja-cabecalho__sombra {
+	position: absolute;
+	inset: 0;
+	background:
+		linear-gradient(90deg, rgba(8, 11, 16, 0.96) 0%, rgba(8, 11, 16, 0.86) 34%, rgba(8, 11, 16, 0.34) 58%, rgba(8, 11, 16, 0.16) 78%, rgba(8, 11, 16, 0.45) 100%),
+		linear-gradient(180deg, rgba(8, 11, 16, 0.22), rgba(8, 11, 16, 0.55));
+}
+
+.loja-cabecalho__conteudo {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 10px 14px;
+	flex-wrap: wrap;
+	padding: 13px 46px 13px 15px;
+	min-height: 76px;
+}
+
+.loja-apres {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.loja-eyebrow {
+	display: block;
+	margin-bottom: 4px;
+	font-size: 10px;
+	letter-spacing: 0.26em;
+	text-transform: uppercase;
+	color: #9aa4b4;
+}
+
+.loja-titulo {
+	margin: 0;
+	font-family: Georgia, "Times New Roman", serif;
+	font-size: clamp(18px, 1.9vw, 25px);
+	font-weight: 400;
+	letter-spacing: 0.03em;
+	line-height: 1.05;
+	color: var(--loja-accent);
+	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95), 0 0 18px var(--loja-glow);
+}
+
+/* ---------------- carteira ---------------- */
+.loja-carteira {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	flex: 0 0 auto;
+}
+
+.loja-saldo {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+}
+
+.loja-saldo__ico {
+	width: 26px;
+	height: 26px;
+	object-fit: contain;
+	filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+}
+
+.loja-saldo__col {
+	display: flex;
+	flex-direction: column;
+	line-height: 1;
+}
+
+.loja-saldo__val {
+	font-family: Georgia, "Times New Roman", serif;
+	font-size: 14px;
+	font-weight: 700;
+	color: #efece6;
+}
+
+.loja-saldo__lbl {
+	margin-top: 3px;
+	font-size: 9px;
+	letter-spacing: 0.02em;
+	color: #778191;
+}
+
+/* toggle "Auto-compra" global no cabeçalho (antes vivia na caption da tabela) */
+.loja-painel .auto-toggle {
+	flex: 0 0 auto;
+	font-size: 11px;
+	color: #a6adba;
+}
+
+.loja-painel .auto-toggle input {
+	width: 15px;
+	height: 15px;
+}
+
+/* fechar fixo no canto superior direito do cabeçalho (sai do fluxo, então
+   nunca "cai" para uma segunda linha quando o cabeçalho fica apertado) */
+.loja-painel .btnLojaFechar {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	z-index: 2;
+	width: 30px;
+	height: 30px;
+	min-width: 30px;
+	font-size: 17px;
+	background: #11151c;
+	border: 1px solid #303744;
+	border-radius: 8px;
+	color: #a6adba;
+}
+
+.loja-painel .btnLojaFechar:hover {
+	border-color: var(--loja-ring);
+	color: #efece6;
+}
+
+/* o preview de compra fica colado abaixo do cabeçalho (barra própria) */
+.loja-painel > .preview-compra {
+	flex: 0 0 auto;
+	position: static;
+}
+
+/* ---------------- lista rolável ---------------- */
+.loja-lista {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 10px 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	overscroll-behavior: contain;
+}
+
+.loja-lista::-webkit-scrollbar {
+	width: 9px;
+}
+
+.loja-lista::-webkit-scrollbar-track {
+	background: rgba(8, 11, 17, 0.78);
+	border-radius: 8px;
+}
+
+.loja-lista::-webkit-scrollbar-thumb {
+	background: linear-gradient(180deg, #d7b36b, #84602d);
+	border: 2px solid rgba(8, 11, 17, 0.78);
+	border-radius: 8px;
+}
+
+.loja-lista::-webkit-scrollbar-thumb:hover {
+	background: linear-gradient(180deg, #f0d58e, #a77a39);
+}
+
+/* ---------------- linha-card ---------------- */
+.loja-item {
+	display: flex;
+	align-items: center;
+	gap: 10px 12px;
+	padding: 9px 11px;
+	border-radius: 9px;
+	background: linear-gradient(180deg, #1b212b, #171d26);
+	border: 1px solid #303744;
+	transition: border-color 120ms ease;
+}
+
+.loja-item:hover {
+	border-color: var(--loja-line);
+}
+
+.loja-item[hidden] {
+	display: none;
+}
+
+.loja-item--max {
+	opacity: 0.96;
+}
+
+/* medalhão (mesmo padrão das habilidades e da Cidade) */
+.loja-item__emblema {
+	flex: 0 0 46px;
+	width: 46px;
+	height: 46px;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	background: radial-gradient(120% 130% at 50% 16%, #3b3529 0%, #1c1c19 46%, #0c0e12 100%);
+	border: 2px solid #120d07;
+	box-shadow:
+		inset 0 0 0 2px rgba(0, 0, 0, 0.65),
+		inset 0 7px 12px rgba(255, 255, 255, 0.07),
+		inset 0 -9px 16px rgba(0, 0, 0, 0.85),
+		0 0 0 2px var(--loja-ring),
+		0 0 0 3px #17120a,
+		0 0 14px var(--loja-glow),
+		0 4px 12px rgba(0, 0, 0, 0.72);
+}
+
+.loja-item__emblema img {
+	max-width: 32px;
+	max-height: 32px;
+	width: auto;
+	height: auto;
+	object-fit: contain;
+	filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.85));
+}
+
+.loja-item__emblema--wide img {
+	width: 40px;
+	max-width: 40px;
+	max-height: 34px;
+}
+
+.loja-item__info {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.loja-item__topo {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 3px;
+}
+
+.loja-item__nome {
+	font-size: 14px;
+	font-weight: 700;
+	color: #efece6;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.loja-item__nivel {
+	flex: 0 0 auto;
+	padding: 2px 6px;
+	border: 1px solid #2b3341;
+	border-radius: 5px;
+	background: #0e1219;
+	color: #a6adba;
+	font-size: 10px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.loja-item__desc {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	margin: 0;
+	overflow: hidden;
+	color: #a6adba;
+	font-size: 11.5px;
+	line-height: 1.35;
+}
+
+/* ---------------- ação (comprar / selo) ---------------- */
+.loja-item__acao {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	min-width: 108px;
+}
+
+.loja-item__comprar {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1px;
+	width: 108px;
+	min-height: 44px;
+	padding: 5px 8px;
+	cursor: pointer;
+	background: var(--loja-tint);
+	border: 1px solid var(--loja-ring);
+	border-radius: 8px;
+	color: var(--loja-price);
+	font-family: inherit;
+	transition: filter 120ms ease, box-shadow 120ms ease, transform 100ms ease;
+}
+
+.loja-item__comprar:hover {
+	filter: brightness(1.1);
+	box-shadow: 0 0 0 1px var(--loja-ring), 0 0 14px var(--loja-glow);
+}
+
+.loja-item__comprar:active {
+	transform: translateY(1px);
+}
+
+.loja-item__comprar-rotulo {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+
+.loja-item__custo {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.loja-item__custo img {
+	width: 14px;
+	height: 14px;
+	object-fit: contain;
+}
+
+.loja-item__preco {
+	font-family: Georgia, "Times New Roman", serif;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+}
+
+/* saldo insuficiente */
+.loja-item__comprar--off {
+	background: #151a22;
+	border-color: #4d5766;
+	color: #778191;
+}
+
+.loja-item__comprar--off .loja-item__custo img {
+	filter: grayscale(0.5) brightness(0.85);
+}
+
+.loja-item__comprar--off:hover {
+	filter: none;
+	box-shadow: none;
+}
+
+/* estado ★ patente: o botão vira o ingresso da próxima patente */
+.loja-item--patente .loja-item__comprar {
+	border-color: #ffb84d;
+	color: #ffb84d;
+}
+
+.loja-item--patente .loja-item__comprar:hover {
+	box-shadow: 0 0 0 1px #ffb84d, 0 0 14px rgba(255, 184, 77, 0.32);
+}
+
+/* selo MAX (substitui o botão na patente máxima) */
+.loja-item__selo {
+	display: grid;
+	place-items: center;
+	width: 108px;
+	min-height: 44px;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+}
+
+.loja-item__selo[hidden] {
+	display: none;
+}
+
+.loja-item--max .loja-item__selo {
+	color: #ffd36b;
+	background: rgba(255, 211, 107, 0.07);
+	border: 1px solid rgba(255, 211, 107, 0.4);
+}
+
+/* ---------------- auto-compra por item (loja de gold) ---------------- */
+.loja-item__auto {
+	flex: 0 0 48px;
+	display: flex;
+	justify-content: center;
+}
+
+.auto-item-loja {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	cursor: pointer;
+	color: #a6adba;
+	font-size: 10px;
+	font-weight: 700;
+	user-select: none;
+}
+
+.auto-item-loja input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.auto-item-loja__trilha {
+	position: relative;
+	width: 34px;
+	height: 18px;
+	border-radius: 999px;
+	background: #0e1219;
+	border: 1px solid #39414f;
+	transition: background 0.15s, border-color 0.15s;
+}
+
+.auto-item-loja__trilha::after {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: #6b7484;
+	transition: transform 0.15s, background 0.15s;
+}
+
+.auto-item-loja input:checked + .auto-item-loja__trilha {
+	background: var(--loja-tint);
+	border-color: var(--loja-ring);
+}
+
+.auto-item-loja input:checked + .auto-item-loja__trilha::after {
+	transform: translateX(16px);
+	background: var(--loja-ring);
+}
+
+.auto-item-loja input:checked ~ .auto-item-loja__txt {
+	color: #efece6;
+}
+
+.auto-item-loja input:disabled ~ .auto-item-loja__trilha,
+.auto-item-loja input:disabled ~ .auto-item-loja__txt {
+	opacity: 0.5;
+}
+
+.auto-item-loja input:focus-visible ~ .auto-item-loja__trilha {
+	outline: 2px solid #ffe0a0;
+	outline-offset: 2px;
+}
+
+/* ---------------- abas de moeda (rodapé) ---------------- */
+.loja-abas {
+	flex: 0 0 auto;
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 8px;
+	padding: 9px 12px;
+	background: #11151c;
+	border-top: 1px solid #303744;
+}
+
+.loja-aba {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 9px 6px;
+	cursor: pointer;
+	background: #0f141c;
+	border: 1px solid #303744;
+	border-radius: 9px;
+	color: #a6adba;
+	font-family: inherit;
+	transition: border-color 120ms ease, background 120ms ease;
+}
+
+.loja-aba img {
+	width: 22px;
+	height: 22px;
+	object-fit: contain;
+	filter: grayscale(0.55) opacity(0.75);
+}
+
+.loja-aba__txt {
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.loja-aba:hover {
+	border-color: var(--loja-line);
+}
+
+.loja-aba--on,
+.loja-aba--on:hover {
+	cursor: default;
+	background: var(--loja-tint);
+	border-color: var(--loja-ring);
+	box-shadow: inset 0 0 0 1px var(--loja-ring), 0 0 14px var(--loja-glow);
+	color: var(--loja-accent);
+}
+
+.loja-aba--on img {
+	filter: none;
+}
+
+/* a especialização é a última seção da lista da loja de gold */
+.loja-lista > .especializacao {
+	flex: 0 0 auto;
+}
+
+/* ---------------- celular: layout compacto (protótipo Android) ---------------- */
+@media (max-width: 700px) {
+	#container-Loja {
+		height: min(54dvh, 430px);
+		max-height: min(54dvh, 430px);
+	}
+
+	.loja-cabecalho__conteudo {
+		padding: 10px 44px 10px 12px;
+		gap: 8px 10px;
+		min-height: 0;
+	}
+
+	.loja-eyebrow {
+		display: none;
+	}
+
+	.loja-titulo {
+		font-size: 17px;
+	}
+
+	.loja-apres {
+		order: 1;
+	}
+
+	.loja-carteira {
+		order: 3;
+		flex: 1 1 100%;
+		gap: 12px;
+	}
+
+	.auto-toggle--loja {
+		order: 4;
+	}
+
+	.loja-saldo__ico {
+		width: 22px;
+		height: 22px;
+	}
+
+	.loja-saldo__val {
+		font-size: 12px;
+	}
+
+	.loja-lista {
+		padding: 8px;
+		gap: 7px;
+	}
+
+	.loja-item {
+		flex-wrap: wrap;
+		gap: 7px 9px;
+		padding: 8px 9px;
+	}
+
+	.loja-item__emblema {
+		flex: 0 0 40px;
+		width: 40px;
+		height: 40px;
+	}
+
+	.loja-item__emblema img {
+		max-width: 26px;
+		max-height: 26px;
+	}
+
+	.loja-item__emblema--wide img {
+		width: 32px;
+		max-width: 32px;
+		max-height: 28px;
+	}
+
+	.loja-item__info {
+		flex: 1 1 130px;
+	}
+
+	.loja-item__nome {
+		white-space: normal;
+	}
+
+	.loja-item__acao {
+		flex: 1 1 100px;
+		min-width: 0;
+	}
+
+	.loja-item__comprar,
+	.loja-item__selo {
+		width: 100%;
+	}
+
+	.loja-item__auto {
+		flex: 0 0 46px;
+	}
+
+	.loja-abas {
+		gap: 6px;
+		padding: 7px 8px;
+	}
+
+	.loja-aba {
+		flex-direction: column;
+		gap: 3px;
+		padding: 7px 4px;
+	}
+
+	.loja-aba img {
+		width: 20px;
+		height: 20px;
+	}
+
+	.loja-aba__txt {
+		font-size: 10px;
+	}
+}
+
+/* telas BAIXAS (janelas curtas / paisagem): o painel tem pouca altura, então
+   o cabeçalho vira duas linhas compactas (título / carteira + auto) para a
+   lista caber e as abas não saírem do painel. */
+@media (max-height: 700px) {
+	.loja-cabecalho__conteudo {
+		padding: 8px 40px 8px 10px;
+		min-height: 0;
+		gap: 5px 10px;
+	}
+
+	.loja-eyebrow {
+		display: none;
+	}
+
+	.loja-titulo {
+		font-size: 16px;
+	}
+
+	.loja-apres {
+		order: 1;
+	}
+
+	.loja-carteira {
+		order: 3;
+		flex: 1 1 100%;
+		gap: 10px;
+	}
+
+	.auto-toggle--loja {
+		order: 4;
+	}
+
+	.loja-saldo__ico {
+		width: 20px;
+		height: 20px;
+	}
+
+	.loja-saldo__val {
+		font-size: 12px;
+	}
+
+	.loja-saldo__lbl {
+		font-size: 8px;
+	}
+
+	.loja-abas {
+		gap: 6px;
+		padding: 6px 8px;
+	}
+
+	.loja-aba {
+		padding: 6px 4px;
+	}
+
+	.loja-aba img {
+		width: 20px;
+		height: 20px;
+	}
+
+	.loja-aba__txt {
+		font-size: 11px;
+	}
+}
+
+/* ==========================================================================
+   LOJA EM TELA CHEIA
+   A loja ocupa a tela toda (com uma margem fina) e termina acima da navegação
+   #container-opcoes — que fica descoberta abaixo dela. As habilidades ficam
+   POR BAIXO da loja: z-index 16 > 15 da fileira, então a loja as cobre. O topo
+   da navegação é medido por script/ui-rodape.js e publicado em --rodape-top.
+   Vale para todos os layouts — sobrepõe as regras antigas de painel lateral
+   (desktop) e de painel na base (celular/tablet).
+   ========================================================================== */
+#container-Loja {
+	top: clamp(8px, 1.1vw, 16px);
+	right: clamp(8px, 1.1vw, 16px);
+	bottom: calc(100vh - var(--rodape-top, calc(100vh - 5rem)) + clamp(6px, 0.9vw, 12px));
+	left: clamp(8px, 1.1vw, 16px);
+	width: auto;
+	max-width: none;
+	height: auto;
+	max-height: none;
+	margin: 0;
+	transform: none;
+	z-index: 16;
 }

@@ -36,6 +36,8 @@ function LojaEsmeralda(){
 		document.getElementById("lvlEsmCM").innerHTML=lvlEsmCM;
 
 		AtualizaLojaEsmSlotBuild();
+		AtualizaCarteiraLoja();
+		AtualizaSaldoBotoesLoja();
 
 	}else{
 		document.getElementById("LojaEsm").style.visibility="hidden";

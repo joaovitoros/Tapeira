@@ -34,7 +34,10 @@ A fuga **mora dentro do topo** (não é mais uma barra absoluta centralizada).
 2. A fuga fica **abaixo** do Andar/Manter e **alinhada à esquerda** com ele.
 3. Andar/Manter, Pausar e Gold/Esmeraldas com o **mesmo `top`** (alinhados pelo topo).
 4. O topo (com a fuga) **não invade** o Objetivo/Missão (`#container-Metas`).
-5. O ícone de Conhecimento é **maior** que o do Gold (`#container-Conhecimento .moeda-icone { height: 1.45em }`).
+5. As 3 moedas do HUD (Gold, Esmeralda e Conhecimento) têm o **mesmo tamanho**
+   (todas com `height: 1em`; a regra antiga `#container-Conhecimento .moeda-icone
+   { height: 1.45em }` foi removida e a arte do livro aberto vem enquadrada para
+   render do mesmo tamanho das outras).
 
 ## Padrão de override deste arquivo
 

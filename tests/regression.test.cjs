@@ -1519,7 +1519,7 @@ test("loja do Conhecimento aplica +5% de dano/gold/XP por nível", async () => {
             const linhas = [...document.querySelectorAll("#StatusBody tr")];
             const linhaGold = linhas.find(tr => tr.cells[0]?.textContent.includes("Conhecimento gold"))?.textContent || "";
             const linhaXp = linhas.find(tr => tr.cells[0]?.textContent.includes("Conhecimento XP"))?.textContent || "";
-            const rotulos = [...document.querySelectorAll("#TabLojaCM td:first-child")].map(td => td.textContent.trim());
+            const rotulos = [...document.querySelectorAll("#LojaCM .loja-item__nome")].map(el => el.textContent.trim());
             const multGold = MultiplicadorGoldConhecimento();
             const multXp = BonusXPConhecimento();
             // compra de dano aplica ×1,05 na hora e compõe por nível
@@ -1945,6 +1945,196 @@ test("loja usa data-* e listeners registrados (compra, navegação, especializa�
         assert.equal(result.holdIniciado, true, "pointerdown inicia o hold pelo data-compra");
         assert.equal(result.holdComprou, true, "o hold compra pelo data-compra");
         assert.ok(result.checkboxes.every(Boolean), "um checkbox de auto-compra por item");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("loja v2: cabeçalho + carteira + abas, sem sobrepor o rodapé/HUD", async t => {
+    const abrir = async viewport => {
+        const context = await browser.newContext({ viewport });
+        await context.addInitScript(() => {
+            localStorage.setItem("volumeJogo", "0");
+            localStorage.setItem("volumeAmbienteJogo", "0");
+        });
+        const page = await context.newPage();
+        const pageErrors = [];
+        page.on("pageerror", error => pageErrors.push(error.message));
+        await page.goto(`${baseUrl}/Caverna.html`, { waitUntil: "domcontentloaded" });
+        await page.waitForFunction(() =>
+            typeof window.AbreLoja === "function"
+            && document.getElementById("container-Habilidades")
+                .style.getPropertyValue("--rodape-hab-left") !== "",
+            undefined, { timeout: 15000 });
+        return { context, page, pageErrors };
+    };
+
+    // Abre sempre o painel pedido (não alterna): libera as skills para o pior
+    // caso de largura do rodapé e espera a loja ficar acima da navegação
+    // (--rodape-top é medido por ui-rodape.js, então a altura pode ajustar
+    // depois do clique — esperar por isso evita corrida).
+    const abrirLoja = async (page, alvo) => {
+        await page.evaluate(alvo => {
+            maxAndar = 100;
+            CarregaHabilidadesDesbloqueadas(false);
+            AtualizaHabilidadesCombate();
+            if (alvo === "Loja") LojaGold();
+            if (alvo === "LojaEsm") { FechaLoja(); LojaEsmeralda(); }
+            if (alvo === "LojaCM") { FechaLoja(); LojaConhecimento(); }
+        }, alvo);
+        await page.waitForFunction(alvo => {
+            const paineis = ["Loja", "LojaEsm", "LojaCM"];
+            const visiveis = paineis.filter(id => {
+                const el = document.getElementById(id);
+                return !!el && getComputedStyle(el).visibility !== "hidden"
+                    && el.getBoundingClientRect().width > 0;
+            });
+            if (visiveis.length !== 1 || visiveis[0] !== alvo) return false;
+            const shop = document.getElementById("container-Loja");
+            const opc = document.getElementById("container-opcoes");
+            if (!shop || !opc) return true;
+            const r = shop.getBoundingClientRect();
+            const o = opc.getBoundingClientRect();
+            return r.height > 0 && o.height > 0 && r.bottom <= o.top + 1;
+        }, alvo, { timeout: 5000 });
+        await page.evaluate(() => new Promise(r => requestAnimationFrame(r)));
+    };
+
+    const medir = async page => page.evaluate(() => {
+        const reta = el => {
+            const b = el.getBoundingClientRect();
+            return {
+                left: Math.round(b.left), right: Math.round(b.right),
+                top: Math.round(b.top), bottom: Math.round(b.bottom)
+            };
+        };
+        const vis = el => !!el && !el.hidden && getComputedStyle(el).visibility !== "hidden"
+            && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
+        const painel = ["Loja", "LojaEsm", "LojaCM"]
+            .map(id => document.getElementById(id)).find(vis);
+        return {
+            painelId: painel ? painel.id : null,
+            painel: painel ? reta(painel) : null,
+            painelZ: painel ? (parseInt(getComputedStyle(painel.parentElement).zIndex, 10) || 0) : 0,
+            botoes: vis(document.getElementById("container-Botoes"))
+                ? reta(document.getElementById("container-Botoes")) : null,
+            opcoes: vis(document.getElementById("container-opcoes"))
+                ? reta(document.getElementById("container-opcoes")) : null,
+            habilidades: vis(document.getElementById("container-Habilidades"))
+                ? reta(document.getElementById("container-Habilidades")) : null,
+            habilidadesZ: (() => {
+                const h = document.getElementById("container-Habilidades");
+                return h ? (parseInt(getComputedStyle(h).zIndex, 10) || 0) : 0;
+            })(),
+            hud: vis(document.getElementById("container-HudTopo"))
+                ? reta(document.getElementById("container-HudTopo")) : null,
+            metas: vis(document.getElementById("container-Metas"))
+                ? reta(document.getElementById("container-Metas")) : null,
+            cabecalho: painel ? reta(painel.querySelector(".loja-cabecalho")) : null,
+            abas: painel ? reta(painel.querySelector(".loja-abas")) : null,
+            abasTexto: painel
+                ? [...painel.querySelectorAll(".loja-aba__txt")].map(e => e.textContent.trim()) : [],
+            saldos: painel
+                ? [...painel.querySelectorAll("[data-saldo]")].map(e => e.textContent.trim()) : [],
+            larguraTela: document.documentElement.clientWidth,
+            alturaTela: document.documentElement.clientHeight
+        };
+    });
+
+    const cruza = (a, b) => !!a && !!b
+        && a.left < b.right - 1 && a.right > b.left + 1
+        && a.top < b.bottom - 1 && a.bottom > b.top + 1;
+
+    const conferePainel = (m, nome) => {
+        assert.ok(m.painelId, nome + ": um painel da loja está aberto");
+        assert.ok(m.painel.left >= 0 && m.painel.top >= 0
+            && m.painel.right <= m.larguraTela && m.painel.bottom <= m.alturaTela + 1,
+            nome + ": painel da loja dentro da tela");
+        assert.ok(m.cabecalho.top >= m.painel.top - 1 && m.cabecalho.bottom <= m.painel.bottom + 1,
+            nome + ": cabeçalho dentro do painel");
+        assert.ok(m.abas.bottom <= m.painel.bottom + 1,
+            nome + ": abas dentro do painel");
+        assert.ok(!cruza(m.painel, m.opcoes), nome + ": loja não sobrepõe o #container-opcoes");
+        // A loja ocupa a tela toda e cobre a fileira de habilidades de
+        // propósito: z-index da loja acima do da fileira.
+        assert.ok(m.painelZ > m.habilidadesZ,
+            nome + ": loja acima das habilidades (z " + m.painelZ + " > " + m.habilidadesZ + ")");
+    };
+
+    const { context, page, pageErrors } = await abrir({ width: 1366, height: 768 });
+    try {
+        await t.test("gold: estrutura, carteira e abas de moeda", async () => {
+            await abrirLoja(page, "Loja");
+            const m = await medir(page);
+            conferePainel(m, "gold");
+            assert.deepEqual(m.abasTexto, ["Gold", "Esmeralda", "Conhecimento"],
+                "as 3 abas de moeda no rodapé da loja");
+            assert.equal(m.saldos.length, 3, "carteira com as 3 moedas");
+            assert.ok(m.saldos.every(v => /[0-9]/.test(v)), "carteira mostra valores");
+            const checkboxes = await page.evaluate(() => {
+                SyncCheckboxesAutoLoja();
+                return ITENS_AUTO_COMPRA.map((_, i) => !!document.getElementById("autoItemLoja-" + i));
+            });
+            assert.ok(checkboxes.every(Boolean),
+                "um toggle de auto-compra por item da loja de gold");
+        });
+
+        await t.test("esmeralda e conhecimento abrem pelo painel certo", async () => {
+            await abrirLoja(page, "LojaEsm");
+            let m = await medir(page);
+            assert.equal(m.painelId, "LojaEsm", "aba de esmeralda abre a loja de esmeraldas");
+            conferePainel(m, "esm");
+            await abrirLoja(page, "LojaCM");
+            m = await medir(page);
+            assert.equal(m.painelId, "LojaCM", "aba de conhecimento abre a loja do CM");
+            conferePainel(m, "cm");
+        });
+
+        await t.test("estado MAX e ★ patente na loja de gold", async () => {
+            const r = await page.evaluate(() => {
+                LojaGold();
+                // no teto com próxima patente: o botão vira o ingresso ★
+                lvlDano = ITENS_PATENTE.dano.niveis[0];
+                patenteDano = 0;
+                AtualizaLojaGold();
+                const rotuloPatente = document
+                    .querySelector('.loja-item[data-item="dano"] .loja-item__comprar-rotulo')
+                    .textContent.trim();
+                // patente máxima: sem próxima compra — entra o selo MAX
+                lvlDano = ITENS_PATENTE.dano.niveis[ITENS_PATENTE.dano.niveis.length - 1];
+                patenteDano = ITENS_PATENTE.dano.niveis.length - 1;
+                AtualizaLojaGold();
+                const linhaMax = document.querySelector('.loja-item[data-item="dano"]');
+                const btn = linhaMax.querySelector(".loja-item__comprar");
+                const selo = linhaMax.querySelector(".loja-item__selo");
+                return {
+                    rotuloPatente,
+                    maxBtnOculto: getComputedStyle(btn).display === "none",
+                    seloVisivel: !selo.hidden,
+                    seloTexto: selo.textContent.trim()
+                };
+            });
+            assert.equal(r.rotuloPatente, "★ Patente",
+                "no teto com ★ pendente o botão vira ★ Patente");
+            assert.ok(r.maxBtnOculto, "na patente máxima o botão some");
+            assert.ok(r.seloVisivel && r.seloTexto === "MAX",
+                "na patente máxima entra o selo MAX");
+        });
+
+        await t.test("varredura de tamanhos: loja não sobrepõe rodapé/HUD", async () => {
+            const tamanhos = [
+                [1920, 1080], [1600, 900], [1440, 900], [1366, 768], [1280, 720],
+                [1100, 800], [1024, 768], [900, 520], [800, 480], [768, 1024],
+                [600, 900], [480, 800], [400, 740], [390, 844], [360, 640], [320, 568]
+            ];
+            for (const [w, h] of tamanhos) {
+                await page.setViewportSize({ width: w, height: h });
+                await abrirLoja(page, "Loja");
+                conferePainel(await medir(page), `${w}x${h}`);
+            }
+        });
+
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();
@@ -2698,7 +2888,7 @@ test("HUD: Conhecimento Mug aparece ao lado de gold e esmeraldas", async () => {
     }
 });
 
-test("HUD: a fuga fica dentro do topo, abaixo do Andar/Manter, e o ícone de CM é maior", async () => {
+test("HUD: a fuga fica dentro do topo, abaixo do Andar/Manter, e as 3 moedas têm o mesmo tamanho", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
         await page.waitForFunction(() => typeof UI !== "undefined" && typeof UI.render === "function",
@@ -2719,7 +2909,8 @@ test("HUD: a fuga fica dentro do topo, abaixo do Andar/Manter, e o ícone de CM 
                 gold: r(document.getElementById("container-GoldEsmeraldas")),
                 metas: r(document.getElementById("container-Metas")),
                 iconeCM: r(document.querySelector("#container-Conhecimento .moeda-icone")),
-                iconeGold: r(document.querySelector("#container-Gold .moeda-icone"))
+                iconeGold: r(document.querySelector("#container-Gold .moeda-icone")),
+                iconeEsmeralda: r(document.querySelector("#container-Esmeraldas .moeda-icone"))
             };
         });
 
@@ -2735,9 +2926,10 @@ test("HUD: a fuga fica dentro do topo, abaixo do Andar/Manter, e o ícone de CM 
         assert.equal(medidas.pausar.t, medidas.andar.t, "Pausar alinhado pelo topo");
         assert.ok(medidas.fugir.b <= medidas.metas.t,
             "o topo (com a fuga) não invade o Objetivo/Missão");
-        assert.ok(medidas.iconeCM.h > medidas.iconeGold.h,
-            "o ícone de Conhecimento é maior que o do Gold (" +
-            medidas.iconeCM.h + " > " + medidas.iconeGold.h + ")");
+        assert.equal(medidas.iconeCM.h, medidas.iconeGold.h,
+            "as 3 moedas têm a MESMA altura (CM " + medidas.iconeCM.h + " = Gold " + medidas.iconeGold.h + ")");
+        assert.equal(medidas.iconeEsmeralda.h, medidas.iconeGold.h,
+            "a esmeralda tem a mesma altura do gold (" + medidas.iconeEsmeralda.h + " = " + medidas.iconeGold.h + ")");
 
         assert.deepEqual(pageErrors, []);
     } finally {

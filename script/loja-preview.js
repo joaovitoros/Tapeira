@@ -173,8 +173,8 @@ function MostraPreviewCompra(btn) {
 
 	// cor: dá para pagar?
 	let podePagar = true;
-	const linha = btn.closest("tr");
-	const celulaPreco = linha ? linha.querySelector("td:nth-child(2) > div") : null;
+	const linha = btn.closest(".loja-item");
+	const celulaPreco = linha ? linha.querySelector(".loja-item__preco") : null;
 	const idPreco = celulaPreco ? (ALIAS_PRECO[celulaPreco.id] || celulaPreco.id) : "";
 	if (/^preco/.test(idPreco) && window[idPreco] !== undefined) {
 		// no teto com patente pendente a célula mostra o ingresso, não o nível
@@ -188,7 +188,7 @@ function MostraPreviewCompra(btn) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-	document.querySelectorAll("#Loja input.Loja, #LojaEsm input.Loja").forEach(btn => {
+	document.querySelectorAll("#Loja .Loja, #LojaEsm .Loja").forEach(btn => {
 		const mostrar = () => MostraPreviewCompra(btn);
 		btn.addEventListener("mouseenter", mostrar);
 		btn.addEventListener("focus", mostrar);
@@ -259,7 +259,7 @@ function HoldCompraInicia(btn) {
 // Delegado no document: não depende de quando o DOM da loja é montado
 document.addEventListener("pointerdown", (e) => {
 	if (e.pointerType === "mouse" && e.button !== 0) return;
-	const btn = e.target && e.target.closest ? e.target.closest("#Loja input.Loja[data-compra]") : null;
+	const btn = e.target && e.target.closest ? e.target.closest("#Loja .Loja[data-compra]") : null;
 	if (!btn) return;
 	if (holdCompraBotao === btn && holdCompraTimer) return; // já segurando
 	HoldCompraInicia(btn);
