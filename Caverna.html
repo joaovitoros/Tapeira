@@ -27,6 +27,11 @@
 	<script src="script/ui-telas.js"></script>
 	<script src="script/ui-feitos.js"></script>
 	<script src="script/casa.js"></script>
+	<script src="script/fazenda.js"></script>
+	<script src="script/pesquisa.js"></script>
+	<script src="script/mercado.js"></script>
+	<script src="script/fabrica.js"></script>
+	<script src="script/cristal.js"></script>
 	<script src="script/ui-cidade.js"></script>
 	<script src="script/ui-rodape.js"></script>
 	<script src="script/missoes.js"></script>
@@ -117,12 +122,12 @@
 
 			<div id="container-GoldEsmeraldas">
 				<div id="container-Gold">
-					<img class="moeda-icone" src="imagens/gold.png" alt="Gold:" />
+					<img class="moeda-icone" src="imagens/hud/gold.png" alt="Gold:" />
 					<div class="contGold" id="contGold">0</div>
 				</div>
 
 				<div id="container-Esmeraldas">
-					<img class="moeda-icone" src="imagens/gem.png" alt="Esmeraldas:" />
+					<img class="moeda-icone" src="imagens/hud/gem.png" alt="Esmeraldas:" />
 					<div class="contEmeraldas" id="contEmeraldas">0</div>
 				</div>
 
@@ -141,7 +146,7 @@
 			<div class="coluna-rail" id="colunaRail">
 			<section id="golden-chest-tracker" aria-label="Baú dourado">
 				<button type="button" id="golden-chest-claim" class="golden-chest-tracker__main" disabled>
-					<img src="imagens/bau-dourado.svg" alt="" class="golden-chest-tracker__icon">
+					<img src="imagens/hud/bau-dourado.svg" alt="" class="golden-chest-tracker__icon">
 					<span id="golden-chest-progress-text">20:00</span>
 				</button>
 
@@ -205,12 +210,12 @@
 			</div>
 		</div>
 
-		<img src="imagens/player.png" class="player">
-		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo1" id="inimigo1">
-		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo2" id="inimigo2">
-		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo3" id="inimigo3">
-		<img style="visibility:hidden" src="imagens/inimigo.png" class="inimigo4" id="inimigo4">
-		<img style="visibility:hidden" src="imagens/comerciante.png" class="comerciante" id="comerciante" alt="">
+		<img src="imagens/personagens/player.png" class="player">
+		<img style="visibility:hidden" src="imagens/personagens/inimigo.png" class="inimigo1" id="inimigo1">
+		<img style="visibility:hidden" src="imagens/personagens/inimigo.png" class="inimigo2" id="inimigo2">
+		<img style="visibility:hidden" src="imagens/personagens/inimigo.png" class="inimigo3" id="inimigo3">
+		<img style="visibility:hidden" src="imagens/personagens/inimigo.png" class="inimigo4" id="inimigo4">
+		<img style="visibility:hidden" src="imagens/personagens/comerciante.png" class="comerciante" id="comerciante" alt="">
 
 		<div id="container-Habilidades">
 			<div id="BaraQTDHab1Borda">
@@ -219,7 +224,7 @@
 			<div id="skill-unlock-panel" class="skill-unlock-panel" hidden aria-label="Habilidades desbloqueadas">
 				<button type="button" id="skill-electric" class="combat-skill" hidden aria-label="Corrente elétrica"
 					title="Corrente elétrica">
-					<img class="combat-skill__icon" src="imagens/skill-electric.png" alt="">
+					<img class="combat-skill__icon" src="imagens/skills/skill-electric.png" alt="">
 					<span id="skill-electric-progress" class="sr-only"></span>
 					<span class="combat-skill__meter" role="progressbar" aria-label="Carga da corrente elétrica"
 						aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -228,7 +233,7 @@
 				</button>
 				<button type="button" id="skill-gold" class="combat-skill" hidden aria-label="Bônus de Gold"
 					title="Bônus de Gold">
-					<img class="combat-skill__icon combat-skill__icon--gold" src="imagens/skill-gold.png" alt="">
+					<img class="combat-skill__icon combat-skill__icon--gold" src="imagens/skills/skill-gold.png" alt="">
 					<span id="skill-gold-progress" class="sr-only"></span>
 					<span class="combat-skill__meter" role="progressbar" aria-label="Carga do bônus de Gold"
 						aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -237,7 +242,7 @@
 				</button>
 				<button type="button" id="skill-escape" class="combat-skill" hidden aria-label="Parar fuga"
 					title="Parar fuga">
-					<img class="combat-skill__icon combat-skill__icon--escape" src="imagens/skill-escape.png" alt="">
+					<img class="combat-skill__icon combat-skill__icon--escape" src="imagens/skills/skill-escape.png" alt="">
 					<span id="skill-escape-progress" class="sr-only"></span>
 					<span class="combat-skill__meter" role="progressbar" aria-label="Carga de parar a fuga"
 						aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -246,7 +251,7 @@
 				</button>
 				<button type="button" id="skill-frenzy" class="combat-skill" hidden aria-label="Toque Frenético"
 					title="Toque Frenético">
-					<img class="combat-skill__icon combat-skill__icon--frenzy" src="imagens/skill-frenzy.png" alt="">
+					<img class="combat-skill__icon combat-skill__icon--frenzy" src="imagens/skills/skill-frenzy.png" alt="">
 					<span id="skill-frenzy-progress" class="sr-only"></span>
 					<span class="combat-skill__meter" role="progressbar" aria-label="Carga do Toque Frenético"
 						aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -309,47 +314,49 @@
 					<button type="button" class="cidade-fechar" data-cidade="fechar" aria-label="Fechar cidade">×</button>
 				</div>
 				<div class="cidade-cena">
-					<div class="cidade-chao" aria-hidden="true"></div>
-					<img class="cidade-decor cidade-decor--moita-esq" src="imagens/cidade/decor/moita.png" alt="" aria-hidden="true">
-					<img class="cidade-decor cidade-decor--pedras-esq" src="imagens/cidade/decor/pedras.png" alt="" aria-hidden="true">
-					<img class="cidade-decor cidade-decor--poste-esq" src="imagens/cidade/decor/poste.png" alt="" aria-hidden="true">
-					<img class="cidade-decor cidade-decor--carrinho-dir" src="imagens/cidade/decor/carrinho.png" alt="" aria-hidden="true">
-					<img class="cidade-decor cidade-decor--barril-dir" src="imagens/cidade/decor/barril.png" alt="" aria-hidden="true">
-					<img class="cidade-decor cidade-decor--moita-dir" src="imagens/cidade/decor/moita-amarela.png" alt="" aria-hidden="true">
-					<div class="cidade-decor cidade-decor--lanterna cidade-decor--lanterna-esq" aria-hidden="true"></div>
-					<div class="cidade-decor cidade-decor--lanterna cidade-decor--lanterna-dir" aria-hidden="true"></div>
-					<img class="cidade-decor cidade-decor--campo-cogumelos" src="imagens/cidade/decor/cogumelos.png" alt="" aria-hidden="true">
-					<img class="cidade-decor cidade-decor--campo-flores" src="imagens/cidade/decor/flores.png" alt="" aria-hidden="true">
-					<div class="cidade-decor cidade-decor--urso cidade-decor--urso1" aria-hidden="true">
-						<img src="imagens/cidade/decor/urso1.png" alt="">
+					<div class="cidade-fundo" aria-hidden="true"></div>
+					<div class="cidade-fonte" aria-hidden="true"></div>
+					<div class="cidade-fogo" aria-hidden="true"></div>
+					<div class="cidade-lampiao cidade-lampiao--1" aria-hidden="true"></div>
+					<div class="cidade-lampiao cidade-lampiao--2" aria-hidden="true"></div>
+					<div class="cidade-lampiao cidade-lampiao--3" aria-hidden="true"></div>
+					<div class="cidade-lampiao cidade-lampiao--4" aria-hidden="true"></div>
+					<div class="cidade-lampiao cidade-lampiao--5" aria-hidden="true"></div>
+					<div class="cidade-lampiao cidade-lampiao--6" aria-hidden="true"></div>
+					<div class="cidade-fumaca cidade-fumaca--fabrica" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+					<div class="cidade-fumaca cidade-fumaca--casa" aria-hidden="true"><span></span><span></span><span></span></div>
+					<div class="cidade-particulas" aria-hidden="true">
+						<span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
 					</div>
-					<div class="cidade-decor cidade-decor--urso cidade-decor--urso2" aria-hidden="true">
-						<img src="imagens/cidade/decor/urso2.png" alt="">
-					</div>
-					<button type="button" class="cidade-predio cidade-predio--casa" data-cidade="casa">
-						<img class="cidade-predio__img" src="imagens/cidade/edificios/casa.png" alt="">
-						<span class="cidade-predio__nome">Casa</span>
-						<span class="cidade-predio__abre">Status</span>
-					</button>
+					<div class="cidade-decor cidade-decor--urso cidade-decor--mine1" aria-hidden="true"><img src="imagens/cidade/decor/minerador1.png" alt=""></div>
+					<div class="cidade-decor cidade-decor--urso cidade-decor--mine2" aria-hidden="true"><img src="imagens/cidade/decor/minerador2.png" alt=""></div>
+					<div class="cidade-decor cidade-decor--urso cidade-decor--mine3" aria-hidden="true"><img src="imagens/cidade/decor/minerador3.png" alt=""></div>
+					<div class="cidade-decor cidade-decor--urso cidade-decor--mine4" aria-hidden="true"><img src="imagens/cidade/decor/minerador4.png" alt=""></div>
+					<div class="cidade-decor cidade-decor--urso cidade-decor--pesq1" aria-hidden="true"><img src="imagens/cidade/decor/pesquisador1.png" alt=""></div>
+					<div class="cidade-decor cidade-decor--urso cidade-decor--pesq2" aria-hidden="true"><img src="imagens/cidade/decor/pesquisador2.png" alt=""></div>
+					<div class="cidade-decor cidade-decor--urso cidade-decor--pesq3" aria-hidden="true"><img src="imagens/cidade/decor/pesquisador3.png" alt=""></div>
+					<div class="cidade-decor cidade-decor--urso cidade-decor--pesq4" aria-hidden="true"><img src="imagens/cidade/decor/pesquisador4.png" alt=""></div>
+					<div class="cidade-decor cidade-decor--urso cidade-decor--form1" aria-hidden="true"><img src="imagens/cidade/decor/formiga1.png" alt=""></div>
+					<div class="cidade-decor cidade-decor--urso cidade-decor--form2" aria-hidden="true"><img src="imagens/cidade/decor/formiga2.png" alt=""></div>
+					<div class="cidade-decor cidade-decor--urso cidade-decor--form3" aria-hidden="true"><img src="imagens/cidade/decor/formiga3.png" alt=""></div>
+					<div class="cidade-decor cidade-decor--urso cidade-decor--form4" aria-hidden="true"><img src="imagens/cidade/decor/formiga4.png" alt=""></div>
 					<button type="button" class="cidade-predio cidade-predio--mercado" data-cidade="mercado">
-						<img class="cidade-predio__img" src="imagens/cidade/edificios/mercado.png" alt="">
-						<span class="cidade-predio__nome">Mercado</span>
-						<span class="cidade-predio__abre">Loja</span>
+						<span class="cidade-predio__banner"><img class="cidade-predio__icone" src="imagens/cidade/icones/icone-mercado.png" alt="" aria-hidden="true"><span class="cidade-predio__nome">Mercado</span></span>
+					</button>
+					<button type="button" class="cidade-predio cidade-predio--casa" data-cidade="casa">
+						<span class="cidade-predio__banner"><img class="cidade-predio__icone" src="imagens/cidade/icones/icone-casa.png" alt="" aria-hidden="true"><span class="cidade-predio__nome">Casa</span></span>
 					</button>
 					<button type="button" class="cidade-predio cidade-predio--pesquisa" data-cidade="pesquisa">
-						<img class="cidade-predio__img" src="imagens/cidade/edificios/pesquisa.png" alt="">
-						<span class="cidade-predio__nome">Pesquisa</span>
-						<span class="cidade-predio__abre">Ramos</span>
-					</button>
-					<button type="button" class="cidade-predio cidade-predio--fazenda" data-cidade="fazenda">
-						<img class="cidade-predio__img" src="imagens/cidade/edificios/fazenda.png" alt="">
-						<span class="cidade-predio__nome">Fazenda de Formigas</span>
-						<span class="cidade-predio__abre">Formigas</span>
+						<span class="cidade-predio__banner"><img class="cidade-predio__icone" src="imagens/cidade/icones/icone-pesquisa.png" alt="" aria-hidden="true"><span class="cidade-predio__nome">Centro de Pesquisa</span></span>
 					</button>
 					<button type="button" class="cidade-predio cidade-predio--fabrica" data-cidade="fabrica">
-						<img class="cidade-predio__img" src="imagens/cidade/edificios/fabrica.png" alt="">
-						<span class="cidade-predio__nome">Fábrica</span>
-						<span class="cidade-predio__abre">Itens da build</span>
+						<span class="cidade-predio__banner"><img class="cidade-predio__icone" src="imagens/cidade/icones/icone-fabrica.png" alt="" aria-hidden="true"><span class="cidade-predio__nome">Fábrica</span></span>
+					</button>
+					<button type="button" class="cidade-predio cidade-predio--fazenda" data-cidade="fazenda">
+						<span class="cidade-predio__banner"><img class="cidade-predio__icone" src="imagens/cidade/icones/icone-fazenda.png" alt="" aria-hidden="true"><span class="cidade-predio__nome">Fazenda de Formigas</span></span>
+					</button>
+					<button type="button" class="cidade-predio cidade-predio--cristal" data-cidade="cristal">
+						<span class="cidade-predio__banner"><img class="cidade-predio__icone" src="imagens/cidade/icones/icone-cristal.png" alt="" aria-hidden="true"><span class="cidade-predio__nome">Cristal</span></span>
 					</button>
 				</div>
 			</div>

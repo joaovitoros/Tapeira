@@ -3,14 +3,14 @@ $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Drawing
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$sourcePath = Join-Path $projectRoot "imagens/player.png"
+$sourcePath = Join-Path $projectRoot "imagens/personagens/player.png"
 $resourcesPath = Join-Path $projectRoot "android/app/src/main/res"
 
 if (-not (Test-Path -LiteralPath $sourcePath)) {
     throw "Player image not found: $sourcePath"
 }
 
-# Square framing of the character's face and helmet in imagens/player.png (1024x1536).
+# Square framing of the character's face and helmet in imagens/personagens/player.png (1024x1536).
 $faceCrop = [System.Drawing.Rectangle]::new(250, 115, 650, 650)
 $densities = @{
     "mipmap-mdpi" = 48
@@ -50,4 +50,4 @@ try {
     $sourceImage.Dispose()
 }
 
-Write-Output "Android launcher icons generated from imagens/player.png"
+Write-Output "Android launcher icons generated from imagens/personagens/player.png"

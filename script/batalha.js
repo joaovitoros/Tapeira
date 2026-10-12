@@ -100,7 +100,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	// nos automáticos e do companheiro — ChanceMorteAssassino().
 	const morteInstantaneaAssassino = lvlComp5 > 0
 		&& Math.random() < ChanceMorteAssassino(validaDano);
-	// Assassino: passiva de veneno — 1% dos golpes tiram 3% da vida máxima do andar
+	// Assassino: passiva de veneno — 2% dos golpes tiram 5% da vida máxima do andar
 	const venenoAssassino = lvlComp5 > 0 && Math.random() < CHANCE_VENENO_ASSASSINO;
 	const danoVeneno = venenoAssassino ? N(vidaAndar) * VENENO_ASSASSINO_PCT : 0;
 	// especialização Cadeia de Ataques: este golpe conta pro stack do alvo
@@ -145,6 +145,11 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	// bloqueia o caminho)
 	dano *= Tapeira.ItensBuild.multDano();
 	if (andar % 10 === 0) dano *= Tapeira.ItensBuild.multGuardiao();
+	// Análise de inimigos (Centro de Pesquisa): +% de dano contra o tipo do
+	// andar atual (comuns / guardiões) — ponto único do bônus
+	if (typeof PesquisaBonusInimigo === "function") {
+		dano *= PesquisaBonusInimigo(TipoInimigoAtual());
+	}
 	// especialização: buff/nerf aplicado no tempo do hit (não muta danoJogador)
 	dano *= MultiplicadorDanoEspecializacao(critico);
 	// Cadeia de Ataques: dano extra por ataque acumulado no MESMO alvo
@@ -434,6 +439,9 @@ let ultimoFeedbackCriticoMs = 0;
 function FeedbackCritico() {
 	// preferência "Tremor no crítico" desligada
 	if (window.Tapeira?.Config && !window.Tapeira.Config.ativo("tremerCritico")) return;
+	// Cidade aberta (tela cheia): a caverna continua rodando por baixo, mas o
+	// tremor/flash do crítico não devem aparecer por cima da Cidade.
+	if (document.getElementById("container-Cidade")?.hidden === false) return;
 	const agora = Date.now();
 	if (agora - ultimoFeedbackCriticoMs < 600) return;
 	ultimoFeedbackCriticoMs = agora;
@@ -558,7 +566,7 @@ function animarEfeitoEletrico(el) {
 	const rect = el.getBoundingClientRect();
 	const effect = document.createElement("img");
 	effect.className = "enemy-electric-impact";
-	effect.src = "imagens/efeito-eletrico.svg";
+	effect.src = "imagens/skills/efeito-eletrico.svg";
 	effect.alt = "";
 	effect.setAttribute("aria-hidden", "true");
 	effect.style.left = `${rect.left + window.scrollX + rect.width * 0.08}px`;
@@ -629,7 +637,7 @@ function animarMorte(el) {
 	CriaPoeiraMorte(rect);
 	const morte = document.createElement("img");
 	morte.className = "morteAnim";
-	morte.src = "imagens/morte/frame12.png";
+	morte.src = "imagens/animacoes/morte/frame12.png";
 	morte.style.left = `${rect.left}px`;
 	morte.style.top = `${rect.top}px`;
 	morte.style.width = `${rect.width}px`;
@@ -640,18 +648,18 @@ function animarMorte(el) {
 	el.style.visibility = "hidden";
 
 	const frames = [
-		"imagens/morte/frame12.png",
-		"imagens/morte/frame11.png",
-		"imagens/morte/frame10.png",
-		"imagens/morte/frame9.png",
-		"imagens/morte/frame8.png",
-		"imagens/morte/frame7.png",
-		"imagens/morte/frame6.png",
-		"imagens/morte/frame5.png",
-		"imagens/morte/frame4.png",
-		"imagens/morte/frame3.png",
-		"imagens/morte/frame2.png",
-		"imagens/morte/frame1.png"
+		"imagens/animacoes/morte/frame12.png",
+		"imagens/animacoes/morte/frame11.png",
+		"imagens/animacoes/morte/frame10.png",
+		"imagens/animacoes/morte/frame9.png",
+		"imagens/animacoes/morte/frame8.png",
+		"imagens/animacoes/morte/frame7.png",
+		"imagens/animacoes/morte/frame6.png",
+		"imagens/animacoes/morte/frame5.png",
+		"imagens/animacoes/morte/frame4.png",
+		"imagens/animacoes/morte/frame3.png",
+		"imagens/animacoes/morte/frame2.png",
+		"imagens/animacoes/morte/frame1.png"
 	];
 
 	let frame = 0;

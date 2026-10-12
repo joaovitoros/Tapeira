@@ -227,7 +227,9 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 	// +5% de XP por nível da Loja do Conhecimento e +10% da conquista
 	// Milionário (arredonda pra baixo e respeita o teto de XP restante)
 	// Grimório Estelar (itens da build): +20% por cópia no XP por abate
-	const xpBase = Math.min(limiteXP, Math.floor(xpCalculado * BonusXPConhecimento() * MultiplicadorXPConquistaComp() * Tapeira.ItensBuild.multXP()));
+	// Cristal (Cidade): amplia o XP conforme a profundidade do reset
+	const multCristalXP = (typeof MultiplicadorCristal === "function") ? MultiplicadorCristal() : 1;
+	const xpBase = Math.min(limiteXP, Math.floor(xpCalculado * BonusXPConhecimento() * MultiplicadorXPConquistaComp() * Tapeira.ItensBuild.multXP() * multCristalXP));
 	if (!Number.isSafeInteger(xpBase) || xpBase < 0) {
 		throw new TypeError("A quantidade de experiência precisa ser um inteiro não negativo.");
 	}

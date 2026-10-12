@@ -242,6 +242,65 @@ function ValidarSave(save) {
 		&& (!Number.isSafeInteger(save.trofeusExibidos) || save.trofeusExibidos < 0 || save.trofeusExibidos > trofeusMax)) {
 		throw new TypeError("Os troféus exibidos da Casa no save são inválidos.");
 	}
+	// Fazenda de Formigas (Cidade): nível e Rainha dentro dos tetos
+	const fazendaMax = (typeof FAZENDA_MAX_NIVEL === "number") ? FAZENDA_MAX_NIVEL : 10;
+	const fazendaRainhaMax = (typeof FAZENDA_RAINHA_MAX === "number") ? FAZENDA_RAINHA_MAX : 5;
+	if (save.fazendaNivel !== undefined
+		&& (!Number.isSafeInteger(save.fazendaNivel) || save.fazendaNivel < 0 || save.fazendaNivel > fazendaMax)) {
+		throw new TypeError("O nível da Fazenda no save é inválido.");
+	}
+	if (save.fazendaRainha !== undefined
+		&& (!Number.isSafeInteger(save.fazendaRainha) || save.fazendaRainha < 0 || save.fazendaRainha > fazendaRainhaMax)) {
+		throw new TypeError("O nível da Rainha da Fazenda no save é inválido.");
+	}
+	// Centro de Pesquisa (Cidade): objetos { id: nível } com ids conhecidos e
+	// níveis dentro do teto. Campos não-numéricos (whitelist abaixo).
+	const pesquisaItemMax = (typeof PESQUISA_ITEM_MAX === "number") ? PESQUISA_ITEM_MAX : 5;
+	const pesquisaInimigoMax = (typeof PESQUISA_INIMIGO_MAX === "number") ? PESQUISA_INIMIGO_MAX : 5;
+	const idsItens = ((window.Tapeira && window.Tapeira.ItensBuild && window.Tapeira.ItensBuild.POOL) || []).map(i => i.id);
+	const idsInimigos = (typeof PESQUISA_INIMIGOS !== "undefined" ? PESQUISA_INIMIGOS : []).map(t => t.id);
+	const validaMapaPesquisa = (valor, ids, max) => {
+		if (valor === undefined) return;
+		if (!valor || typeof valor !== "object" || Array.isArray(valor)) {
+			throw new TypeError("Os dados de pesquisa do save são inválidos.");
+		}
+		for (const [chave, nivel] of Object.entries(valor)) {
+			if (!ids.includes(chave) || !Number.isSafeInteger(nivel) || nivel < 0 || nivel > max) {
+				throw new TypeError("Os dados de pesquisa do save são inválidos.");
+			}
+		}
+	};
+	validaMapaPesquisa(save.pesquisaItens, idsItens, pesquisaItemMax);
+	validaMapaPesquisa(save.pesquisaInimigos, idsInimigos, pesquisaInimigoMax);
+	// Mercado (Cidade): reputação (desconto nas lojas) dentro do teto
+	const reputacaoMax = (typeof REPUTACAO_MAX === "number") ? REPUTACAO_MAX : 10;
+	if (save.reputacao !== undefined
+		&& (!Number.isSafeInteger(save.reputacao) || save.reputacao < 0 || save.reputacao > reputacaoMax)) {
+		throw new TypeError("A reputação do Mercado no save é inválida.");
+	}
+	// Fábrica (Cidade): nível da linha de montagem dentro do teto
+	const fabricaMax = (typeof FABRICA_MAX_NIVEL === "number") ? FABRICA_MAX_NIVEL : 10;
+	if (save.fabricaNivel !== undefined
+		&& (!Number.isSafeInteger(save.fabricaNivel) || save.fabricaNivel < 0 || save.fabricaNivel > fabricaMax)) {
+		throw new TypeError("O nível da Fábrica no save é inválido.");
+	}
+	// Cristal (Cidade): nível dentro do teto
+	const cristalMax = (typeof CRISTAL_MAX_NIVEL === "number") ? CRISTAL_MAX_NIVEL : 10;
+	if (save.cristalNivel !== undefined
+		&& (!Number.isSafeInteger(save.cristalNivel) || save.cristalNivel < 0 || save.cristalNivel > cristalMax)) {
+		throw new TypeError("O nível do Cristal no save é inválido.");
+	}
+	// Forja (Cidade): objeto { itemId: nível } com ids conhecidos e níveis no teto
+	if (save.forja !== undefined) {
+		if (!save.forja || typeof save.forja !== "object" || Array.isArray(save.forja)) {
+			throw new TypeError("Os dados da forja do save são inválidos.");
+		}
+		for (const [chave, nivel] of Object.entries(save.forja)) {
+			if (!idsItens.includes(chave) || !Number.isSafeInteger(nivel) || nivel < 0 || nivel > 50) {
+				throw new TypeError("Os dados da forja do save são inválidos.");
+			}
+		}
+	}
 	if (save.missoesCompletas !== undefined
 		&& (!Number.isSafeInteger(save.missoesCompletas) || save.missoesCompletas < 0 || save.missoesCompletas > 1000000)) {
 		throw new TypeError("O contador de missões do save é inválido.");
@@ -438,7 +497,8 @@ function ValidarSave(save) {
 		// campos não-numéricos já validados especificamente acima (shape conferido)
 		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards",
 			"conquistasComp", "melhorGoldRun", "autoItensLoja",
-			"itensBuild", "bauBuildPendente", "opcoesBauBuild"].includes(key)) continue;
+			"itensBuild", "bauBuildPendente", "opcoesBauBuild",
+			"pesquisaItens", "pesquisaInimigos", "forja"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");
 		}

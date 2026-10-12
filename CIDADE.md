@@ -60,8 +60,11 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
 ### Fase 0 — Decisões (fechada)
 - [x] Gates: **andar 80** para a Cidade; prédios em 85/90/100/110/120 (ver tabela acima).
 - [x] Pesquisa de itens: **por item**.
-- [x] Arte/UX do mapa: **cena** com os 5 prédios recortados + **decoração** (props de
-      natureza/luz/estruturas e ursinhos passeando) + **hotspots** por prédio — responsivo.
+- [x] Arte/UX do mapa: **cena em vila 2.5D** (perto da arte-base) — prédios em volta de uma
+      **praça com fonte de cristal** (Casa no topo-centro; Mercado/Pesquisa nas laterais de
+      cima; Fábrica/Fazenda embaixo), **banner-placa** com ícone acima de cada prédio,
+      decoração (props de natureza/luz/estruturas, cristais e ursinhos passeando) e
+      **hotspots** por prédio — responsivo (desktop e celular).
 
 ### Fase 1 — A aba "Cidade" + o mapa (sem mecânica nova)
 - [x] `Caverna.html`: `#btnCidade` na `#container-Botoes` (ícone 🏘️) + `#container-Cidade`.
@@ -96,29 +99,54 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
 - [x] Teste `test-casa.js`: multiplicadores, compra, troféus, gold, save/validação e reset.
 
 ### Fase 4 — 🐜 Fazenda de Formigas
-- [ ] Timer de produção (reusa o drop de formiga de `recompensas.js`) + **Rainha**.
-- [ ] **Save**: `fazendaNivel`, `fazendaRainha`.
-- [ ] Teste: gera formiga no ciclo; rainha multiplica; persiste; timer limpo no reset/pausa.
+- [x] **Produção passiva**: timer gera 1 formiga aleatória por ciclo, reusando o MESMO drop
+      (`ConcedeFormigaColecao`). Nível (`fazendaNivel`, 0..10) encurta o intervalo (90 s → 36 s);
+      a **Rainha** (`fazendaRainha`, 0..5) multiplica a produção (+30% por nível). Pagos em CM.
+- [x] **Save** (5 passos): `fazendaNivel` + `fazendaRainha` (permanentes — não zeram no `Resetar`).
+- [x] Painel próprio (`script/fazenda.js` + `#fazendaModal`), com Produção + Rainha + a coleção
+      de formigas (reusa `UI.criaConteudoFormigas`). Timer gerenciado (load/reset/compra).
+- [x] Teste `test-fazenda.js`: intervalos, multiplicador da Rainha, compras, produção (pausa),
+      save/validação e reset.
 
 ### Fase 5 — 🔬 Centro de Pesquisa
-- [ ] Pesquisa por item (multiplicador no efeito do item) + Análise de inimigos.
-- [ ] **Save**: `pesquisaItens`, `pesquisaInimigos`.
-- [ ] Teste: pesquisa sobe o efeito; dano contra o inimigo analisado.
+- [x] **Pesquisa por item**: nível por item (pago em CM) que potencializa o efeito
+      (+10%/nível) — aplicado num ponto único em `ItensBuild.mult` (só vale se você
+      tiver o item).
+- [x] **Análise de inimigos**: +10%/nível de dano contra um TIPO (comuns / guardiões,
+      andares múltiplos de 10) — ponto único no combate (`batalha.js`).
+- [x] **Save** (5 passos): `pesquisaItens` + `pesquisaInimigos` (objetos `{id: nível}`;
+      whitelist + shape no `ValidarSave`). Permanentes — não zeram no `Resetar`.
+- [x] Painel próprio (`script/pesquisa.js` + `#pesquisaModal`), aberto pelo prédio Pesquisa.
+- [x] Teste `test-pesquisa.js`: bônus, custos, compras, save/validação e reset.
 
 ### Fase 6 — 🛒 Mercado
-- [ ] Vender duplicatas (itens/formigas → gold/CM) + Reputação (desconto nas lojas).
-- [ ] **Save**: `reputacao`, `ofertasDia`.
-- [ ] Teste: venda credita certo; desconto aplica.
+- [x] **Reputação**: nível (pago em CM) que dá -2% no preço da **Loja do Conhecimento**
+      por nível (ponto único em `PrecoLojaCM`). **Save**: `reputacao` (permanente).
+- [x] **Vender excedentes**: cópias extras dos itens da build (mantém 1 de cada) +
+      formigas fora dos conjuntos de 5 → **gold** (escala com o andar).
+- [x] Painel próprio (`script/mercado.js` + `#mercadoModal`), aberto pelo prédio Mercado.
+- [x] Teste `test-mercado.js`: desconto aplica; venda credita e sobra só os conjuntos;
+      save/validação e reset.
+- [ ] (adiado) **Ofertas rotativas** (`ofertasDia`) — não entrou nesta rodada.
 
 ### Fase 7 — ⚙️ Fábrica
-- [ ] Forja (2 iguais → 1 melhorado) + Linha de montagem (automação).
-- [ ] **Save**: `fabricaNivel`, estado da forja.
-- [ ] Teste: forja combina e melhora; automação acelera.
+- [x] **Forja**: junta 2 cópias iguais em 1 "melhorada" (mesmo efeito, 1 slot a menos).
+      O estado é da run (zera com a build). Save: `forja` (objeto `{itemId: nível}`; whitelist).
+- [x] **Linha de montagem** (`fabricaNivel`, 0..10, pago em CM): +1 auto-compra por
+      segundo cada nível (ponto único no `TickAutomacao`). Permanente.
+- [x] Painel próprio (`script/fabrica.js` + `#fabricaModal`), aberto pelo prédio Fábrica.
+- [x] Teste `test-fabrica.js`: forja preserva o efeito e libera slot; linha acelera;
+      save/validação e reset.
 
 ### Fase 8 — 💎 Cristal
-- [ ] Ligação com a profundidade do reset.
-- [ ] **Save**: `cristalNivel` (se necessário).
-- [ ] Teste: reset mais fundo → mais rendimento.
+- [x] **Ligação com a profundidade do reset**: `MultiplicadorCristal() = 1 + 0,02 × nível
+      × profundidade` (profundidade = andar de reset / 15, teto ×5). Amplia **gold**
+      (`AddGold`), **XP** (`GanhaXP`) e a **produção da Fazenda** (`IntervaloFazendaMs`) —
+      sem moeda nova.
+- [x] **Save**: `cristalNivel` (permanente). Painel próprio (`script/cristal.js` +
+      `#cristalModal`); hotspot no **cristal central** da cena (gate 120).
+- [x] Teste `test-cristal.js`: multiplicador/profundidade, aplicação (gold/XP/fazenda),
+      save/validação e reset.
 
 ---
 

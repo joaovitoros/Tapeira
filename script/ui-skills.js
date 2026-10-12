@@ -188,7 +188,7 @@ Object.assign(UI, {
             const noMaximo = skillLevel >= skill.maximo;
             const semPontos = pontosHabilidade <= 0;
             const podeMelhorar = unlocked && !noMaximo && !semPontos;
-            const icone = ICONE_SKILL[skill.id] || "imagens/espada-habilidade.svg";
+            const icone = ICONE_SKILL[skill.id] || "imagens/skills/espada-habilidade.svg";
             // "máximo" só quando a skill E o perk estiverem no máximo
             const perk = PERKS.find(item => item.skillId === skill.id);
             const perkNivel = perk ? (Number(window[perk.varName]) || 0) : 0;
@@ -247,7 +247,7 @@ Object.assign(UI, {
 
             const iconeEl = document.createElement("img");
             iconeEl.className = "skill-no-icone";
-            iconeEl.src = ICONE_SKILL[skill.id] || "imagens/espada-habilidade.svg";
+            iconeEl.src = ICONE_SKILL[skill.id] || "imagens/skills/espada-habilidade.svg";
             iconeEl.alt = "";
             iconeEl.setAttribute("aria-hidden", "true");
 
@@ -669,7 +669,7 @@ Object.assign(UI, {
             btn.title = skill.nome;
             const icone = document.createElement("img");
             icone.className = "ramos-tree-trilha__icone";
-            icone.src = ICONE_SKILL[skill.id] || "imagens/espada-habilidade.svg";
+            icone.src = ICONE_SKILL[skill.id] || "imagens/skills/espada-habilidade.svg";
             icone.alt = "";
             icone.setAttribute("aria-hidden", "true");
             btn.append(icone);
@@ -767,7 +767,7 @@ Object.assign(UI, {
         topo.className = "ramos-tree-topo";
         const iconeTopo = document.createElement("img");
         iconeTopo.className = "ramos-tree-topo__icone";
-        iconeTopo.src = ICONE_SKILL[skill.id] || "imagens/espada-habilidade.svg";
+        iconeTopo.src = ICONE_SKILL[skill.id] || "imagens/skills/espada-habilidade.svg";
         iconeTopo.alt = "";
         iconeTopo.setAttribute("aria-hidden", "true");
         const titulo = document.createElement("span");
@@ -864,7 +864,7 @@ Object.assign(UI, {
             const bRamos = bloco("Ramos · Nv 5 → Nv 10");
             const grades = document.createElement("div");
             grades.className = "ramos-tree-ramos";
-            const tilesRamo = ICONE_SKILL[skill.id] || "imagens/espada-habilidade.svg";
+            const tilesRamo = ICONE_SKILL[skill.id] || "imagens/skills/espada-habilidade.svg";
             const podeEscolher = escolhido === 0 && unlocked && skillLevel >= RAMO_NIVEL_ESCOLHA;
             for (const ramo of arvoreRamos.ramos) {
                 const ehEscolhido = escolhido === ramo.id;

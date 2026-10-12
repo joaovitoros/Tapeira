@@ -203,6 +203,10 @@ function AddGold(valor, aplicaBonusFormigas = true) {
         valorFinal = valorFinal * MultiplicadorGoldEspecializacao();
         // Alquimista: buff de Gold ×2 por 10s
         valorFinal = valorFinal * MultiplicadorBuffGold();
+        // Cristal (Cidade): amplia o gold conforme a profundidade do reset
+        if (typeof MultiplicadorCristal === "function") {
+            valorFinal = valorFinal * MultiplicadorCristal();
+        }
     }
     gold.add(valorFinal);
 

@@ -67,6 +67,21 @@ var maxBausOffline = 2;
 // Resetar (só no ZerarTodosSaves), como o Conhecimento Mug.
 var casaNivel = 0;
 var trofeusExibidos = 0;
+// Fazenda de Formigas (Cidade): nível = velocidade da produção passiva;
+// Rainha = multiplica a produção. Permanentes (não zeram no reset).
+var fazendaNivel = 0;
+var fazendaRainha = 0;
+var intervaloFazenda = null; // handle do timer de produção da Fazenda
+// Centro de Pesquisa (Cidade): nível por item da build e por tipo de inimigo.
+// Permanentes (não zeram no reset). Objetos { id: nível }.
+var pesquisaItens = {};
+var pesquisaInimigos = {};
+// Mercado (Cidade): reputação = desconto nas lojas. Permanente.
+var reputacao = 0;
+// Fábrica (Cidade): nível da linha de montagem (auto-compra por segundo). Permanente.
+var fabricaNivel = 0;
+// Cristal (Cidade): amplia os rendimentos conforme a profundidade do reset. Permanente.
+var cristalNivel = 0;
 const TEMPO_BAU_DOURADO_JOGO = 20 * 60 * 1000;
 const TEMPO_BAU_DOURADO_OFFLINE = 40 * 60 * 1000;
 var progressoBauDourado = 0;
@@ -108,7 +123,10 @@ var danoBonus = 0; //variavel para armazenar os danos bonus
 // Preço dos itens da loja: base 10 CM, escalonado ×1.4 por nível
 // (10, 14, 20, 27, 38...). Era ×1.5 e o crescimento ficava grande rápido.
 function PrecoLojaCM(nivel) {
-	return Math.round(10 * Math.pow(1.4, Math.max(0, Number(nivel) || 0)));
+	const base = 10 * Math.pow(1.4, Math.max(0, Number(nivel) || 0));
+	// Mercado (Cidade): a reputação dá desconto na Loja do Conhecimento
+	const preco = (typeof PrecoComReputacao === "function") ? PrecoComReputacao(base) : base;
+	return Math.round(preco);
 }
 
 // +5% de gold por nível — aplicado em todo ganho de gold (AddGold)
@@ -209,7 +227,7 @@ var sobeGold = 0.3;
 var lvlGold = 1;
 
 var precoAvan = 160;
-var sobeAvanco = 0.01;
+var sobeAvanco = 0.005;
 var lvlAvan = 0;
 
 var precoDCrit = 150;
@@ -368,7 +386,7 @@ function CarregarStatus(){
 // Duas camadas fixas (#fundoA/#fundoB) se cruzam (crossfade ~1,2s; corte seco
 // em reduced-motion) a cada andar vencido. Novo fundo = jogar o PNG em imagens/
 // e listar o nome aqui. Cosmético: não vai pro save.
-var FUNDOS_CAVERNA = ['background cristal.png', 'background.png'];
+var FUNDOS_CAVERNA = ['fundos/background cristal.png', 'fundos/background.png'];
 var fundoIdxAtual = 0;
 var fundoA = null, fundoB = null, fundoAtiva = null;
 

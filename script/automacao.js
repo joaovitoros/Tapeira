@@ -292,7 +292,9 @@ function TickAutomacao() {
 	}
 
 	if (autoCompra === 1 && AutoCompraDesbloqueada()) {
-		AutoCompraMaisBarato();
+		// Fábrica (Cidade): a Linha de montagem dá +1 auto-compra por segundo
+		const vezes = (typeof LinhasMontagem === "function") ? Math.max(1, LinhasMontagem()) : 1;
+		for (let i = 0; i < vezes; i++) AutoCompraMaisBarato();
 	}
 }
 

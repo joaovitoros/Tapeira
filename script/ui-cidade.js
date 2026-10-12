@@ -13,15 +13,16 @@
     // prédio -> painel existente que ele abre
     const PREDIOS = {
         casa: () => Tapeira.Casa.abrir(),
-        mercado: () => AbreLoja(false),
-        pesquisa: () => UI.showRamosTreePanel(),
-        fazenda: () => UI.showAntCollection(),
-        fabrica: () => UI.showItensBuild()
+        mercado: () => Tapeira.Mercado.abrir(),
+        pesquisa: () => Tapeira.Pesquisa.abrir(),
+        fazenda: () => Tapeira.Fazenda.abrir(),
+        fabrica: () => Tapeira.Fabrica.abrir(),
+        cristal: () => Tapeira.Cristal.abrir()
     };
 
     // Andar máximo para destravar cada prédio (derivado, sem campo no save).
     // Bate com a tabela de gates do CIDADE.md.
-    const GATES = { casa: 80, fazenda: 85, mercado: 90, fabrica: 100, pesquisa: 110 };
+    const GATES = { casa: 80, fazenda: 85, mercado: 90, fabrica: 100, pesquisa: 110, cristal: 120 };
 
     function desbloqueada() {
         return (Number(window.maxAndar) || 0) >= ANDAR_CIDADE;
@@ -77,6 +78,8 @@
         if (botao) botao.setAttribute("aria-expanded", "true");
         atualizaHud();
         UI.syncScreenButtons();
+        // centraliza depois do layout (a cena já tem o tamanho final)
+        requestAnimationFrame(centralizaCena);
     }
 
     function alternar() {
@@ -92,7 +95,8 @@
         }
         const acao = PREDIOS[id];
         if (!acao) return;
-        fechar();
+        // Abre o painel POR CIMA da Cidade (ela continua aberta atrás) — assim,
+        // ao fechar o painel, o jogador volta pra Cidade, não pra caverna.
         acao();
     }
 
@@ -114,6 +118,61 @@
         });
     }
 
+    // Centraliza a cena no container (a cidade abre no meio, não na ponta) —
+    // vale pro celular, onde a cena é mais larga que o visor.
+    function centralizaCena() {
+        const container = painel();
+        if (!container) return;
+        container.scrollLeft = Math.max(0, (container.scrollWidth - container.clientWidth) / 2);
+        container.scrollTop = Math.max(0, (container.scrollHeight - container.clientHeight) / 2);
+    }
+
+    // Arrastar a cena pra explorar a cidade (tipo um mapa): move o scroll do
+    // container. SEM setPointerCapture — ele redirecionava o "click" pro
+    // container e o clique no prédio não chegava; o arrasto acompanha o
+    // ponteiro por listeners na janela. Um arrasto engole o clique seguinte.
+    function habilitaArrastarCena() {
+        const cena = document.querySelector(".cidade-cena");
+        const container = painel();
+        if (!cena || !container) return;
+        let arrastando = false, moveu = false, iniX = 0, iniY = 0, sTop = 0, sLeft = 0;
+
+        const aoMover = e => {
+            if (!arrastando) return;
+            const dx = e.clientX - iniX;
+            const dy = e.clientY - iniY;
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moveu = true;
+            container.scrollTop = sTop - dy;
+            container.scrollLeft = sLeft - dx;
+        };
+        const aoSoltar = () => {
+            arrastando = false;
+            window.removeEventListener("pointermove", aoMover);
+            window.removeEventListener("pointerup", aoSoltar);
+            window.removeEventListener("pointercancel", aoSoltar);
+        };
+
+        cena.addEventListener("pointerdown", e => {
+            if (e.button !== 0) return;
+            arrastando = true;
+            moveu = false;
+            iniX = e.clientX; iniY = e.clientY;
+            sTop = container.scrollTop; sLeft = container.scrollLeft;
+            window.addEventListener("pointermove", aoMover);
+            window.addEventListener("pointerup", aoSoltar);
+            window.addEventListener("pointercancel", aoSoltar);
+        });
+
+        // se arrastou, engole o clique que viria em seguida (não abre o prédio)
+        cena.addEventListener("click", e => {
+            if (moveu) {
+                e.preventDefault();
+                e.stopPropagation();
+                moveu = false;
+            }
+        }, true);
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         const botao = document.getElementById("btnCidade");
         if (botao) botao.addEventListener("click", alternar);
@@ -132,6 +191,7 @@
                 b.addEventListener("click", () => abrePredio(id));
             });
         }
+        habilitaArrastarCena();
         sincroniza();
     });
 

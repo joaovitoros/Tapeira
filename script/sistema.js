@@ -329,6 +329,9 @@ function PreCarregamento() {
 	// intervalos dos novos companheiros (Mago do Relógio e
 	// Alquimista): handles gerenciados, limpos e recriados aqui
 	SincronizaIntervalosNovosCompanheiros();
+	// timer de produção da Fazenda (Cidade): handle gerenciado, limpo e
+	// recriado aqui com o nível atual
+	SincronizaIntervaloFazenda();
 	// buff do Alquimista não sobrevive ao reset
 	buffAtivo = null;
 	AtualizaBuffAlquimistaUI();
@@ -345,6 +348,11 @@ function Resetar() {
 	EncerraEvento(true); //evento aleatório não sobrevive ao reset
 	// Casa (Cidade): casaNivel e trofeusExibidos são PERMANENTES — não zeram
 	// aqui (só no ZerarTodosSaves), como o Conhecimento Mug e seus níveis.
+	// Fazenda de Formigas (Cidade): fazendaNivel e fazendaRainha idem.
+	// Centro de Pesquisa (Cidade): pesquisaItens e pesquisaInimigos idem.
+	// Mercado (Cidade): reputacao idem. Fábrica: fabricaNivel idem (a forja é
+	// da run e some com a build, no Tapeira.ItensBuild.limpa abaixo).
+	// Cristal (Cidade): cristalNivel idem.
 	recompensasOfflinePendentes = null;
 	ultimaDataSaveOffline = Date.now();
 	numInimigosTela = 1; //usada para validar quantos inimigos e
@@ -421,6 +429,7 @@ function Resetar() {
 	ataquesFrenesi = 0;
 	alvoFrenesiComp = 0;
 	danoJanelaFrenesiComp = 0;
+	LimpaAnelFrenesiComp(); // some com o anel da marca, se houver
 	andarBoss = 10; //andar atual onde aparecerão inimigos mais fortes
 	missao = Array(" ", "Coleta de Gold", "Golpes", "Caça aos Mugs", "Tempo") //vetor usado para listagem das missões
 	missaoAtual = 0; //nenhuma missao ativa ate o proximo sorteio
@@ -449,7 +458,7 @@ function Resetar() {
 	lvlGold = 1;
 
 	precoAvan = 160;
-	sobeAvanco = 0.01;
+	sobeAvanco = 0.005;
 	lvlAvan = 0;
 
 	precoDCrit = 150;

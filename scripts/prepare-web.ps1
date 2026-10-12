@@ -23,6 +23,26 @@ foreach ($directory in @("css", "script", "imagens", "media")) {
         -Destination $destinationDirectory -Recurse -Force
 }
 
+# Assets que NAO vao pro app: sao material de origem (folhas-fonte, inimigos
+# futuros) e o material-base da Cidade (props/fundos/predios antigos) - nada
+# disso e usado em runtime, entao fica de fora das builds (ver tambem o
+# "files" do electron-builder no package.json, que exclui os mesmos caminhos).
+$excluirPastas = @(
+    "imagens\fontes",
+    "imagens\inimigos-futuros",
+    "imagens\cidade\edificios"
+)
+foreach ($rel in $excluirPastas) {
+    $destino = Join-Path $webRoot $rel
+    if (Test-Path $destino) {
+        Remove-Item -LiteralPath $destino -Recurse -Force
+    }
+}
+$cidadeDestino = Join-Path $webRoot "imagens\cidade"
+Get-ChildItem -LiteralPath $cidadeDestino -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -like "props *" -or $_.Name -like "cidade background*" } |
+    Remove-Item -Force
+
 $cavernaPath = Join-Path $webRoot "Caverna.html"
 $cavernaHtml = [System.IO.File]::ReadAllText($cavernaPath)
 $androidSaveScript = '<script src="script/android-save.bundle.js"></script>'

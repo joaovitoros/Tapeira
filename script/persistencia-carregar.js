@@ -156,8 +156,10 @@ function Carregar(saveData, calculaOffline = false) {
 	lvlGold = save.lvlGold ?? 1;
 
 	precoAvan = save.precoAvan ?? 160;
-	sobeAvanco = save.sobeAvanco ?? 0.01;
 	lvlAvan = save.lvlAvan ?? 0;
+	// nerf: o ganho por nível da "Chance de avanço" caiu à metade (base 0,005).
+	// Derivado do nível pra valer também em saves antigos (o teto continua igual).
+	sobeAvanco = 0.005 * Math.pow(1.005, Math.max(0, N(lvlAvan) | 0));
 
 	precoDCrit = save.precoDCrit ?? 150;
 	sobeDCrit = save.sobeDCrit ?? 0.1;
@@ -238,6 +240,21 @@ function Carregar(saveData, calculaOffline = false) {
 	// Casa (Cidade): conforto e troféus exibidos — permanentes (não zeram no reset)
 	casaNivel = save.casaNivel ?? 0;
 	trofeusExibidos = save.trofeusExibidos ?? 0;
+	// Fazenda de Formigas (Cidade): nível e Rainha — permanentes
+	fazendaNivel = save.fazendaNivel ?? 0;
+	fazendaRainha = save.fazendaRainha ?? 0;
+	// Centro de Pesquisa (Cidade): pesquisa por item e por tipo de inimigo —
+	// permanentes. Objetos { id: nível }; valores inválidos caem no default.
+	pesquisaItens = (save.pesquisaItens && typeof save.pesquisaItens === "object" && !Array.isArray(save.pesquisaItens))
+		? Object.assign({}, save.pesquisaItens) : {};
+	pesquisaInimigos = (save.pesquisaInimigos && typeof save.pesquisaInimigos === "object" && !Array.isArray(save.pesquisaInimigos))
+		? Object.assign({}, save.pesquisaInimigos) : {};
+	// Mercado (Cidade): reputação (desconto nas lojas) — permanente
+	reputacao = save.reputacao ?? 0;
+	// Fábrica (Cidade): nível da linha de montagem — permanente
+	fabricaNivel = save.fabricaNivel ?? 0;
+	// Cristal (Cidade): nível — permanente
+	cristalNivel = save.cristalNivel ?? 0;
 	missoesCompletas = save.missoesCompletas ?? 0;
 	desafiosVencidos = save.desafiosVencidos ?? 0;
 	melhorGoldRun = GoldNumber.fromMantissaExponent(save.melhorGoldRun?.m ?? 0, save.melhorGoldRun?.e ?? 0);
@@ -260,6 +277,8 @@ function Carregar(saveData, calculaOffline = false) {
 	// intervalos dos novos companheiros (Mago do Relógio e
 	// Alquimista) também iniciam no load
 	SincronizaIntervalosNovosCompanheiros();
+	// timer de produção da Fazenda (Cidade) — recriado com o nível carregado
+	SincronizaIntervaloFazenda();
 
 	RemoverInimigos();
 	AbreLoja();

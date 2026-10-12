@@ -56,6 +56,11 @@
 
 	// Uma entrada por cópia: cópias repetidas do mesmo item acumulam o efeito
 	let lista = [];
+	// Forja (Cidade): por item, quantas vezes 2 cópias foram juntadas numa
+	// "melhorada" — cada nível soma +1 cópia EFETIVA no efeito sem ocupar slot.
+	// É da run: zera junto com a build no Resetar.
+	let forja = {};
+	const FORJA_MAX = 50;
 	let bausPendentes = 0;
 	let opcoesBauAtual = null;
 	// espaços extras comprados na loja de esmeraldas: permanentes (não zeram
@@ -70,10 +75,44 @@
 		return lista.filter(idItem => idItem === id).length;
 	}
 
+	// Forja: níveis de "melhorada" por item e cópias efetivas (cópia + forja)
+	function forjaDe(id) {
+		const n = forja[id];
+		return Number.isInteger(n) && n > 0 ? n : 0;
+	}
+
+	// cada nível de forja vale as 2 cópias que foram juntadas (mesmo efeito,
+	// menos slots): 2 cópias → 1 forja = 2 cópias efetivas
+	function copiasEfetivas(id) {
+		return copias(id) + 2 * forjaDe(id);
+	}
+
+	function podeForjar(id) {
+		return copias(id) >= 2 && forjaDe(id) < FORJA_MAX;
+	}
+
+	// Junta 2 cópias iguais em 1 "melhorada": o efeito fica igual (cópia efetiva
+	// +2 → -2 +1 forja), mas libera 1 slot da build.
+	function forjar(id) {
+		if (!podeForjar(id)) return false;
+		let removidas = 0;
+		lista = lista.filter(idItem => {
+			if (idItem === id && removidas < 2) { removidas++; return false; }
+			return true;
+		});
+		forja[id] = forjaDe(id) + 1;
+		return true;
+	}
+
 	// sem cópia o valor é exatamente 1 (Math.pow(x, 0)); cada cópia repete
-	// o fator, então acumular o mesmo item multiplica o bônus por cópia
+	// o fator, então acumular o mesmo item multiplica o bônus por cópia.
+	// Centro de Pesquisa (Cidade): a pesquisa do item potencializa o efeito
+	// (+10% por nível), aplicado aqui — ponto único de todo bônus de item.
 	function mult(base, id) {
-		return Math.pow(base, copias(id));
+		const efetivas = copiasEfetivas(id);
+		if (efetivas === 0) return 1;
+		const bonus = (typeof PesquisaBonusItem === "function") ? PesquisaBonusItem(id) : 1;
+		return Math.pow(base, efetivas) * bonus;
 	}
 
 	function desbloqueada() {
@@ -95,6 +134,20 @@
 		return LIMITE + slotsExtras;
 	}
 
+	// forja vem do save: só ids conhecidos e níveis inteiros dentro do teto
+	function forjaDoSave(save) {
+		const bruto = save ? save.forja : undefined;
+		const limpo = {};
+		if (bruto && typeof bruto === "object" && !Array.isArray(bruto)) {
+			for (const [id, nivel] of Object.entries(bruto)) {
+				if (item(id) && Number.isSafeInteger(nivel) && nivel > 0) {
+					limpo[id] = Math.min(nivel, FORJA_MAX);
+				}
+			}
+		}
+		return limpo;
+	}
+
 	// espaços extras vêm do save; valor inválido conta como 0
 	function slotsExtrasDoSave(save) {
 		const valor = save ? save.slotsExtrasBuild : undefined;
@@ -109,12 +162,16 @@
 	}
 
 	function resumo() {
-		if (lista.length === 0) return "nenhum (0/" + limiteAtual() + ")";
 		const partes = [];
 		for (const registro of POOL) {
 			const n = copias(registro.id);
-			if (n > 0) partes.push(registro.nome + (n > 1 ? " ×" + n : ""));
+			const f = forjaDe(registro.id);
+			if (n > 0 || f > 0) {
+				partes.push(registro.nome + (n > 0 ? " ×" + n : "")
+					+ (f > 0 ? " (+" + f + " forjada" + (f > 1 ? "s" : "") + ")" : ""));
+			}
 		}
+		if (partes.length === 0) return "nenhum (0/" + limiteAtual() + ")";
 		return partes.join(", ") + " (" + lista.length + "/" + limiteAtual() + ")";
 	}
 
@@ -126,6 +183,12 @@
 		// ---- leitura ----
 		item: item,
 		copias: copias,
+		copiasEfetivas: copiasEfetivas,
+		nivelForja: forjaDe,
+		// itens com forja (não aparecem mais na lista como cópias)
+		idsForjados: () => Object.keys(forja).filter(id => forjaDe(id) > 0),
+		podeForjar: podeForjar,
+		forjar: forjar,
 		contagem: () => lista.length,
 		pegaLista: () => lista.slice(),
 		pendente: () => bausPendentes > 0,
@@ -192,8 +255,9 @@
 			if (!registro || bausPendentes <= 0 || !opcoesBauAtual?.includes(id)) return;
 			if (lista.length >= limiteAtual()) {
 				// build cheia: sem um item para descartar não pode entrar
-				if (!descarta || copias(descarta) === 0) return;
+				if (!descarta || (copias(descarta) === 0 && forjaDe(descarta) === 0)) return;
 				lista = lista.filter(idItem => idItem !== descarta);
+				delete forja[descarta]; // a pilha inteira sai (cópias + forja)
 			}
 			lista.push(id); // cada cópia ocupa um slot próprio e acumula o bônus
 			bausPendentes--;
@@ -205,10 +269,26 @@
 			AutoSalvar();
 		},
 
+		// Mercado (Cidade): vende as cópias EXTRAS (mantém 1 de cada item) e
+		// devolve quantas saíram — o valor em gold é calculado pelo Mercado.
+		vendeDuplicatas() {
+			const vistas = new Set();
+			const mantidas = [];
+			let vendidas = 0;
+			for (const id of lista) {
+				if (vistas.has(id)) { vendidas++; continue; }
+				vistas.add(id);
+				mantidas.push(id);
+			}
+			lista = mantidas;
+			return vendidas;
+		},
+
 		// ---- save (regras do save em sistema.js) ----
 		carrega(save) {
 			// extras antes da lista: o slice respeita o limite efetivo do save
 			slotsExtras = slotsExtrasDoSave(save);
+			forja = forjaDoSave(save);
 			lista = Array.isArray(save.itensBuild)
 				? save.itensBuild.filter(id => item(id)).slice(0, limiteAtual())
 				: [];
@@ -228,6 +308,7 @@
 			return {
 				slotsExtrasBuild: slotsExtras,
 				itensBuild: lista.slice(),
+				forja: Object.assign({}, forja),
 				bausBuildPendentes: bausPendentes,
 				bauBuildPendente: bausPendentes > 0,
 				opcoesBauBuild: opcoesBauAtual ? opcoesBauAtual.slice() : null
@@ -235,6 +316,7 @@
 		},
 		limpa() {
 			lista = [];
+			forja = {};
 			bausPendentes = 0;
 			opcoesBauAtual = null;
 			// slotsExtras NÃO zera: espaço extra é compra permanente da loja
