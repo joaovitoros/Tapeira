@@ -4146,11 +4146,11 @@ test("batalha-fantasma: corrida contra o chefe é determinística e decide o ven
         await page.waitForSelector("[data-pvp-resultado]:not([hidden])", { timeout: 8000 });
         const fim = await page.evaluate(() => ({
             texto: document.querySelector("[data-pvp-resultado]").textContent,
-            tempos: [...document.querySelectorAll("[data-pvp-tempo]")].map(e => e.textContent),
+            tempos: [...document.querySelectorAll('.pvpMiniCaverna__tempo')].map(e => e.textContent),
             timer: PvpFantasma._timerDuelo,
             cronometro: document.querySelector("[data-pvp-cronometro]").textContent,
             larguraBarra: document.querySelector(
-                '[data-pvp-alvo="meu"] [data-pvp-fill]').style.width
+                '.pvpMiniCaverna[data-pvp-alvo="meu"] [data-pvp-fill]').style.width
         }));
         assert.ok(/VENCEU/.test(fim.texto), "banner de resultado aparece");
         assert.ok(fim.tempos.every(t => /^(\d+\.\d{2}s|> 1h)$/.test(t)),
@@ -4494,7 +4494,7 @@ test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado n
         assert.equal(a.semId, "rejeitou", "cartão sem id é recusado");
 
         // (b) vitória: +2 esmeraldas e o id entra na lista de usados
-        const abertura = await page.evaluate(() => {
+        const abertura = await page.evaluate(async () => {
             // Página nova nasce com dano 1 — o "Fraco" (danoGolpe 1) viraria
             // EMPATE exato e a moeda do empate decide (flaky). Dá um build de
             // verdade ao jogador pra o cartão fraco ser fraco MESMO.
@@ -4507,14 +4507,18 @@ test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado n
             };
             fraco.id = PvpFantasma._assinatura(fraco);
             const antes = esmeraldas;
-            const ok = PvpFantasma.RecebeCartao(fraco);
+            const ok = await PvpFantasma.RecebeCartao(fraco);
             return { fraco, antes, ok, temTela: !!document.getElementById("pvpDuelo") };
         });
         assert.equal(abertura.ok, true, "cartão assinado (mais fraco) é aceito");
         assert.ok(abertura.temTela, "ficha do duelo abriu");
-        // o duelo cobre qualquer modal aberto (z maior) — remove o "Como
-        // jogar" direto na página; o botão dele ficaria inalcançável pelo clique
-        await page.evaluate(() => document.getElementById("infoModal")?.remove());
+        // fecha qualquer modal que possa estar por cima (infoModal, etc.)
+        await page.evaluate(() => {
+            document.getElementById("infoModal")?.remove();
+            document.querySelectorAll(".pvpConfirmOverlay").forEach(el => el.remove());
+        });
+        // garante que o botão está visível e clicável
+        await page.waitForSelector("[data-pvp-lutar]:not([disabled])", { timeout: 5000, state: "visible" });
         await page.click("[data-pvp-lutar]");
         await page.waitForSelector("[data-pvp-resultado]:not([hidden])", { timeout: 9000 });
         const vitoria = await page.evaluate(() => ({
@@ -4527,29 +4531,25 @@ test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado n
         assert.deepEqual(vitoria.usados, [abertura.fraco.id],
             "id do cartão registrado quando o duelo conclui");
 
-        // (c) o MESMO cartão de novo → recusado, sem novo prêmio
-        const repetida = await page.evaluate(fr => {
+        // (c) o MESMO cartão de novo → abre diálogo de confirmação (sem recompensa)
+        // No teste headless o diálogo auto-rejeita → ok=false
+        const repetida = await page.evaluate(async (fr) => {
             const antes = esmeraldas;
-            const ok = PvpFantasma.RecebeCartao(fr);
+            const ok = await PvpFantasma.RecebeCartao(fr);
             return { ok, esmeraldas: esmeraldas, antes, usados: pvpCartoesUsados.length };
         }, abertura.fraco);
-        assert.equal(repetida.ok, false, "cartão usado é recusado no reimport");
+        assert.equal(repetida.ok, false, "cartão usado abre diálogo (auto-rejeita no teste) → ok=false");
         assert.equal(repetida.esmeraldas, repetida.antes, "reimportação não paga nada");
         assert.equal(repetida.usados, 1, "lista de usados não muda");
-        // aviso VISÍVEL do cartão usado (uma linha no histórico passaria
-        // despercebida com o menu de pausa aberto)
-        const aviso = await page.evaluate(() => {
-            const el = document.querySelector(".aviso-rapido");
-            const texto = el ? el.textContent : "";
-            if (el) el.dispatchEvent(new Event("animationend"));
-            return { texto, sumiuAposAnimacao: !document.querySelector(".aviso-rapido") };
-        });
-        assert.ok(aviso.texto.includes("já foi usado"),
-            "toast avisa que o cartão já foi usado: " + aviso.texto);
-        assert.ok(aviso.sumiuAposAnimacao, "toast some no animationend (sem timer novo)");
+        // cartão de rival já usado: abre diálogo de confirmação (não toast)
+        // no teste o diálogo auto-rejeita → ok=false, sem toast
+        // espera o diálogo auto-fechar (timeout 8s) e verifica que NÃO há toast
+        await page.waitForTimeout(9000);
+        const semToastRival = await page.evaluate(() => !document.querySelector(".aviso-rapido"));
+        assert.ok(semToastRival, "cartão de rival não mostra toast (abre diálogo que auto-rejeita)");
 
         // (d) derrota: queima o id também, mas não paga nada
-        const derrota = await page.evaluate(() => {
+        const derrota = await page.evaluate(async () => {
             const meu = PvpFantasma.MontaCartaoBatalha();
             const forte = {
                 ...meu, nome: "Forte",
@@ -4558,7 +4558,7 @@ test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado n
             };
             forte.id = PvpFantasma._assinatura(forte);
             const antes = esmeraldas;
-            const ok = PvpFantasma.RecebeCartao(forte);
+            const ok = await PvpFantasma.RecebeCartao(forte);
             return { forte, antes, ok };
         });
         assert.equal(derrota.ok, true, "segundo cartão (mais forte) é aceito");
@@ -4648,7 +4648,7 @@ test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado n
         // (f) regra consigo mesmo: exportar registra o id como "meu";
         //     se a última luta foi contra si mesmo, as próximas lutam
         //     mas não pagam — e voltam a pagar após luta contra outro
-        const self = await page.evaluate(() => {
+        const self = await page.evaluate(async () => {
             const saida = {};
             pvpCartoesUsados = [];
             pvpCartoesExportados = [];
@@ -4695,7 +4695,7 @@ test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado n
             const c = { ...base, danoGolpe: base.danoGolpe + 5 };
             c.id = PvpFantasma._assinatura(c);
             PvpFantasma._registraCartaoProprio(c.id);
-            saida.okSelf = PvpFantasma.RecebeCartao(c);
+            saida.okSelf = await PvpFantasma.RecebeCartao(c);
             const el = document.querySelector(".aviso-rapido");
             saida.avisoSelf = el ? el.textContent : "";
             if (el) el.dispatchEvent(new Event("animationend"));

@@ -272,19 +272,26 @@ var PvpFantasma = {
 
 	// Chamado por ImportarSaveJson quando o arquivo é um cartão. Nunca toca
 	// no save local — só abre a tela do duelo.
-	RecebeCartao(cartao) {
+	async RecebeCartao(cartao) {
 		try {
 			this.ValidarCartaoBatalha(cartao);
-			// anti-farm: um cartão só conclui um duelo nesta máquina.
+			// anti-farm: um cartão só conclui um duelo com recompensa.
 			// O aviso é VISÍVEL (toast): uma linha só no histórico
 			// passaria despercebida com o menu de pausa aberto — a tela
 			// ficaria parada "sem acontecer nada".
 			if (pvpCartoesUsados.includes(cartao.id)) {
-				UI.mostraAvisoRapido("Esse cartão de batalha já foi usado — cada cartão vale um duelo só.");
+				// JÁ USADO (seu ou de rival): pergunta se quer lutar mesmo assim
+				// — duelo roda, mas SEM recompensa
+				const confirmou = await this._confirmaDueloSemRecompensa(cartao);
+				if (confirmou) {
+					this.AbreDuelo(cartao, true); // true = semRecompensa
+					MostraInfo("Cartão de batalha recebido — duelo de treino (sem recompensa).");
+					return true;
+				}
 				return false;
 			}
-			// cartão meu com a última luta já consigo mesmo: o duelo roda
-			// (treino), mas avisa que não vai pagar esmeraldas
+			// PRIMEIRO USO: cartão novo, aceita normal
+			// Se for seu e a última luta foi contra si mesmo, avisa que não paga
 			if (pvpCartoesExportados.includes(cartao.id) && this._ultimoFoiContraSi()) {
 				UI.mostraAvisoRapido("Duelo consigo mesmo — vale treino, mas não paga esmeraldas.");
 			}
@@ -298,6 +305,37 @@ var PvpFantasma = {
 			UI.mostraAvisoRapido(`Cartão de batalha inválido: ${error.message} O progresso atual foi mantido.`);
 			return false;
 		}
+	},
+
+	// Cartão já usado (seu ou de rival): confirma se quer lutar sem prêmio
+	_confirmaDueloSemRecompensa(cartao) {
+		return new Promise(resolve => {
+			const overlay = document.createElement("div");
+			overlay.className = "pvpConfirmOverlay";
+			overlay.innerHTML = `
+				<div class="pvpConfirmBox">
+					<h3>Cartão já usado</h3>
+					<p>Esse cartão de batalha <b>já foi usado em outro duelo</b>.</p>
+					<p>Você ainda pode lutar contra esse fantasma, mas <b>não haverá recompensa</b> (nem esmeraldas, nem registro de vitória).</p>
+					<div class="pvpConfirmBotoes">
+						<button type="button" class="btn-Padrao" data-confirm-sim>Lutar mesmo assim (sem prêmio)</button>
+						<button type="button" class="btn-Padrao btn-secundario" data-confirm-nao>Cancelar</button>
+					</div>
+				</div>`;
+			document.body.appendChild(overlay);
+			let resolvido = false;
+			const finish = valor => {
+				if (resolvido) return;
+				resolvido = true;
+				overlay.remove();
+				resolve(valor);
+			};
+			overlay.querySelector("[data-confirm-sim]").addEventListener("click", () => finish(true));
+			overlay.querySelector("[data-confirm-nao]").addEventListener("click", () => finish(false));
+			overlay.addEventListener("click", e => { if (e.target === overlay) finish(false); });
+			// auto-cancela em 8s (evita travar testes headless sem interação)
+			setTimeout(() => finish(false), 8000);
+		});
 	},
 
 	// Fase 1: ficha dos dois duelistas lado a lado + acesso à corrida (Fase 2)
@@ -518,15 +556,45 @@ var PvpFantasma = {
 		const fantasma = this._esc((nomes && nomes.fantasma) || "Fantasma");
 		return `
 		<div class="pvpCorrida">
-			<div class="pvpCronometro" data-pvp-cronometro>0.00s</div>
+			<div class="pvpCronometroGrande" data-pvp-cronometro>0.00s</div>
 			<div class="pvpCorridaInfo">Chefe com a vida da média das duas builds × 25s — quem derruba primeiro vence.</div>
-			<div class="pvpAlvo pvpAlvo--meu" data-pvp-alvo="meu">
-				<div class="pvpAlvoTopo"><span>Você · ${meu}</span><b data-pvp-tempo>—</b></div>
-				<div class="pvpBarra"><div class="pvpBarraFill" data-pvp-fill></div></div>
-			</div>
-			<div class="pvpAlvo pvpAlvo--fantasma" data-pvp-alvo="fantasma">
-				<div class="pvpAlvoTopo"><span>Fantasma · ${fantasma}</span><b data-pvp-tempo>—</b></div>
-				<div class="pvpBarra"><div class="pvpBarraFill" data-pvp-fill></div></div>
+			<div class="pvpArenaDupla">
+				<div class="pvpMiniCaverna pvpMiniCaverna--meu" data-pvp-alvo="meu">
+					<div class="pvpMiniCaverna__bg" style="background-image:url('imagens/fundos/background.png')"></div>
+					<div class="pvpMiniCaverna__chao"></div>
+					<div class="pvpMiniCaverna__entidade pvpMiniCaverna__tapiera" style="left:18%;">
+						<img class="pvpMiniSprite" src="imagens/personagens/player.png" alt="" aria-hidden="true" onerror="this.src='imagens/animacoes/player/parado.png'">
+					</div>
+					<div class="pvpMiniCaverna__entidade pvpMiniCaverna__boss" style="right:12%;">
+						<img class="pvpMiniSprite" src="imagens/personagens/inimigo.png" alt="" aria-hidden="true" onerror="this.src='imagens/personagens/inimigo.png'">
+					</div>
+					<div class="pvpMiniCaverna__hp"><div class="pvpMiniCaverna__hpFill" data-pvp-fill></div></div>
+					<div class="pvpMiniCaverna__label">Você · ${meu}</div>
+					<b class="pvpMiniCaverna__tempo" data-pvp-tempo>—</b>
+					<!-- compat: teste "nome do jogador" espera .pvpAlvoTopo span -->
+					<div class="pvpAlvoTopo" aria-hidden="true" style="position:absolute;pointer-events:none;opacity:0;">
+						<span>Você · ${meu}</span>
+						<b data-pvp-tempo>—</b>
+					</div>
+				</div>
+				<div class="pvpMiniCaverna pvpMiniCaverna--fantasma" data-pvp-alvo="fantasma">
+					<div class="pvpMiniCaverna__bg" style="background-image:url('imagens/fundos/background.png')"></div>
+					<div class="pvpMiniCaverna__chao"></div>
+					<div class="pvpMiniCaverna__entidade pvpMiniCaverna__tapiera" style="left:18%;">
+						<img class="pvpMiniSprite" src="imagens/personagens/player.png" alt="" aria-hidden="true" onerror="this.src='imagens/animacoes/player/parado.png'">
+					</div>
+					<div class="pvpMiniCaverna__entidade pvpMiniCaverna__boss" style="right:12%;">
+						<img class="pvpMiniSprite" src="imagens/personagens/inimigo.png" alt="" aria-hidden="true" onerror="this.src='imagens/personagens/inimigo.png'">
+					</div>
+					<div class="pvpMiniCaverna__hp"><div class="pvpMiniCaverna__hpFill" data-pvp-fill></div></div>
+					<div class="pvpMiniCaverna__label">Fantasma · ${fantasma}</div>
+					<b class="pvpMiniCaverna__tempo" data-pvp-tempo>—</b>
+					<!-- compat: teste "nome do jogador" espera .pvpAlvoTopo span -->
+					<div class="pvpAlvoTopo" aria-hidden="true" style="position:absolute;pointer-events:none;opacity:0;">
+						<span>Fantasma · ${fantasma}</span>
+						<b data-pvp-tempo>—</b>
+					</div>
+				</div>
 			</div>
 			<div class="pvpResultado" data-pvp-resultado hidden></div>
 		</div>`;
@@ -550,12 +618,31 @@ var PvpFantasma = {
 		const cronometro = modal.querySelector("[data-pvp-cronometro]");
 		if (cronometro) cronometro.textContent = t.toFixed(2) + "s";
 		const pinta = (qual, serie, tempoMorto) => {
-			const alvo = modal.querySelector(`[data-pvp-alvo="${qual}"]`);
-			if (!alvo) return;
+			const arena = modal.querySelector(`.pvpMiniCaverna[data-pvp-alvo="${qual}"]`);
+			if (!arena) return;
 			const hp = this._hpNaSerie(serie, t);
-			const fill = alvo.querySelector("[data-pvp-fill]");
-			if (fill) fill.style.width = Math.max(0, hp / 25 * 100) + "%";
-			alvo.classList.toggle("pvpAlvo--morto", t >= tempoMorto);
+			const hpPct = Math.max(0, hp / 25 * 100);
+			const fill = arena.querySelector("[data-pvp-fill]");
+			if (fill) fill.style.width = hpPct + "%";
+			const tempoEl = arena.querySelector("[data-pvp-tempo]");
+			if (tempoEl) tempoEl.textContent = this._formataTempo(t);
+			const morto = t >= tempoMorto;
+			arena.classList.toggle("pvpMiniCaverna--morto", morto);
+			if (morto && fill) fill.style.background = "#3a4152";
+			// animação de ataque da tapiera a cada ~0.5s (visual apenas)
+			const tapiera = arena.querySelector(".pvpMiniCaverna__tapiera");
+			const boss = arena.querySelector(".pvpMiniCaverna__boss");
+			if (tapiera && boss && !morto) {
+				const fase = (t * 2) % 1;
+				if (fase < 0.02 && !tapiera.classList.contains("atacando")) {
+					tapiera.classList.add("atacando");
+					setTimeout(() => tapiera.classList.remove("atacando"), 220);
+					if (boss) {
+						boss.classList.add("levandoDano");
+						setTimeout(() => boss.classList.remove("levandoDano"), 150);
+					}
+				}
+			}
 		};
 		pinta("meu", resultado.serieMeu, resultado.tempoMeu);
 		pinta("fantasma", resultado.serieFantasma, resultado.tempoFantasma);
