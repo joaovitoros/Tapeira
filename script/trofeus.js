@@ -28,11 +28,11 @@ const TROFEUS = [
 		tipo: "mult", pct: 0.05, alvo: "dano", desc: "+5% de dano por nível" },
 	{ id: "mercador", nome: "Mercador", icone: "imagens/hud/gold.png",
 		tipo: "mult", pct: 0.05, alvo: "gold", desc: "+5% de gold por nível" },
-	{ id: "sabio", nome: "Sábio", icone: "",
+	{ id: "sabio", nome: "Sábio", icone: "imagens/hud/sabio.svg",
 		tipo: "mult", pct: 0.05, alvo: "XP", desc: "+5% de XP por nível" },
-	{ id: "colecionador", nome: "Colecionador", icone: "",
+	{ id: "colecionador", nome: "Colecionador", icone: "imagens/hud/colecionador.svg",
 		tipo: "mult", pct: 0.02, alvo: "Conhecimento Mug", desc: "+2% de Conhecimento Mug por nível" },
-	{ id: "sorte", nome: "Sorte", icone: "",
+	{ id: "sorte", nome: "Sorte", icone: "imagens/hud/sorte.svg",
 		tipo: "aditivo", pct: 0.005, alvo: "crítico", desc: "+0,5% de chance de crítico por nível" }
 ];
 
