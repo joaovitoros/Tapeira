@@ -22,11 +22,107 @@
 // - Determinismo: RNG mulberry32 com seed combinada (XOR, comutativo) e
 //   lados canônicos ordenados por (seed, exportedAt) — as DUAS máquinas
 //   calculam o mesmo resultado, independente de quem importou quem.
+// - Id de integridade: cada cartão carrega id = sha256(segredo + campos
+//   estáveis). Editou o cartão num editor, a assinatura não confere e o
+//   import é recusado. exportedAt e seed ficam FORA do id de propósito:
+//   exportar de novo o mesmo progresso gera o MESMO id (sem isso, o
+//   farm de re-exportar em loop continuaria possível).
+// - Anti-farm: um cartão só conclui UM duelo — o id entra em
+//   pvpCartoesUsados (campo de save PERMANENTE) quando o duelo acaba e
+//   importar de novo é recusado. Vitória paga +2 esmeraldas, sempre na
+//   mesma conclusão que queima o id: não existe caminho pra pagar 2x o
+//   mesmo cartão.
+
+// ids dos cartões de batalha já duelados nesta máquina (anti-farm do
+// PvP). PERMANENTE: não zera no Resetar — protege as esmeraldas, que
+// também atravessam o reset. Contrato de save: CriarObjetoSave,
+// Carregar e ValidarSave (validação própria + whitelist por ser array).
+var pvpCartoesUsados = [];
 
 var PvpFantasma = {
 	// taxa nominal de golpes por segundo do duelo — os dois lados usam a
 	// mesma, então a corrida compara builds, não a velocidade do dedo
 	TAXA_ATAQUE_JOGADOR: 3,
+
+	// segredo do id de integridade dos cartões. Valor embutido no código
+	// (dá pra achar lendo o JS) — serve pra derrubar edição casual no
+	// bloco de notas; anti-cheat sério do lado do cliente não existe.
+	_segredo: "t4peira-pvp-k4rdumm-2026",
+
+	// SHA-256 puro e síncrono. Sem WebCrypto de propósito: crypto.subtle
+	// exige contexto seguro e não existe em file:// nem no Electron
+	// abrindo arquivo local — e o fluxo do cartão é todo síncrono.
+	_sha256(texto) {
+		const K = [
+			0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+			0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+			0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+			0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+			0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+			0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+			0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+			0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+		];
+		const bytes = new TextEncoder().encode(texto);
+		const bits = bytes.length * 8;
+		const blocos = Math.ceil((bytes.length + 9) / 64);
+		const buffer = new Uint8Array(blocos * 64);
+		buffer.set(bytes);
+		buffer[bytes.length] = 0x80;
+		const vista = new DataView(buffer.buffer);
+		vista.setUint32(blocos * 64 - 8, Math.floor(bits / 0x100000000), false);
+		vista.setUint32(blocos * 64 - 4, bits >>> 0, false);
+		const h = new Uint32Array([
+			0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+			0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+		]);
+		const w = new Uint32Array(64);
+		const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+		for (let bloco = 0; bloco < blocos; bloco++) {
+			const off = bloco * 64;
+			for (let t = 0; t < 16; t++) w[t] = vista.getUint32(off + t * 4, false);
+			for (let t = 16; t < 64; t++) {
+				const s0 = rotr(w[t - 15], 7) ^ rotr(w[t - 15], 18) ^ (w[t - 15] >>> 3);
+				const s1 = rotr(w[t - 2], 17) ^ rotr(w[t - 2], 19) ^ (w[t - 2] >>> 10);
+				w[t] = (w[t - 16] + s0 + w[t - 7] + s1) >>> 0;
+			}
+			let a = h[0], b = h[1], c = h[2], d = h[3];
+			let e = h[4], f = h[5], g = h[6], hh = h[7];
+			for (let t = 0; t < 64; t++) {
+				const s1r = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+				const ch = (e & f) ^ (~e & g);
+				const t1 = (hh + s1r + ch + K[t] + w[t]) >>> 0;
+				const s0r = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+				const maj = (a & b) ^ (a & c) ^ (b & c);
+				const t2 = (s0r + maj) >>> 0;
+				hh = g; g = f; f = e;
+				e = (d + t1) >>> 0;
+				d = c; c = b; b = a;
+				a = (t1 + t2) >>> 0;
+			}
+			h[0] = (h[0] + a) >>> 0; h[1] = (h[1] + b) >>> 0;
+			h[2] = (h[2] + c) >>> 0; h[3] = (h[3] + d) >>> 0;
+			h[4] = (h[4] + e) >>> 0; h[5] = (h[5] + f) >>> 0;
+			h[6] = (h[6] + g) >>> 0; h[7] = (h[7] + hh) >>> 0;
+		}
+		let hex = "";
+		for (let i = 0; i < 8; i++) hex += h[i].toString(16).padStart(8, "0");
+		return hex;
+	},
+
+	// id do cartão = sha256(segredo + conteúdo ESTÁVEL) truncado em 128
+	// bits. exportedAt e seed ficam de fora: mudam a cada exportação e,
+	// sem eles, exportar duas vezes o mesmo progresso dá o MESMO id.
+	_assinatura(cartao) {
+		const campos = [
+			cartao.saveFormat, cartao.saveVersion, cartao.nome, cartao.nivel,
+			cartao.danoGolpe, cartao.danoCrit, cartao.chanceCrit,
+			cartao.dpsCompanheiro, cartao.especializacao,
+			cartao.itensBuildResumo, cartao.taxaAtaque
+		];
+		const canonico = campos.map(c => JSON.stringify(c === undefined ? null : c)).join("\u0001");
+		return this._sha256(this._segredo + "\u0000" + canonico).slice(0, 32);
+	},
 
 	_registrado: false,
 	// estado da tela aberta: cartões em disputa, timer da animação e
@@ -45,7 +141,7 @@ var PvpFantasma = {
 		const multDanoTotal = MultiplicadorDanoFormigas() * MultiplicadorDanoNivel() * Tapeira.ItensBuild.multDanoPvp();
 		const multEspNormal = MultiplicadorDanoEspecializacao(false);
 		const multEspCritico = MultiplicadorDanoEspecializacao(true);
-		return {
+		const cartao = {
 			saveFormat: "tapeira-cartao-batalha",
 			saveVersion: 1,
 			exportedAt: new Date().toISOString(),
@@ -65,6 +161,10 @@ var PvpFantasma = {
 			taxaAtaque: this.TAXA_ATAQUE_JOGADOR,
 			seed: Math.floor(Math.random() * 2147483647)
 		};
+		// id de integridade: deriva do segredo + o conteúdo do cartão —
+		// editar qualquer campo estável invalida o arquivo no import
+		cartao.id = this._assinatura(cartao);
+		return cartao;
 	},
 
 	// DPS médio de um cartão (crítico ponderado pela chance) — usado na ficha
@@ -84,6 +184,9 @@ var PvpFantasma = {
 		if (!Number.isInteger(cartao.saveVersion) || cartao.saveVersion < 1) {
 			throw new TypeError("A versão do cartão de batalha é inválida.");
 		}
+		if (typeof cartao.id !== "string" || !/^[0-9a-f]{32}$/.test(cartao.id)) {
+			throw new TypeError("O cartão de batalha não tem o id de integridade — exporte de novo na versão atual.");
+		}
 		for (const campo of ["danoGolpe", "danoCrit", "chanceCrit", "dpsCompanheiro", "taxaAtaque", "seed"]) {
 			if (!Number.isFinite(cartao[campo]) || cartao[campo] < 0) {
 				throw new TypeError(`O campo "${campo}" do cartão de batalha é inválido.`);
@@ -97,6 +200,11 @@ var PvpFantasma = {
 		}
 		if (cartao.itensBuildResumo !== undefined && typeof cartao.itensBuildResumo !== "string") {
 			throw new TypeError("O resumo de itens do cartão de batalha é inválido.");
+		}
+		// por último: o id precisa bater com o conteúdo — editou um campo
+		// estável no editor, a assinatura não confere mais e o cartão cai
+		if (this._assinatura(cartao) !== cartao.id) {
+			throw new TypeError("A assinatura do cartão de batalha não confere — o arquivo foi editado.");
 		}
 		return true;
 	},
@@ -156,6 +264,10 @@ var PvpFantasma = {
 	RecebeCartao(cartao) {
 		try {
 			this.ValidarCartaoBatalha(cartao);
+			// anti-farm: um cartão só conclui um duelo nesta máquina
+			if (pvpCartoesUsados.includes(cartao.id)) {
+				throw new TypeError("esse cartão de batalha já foi usado — cada cartão vale um duelo só.");
+			}
 			this.AbreDuelo(cartao);
 			MostraInfo("Cartão de batalha recebido — a ficha do duelo está aberta.");
 			return true;
@@ -179,7 +291,7 @@ var PvpFantasma = {
 		modal.innerHTML = `
 		<div class="pvpDueloBox">
 			<div class="pvpDueloTitulo">BATALHA-FANTASMA</div>
-			<div class="pvpDueloSub">Ficha dos duelistas — quem derruba o chefe primeiro vence.</div>
+			<div class="pvpDueloSub">Ficha dos duelistas — quem derruba o chefe primeiro vence e leva +2 esmeraldas.</div>
 			<div class="pvpCartoes">
 				${this._htmlCartao("Você", meuCartao, dpsMeu, dpsFantasma)}
 				${this._htmlCartao("Fantasma", cartaoFantasma, dpsFantasma, dpsMeu)}
@@ -332,6 +444,10 @@ var PvpFantasma = {
 			return;
 		}
 		this._resultadoDuelo = resultado;
+		// id do fantasma, guardado pro fechamento do duelo: fechar no
+		// meio da animação não queima o cartão (o duelo não concluiu)
+		const idFantasma = this._dueloAtual && this._dueloAtual.cartaoFantasma
+			? this._dueloAtual.cartaoFantasma.id : null;
 
 		const modal = document.getElementById("pvpDuelo");
 		if (!modal) return;
@@ -356,12 +472,10 @@ var PvpFantasma = {
 			if (decorrido >= DURACAO_MS) {
 				clearInterval(this._timerDuelo);
 				this._timerDuelo = null;
-				if (el) {
-					this._mostraResultado(resultado);
-				} else {
-					// fecharam o duelo durante a animação: só registra
-					this._logResultado(resultado);
-				}
+				// conclusão: queima o id do cartão e paga o prêmio —
+				// acontece com ou sem modal na tela
+				this._conclui(idFantasma, resultado);
+				if (el) this._mostraResultado(resultado);
 			}
 		};
 		this._timerDuelo = setInterval(atualiza, 50);
@@ -421,6 +535,27 @@ var PvpFantasma = {
 		return segundos.toFixed(2) + "s";
 	},
 
+	// o duelo CONCLUIU (vitória ou derrota): queima o id — um cartão
+	// vale um duelo só — e paga o prêmio da vitória. Marcação e prêmio
+	// no MESMO ponto: não existe caminho pra pagar 2x o mesmo cartão.
+	_conclui(idCartao, resultado) {
+		if (idCartao && !pvpCartoesUsados.includes(idCartao)) {
+			pvpCartoesUsados.push(idCartao);
+			// teto defensivo: o save não cresce sem fim (2000 ids ~ 80 KB)
+			if (pvpCartoesUsados.length > 2000) pvpCartoesUsados.shift();
+			AutoSalvar();
+		}
+		let premio = "";
+		if (resultado.venceu) {
+			esmeraldas += 2;
+			const contador = document.getElementById("contEmeraldas");
+			if (contador) contador.innerHTML = esmeraldas;
+			UI.showCurrencyReward("emerald", 2);
+			premio = " Prêmio: +2 esmeraldas.";
+		}
+		this._logResultado(resultado, premio);
+	},
+
 	_mostraResultado(resultado) {
 		const modal = document.getElementById("pvpDuelo");
 		if (!modal) return;
@@ -444,16 +579,17 @@ var PvpFantasma = {
 				: "pvpResultado--perdeu");
 			box.innerHTML = `
 				<div class="pvpResultadoTitulo">${resultado.venceu ? "VOCÊ VENCEU!" : "O FANTASMA VENCEU"}</div>
+				${resultado.venceu ? '<div class="pvpResultadoPremio">+2 esmeraldas</div>' : ""}
 				<div class="pvpResultadoLinha">Você: <b>${this._formataTempo(resultado.tempoMeu)}</b> ·
 					Fantasma: <b>${this._formataTempo(resultado.tempoFantasma)}</b></div>
 				<div class="pvpResultadoNota">Resultado idêntico na máquina do rival — mesmos cartões, mesma corrida.</div>`;
 		}
-		this._logResultado(resultado);
+		// o log sai da _conclui (roda com ou sem modal na tela)
 	},
 
-	_logResultado(resultado) {
+	_logResultado(resultado, premio) {
 		MostraInfo(resultado.venceu
-			? `Batalha-fantasma vencida em ${this._formataTempo(resultado.tempoMeu)} (fantasma: ${this._formataTempo(resultado.tempoFantasma)}).`
+			? `Batalha-fantasma vencida em ${this._formataTempo(resultado.tempoMeu)} (fantasma: ${this._formataTempo(resultado.tempoFantasma)}).${premio || ""}`
 			: `Batalha-fantasma perdida: fantasma em ${this._formataTempo(resultado.tempoFantasma)} (você: ${this._formataTempo(resultado.tempoMeu)}).`);
 	},
 

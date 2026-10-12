@@ -149,7 +149,16 @@ function AbrirTrofeus() {
 	close.setAttribute("aria-label", "Fechar a Loja de Troféus");
 	close.textContent = "×";
 	close.addEventListener("click", FecharTrofeus);
-	header.append(title, close);
+	header.append(title, CriaInfoTela({
+		id: "trofeus-info",
+		rotulo: "Sobre a Loja de Troféus",
+		html: "<b>Como funciona</b>"
+			+ "<p><b>Tickets de Caçador de Mugs</b> são os pontos de habilidade "
+			+ "que sobram quando <b>todas as skills estão no máximo</b> — viram "
+			+ "ticket sozinho, a cada nível de jogador.</p>"
+			+ "<p>Gaste em <b>troféus permanentes</b> (dano, gold, XP, CM e "
+			+ "crítico). O preço sobe a cada nível.</p>"
+	}), close);
 
 	const corpo = document.createElement("div");
 	corpo.className = "trofeus-corpo";

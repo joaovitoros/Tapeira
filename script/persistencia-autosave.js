@@ -96,6 +96,9 @@ function CriarObjetoSave(incluirOffline = true) {
 		tempoEsperaCompanheiro,
 
 		esmeraldas,
+		// ids de cartões de batalha já duelados (anti-farm do PvP) —
+		// permanente, não zera no Resetar
+		pvpCartoesUsados,
 		numVoltas,
 		tempoAvancoInimigos,
 		andarBoss,

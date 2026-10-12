@@ -122,6 +122,9 @@ function Carregar(saveData, calculaOffline = false) {
 	tempoEsperaCompanheiro = 0;
 
 	esmeraldas = save.esmeraldas ?? 0;
+	// cartões de batalha já usados no PvP: permanente (não zera no
+	// Resetar); save antigo sem o campo começa com a lista vazia
+	pvpCartoesUsados = Array.isArray(save.pvpCartoesUsados) ? save.pvpCartoesUsados.slice() : [];
 	numVoltas = save.numVoltas ?? 0;
 
 	tempoAvancoInimigos = save.tempoAvancoInimigos ?? TempoFugaMax();

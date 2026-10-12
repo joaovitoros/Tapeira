@@ -488,6 +488,13 @@ function ValidarSave(save) {
 			|| (save.bausBuildPendentes ?? (save.bauBuildPendente === true ? 1 : 0)) === 0)) {
 		throw new TypeError("As opções do baú de itens da build no save são inválidas.");
 	}
+	if (save.pvpCartoesUsados !== undefined
+		&& (!Array.isArray(save.pvpCartoesUsados)
+			|| save.pvpCartoesUsados.length > 2000
+			|| save.pvpCartoesUsados.some(id =>
+				typeof id !== "string" || !/^[0-9a-f]{32}$/.test(id)))) {
+		throw new TypeError("A lista de cartões de batalha usados no save é inválida.");
+	}
 	if (save.ultimaAtualizacaoBauDourado !== undefined
 		&& (!Number.isFinite(save.ultimaAtualizacaoBauDourado)
 			|| save.ultimaAtualizacaoBauDourado < 0)) {
@@ -517,6 +524,7 @@ function ValidarSave(save) {
 		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards",
 			"conquistasComp", "melhorGoldRun", "autoItensLoja",
 			"itensBuild", "bauBuildPendente", "opcoesBauBuild",
+			"pvpCartoesUsados",
 			"pesquisaItens", "pesquisaInimigos", "trofeus", "forja"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");

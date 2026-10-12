@@ -2623,6 +2623,145 @@ test("árvore de ramos: ícone de info abre o balão de como funciona a tela", a
     }
 });
 
+test("telas complexas: Skills, Coleção e Feitos trazem o ícone de info com balão", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            typeof UI !== "undefined"
+            && typeof UI.showSkillUpgradePanel === "function"
+            && typeof window.CriaInfoTela === "function",
+            undefined,
+            { timeout: 15000 }
+        );
+
+        // cada painel: abre, confere o selo no header e que o clique abre o balão
+        const resultado = await page.evaluate(() => {
+            if (typeof AlternaPausa === "function" && !window.jogoPausado) AlternaPausa();
+            document.getElementById("infoModal")?.remove();
+
+            const casos = [
+                { nome: "Skills", abre: () => UI.showSkillUpgradePanel(), idModal: "skillUpgradeModal" },
+                { nome: "Colecao", abre: () => UI.showAntCollection(), idModal: "antCollectionModal" },
+                { nome: "Feitos", abre: () => UI.showFeitosPanel(), idModal: "feitosModal" }
+            ];
+            const fora = [];
+            for (const caso of casos) {
+                caso.abre();
+                const modal = document.getElementById(caso.idModal);
+                const btn = modal ? modal.querySelector(".info-tela__btn") : null;
+                const balao = btn ? btn.parentElement.querySelector(".info-tela__balao") : null;
+                if (!btn || !balao) {
+                    fora.push(caso.nome + ":sem-info");
+                    modal?.remove();
+                    continue;
+                }
+                // o selo precisa estar no header (Feitos usa <div> com a classe)
+                const header = btn.closest("header") || btn.closest(".ant-collection-header");
+                const fechar = header ? header.querySelector(".ant-collection-close") : null;
+                if (!header) fora.push(caso.nome + ":fora-do-header");
+                else if (!fechar || !(btn.compareDocumentPosition(fechar) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+                    fora.push(caso.nome + ":nao-antes-do-x");
+                }
+                if (["onclick", "onload"].some(a => btn.hasAttribute(a))) fora.push(caso.nome + ":handler-inline");
+                if (!balao.hidden) fora.push(caso.nome + ":balao-nasceu-aberto");
+                if (!/Como funciona|funciona/i.test(balao.textContent)) fora.push(caso.nome + ":texto-vazio");
+
+                // clique abre e o aria-expanded acompanha
+                btn.click();
+                if (balao.hidden || btn.getAttribute("aria-expanded") !== "true") {
+                    fora.push(caso.nome + ":clique-nao-abriu");
+                }
+                // ESC fecha o balão e mantém o painel (camada extra)
+                document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true }));
+                if (!balao.hidden) fora.push(caso.nome + ":esc-nao-fechou-balao");
+                if (!document.getElementById(caso.idModal)) fora.push(caso.nome + ":esc-levantou-o-painel");
+                // limpa pro próximo
+                modal.remove();
+            }
+            return fora;
+        });
+
+        assert.deepEqual(resultado, [],
+            "Skills, Coleção e Feitos têm o ícone de info funcional no header");
+
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("telas da Cidade: os 7 prédios trazem o ícone de info com balão", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            typeof window.CriaInfoTela === "function"
+            && typeof window.AbrirCasa === "function"
+            && typeof window.AbrirTrofeus === "function",
+            undefined,
+            { timeout: 15000 }
+        );
+
+        const resultado = await page.evaluate(() => {
+            if (typeof AlternaPausa === "function" && !window.jogoPausado) AlternaPausa();
+            document.getElementById("infoModal")?.remove();
+            window.maxAndar = 200; // destrava os prédios da Cidade
+
+            const casos = [
+                { nome: "Casa", abre: AbrirCasa, fecha: FecharCasa, idModal: "casaModal" },
+                { nome: "Fazenda", abre: AbrirFazenda, fecha: FecharFazenda, idModal: "fazendaModal" },
+                { nome: "Mercado", abre: AbrirMercado, fecha: FecharMercado, idModal: "mercadoModal" },
+                { nome: "Fabrica", abre: AbrirFabrica, fecha: FecharFabrica, idModal: "fabricaModal" },
+                { nome: "Pesquisa", abre: AbrirPesquisa, fecha: FecharPesquisa, idModal: "pesquisaModal" },
+                { nome: "Cristal", abre: AbrirCristal, fecha: FecharCristal, idModal: "cristalModal" },
+                { nome: "Trofeus", abre: AbrirTrofeus, fecha: FecharTrofeus, idModal: "trofeusModal" }
+            ];
+            const fora = [];
+            for (const caso of casos) {
+                caso.abre();
+                const modal = document.getElementById(caso.idModal);
+                const btn = modal ? modal.querySelector(".info-tela__btn") : null;
+                const balao = btn ? btn.parentElement.querySelector(".info-tela__balao") : null;
+                if (!btn || !balao) {
+                    fora.push(caso.nome + ":sem-info");
+                    caso.fecha();
+                    continue;
+                }
+                const header = btn.closest("header");
+                const fechar = header ? header.querySelector("[class$='-fechar']") : null;
+                if (!header) fora.push(caso.nome + ":fora-do-header");
+                else if (!fechar || !(btn.compareDocumentPosition(fechar) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+                    fora.push(caso.nome + ":nao-antes-do-x");
+                }
+                if (["onclick", "onload"].some(a => btn.hasAttribute(a))) fora.push(caso.nome + ":handler-inline");
+                if (!balao.hidden) fora.push(caso.nome + ":balao-nasceu-aberto");
+                if (!balao.textContent.trim()) fora.push(caso.nome + ":texto-vazio");
+
+                btn.click();
+                if (balao.hidden || btn.getAttribute("aria-expanded") !== "true") {
+                    fora.push(caso.nome + ":clique-nao-abriu");
+                }
+                document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true }));
+                if (!balao.hidden) fora.push(caso.nome + ":esc-nao-fechou-balao");
+                if (!document.getElementById(caso.idModal)) fora.push(caso.nome + ":esc-levantou-o-painel");
+                caso.fecha();
+                if (document.getElementById(caso.idModal)) fora.push(caso.nome + ":nao-fechou");
+            }
+            // o ESC seguinte, sem balão, fecha o painel (comportamento existente)
+            AbrirCasa();
+            document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true }));
+            if (document.getElementById("casaModal")) fora.push("Casa:esc-final-nao-fechou");
+            return fora;
+        });
+
+        assert.deepEqual(resultado, [],
+            "Casa, Fazenda, Mercado, Fábrica, Pesquisa, Cristal e Troféus têm o ícone de info funcional");
+
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("rodapé: botões horizontais à esquerda e habilidades abaixo do log, ao lado ou acima dos botões", async t => {
     const abrir = async viewport => {
         const context = await browser.newContext({ viewport });
@@ -3349,14 +3488,20 @@ test("batalha-fantasma: corrida contra o chefe é determinística e decide o ven
             await page.click("#infoModal [data-info-fechar]");
         } catch (erro) { /* já fechado ou não abriu */ }
 
-        const FIX_A = {
+        let FIX_A = {
             saveFormat: "tapeira-cartao-batalha", saveVersion: 1,
             exportedAt: "2026-01-01T00:00:00.000Z", nome: "A", nivel: 10,
             danoGolpe: 1000, danoCrit: 4000, chanceCrit: 0.3,
             dpsCompanheiro: 0, especializacao: null, itensBuildResumo: "",
             taxaAtaque: 3, seed: 111
         };
-        const FIX_B = { ...FIX_A, nome: "B", exportedAt: "2026-01-02T00:00:00.000Z", seed: 222 };
+        let FIX_B = { ...FIX_A, nome: "B", exportedAt: "2026-01-02T00:00:00.000Z", seed: 222 };
+        // Fase 3: a validação exige o id de integridade — assina os
+        // fixtures na página (é lá que existe o segredo)
+        [FIX_A, FIX_B] = await page.evaluate(f => f.map(c => {
+            c.id = PvpFantasma._assinatura(c);
+            return c;
+        }), [FIX_A, FIX_B]);
 
         // 1) determinismo: mesma entrada → mesmo resultado
         const r1 = await page.evaluate(
@@ -3389,7 +3534,9 @@ test("batalha-fantasma: corrida contra o chefe é determinística e decide o ven
                 dpsCompanheiro: 0, especializacao: null, itensBuildResumo: "",
                 taxaAtaque: 3, seed: 7
             };
+            base.id = PvpFantasma._assinatura(base);
             const forte = { ...base, seed: 9, danoGolpe: 100000, danoCrit: 400000 };
+            forte.id = PvpFantasma._assinatura(forte);
             return PvpFantasma.SimulaDuelo(forte, base);
         });
         assert.equal(forte.venceu, true, "build mais forte vence");
@@ -3563,6 +3710,174 @@ test("pvp: só itens com forja 5+ entram no cartão e ganham borda prateada na t
             "forja 4 continua só com a dourada");
         assert.ok(!r.classes4.includes("item-build-cartao--pvp"),
             "forja 4 NÃO ganha a borda prateada");
+
+        assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
+    } finally {
+        await context.close();
+    }
+});
+
+test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado não reentra", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        // o "Como jogar" abre sozinho em página nova — fecha antes dos cliques
+        try {
+            await page.waitForSelector("#infoModal [data-info-fechar]", { timeout: 2500 });
+            await page.click("#infoModal [data-info-fechar]");
+        } catch (erro) { /* já fechado ou não abriu */ }
+
+        // (a) id: vetor de teste do sha256, edição invalida o cartão e
+        //     reexportar sem mudar progresso mantém o MESMO id (anti-farm)
+        const a = await page.evaluate(() => {
+            const c = PvpFantasma.MontaCartaoBatalha();
+            const saida = {
+                id: c.id,
+                sha0: PvpFantasma._sha256(""),
+                shaAbc: PvpFantasma._sha256("abc")
+            };
+            const editado = { ...c, danoGolpe: c.danoGolpe * 10 };
+            try { PvpFantasma.ValidarCartaoBatalha(editado); saida.editado = "aceitou"; }
+            catch (e) { saida.editado = e.message; }
+            const reexportado = {
+                ...c,
+                exportedAt: "2030-06-30T12:00:00.000Z",
+                seed: (c.seed + 999) % 2147483647
+            };
+            saida.idReexportado = PvpFantasma._assinatura(reexportado);
+            const semId = { ...c };
+            delete semId.id;
+            try { PvpFantasma.ValidarCartaoBatalha(semId); saida.semId = "aceitou"; }
+            catch (e) { saida.semId = "rejeitou"; }
+            return saida;
+        });
+        assert.ok(/^[0-9a-f]{32}$/.test(a.id), "id tem 32 dígitos hexadecimais");
+        assert.equal(a.sha0,
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "sha256 do texto vazio bate com o vetor de teste");
+        assert.equal(a.shaAbc,
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+            "sha256 de \"abc\" bate com o vetor de teste");
+        assert.ok(a.editado.includes("assinatura"),
+            "editar o cartão invalida a assinatura: " + a.editado);
+        assert.equal(a.idReexportado, a.id,
+            "reexportar sem mudar progresso mantém o mesmo id");
+        assert.equal(a.semId, "rejeitou", "cartão sem id é recusado");
+
+        // (b) vitória: +2 esmeraldas e o id entra na lista de usados
+        const abertura = await page.evaluate(() => {
+            const meu = PvpFantasma.MontaCartaoBatalha();
+            const fraco = {
+                ...meu, nome: "Fraco",
+                danoGolpe: 1, danoCrit: 1, chanceCrit: 0,
+                dpsCompanheiro: 0, seed: 424242
+            };
+            fraco.id = PvpFantasma._assinatura(fraco);
+            const antes = esmeraldas;
+            const ok = PvpFantasma.RecebeCartao(fraco);
+            return { fraco, antes, ok, temTela: !!document.getElementById("pvpDuelo") };
+        });
+        assert.equal(abertura.ok, true, "cartão assinado (mais fraco) é aceito");
+        assert.ok(abertura.temTela, "ficha do duelo abriu");
+        try {
+            await page.waitForSelector("#infoModal [data-info-fechar]", { timeout: 2000 });
+            await page.click("#infoModal [data-info-fechar]");
+        } catch (erro) { /* sem aviso por cima */ }
+        await page.click("[data-pvp-lutar]");
+        await page.waitForSelector("[data-pvp-resultado]:not([hidden])", { timeout: 9000 });
+        const vitoria = await page.evaluate(() => ({
+            esmeraldas: esmeraldas,
+            usados: pvpCartoesUsados.slice(),
+            texto: document.querySelector("[data-pvp-resultado]").textContent
+        }));
+        assert.equal(vitoria.esmeraldas, abertura.antes + 2, "vitória paga 2 esmeraldas");
+        assert.ok(vitoria.texto.includes("+2 esmeraldas"), "banner mostra o prêmio");
+        assert.deepEqual(vitoria.usados, [abertura.fraco.id],
+            "id do cartão registrado quando o duelo conclui");
+
+        // (c) o MESMO cartão de novo → recusado, sem novo prêmio
+        const repetida = await page.evaluate(fr => {
+            const antes = esmeraldas;
+            const ok = PvpFantasma.RecebeCartao(fr);
+            return { ok, esmeraldas: esmeraldas, antes, usados: pvpCartoesUsados.length };
+        }, abertura.fraco);
+        assert.equal(repetida.ok, false, "cartão usado é recusado no reimport");
+        assert.equal(repetida.esmeraldas, repetida.antes, "reimportação não paga nada");
+        assert.equal(repetida.usados, 1, "lista de usados não muda");
+
+        // (d) derrota: queima o id também, mas não paga nada
+        const derrota = await page.evaluate(() => {
+            const meu = PvpFantasma.MontaCartaoBatalha();
+            const forte = {
+                ...meu, nome: "Forte",
+                danoGolpe: 1e9, danoCrit: 1e9, chanceCrit: 0.5,
+                dpsCompanheiro: 0, seed: 777
+            };
+            forte.id = PvpFantasma._assinatura(forte);
+            const antes = esmeraldas;
+            const ok = PvpFantasma.RecebeCartao(forte);
+            return { forte, antes, ok };
+        });
+        assert.equal(derrota.ok, true, "segundo cartão (mais forte) é aceito");
+        try {
+            await page.waitForSelector("#infoModal [data-info-fechar]", { timeout: 2000 });
+            await page.click("#infoModal [data-info-fechar]");
+        } catch (erro) { /* sem aviso por cima */ }
+        await page.click("[data-pvp-lutar]");
+        await page.waitForSelector("[data-pvp-resultado]:not([hidden])", { timeout: 9000 });
+        const fimDerrota = await page.evaluate(() => ({
+            esmeraldas: esmeraldas,
+            usados: pvpCartoesUsados.slice(),
+            texto: document.querySelector("[data-pvp-resultado]").textContent
+        }));
+        assert.equal(fimDerrota.esmeraldas, derrota.antes, "derrota não paga esmeraldas");
+        assert.ok(fimDerrota.texto.includes("FANTASMA VENCEU"), "banner da derrota aparece");
+        assert.ok(!fimDerrota.texto.includes("+2 esmeraldas"), "derrota não mostra prêmio");
+        assert.deepEqual(fimDerrota.usados, [abertura.fraco.id, derrota.forte.id],
+            "derrota também queima o id");
+
+        // (e) contrato de save: builder, validação + whitelist e carga
+        const contrato = await page.evaluate(() => {
+            const saida = {};
+            const ids = ["a1b2c3d4e5f60718293a4b5c6d7e8f90", "00112233445566778899aabbccddeeff"];
+            pvpCartoesUsados = ids.slice();
+            const obj = CriarObjetoSave(false);
+            obj.saveFormat = "tapeira-save";
+            obj.saveVersion = 1;
+            obj.exportedAt = new Date().toISOString();
+            saida.builder = Array.isArray(obj.pvpCartoesUsados)
+                && obj.pvpCartoesUsados.length === 2;
+            const json = JSON.stringify(obj);
+            try { ValidarSave(JSON.parse(json)); saida.valido = true; }
+            catch (e) { saida.valido = false; saida.erroValido = e.message; }
+            const lixo = JSON.parse(json);
+            lixo.pvpCartoesUsados = "nao-array";
+            try { ValidarSave(lixo); saida.rejeitaLixo = false; }
+            catch (e) { saida.rejeitaLixo = e instanceof TypeError; }
+            const fora = JSON.parse(json);
+            fora.pvpCartoesUsados = ["nao-hex"];
+            try { ValidarSave(fora); saida.rejeitaFormato = false; }
+            catch (e) { saida.rejeitaFormato = e instanceof TypeError; }
+            // save novo: Carregar restaura a lista
+            pvpCartoesUsados = [];
+            Carregar(json);
+            saida.restaurado = pvpCartoesUsados.slice();
+            // save antigo sem o campo: começa vazio
+            const antigo = JSON.parse(json);
+            delete antigo.pvpCartoesUsados;
+            pvpCartoesUsados = ["lixo"];
+            Carregar(JSON.stringify(antigo));
+            saida.antigo = pvpCartoesUsados.slice();
+            return saida;
+        });
+        assert.ok(contrato.builder, "CriarObjetoSave leva pvpCartoesUsados");
+        assert.equal(contrato.valido, true,
+            "ValidarSave aceita a lista (whitelist): " + (contrato.erroValido || ""));
+        assert.ok(contrato.rejeitaLixo, "lista lixo (não-array) é rejeitada");
+        assert.ok(contrato.rejeitaFormato, "id fora do formato é rejeitado");
+        assert.deepEqual(contrato.restaurado,
+            ["a1b2c3d4e5f60718293a4b5c6d7e8f90", "00112233445566778899aabbccddeeff"],
+            "Carregar restaura a lista");
+        assert.deepEqual(contrato.antigo, [], "save antigo ganha lista vazia");
 
         assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
     } finally {

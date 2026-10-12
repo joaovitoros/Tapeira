@@ -210,10 +210,15 @@ function FechaJanelasAbertas() {
 
     // Balão do ícone de info ("i") das telas complexas (ui-info.js): fecha
     // PRIMEIRO, uma camada por vez — senão o ESC levaria o painel inteiro
-    // junto com o balão.
+    // junto com o balão. Se o painel que segurava o balão foi destruído ou
+    // re-renderizado, o balão já não está no DOM: limpa o estado órfão sem
+    // consumir o ESC (senão o primeiro ESC faria nada de visível).
     if (typeof infoTelaAtiva !== "undefined" && infoTelaAtiva) {
-        FechaInfoTela();
-        return true;
+        if (infoTelaAtiva.balao && infoTelaAtiva.balao.isConnected) {
+            FechaInfoTela();
+            return true;
+        }
+        infoTelaAtiva = null;
     }
 
     // Diálogo de pausa / confirmação de saída
