@@ -38,7 +38,7 @@ const APARENCIA_SLOTS = [
         dir: "imagens/personagens/cachecois/",
         campo: "cachecolEquipado",
         vazio: "Sem cachecol",
-        ancora: { x: 50, y: 68, largura: 33 },
+        ancora: { x: 50, y: 74, largura: 40 },
         itens: [
             { id: "roxo", nome: "Cachecol roxo", arquivo: "cachecol-01.png" },
             { id: "xadrez", nome: "Cachecol xadrez", arquivo: "cachecol-02.png" },
