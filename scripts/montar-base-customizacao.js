@@ -17,7 +17,7 @@ const DIR_CUSTOM = path.join(
     fs.readdirSync(DIR_IMAGENS).find(n => n.toLowerCase().startsWith("customiza"))
 );
 const PLAYER = path.join(DIR_IMAGENS, "personagens", "player.png");
-const BASE = path.join(DIR_CUSTOM, "base", "base-frente.png");
+const BASE = path.join(DIR_CUSTOM, "base", "base-sprite.png");
 const DIR_CHAPEUS_ORIG = path.join(DIR_CUSTOM, "chapeus");
 const DIR_CHAPEUS = path.join(DIR_IMAGENS, "personagens", "chapeus");
 
@@ -51,9 +51,9 @@ const lêB64 = p => "data:image/png;base64," + fs.readFileSync(p).toString("base
             }
         }
 
-        // topeira nova: escala pela LARGURA útil (a bichinha nova é mais gorda),
-        // pés na mesma linha e centrada no eixo da silhueta atual
-        const escala = ((maxX - minX + 1) * 0.99) / nova.naturalWidth;
+        // topeira nova: escala pela ALTURA útil (mantém o tamanho do bichinho na
+        // cena), pés na mesma linha e centrada no eixo da silhueta atual
+        const escala = ((maxY - minY + 1) * 0.995) / nova.naturalHeight;
         const w = Math.round(nova.naturalWidth * escala);
         const h = Math.round(nova.naturalHeight * escala);
         // Canvas na PROPORÇÃO da caixa do player no CSS (10.55 : 13.9): assim a

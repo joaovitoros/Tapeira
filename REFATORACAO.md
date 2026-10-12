@@ -204,8 +204,9 @@ Rode `npm run prepare:web` antes dos testes focados que abrem `www/`.
 - **Customização (Aparência) — slot de CHAPÉUS pronto**: base sem chapéu
   (`imagens/personagens/player.png`) + camada `.player__chapeu` dentro da caixa
   do player + 8 chapéus (`imagens/personagens/chapeus/`) + seção "Aparência" na
-  Casa + campo `chapeuEquipado` no save. Âncora de referência: `x=46,5%`
-  `y=22%` `largura=53%` (canvas 1166x1536). **Próximos slots** (cachecol, capa,
+  Casa + campo `chapeuEquipado` no save. Base = 1º sprite da "Folha de sprites do
+  mineiro toupeira" (toupeira padrão, SEM a faixa nos olhos). Âncora de
+  referência: `x=50%` `y=30%` `largura=53%` (canvas 1166x1536). **Próximos slots** (cachecol, capa,
   mochila, ferramenta, escudo, cinto): as peças já estão fatiadas em
   `imagens/customizacao/pecas/` (78 peças, sem xadrez) — falta **calibrar a
   âncora de cada peça** (trabalho por peça; dá pra reaproveitar
