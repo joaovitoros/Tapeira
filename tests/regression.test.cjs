@@ -2873,6 +2873,58 @@ test("Loja de Troféus: níveis, custo crescente, efeitos, save e painel", async
     }
 });
 
+test("forja da Fábrica custa ~80 avanços de andar e cobra o gold", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            window.Tapeira && window.Tapeira.ItensBuild && typeof window.CustoForjaItem === "function");
+        const result = await page.evaluate(() => {
+            UI.showInfo = () => {};
+            const build = window.Tapeira.ItensBuild;
+            andar = 123; mulGold = 1; mulGoldAvanco = 1; vidaAndar = 5000;
+            const base = BonusGoldAvanco();
+            const custo = CustoForjaItem();
+
+            // sem 2 cópias iguais: não forja
+            build.limpa();
+            build.carrega({ itensBuild: ["adaga"], bauBuildPendente: false });
+            gold = new GoldNumber(base * 1000);
+            const semCopias = ForjaItem("adaga");
+
+            // com 2 cópias mas sem gold: não forja
+            build.limpa();
+            build.carrega({ itensBuild: ["adaga", "adaga"], bauBuildPendente: false });
+            gold = new GoldNumber(base); // ~1 avanço, bem menos que o custo
+            const semGold = ForjaItem("adaga");
+
+            // com 2 cópias e gold: forja e debita o custo
+            gold = new GoldNumber(custo * 2);
+            const antes = gold.toNumber();
+            const forjou = ForjaItem("adaga");
+            const depois = gold.toNumber();
+
+            return {
+                mult: base > 0 ? custo / base : 0,
+                semCopias, semGold, forjou,
+                cobrou: antes - depois,
+                custo,
+                nivelForja: build.nivelForja("adaga")
+            };
+        });
+
+        assert.ok(Math.abs(result.mult - 80) < 1e-9,
+            "custo = 80 avanços de andar (veio " + result.mult + ")");
+        assert.equal(result.semCopias, false, "não forja sem 2 cópias iguais");
+        assert.equal(result.semGold, false, "não forja sem gold suficiente");
+        assert.equal(result.forjou, true, "forja com 2 cópias e gold");
+        assert.ok(Math.abs(result.cobrou - result.custo) < 1e-6, "debita exatamente o custo");
+        assert.equal(result.nivelForja, 1, "o item fica com 1 forja");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("batalha-fantasma: cartão de batalha monta, valida e importa sem tocar no save", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
