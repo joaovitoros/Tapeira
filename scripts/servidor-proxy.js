@@ -134,7 +134,9 @@ function encaminha(req, res, porta, caminho) {
 
 const servidor = http.createServer((req, res) => {
     const url = new URL(req.url, "http://x");
-    const caminho = url.pathname;
+    // decodifica %20 etc. — senão arquivos com espaço/acento (ex.: a musica) 404
+    let caminho;
+    try { caminho = decodeURIComponent(url.pathname); } catch { caminho = url.pathname; }
 
     if (caminho === "/api/versao") {
         const corpo = JSON.stringify(infoVersao());
