@@ -2710,6 +2710,7 @@ caption {
 	left: 0;
 	top: 0;
 	transform: translate(-50%, -100%);
+	transform-origin: 50% 100%;
 	pointer-events: none;
 	filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.35));
 }

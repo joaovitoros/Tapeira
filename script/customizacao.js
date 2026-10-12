@@ -91,7 +91,9 @@ function AparenciaAplicaEm(raiz) {
             img.style.left = a.x + "%";
             img.style.top = a.y + "%";
             img.style.width = a.largura + "%";
-            img.classList.toggle("is-espelhado", !!item.flip);
+            img.style.transform = "translate(-50%, -100%)"
+                + (item.flip ? " scaleX(-1)" : "")
+                + (item.rot ? " rotate(" + item.rot + "deg)" : "");
             img.classList.toggle("is-atras", !!item.tras);
         });
     }

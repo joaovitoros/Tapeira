@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calibrador de Aparência — TAPeira</title>
+<style>
+	* { box-sizing: border-box; }
+	body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #0d1219; color: #dfe7f2; }
+	header { padding: 10px 14px; border-bottom: 1px solid #22303f; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+	header h1 { font-size: 15px; margin: 0; color: #ffe2a0; }
+	header .dica { font-size: 12px; color: #8291a8; max-width: 720px; }
+	.wrap { display: flex; gap: 14px; padding: 14px; align-items: flex-start; flex-wrap: wrap; }
+	.palco { position: relative; background: radial-gradient(circle at 50% 30%, #2b3a4f, #121822 70%); border: 1px solid #22303f; border-radius: 12px; padding: 10px; }
+	.arte { position: relative; width: 320px; aspect-ratio: 1166 / 1536; touch-action: none; user-select: none; }
+	.arte .base { display: block; width: 100%; height: 100%; pointer-events: none; }
+	.arte .camada { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); transform-origin: 50% 100%; pointer-events: none; }
+	.arte .camada.sel { outline: 1px dashed #7ee0a0; outline-offset: 2px; cursor: grab; pointer-events: auto; }
+	.grade { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(to right, rgba(255,255,255,0.13) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.13) 1px, transparent 1px); background-size: 10% 10%; }
+	aside { width: 360px; display: flex; flex-direction: column; gap: 10px; }
+	.campo { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+	.linha { display: flex; gap: 10px; align-items: center; font-size: 13px; flex-wrap: wrap; }
+	select, button, textarea { font: inherit; color: inherit; }
+	select { background: #161d27; border: 1px solid #2a3546; border-radius: 8px; padding: 6px; }
+	button { background: #1d2a3a; border: 1px solid #2f4a6a; border-radius: 8px; padding: 7px 10px; cursor: pointer; }
+	button:hover { filter: brightness(1.15); }
+	label.arquivo { background: #1d2a3a; border: 1px solid #2f4a6a; border-radius: 8px; padding: 7px 10px; cursor: pointer; font-size: 13px; }
+	label.arquivo input { display: none; }
+	input[type=range] { width: 100%; }
+	.itens { display: flex; flex-wrap: wrap; gap: 6px; max-height: 260px; overflow: auto; }
+	.itens button { width: 68px; padding: 4px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; }
+	.itens button img { width: 54px; height: 40px; object-fit: contain; }
+	.itens button.is-sel { border-color: #7ee0a0; box-shadow: inset 0 0 0 1px rgba(126,224,160,0.6); }
+	textarea { width: 100%; height: 170px; background: #10161f; border: 1px solid #2a3546; border-radius: 8px; padding: 8px; font-family: ui-monospace, monospace; font-size: 11px; }
+	.info { font-size: 12px; color: #ffe2a0; font-family: ui-monospace, monospace; }
+	.tag { font-size: 11px; color: #8291a8; }
+</style>
+</head>
+<body>
+	<header>
+		<h1>Calibrador de Aparência</h1>
+		<span class="dica">1) Carregue a pasta de itens (ex.: imagens/personagens/capas). 2) Arraste cada item pra posição (a BASE dele segue o cursor) e ajuste largura/rotação/espelho. 3) Exportar → me mande o JSON. Dá pra carregar várias pastas (acumula).</span>
+	</header>
+	<div class="wrap">
+		<div class="palco">
+			<div class="arte" id="arte">
+				<img class="base" id="base" src="../imagens/personagens/player.png" alt="">
+				<div class="grade"></div>
+			</div>
+			<div class="linha" style="margin-top:8px">
+				<label class="arquivo">Trocar base…<input type="file" id="baseFile" accept="image/*"></label>
+				<span class="tag" id="baseNome">player.png</span>
+			</div>
+		</div>
+		<aside>
+			<div class="linha">
+				<label class="arquivo">Carregar pasta de itens…<input type="file" id="pasta" webkitdirectory directory multiple></label>
+				<button id="limpar">Limpar</button>
+			</div>
+			<div class="campo">
+				<span>Slot</span>
+				<select id="slot"></select>
+			</div>
+			<div class="itens" id="itens"></div>
+			<div class="campo">
+				<span>Largura: <b id="larguraVal">—</b>%</span>
+				<input type="range" id="largura" min="4" max="160" step="0.5">
+			</div>
+			<div class="campo">
+				<span>Rotação: <b id="rotVal">0</b>°</span>
+				<input type="range" id="rot" min="-60" max="60" step="1">
+			</div>
+			<div class="linha">
+				<label><input type="checkbox" id="flip"> Espelhar</label>
+				<label><input type="checkbox" id="atras"> Atrás</label>
+				<label><input type="checkbox" id="grade"> Grade</label>
+			</div>
+			<div class="info" id="info">—</div>
+			<div class="linha">
+				<button id="exportar">Exportar / Copiar JSON</button>
+				<button id="exportarTudo">Ver tudo</button>
+			</div>
+			<textarea id="saida" spellcheck="false" placeholder="O JSON aparece aqui…"></textarea>
+		</aside>
+	</div>
+
+	<script>
+	(function () {
+		// slots = [{ id, nome, itens: [{ id, nome, url }] }]
+		var slots = [];
+		var dados = {};      // dados[slot][item] = {x,y,largura,flip,atras,rot}
+		var equipado = {};   // equipado[slot] = itemId
+		var sel = { slot: null, item: null };
+		var CHAVE = "tapeira-calibrador-aparencia";
+
+		// restaura o que já foi posicionado antes (posições ficam salvas no navegador)
+		try { dados = JSON.parse(localStorage.getItem(CHAVE) || "{}"); } catch (e) { dados = {}; }
+
+		var arte = document.getElementById("arte");
+		var slotSel = document.getElementById("slot");
+		var itensBox = document.getElementById("itens");
+		var largura = document.getElementById("largura");
+		var larguraVal = document.getElementById("larguraVal");
+		var rot = document.getElementById("rot");
+		var rotVal = document.getElementById("rotVal");
+		var flip = document.getElementById("flip");
+		var atras = document.getElementById("atras");
+		var grade = document.getElementById("grade");
+		var info = document.getElementById("info");
+		var saida = document.getElementById("saida");
+
+		function salvar() { try { localStorage.setItem(CHAVE, JSON.stringify(dados)); } catch (e) {} }
+		function slot() { return slots.find(function (s) { return s.id === sel.slot; }); }
+		function item() { return slot() ? slot().itens.find(function (i) { return i.id === sel.item; }) : null; }
+		function d() {
+			if (!dados[sel.slot]) dados[sel.slot] = {};
+			if (!dados[sel.slot][sel.item]) dados[sel.slot][sel.item] = { x: 50, y: 50, largura: 40, flip: false, atras: false, rot: 0 };
+			return dados[sel.slot][sel.item];
+		}
+
+		// ---- carregar pasta ----
+		document.getElementById("pasta").addEventListener("change", function (ev) {
+			var files = Array.prototype.slice.call(ev.target.files).filter(function (f) { return /\.(png|webp|gif|jpg|jpeg)$/i.test(f.name); });
+			if (!files.length) return;
+			var nomePasta = (files[0].webkitRelativePath || "").split("/")[0] || "itens";
+			var id = nomePasta.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+			var s = slots.find(function (x) { return x.id === id; });
+			if (!s) { s = { id: id, nome: nomePasta, itens: [] }; slots.push(s); }
+			files.forEach(function (f) {
+				var nome = f.name.replace(/\.[^.]+$/, "");
+				if (s.itens.some(function (i) { return i.id === nome; })) return;
+				s.itens.push({ id: nome, nome: nome, url: URL.createObjectURL(f) });
+			});
+			s.itens.sort(function (a, b) { return a.id.localeCompare(b.id); });
+			if (!sel.slot) { sel.slot = s.id; sel.item = s.itens[0].id; }
+			if (!equipado[s.id]) equipado[s.id] = s.itens[0].id;
+			renderSlots();
+			render();
+		});
+
+		document.getElementById("baseFile").addEventListener("change", function (ev) {
+			var f = ev.target.files[0];
+			if (!f) return;
+			document.getElementById("base").src = URL.createObjectURL(f);
+			document.getElementById("baseNome").textContent = f.name;
+		});
+
+		function renderSlots() {
+			slotSel.replaceChildren();
+			slots.forEach(function (s) {
+				var o = document.createElement("option");
+				o.value = s.id; o.textContent = s.nome + " (" + s.itens.length + ")";
+				slotSel.appendChild(o);
+			});
+			if (sel.slot) slotSel.value = sel.slot;
+		}
+
+		function renderItens() {
+			itensBox.replaceChildren();
+			if (!slot()) return;
+			slot().itens.forEach(function (it) {
+				var b = document.createElement("button");
+				b.type = "button";
+				b.className = (sel.item === it.id ? "is-sel" : "");
+				var img = document.createElement("img");
+				img.src = it.url; img.alt = "";
+				var dd = dados[sel.slot] && dados[sel.slot][it.id];
+				if (dd && dd.flip) img.style.transform = "scaleX(-1)";
+				b.appendChild(img);
+				var sp = document.createElement("span");
+				sp.textContent = it.nome;
+				b.appendChild(sp);
+				b.addEventListener("click", function () { sel.item = it.id; equipado[sel.slot] = it.id; render(); });
+				itensBox.appendChild(b);
+			});
+		}
+
+		function renderArte() {
+			Array.prototype.slice.call(arte.querySelectorAll(".camada")).forEach(function (e) { e.remove(); });
+			slots.forEach(function (s) {
+				var id = equipado[s.id];
+				if (!id || !dados[s.id] || !dados[s.id][id]) return;
+				var it = s.itens.find(function (i) { return i.id === id; });
+				if (!it) return;
+				var dd = dados[s.id][id];
+				var img = document.createElement("img");
+				img.className = "camada" + (s.id === sel.slot && id === sel.item ? " sel" : "");
+				img.dataset.slot = s.id;
+				img.src = it.url;
+				img.style.left = dd.x + "%";
+				img.style.top = dd.y + "%";
+				img.style.width = dd.largura + "%";
+				img.style.transform = "translate(-50%,-100%)" + (dd.flip ? " scaleX(-1)" : "") + (dd.rot ? " rotate(" + dd.rot + "deg)" : "");
+				if (dd.atras) img.style.zIndex = "-1";
+				arte.appendChild(img);
+			});
+			var el = arte.querySelector('.camada[data-slot="' + sel.slot + '"]');
+			if (el) el.addEventListener("pointerdown", iniciarArraste);
+		}
+
+		function render() {
+			if (!slot()) {
+				renderItens(); renderArte();
+				info.textContent = "carregue uma pasta de itens…";
+				return;
+			}
+			var dd = d();          // garante que a posição do item existe antes de desenhar
+			renderItens();
+			renderArte();
+			largura.value = dd.largura; larguraVal.textContent = dd.largura;
+			rot.value = dd.rot; rotVal.textContent = dd.rot;
+			flip.checked = dd.flip; atras.checked = dd.atras;
+			info.textContent = sel.slot + " / " + sel.item + "  →  x=" + dd.x.toFixed(1) + "%  y=" + dd.y.toFixed(1) + "%  largura=" + dd.largura.toFixed(1) + "%";
+		}
+
+		// ---- arraste ----
+		var arr = null;
+		function iniciarArraste(ev) {
+			ev.preventDefault();
+			var el = ev.currentTarget, r = arte.getBoundingClientRect(), dd = d();
+			var bx = r.left + (dd.x / 100) * r.width, by = r.top + (dd.y / 100) * r.height;
+			arr = { dx: ev.clientX - bx, dy: ev.clientY - by, el: el };
+			try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+			el.addEventListener("pointermove", mover);
+			el.addEventListener("pointerup", soltar);
+		}
+		function mover(ev) {
+			if (!arr) return;
+			var r = arte.getBoundingClientRect(), dd = d();
+			dd.x = Math.max(-25, Math.min(125, ((ev.clientX - arr.dx - r.left) / r.width) * 100));
+			dd.y = Math.max(-25, Math.min(150, ((ev.clientY - arr.dy - r.top) / r.height) * 100));
+			// move só o elemento arrastado (sem recriar, senão perde o "pegar")
+			arr.el.style.left = dd.x + "%";
+			arr.el.style.top = dd.y + "%";
+			info.textContent = sel.slot + " / " + sel.item + "  →  x=" + dd.x.toFixed(1) + "%  y=" + dd.y.toFixed(1) + "%  largura=" + dd.largura.toFixed(1) + "%";
+			salvar();
+		}
+		function soltar(ev) {
+			arr = null;
+			ev.currentTarget.removeEventListener("pointermove", mover);
+			ev.currentTarget.removeEventListener("pointerup", soltar);
+			salvar();
+		}
+
+		// ---- controles ----
+		slotSel.addEventListener("change", function () {
+			sel.slot = slotSel.value;
+			sel.item = equipado[sel.slot] || (slot().itens[0] && slot().itens[0].id);
+			equipado[sel.slot] = sel.item;
+			render();
+		});
+		largura.addEventListener("input", function () { d().largura = parseFloat(largura.value); larguraVal.textContent = largura.value; renderArte(); salvar(); });
+		rot.addEventListener("input", function () { d().rot = parseInt(rot.value, 10); rotVal.textContent = rot.value; renderArte(); salvar(); });
+		flip.addEventListener("change", function () { d().flip = flip.checked; renderArte(); salvar(); });
+		atras.addEventListener("change", function () { d().atras = atras.checked; renderArte(); salvar(); });
+		grade.addEventListener("change", function () { document.querySelector(".grade").style.display = grade.checked ? "" : "none"; });
+		grade.checked = true;
+
+		function geraJson(soOsSlotsCarregados) {
+			var out = {};
+			var chaves = soOsSlotsCarregados ? slots.map(function (s) { return s.id; }) : Object.keys(dados);
+			chaves.forEach(function (sid) {
+				if (!dados[sid]) return;
+				out[sid] = {};
+				Object.keys(dados[sid]).sort().forEach(function (iid) {
+					var dd = dados[sid][iid];
+					out[sid][iid] = {
+						x: +dd.x.toFixed(1), y: +dd.y.toFixed(1), largura: +dd.largura.toFixed(1),
+						flip: !!dd.flip, atras: !!dd.atras, rot: dd.rot || 0
+					};
+				});
+			});
+			return JSON.stringify(out, null, 1);
+		}
+		document.getElementById("exportar").addEventListener("click", function () {
+			saida.value = geraJson(true);
+			if (navigator.clipboard) navigator.clipboard.writeText(saida.value).catch(function () {});
+		});
+		document.getElementById("exportarTudo").addEventListener("click", function () {
+			saida.value = geraJson(false);
+			if (navigator.clipboard) navigator.clipboard.writeText(saida.value).catch(function () {});
+		});
+		document.getElementById("limpar").addEventListener("click", function () {
+			slots = []; equipado = {}; sel = { slot: null, item: null };
+			renderSlots(); render();
+		});
+
+		render();
+	})();
+	</script>
+</body>
+</html>
