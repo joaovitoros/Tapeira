@@ -26,9 +26,9 @@ function MultiplicadorCristal() {
 	return 1 + CRISTAL_BONUS_NIVEL * nivel * CristalProfundidade();
 }
 
-// Custo em CM do próximo nível (base 25.000, ×1,65 por nível)
+// Custo em CM do próximo nível (base 100.000, ×1,65 por nível)
 function CustoCristalNivel(nivel) {
-	return Math.round(25000 * Math.pow(1.65, CristalNivelValido(nivel)));
+	return Math.round(100000 * Math.pow(1.65, CristalNivelValido(nivel)));
 }
 
 function CompraCristalNivel() {
