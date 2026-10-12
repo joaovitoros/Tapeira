@@ -132,8 +132,10 @@ function ValorGoldBau() {
 		* MultiplicadorGoldBauFormigas();
 }
 
-function ConcedeFormigaColecao(formiga) {
+// silencioso=true: só soma a coleção (a coleta da Fazenda agrupa os avisos)
+function ConcedeFormigaColecao(formiga, silencioso = false) {
 	window[formiga.contador] = Math.min(Number.MAX_SAFE_INTEGER, window[formiga.contador] + 1);
+	if (silencioso) return;
 	UI.showAntReward(formiga);
 	UI.showInfo(`Uma formiga ${formiga.singular} entrou para sua coleção!`);
 	UI.showMilestone("Nova formiga encontrada", `Formiga ${formiga.singular} adicionada à coleção`);

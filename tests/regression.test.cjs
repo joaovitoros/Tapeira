@@ -2513,6 +2513,106 @@ test("árvore de ramos: 2º botão, trilha de skills e seções com descrições
     }
 });
 
+test("árvore de ramos: ícone de info abre o balão de como funciona a tela", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            document.getElementById("btnRamos")
+            && typeof UI !== "undefined"
+            && typeof UI.toggleRamosTreePanel === "function",
+            undefined,
+            { timeout: 15000 }
+        );
+
+        await page.evaluate(() => {
+            if (typeof AlternaPausa === "function") AlternaPausa();
+            document.getElementById("infoModal")?.remove();
+            document.getElementById("btnRamos").click();
+        });
+        await page.waitForSelector("#ramosTreeModal");
+
+        // o helper é genérico (ui-info.js) e o balão nasce fechado
+        const inicial = await page.evaluate(() => {
+            const btn = document.getElementById("ramos-tree-info");
+            const balao = btn?.parentElement?.querySelector(".info-tela__balao");
+            return {
+                helperGlobal: typeof window.CriaInfoTela === "function",
+                botaoNoHeader: !!btn && !!btn.closest(".ramos-tree-header"),
+                inline: btn
+                    ? ["onclick", "onload"].filter(a => btn.hasAttribute(a))
+                    : null,
+                expandido: btn?.getAttribute("aria-expanded") ?? null,
+                balaoOculto: balao ? balao.hidden : null,
+                texto: balao?.textContent || ""
+            };
+        });
+        assert.equal(inicial.helperGlobal, true, "CriaInfoTela fica global (ui-info.js)");
+        assert.equal(inicial.botaoNoHeader, true, "ícone de info no cabeçalho do painel");
+        assert.deepEqual(inicial.inline, [], "sem handler inline no botão");
+        assert.equal(inicial.expandido, "false", "nasce com aria-expanded=false");
+        assert.equal(inicial.balaoOculto, true, "balão nasce oculto");
+        assert.match(inicial.texto, /nível 5/, "balão explica o fork dos ramos");
+
+        // clique abre; segundo clique fecha
+        const alternado = await page.evaluate(() => {
+            const btn = document.getElementById("ramos-tree-info");
+            const balao = btn.parentElement.querySelector(".info-tela__balao");
+            btn.click();
+            const aberto = { oculto: balao.hidden, expandido: btn.getAttribute("aria-expanded") };
+            btn.click();
+            const fechado = { oculto: balao.hidden, expandido: btn.getAttribute("aria-expanded") };
+            return { aberto, fechado };
+        });
+        assert.deepEqual(alternado.aberto, { oculto: false, expandido: "true" },
+            "clique abre o balão e marca aria-expanded");
+        assert.deepEqual(alternado.fechado, { oculto: true, expandido: "false" },
+            "segundo clique fecha o balão");
+
+        // ESC com o balão aberto fecha SÓ o balão (o painel continua).
+        // foca o botão antes — o ESC só chega no helper se o foco estiver
+        // dentro dele (num clique real o mousedown já foca o botão).
+        const escBalao = await page.evaluate(() => {
+            const btn = document.getElementById("ramos-tree-info");
+            btn.click();
+            btn.focus();
+            return {
+                balaoAberto: !document.querySelector("#ramosTreeModal .info-tela__balao").hidden,
+                focoNoBotao: document.activeElement === btn
+            };
+        });
+        assert.deepEqual(escBalao, { balaoAberto: true, focoNoBotao: true },
+            "balão reaberto (e focado) para testar o ESC");
+        await page.keyboard.press("Escape");
+        const escResultado = await page.evaluate(() => ({
+            balaoFechado: document.querySelector("#ramosTreeModal .info-tela__balao")?.hidden ?? null,
+            painelAberto: !!document.getElementById("ramosTreeModal")
+        }));
+        assert.deepEqual(escResultado, { balaoFechado: true, painelAberto: true },
+            "ESC fecha primeiro o balão e deixa o painel aberto");
+
+        // e o ESC seguinte fecha o painel (comportamento existente)
+        await page.keyboard.press("Escape");
+        await page.waitForFunction(() => !document.getElementById("ramosTreeModal"));
+
+        // reabrir: o balão volta oculto (re-render não vaza estado)
+        await page.evaluate(() => {
+            document.getElementById("infoModal")?.remove();
+            document.getElementById("btnRamos").click();
+        });
+        await page.waitForSelector("#ramosTreeModal");
+        const reaberto = await page.evaluate(() => ({
+            oculto: document.querySelector("#ramosTreeModal .info-tela__balao").hidden,
+            ativos: typeof infoTelaAtiva === "undefined" || infoTelaAtiva === null
+        }));
+        assert.deepEqual(reaberto, { oculto: true, ativos: true },
+            "reabrir a tela não vaza o balão aberto");
+
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("rodapé: botões horizontais à esquerda e habilidades abaixo do log, ao lado ou acima dos botões", async t => {
     const abrir = async viewport => {
         const context = await browser.newContext({ viewport });
@@ -3073,45 +3173,74 @@ test("CM comprado escala com o andar (+20 × andar) no Comércio e no Mercado", 
     }
 });
 
-test("Fazenda: painel mostra o progresso e pulsa o cartão ao produzir", async () => {
+test("Fazenda: depósito com limite — produz, pausa quando cheio e coleta", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
         await page.waitForFunction(() => window.Tapeira && window.Tapeira.Fazenda);
         const result = await page.evaluate(async () => {
             UI.showInfo = () => {};
             window.maxAndar = 200;
-            fazendaNivel = 5; fazendaRainha = 0;
+            fazendaNivel = 10; fazendaRainha = 0;
             andar = 100;
             Tapeira.Fazenda.sincroniza();
             Tapeira.Fazenda.abrir();
             const out = {};
             out.tickAoAbrir = Tapeira.Fazenda.painelTickAtivo();
             out.barraExiste = !!document.getElementById("fazendaBarraFill");
+            out.depositoExiste = !!document.getElementById("fazendaDeposito");
             out.cartoesComData = document.querySelectorAll(".ant-collection-card[data-formiga]").length;
+            out.cap = Tapeira.Fazenda.capPendentes();
+            out.coletarDesabilitadoVazio = document.querySelector(".fazenda-coletar").disabled;
 
-            // força uma produção e espera o tick (250ms) reagir
-            ProduzFormigasFazenda();
+            // primeira produção + o tick (250ms) dá o feedback
+            out.produz1 = ProduzFormigasFazenda();
             await new Promise(r => setTimeout(r, 450));
+            out.pendentesApos1 = Tapeira.Fazenda.pendentes().length;
             out.mais1 = document.querySelectorAll(".fazenda-mais1").length;
+            out.contaTexto = document.querySelector(".fazenda-deposito__conta")?.textContent || "";
+
+            // enche o depósito: a produção PAUSA
+            while (ProduzFormigasFazenda()) { /* enche até o cap */ }
+            await new Promise(r => setTimeout(r, 300));
+            out.pendentesCheio = Tapeira.Fazenda.pendentes().length;
+            out.producaoParouCheio = !ProduzFormigasFazenda();
+            out.avisoCheio = document.querySelectorAll(".fazenda-deposito.is-cheio").length;
+            out.tempoCheio = document.getElementById("fazendaTempo")?.textContent || "";
+
+            // coleta: tudo entra na coleção, o depósito esvazia e os cartões pulsam
+            const totalAntes = FORMIGAS.reduce((t, f) => t + window[f.contador], 0);
+            out.coletadas = Tapeira.Fazenda.coletar();
+            const totalDepois = FORMIGAS.reduce((t, f) => t + window[f.contador], 0);
+            out.somouColecao = totalDepois - totalAntes;
+            out.pendentesAposColetar = Tapeira.Fazenda.pendentes().length;
             out.pulsando = document.querySelectorAll(".ant-collection-card.is-produzindo").length;
-            out.tempo = document.getElementById("fazendaTempo")?.textContent || "";
+            out.botaoVazioAposColetar = document.querySelector(".fazenda-coletar").disabled;
 
             // fecha: o tick do painel para (sem timer órfão)
             Tapeira.Fazenda.fechar();
-            out.fechou = !document.getElementById("fazendaModal");
             out.tickAoFechar = Tapeira.Fazenda.painelTickAtivo();
-            out.mais1AposFechar = document.querySelectorAll(".fazenda-mais1").length;
             return out;
         });
         assert.ok(result.tickAoAbrir, "o tick do painel liga ao abrir");
         assert.ok(result.barraExiste, "o painel mostra a barra de produção");
+        assert.ok(result.depositoExiste, "o painel mostra o depósito");
         assert.equal(result.cartoesComData, 5, "os 5 cartões têm data-formiga");
+        assert.ok(result.cap >= 1, "o depósito tem um cap (5 min de produção): " + result.cap);
+        assert.ok(result.coletarDesabilitadoVazio, "sem nada, o Coletar fica desabilitado");
+        assert.equal(result.produz1, true, "produz 1 formiga");
+        assert.equal(result.pendentesApos1, 1, "ela vai pro depósito (não pra coleção)");
         assert.ok(result.mais1 > 0, "mostra o +1 ao produzir");
-        assert.ok(result.pulsando > 0, "pulsa o cartão da cor produzida");
-        assert.ok(/Próxima formiga em \d+ s/.test(result.tempo), "mostra a contagem: " + result.tempo);
-        assert.ok(result.fechou, "o painel fecha");
+        assert.ok(/Esperando: 1 de \d+/.test(result.contaTexto), "conta o depósito: " + result.contaTexto);
+        assert.equal(result.pendentesCheio, result.cap, "o depósito enche até o cap");
+        assert.ok(result.producaoParouCheio, "com o depósito cheio a produção para");
+        assert.equal(result.avisoCheio, 1, "marca o depósito como cheio");
+        assert.ok(/dep[óo]sito cheio/i.test(result.tempoCheio), "avisa que está cheio: " + result.tempoCheio);
+        assert.equal(result.coletadas, result.cap, "coleta tudo que estava esperando");
+        assert.equal(result.somouColecao, result.cap, "as formigas entram na coleção");
+        assert.equal(result.pendentesAposColetar, 0, "o depósito esvazia");
+        assert.ok(result.pulsando > 0, "pulsa os cartões das cores coletadas");
+        assert.ok(result.botaoVazioAposColetar, "depois de coletar, o Coletar fica desabilitado");
         assert.equal(result.tickAoFechar, false, "o tick do painel para ao fechar (sem órfão)");
-        assert.equal(result.mais1AposFechar, 0, "o fechar limpa os efeitos");
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();

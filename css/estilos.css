@@ -11081,6 +11081,87 @@ img.ramos-tree-no__tile {
 	100% { opacity: 0; transform: translateY(-12px); }
 }
 
+/* Depósito: formigas esperando a coleta + botão Coletar */
+.fazenda-deposito {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 8px 10px;
+	border: 1px solid rgba(137, 177, 255, 0.28);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #1a2230, #121822);
+}
+
+.fazenda-deposito.is-cheio {
+	border-color: rgba(229, 183, 96, 0.7);
+	box-shadow: inset 0 0 10px rgba(255, 200, 90, 0.12);
+}
+
+.fazenda-deposito__topo {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.fazenda-deposito__conta {
+	color: #eaf1fc;
+	font-weight: 800;
+	font-size: clamp(12px, 1.05vw, 14px);
+}
+
+.fazenda-deposito__aviso {
+	color: #ffcf6b;
+	font-weight: 800;
+	font-size: clamp(11px, 1vw, 13px);
+}
+
+.fazenda-deposito__previa {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 3px;
+	min-height: 20px;
+}
+
+.fazenda-deposito__chip {
+	display: inline-flex;
+	width: 22px;
+	height: 20px;
+}
+
+.fazenda-deposito__chip .ant-sprite {
+	width: 100%;
+	height: 100%;
+}
+
+.fazenda-deposito__mais,
+.fazenda-deposito__vazio {
+	color: #9aa7bd;
+	font-size: clamp(11px, 0.95vw, 13px);
+}
+
+.fazenda-coletar {
+	align-self: flex-start;
+	padding: 8px 16px;
+	border: 1px solid rgba(126, 224, 160, 0.6);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #2f9e5a, #1d6b3c);
+	color: #f2fff6;
+	font: inherit;
+	font-weight: 800;
+	cursor: pointer;
+}
+
+.fazenda-coletar:hover {
+	filter: brightness(1.1);
+}
+
+.fazenda-coletar:disabled {
+	filter: saturate(0.4) brightness(0.7);
+	cursor: not-allowed;
+}
+
 /* Pulso no cartão da formiga recém-produzida */
 .ant-collection-card.is-produzindo {
 	animation: fazendaPulso 0.9s ease-out;

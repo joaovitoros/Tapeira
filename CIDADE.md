@@ -108,10 +108,16 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
 - [x] **Save** (5 passos): `fazendaNivel` + `fazendaRainha` (permanentes — não zeram no `Resetar`).
 - [x] Painel próprio (`script/fazenda.js` + `#fazendaModal`), com Produção + Rainha + a coleção
       de formigas (reusa `UI.criaConteudoFormigas`). Timer gerenciado (load/reset/compra).
-- [x] **Feedback visual da produção**: barra de progresso do próximo ciclo + contagem ("Próxima
-      formiga em Xs"); ao produzir, o cartão daquela cor **pulsa** e sobe um **"+1 <cor>"**.
-      Tick próprio do painel (250 ms) que **para ao fechar** (sem timer órfão; se o modal sumir
-      por outro caminho, ele se encerra sozinho). Respeita `prefers-reduced-motion`.
+- [x] **Depósito com limite (5 min)**: a produção vai pra um **depósito** em vez de cair direto
+      na coleção; ele aguenta o que a Fazenda produz em **5 min** (`CapFazendaPendentes`) e,
+      **cheio, a produção pausa** até o jogador **coletar** — obrigando a voltar na Fazenda. O
+      botão **"Coletar (N)"** manda tudo pra coleção (mesmo drop, agrupado por cor pra não
+      spammar) e destrava a produção. Buffer só em memória (**não vai pro save** — a produção só
+      rola com o jogo aberto).
+- [x] **Feedback visual**: barra de progresso do próximo ciclo + contagem; ao produzir sobe um
+      **"+1 <cor>"** no depósito; ao coletar, os cartões das cores **pulsam**. Tick próprio do
+      painel (250 ms) que **para ao fechar** (sem timer órfão; se o modal sumir por outro
+      caminho, ele se encerra sozinho). Respeita `prefers-reduced-motion`.
 - [x] Teste `test-fazenda.js`: intervalos, multiplicador da Rainha, compras, produção (pausa),
       save/validação e reset.
 
