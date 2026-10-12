@@ -608,6 +608,9 @@ const UI = {
                     <button type="button" class="btn-Padrao btn-status-dano" data-status-dano>
                         Decomposição do dano
                     </button>
+                    <button type="button" class="btn-Padrao btn-status-pvp" data-pvp-exportar>
+                        Cartão de batalha
+                    </button>
                 </td>
             </tr>
         `;

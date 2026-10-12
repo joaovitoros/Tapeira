@@ -59,9 +59,15 @@ function Salvar() {
 // um save por Bluetooth/Compartilhar.
 function ImportarSaveJson(texto) {
 	try {
+		const dados = JSON.parse(texto);
+		// Cartão de batalha (batalha-fantasma): NÃO é save — não pode tocar
+		// no progresso local; só abre a ficha do duelo.
+		if (dados && dados.saveFormat === "tapeira-cartao-batalha") {
+			return PvpFantasma.RecebeCartao(dados);
+		}
 		// Valida antes de liberar o auto save: um JSON incompatível não pode
 		// substituir nem desbloquear o progresso local que falhou no load.
-		ValidarSave(JSON.parse(texto));
+		ValidarSave(dados);
 		autoSaveBloqueadoPorIncompatibilidade = false;
 		const autoSaveAtualizado = Carregar(texto);
 		MostraInfo(autoSaveAtualizado
