@@ -119,6 +119,10 @@ function NomeJogador() {
 // Multiplicador global dos custos em CM da CIDADE (todos os prédios). Um botão
 // só pra recalibrar — nasceu do rebalance de ×10 pedido pelo jogador.
 const CUSTO_CIDADE_MULT = 10;
+
+// Aparência (customização): id do chapéu equipado (ver customizacao.js).
+// PERMANENTE — não zera no Resetar. Ausente em save antigo = "nenhum".
+var chapeuEquipado = "nenhum";
 const TEMPO_BAU_DOURADO_JOGO = 20 * 60 * 1000;
 const TEMPO_BAU_DOURADO_OFFLINE = 40 * 60 * 1000;
 var progressoBauDourado = 0;

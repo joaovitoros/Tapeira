@@ -151,7 +151,7 @@ function AbrirCasa() {
 function RenderCasaPainel() {
 	const corpo = document.getElementById("casaCorpo");
 	if (!corpo) return;
-	corpo.replaceChildren(CasaSecaoNome(), CasaSecaoConforto(), CasaSecaoCompanheiros(), CasaSecaoTrofeus());
+	corpo.replaceChildren(CasaSecaoNome(), CasaSecaoConforto(), CasaSecaoCompanheiros(), CasaSecaoTrofeus(), CasaSecaoAparencia());
 }
 
 // ---- Nome do jogador ----

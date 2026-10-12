@@ -201,3 +201,20 @@ Rode `npm run prepare:web` antes dos testes focados que abrem `www/`.
   sufixo (~e+150), imprimiria um número gigante + "Noqig" em vez de notação
   científica — diferente do `FormatGold`/`formatNumber`. Baixo risco hoje, mas
   vale unificar.
+- **Customização (Aparência) — slot de CHAPÉUS pronto**: base sem chapéu
+  (`imagens/personagens/player.png`) + camada `.player__chapeu` dentro da caixa
+  do player + 8 chapéus (`imagens/personagens/chapeus/`) + seção "Aparência" na
+  Casa + campo `chapeuEquipado` no save. Âncora de referência: `x=46,5%`
+  `y=22%` `largura=53%` (canvas 1166x1536). **Próximos slots** (cachecol, capa,
+  mochila, ferramenta, escudo, cinto): as peças já estão fatiadas em
+  `imagens/customizacao/pecas/` (78 peças, sem xadrez) — falta **calibrar a
+  âncora de cada peça** (trabalho por peça; dá pra reaproveitar
+  `scripts/testar-chapeus.js` trocando as imagens).
+- **Teste de PvP `pvp fase 3` falhando** (na outra sessão, não na customização):
+  a asserção que falha varia entre execuções (cartão assinado / toast "já
+  usado") — `script/pvp-fantasma.js` e `tests/regression.test.cjs` estavam sendo
+  editados em paralelo; provável WIP em andamento. Revalidar quando a outra
+  sessão fechar.
+- **Arte da customização**: as folhas vieram com o "transparente" PINTADO (xadrez).
+  O fatiador (`scripts/fatiar-customizacao.js`) remove por flood-fill das bordas
+  — funciona, mas se re-exportar com alfa real, o recorte fica ainda mais limpo.

@@ -45,6 +45,7 @@
       "imagens/**/*",
       "!imagens/fontes/**",
       "!imagens/inimigos-futuros/**",
+      "!imagens/customizacao/**",
       "!imagens/cidade/edificios/**",
       "!imagens/cidade/props *.png",
       "!imagens/cidade/cidade background*.png",

@@ -30,7 +30,8 @@ foreach ($directory in @("css", "script", "imagens", "media")) {
 $excluirPastas = @(
     "imagens\fontes",
     "imagens\inimigos-futuros",
-    "imagens\cidade\edificios"
+    "imagens\cidade\edificios",
+    "imagens\customizacao"
 )
 foreach ($rel in $excluirPastas) {
     $destino = Join-Path $webRoot $rel

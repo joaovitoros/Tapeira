@@ -35,6 +35,7 @@ module.exports = {
         "script/fabrica.js",
         "script/cristal.js",
         "script/trofeus.js",
+        "script/customizacao.js",
         "script/ui-cidade.js",
         "script/ui-rodape.js",
         "script/missoes.js",
