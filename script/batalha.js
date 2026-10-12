@@ -272,7 +272,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	}
 
 	// Companheiro de dano + Frenesi: quando a JANELA TERMINA (o último toque
-	// consumiu a janela), 25% do dano acumulado explode em todos os inimigos
+	// consumiu a janela), 50% do dano acumulado explode em todos os inimigos
 	// vivos — não precisa mais matar o alvo marcado. Os abates da explosão
 	// entram em derrotados e seguem o mesmo fluxo de recompensas
 	if (janelaFrenesiAtiva && ataquesFrenesi === 0) {

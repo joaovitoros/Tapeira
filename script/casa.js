@@ -146,7 +146,7 @@ function CasaCompanheirosInfo() {
 		{
 			img: "imagens/companheiros/companheiro1.png", nome: "Companheiro 1 — Dano", nivel: N(lvlComp1) | 0,
 			desc: "Ataca os inimigos junto com você: cada golpe dá " + FormataPct(danoComp1, 0) + " do seu dano.",
-			passiva: "No Toque Frenético, marca um inimigo; se ele morrer, 25% do dano acumulado na janela explode em todos os inimigos vivos."
+			passiva: "No Toque Frenético, marca um inimigo; quando a janela termina, 50% do dano acumulado nela explode em todos os inimigos vivos."
 		},
 		{
 			img: "imagens/companheiros/companheiro2.png", nome: "Companheiro 2 — Gold", nivel: N(lvlComp2) | 0,

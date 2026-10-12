@@ -2878,15 +2878,95 @@ caption {
 }
 
 /* Frenesi: flash vermelho em quem sofre o dano bônus do splash (filter
-   só — não mexe no transform do impacto normal). */
+   só — não mexe no transform do impacto normal). Reforçado junto do balance
+   (25% → 50%): mais forte e um pouco mais longo. */
 .inimigo--frenesi-dano {
-	animation: inimigo-frenesi-dano 300ms ease-out;
+	animation: inimigo-frenesi-dano 420ms ease-out;
 }
 
 @keyframes inimigo-frenesi-dano {
 	0% { filter: none; }
-	30% { filter: sepia(1) saturate(6) hue-rotate(-30deg) brightness(1.35) drop-shadow(0 0 12px rgba(255, 40, 20, 0.95)); }
+	25% { filter: sepia(1) saturate(8) hue-rotate(-32deg) brightness(1.7) drop-shadow(0 0 20px rgba(255, 40, 20, 1)); }
+	60% { filter: sepia(1) saturate(5) hue-rotate(-30deg) brightness(1.25) drop-shadow(0 0 12px rgba(255, 60, 30, 0.8)); }
 	100% { filter: none; }
+}
+
+/* Frenesi: EXPLOSÃO do dano bônus (Companheiro 1) — um efeito grande e bem
+   visível quando o acumulado estoura: núcleo brilhante + onda de choque,
+   centrados no alvo marcado, mais um flash de tela curto. */
+.frenesi-explosao {
+	position: fixed;
+	z-index: 8;
+	width: 340px;
+	height: 340px;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+	animation: frenesi-explosao 660ms ease-out forwards;
+}
+
+.frenesi-explosao__nucleo {
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	width: 130px;
+	height: 130px;
+	border-radius: 50%;
+	background: radial-gradient(circle,
+		rgba(255, 255, 236, 0.98) 0%,
+		rgba(255, 182, 66, 0.9) 30%,
+		rgba(255, 62, 30, 0.6) 55%,
+		transparent 72%);
+	animation: frenesi-nucleo 660ms ease-out forwards;
+}
+
+.frenesi-explosao__onda {
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	width: 170px;
+	height: 170px;
+	border-radius: 50%;
+	border: 6px solid rgba(255, 72, 40, 0.95);
+	box-shadow:
+		0 0 26px rgba(255, 62, 30, 0.9),
+		inset 0 0 20px rgba(255, 62, 30, 0.7);
+	animation: frenesi-onda 660ms cubic-bezier(0.15, 0.72, 0.25, 1) forwards;
+}
+
+@keyframes frenesi-explosao {
+	0% { opacity: 1; }
+	72% { opacity: 1; }
+	100% { opacity: 0; }
+}
+
+@keyframes frenesi-nucleo {
+	0% { opacity: 1; transform: scale(0.25); }
+	35% { opacity: 1; transform: scale(1.05); }
+	100% { opacity: 0; transform: scale(1.75); }
+}
+
+@keyframes frenesi-onda {
+	0% { opacity: 1; transform: scale(0.25); }
+	60% { opacity: 0.9; }
+	100% { opacity: 0; transform: scale(2); }
+}
+
+/* Flash de tela (vignette vermelha) — vende o impacto da explosão */
+.frenesi-flash-tela {
+	position: fixed;
+	inset: 0;
+	z-index: 6;
+	pointer-events: none;
+	background: radial-gradient(circle at 50% 55%,
+		rgba(255, 84, 40, 0.3),
+		rgba(140, 0, 0, 0.14) 55%,
+		transparent 78%);
+	animation: frenesi-flash 540ms ease-out forwards;
+}
+
+@keyframes frenesi-flash {
+	0% { opacity: 1; }
+	100% { opacity: 0; }
 }
 
 .enemy-hit-eyes span {
@@ -3378,6 +3458,10 @@ html.crit-shake {
 	.enemy-electric-impact,
 	.inimigo--surgindo,
 	.inimigo-surgir-anel,
+	.frenesi-explosao,
+	.frenesi-explosao__nucleo,
+	.frenesi-explosao__onda,
+	.frenesi-flash-tela,
 	.contador--pulso,
 	.xp-fill--pulso,
 	.floor-transition--visible,
@@ -11781,4 +11865,92 @@ img.ramos-tree-no__tile {
 	.cristal-panel {
 		animation: none;
 	}
+}
+
+/* =========================
+   ÍCONE DE INFO DE TELAS
+   =========================
+   Componente reutilizável (script/ui-info.js): o selo redondo de "i" que
+   abre um balão curto explicando como a tela funciona. Mesmo visual do info
+   do baú dourado, mas com classes genéricas para qualquer tela complexa
+   (primeiro uso: cabeçalho do painel de Ramos). */
+.info-tela {
+	position: relative;
+	display: inline-flex;
+	flex: none;
+}
+
+.info-tela__btn {
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 24px;
+	height: 24px;
+	min-width: 0;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	border: 1px solid rgba(255, 224, 138, 0.55);
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.5);
+	color: #ffe08a;
+	font-size: 0;
+	cursor: pointer;
+}
+
+.info-tela__btn svg {
+	width: 15px;
+	height: 15px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.2;
+	stroke-linecap: round;
+}
+
+.info-tela__btn .info-tela__ponto {
+	fill: currentColor;
+	stroke: none;
+}
+
+.info-tela__btn:hover {
+	border-color: #ffe08a;
+	background: rgba(255, 224, 138, 0.18);
+}
+
+.info-tela__btn[aria-expanded="true"] {
+	background: #ffe08a;
+	color: #2b1c05;
+}
+
+.info-tela__btn:focus-visible {
+	outline: 2px solid #fff0a3;
+	outline-offset: 2px;
+}
+
+/* Balão: sai do fluxo (não empurra o × do cabeçalho) e abre para BAIXO,
+   alinhado à direita do selo — o botão vive no canto direito do cabeçalho,
+   então right:0 mantém o balão dentro do painel em qualquer tela. */
+.info-tela__balao {
+	position: absolute;
+	top: calc(100% + 6px);
+	right: 0;
+	z-index: 30;
+	box-sizing: border-box;
+	width: min(240px, calc(100vw - 24px));
+	padding: 7px 9px;
+	border: 1px solid rgba(255, 204, 77, 0.55);
+	border-radius: 9px;
+	background: rgba(15, 14, 12, 0.98);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
+	color: #e9dcc0;
+	font-size: 11px;
+	line-height: 1.35;
+	text-align: left;
+	white-space: normal;
+}
+
+.info-tela__balao[hidden] {
+	display: none;
 }

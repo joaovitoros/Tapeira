@@ -1647,7 +1647,7 @@ test("explorador: chance só da distância e o nível pula N andares", async () 
     }
 });
 
-test("companheiro de dano + Frenesi: marca alvo (1 ou 2) e estoura 25% do dano da janela", async () => {
+test("companheiro de dano + Frenesi: marca alvo (1 ou 2) e estoura 50% do dano da janela", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
         await page.waitForFunction(() => typeof window.AtivaHabilidadeCombate === "function");
@@ -1700,6 +1700,8 @@ test("companheiro de dano + Frenesi: marca alvo (1 ou 2) e estoura 25% do dano d
             out.acumuladoLimpo = danoJanelaFrenesiComp === 0;
             out.anelRemovido = !document.querySelector(".inimigo-frenesi-anel");
             out.flashSplash = document.querySelectorAll(".inimigo--frenesi-dano").length;
+            out.explosao = document.querySelectorAll(".frenesi-explosao").length;
+            out.flashTela = document.querySelectorAll(".frenesi-flash-tela").length;
 
             // sem o nível 5 do companheiro não há marca nem acumulado
             lvlComp1 = 4;
@@ -1715,15 +1717,17 @@ test("companheiro de dano + Frenesi: marca alvo (1 ou 2) e estoura 25% do dano d
         assert.ok(result.marca === 1 || result.marca === 2, "marcou o inimigo 1 ou 2 (alvo " + result.marca + ")");
         assert.equal(result.acumulado, 600, "só hits da janela acumulam (600)");
         assert.ok(result.marcaMorta, "o golpe matou o marcado (vida 1)");
-        // 600 acumulados + 1 do próprio golpe de kill = 601 → 25% = 150,25
-        assert.ok(Math.abs(result.splashOutro1 - 150.25) < 1e-9,
-            "splash de 150,25 no outro inimigo 1/2 (veio " + result.splashOutro1 + ")");
-        assert.ok(Math.abs(result.splashInimigo3 - 150.25) < 1e-9,
-            "splash de 150,25 no inimigo 3 (veio " + result.splashInimigo3 + ")");
+        // 600 acumulados + 1 do próprio golpe de kill = 601 → 50% = 300,5
+        assert.ok(Math.abs(result.splashOutro1 - 300.5) < 1e-9,
+            "splash de 300,5 no outro inimigo 1/2 (veio " + result.splashOutro1 + ")");
+        assert.ok(Math.abs(result.splashInimigo3 - 300.5) < 1e-9,
+            "splash de 300,5 no inimigo 3 (veio " + result.splashInimigo3 + ")");
         assert.ok(result.marcaLimpa && result.acumuladoLimpo, "marca e acumulado zerados após a explosão");
         assert.ok(result.anelMarcado, "anel pulsante no inimigo marcado");
         assert.ok(result.anelRemovido, "anel some quando a marca explode");
         assert.equal(result.flashSplash, 2, "flash vermelho nas duas vítimas do splash");
+        assert.equal(result.explosao, 1, "explosão visual grande disparada no dano bônus");
+        assert.equal(result.flashTela, 1, "flash de tela disparado no dano bônus");
         assert.ok(result.semCompanheiro, "sem companheiro de dano não marca");
         assert.deepEqual(pageErrors, []);
     } finally {
@@ -3292,6 +3296,46 @@ test("batalha-fantasma: corrida contra o chefe é determinística e decide o ven
         }));
         assert.ok(noMeio.semModal && noMeio.timer === null,
             "fechar no meio da animação cancela o timer");
+
+        assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
+    } finally {
+        await context.close();
+    }
+});
+
+test("tempo para fugir mostra no máximo duas casas decimais", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        const resultado = await page.evaluate(() => {
+            const el = document.getElementById("contTempo");
+            const casos = {};
+            // lixo real de ponto flutuante (raiz: a multiplicação do
+            // TempoFugaMax com o Relógio de Bolso)
+            tempoAvancoInimigos = 117.0500000000003;
+            AtualizarTela();
+            casos.sujo = el.textContent;
+            tempoAvancoInimigos = 120;
+            UI.updateResources();
+            casos.inteiro = el.textContent;
+            tempoAvancoInimigos = 116.5;
+            AtualizarTela();
+            casos.meio = el.textContent;
+            casos.helper = [
+                FormataTempoFuga(117.0500000000003),
+                FormataTempoFuga(120),
+                FormataTempoFuga(116.5),
+                FormataTempoFuga(0.0500000000003),
+                FormataTempoFuga(NaN)
+            ];
+            tempoAvancoInimigos = 90; // devolve o valor padrão da página
+            return casos;
+        });
+        assert.equal(resultado.sujo, "117.05", "valor sujo aparece com 2 casas");
+        assert.equal(resultado.inteiro, "120", "inteiro aparece sem decimal");
+        assert.equal(resultado.meio, "116.5", "meio decimal sem zero sobrando");
+        assert.deepEqual(resultado.helper,
+            ["117.05", "120", "116.5", "0.05", "0"],
+            "helper formata todos os casos");
 
         assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
     } finally {
