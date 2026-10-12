@@ -83,14 +83,14 @@ const APARENCIA_SLOTS = [
         vazio: "Sem cinto",
         ancora: { x: 41.9, y: 71.6, largura: 40 },
         itens: [
-            { id: "cinto-01", nome: "Bolsa azul", arquivo: "cinto-01.png" },
-            { id: "cinto-02", nome: "Bolsa creme", arquivo: "cinto-02.png" },
-            { id: "cinto-03", nome: "Bolsa escura", arquivo: "cinto-03.png" },
-            { id: "cinto-04", nome: "Cinto de couro", arquivo: "cinto-04.png" },
-            { id: "cinto-05", nome: "Bolsa verde", arquivo: "cinto-05.png" },
-            { id: "cinto-06", nome: "Bolsa roxa", arquivo: "cinto-06.png" },
-            { id: "cinto-07", nome: "Bolsa vermelha", arquivo: "cinto-07.png" },
-            { id: "cinto-08", nome: "Cinto escuro", arquivo: "cinto-08.png" }
+            { id: "cinto-01", nome: "Bolsa azul", arquivo: "cinto-01.png", ancora: { x: 45.6, y: 79.9, largura: 47.5 } },
+            { id: "cinto-02", nome: "Bolsa creme", arquivo: "cinto-02.png", oculto: true },
+            { id: "cinto-03", nome: "Bolsa escura", arquivo: "cinto-03.png", oculto: true },
+            { id: "cinto-04", nome: "Cinto de couro", arquivo: "cinto-04.png", ancora: { x: 42.2, y: 80.9, largura: 52 } },
+            { id: "cinto-05", nome: "Bolsa verde", arquivo: "cinto-05.png", oculto: true },
+            { id: "cinto-06", nome: "Bolsa roxa", arquivo: "cinto-06.png", oculto: true },
+            { id: "cinto-07", nome: "Bolsa vermelha", arquivo: "cinto-07.png", oculto: true },
+            { id: "cinto-08", nome: "Cinto escuro", arquivo: "cinto-08.png", ancora: { x: 41, y: 83, largura: 58.5 } }
         ]
     },
     {
@@ -120,10 +120,10 @@ function AparenciaSlot(id) {
     return APARENCIA_SLOTS.find(s => s.id === id) || null;
 }
 
-// id equipado no slot (id de item conhecido, ou "nenhum").
+// id equipado no slot (id de item conhecido e VISÍVEL, ou "nenhum").
 function AparenciaEquipadoId(slot) {
     const v = window[slot.campo];
-    return (typeof v === "string" && slot.itens.some(i => i.id === v)) ? v : "nenhum";
+    return (typeof v === "string" && slot.itens.some(i => i.id === v && !i.oculto)) ? v : "nenhum";
 }
 
 // item equipado no slot (ou null para "nenhum").
@@ -230,7 +230,8 @@ function CasaBlocoAparencia(slot) {
     lista.className = "aparencia-lista";
     const atual = AparenciaEquipadoId(slot);
 
-    const opcoes = [{ id: "nenhum", nome: slot.vazio }].concat(slot.itens);
+    const opcoes = [{ id: "nenhum", nome: slot.vazio }]
+        .concat(slot.itens.filter(i => !i.oculto));
     for (const item of opcoes) {
         const ehAtual = atual === item.id;
         const btn = document.createElement("button");
