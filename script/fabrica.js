@@ -41,9 +41,9 @@ function CompraFabricaNivel() {
 	return true;
 }
 
-// Custo em gold de uma forja (escala com o andar): ~3 avanços de andar
+// Custo em gold de uma forja (escala com o andar): ~8 avanços de andar
 function CustoForjaItem() {
-	return BonusGoldAvanco() * 3;
+	return BonusGoldAvanco() * 8;
 }
 
 // Forja um item (2 cópias → 1 melhorada) e atualiza a tela. Custa gold.
