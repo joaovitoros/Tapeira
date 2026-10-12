@@ -1,7 +1,7 @@
 // ===================== BATALHA-FANTASMA (PvP ASSÍNCRONO) =====================
-// Fase 1: o "cartão de batalha" — exportar, validar, receber o cartão do
-// adversário e abrir a tela de comparação (você vs. fantasma). A corrida
-// contra o chefe (simulação determinística com a seed) vem na Fase 2.
+// Fase 1: o "cartão de batalha" — exportar, validar e receber o cartão do
+// adversário e abrir a tela de comparação (você vs. fantasma).
+// Fase 2: a corrida contra o chefe — simulação determinística com seed.
 //
 // Regras da v1 (combinadas com o jogador):
 // - O cartão é TRANSITÓRIO: não entra no save — os 5 passos do contrato de
@@ -11,6 +11,13 @@
 //   entrega o arquivo em ImportarSaveJson, que ramifica pro cartão).
 // - Carrega valores JÁ CALCULADOS (não o save cru): funciona entre versões
 //   diferentes do jogo e não vaza o progresso inteiro do jogador.
+// - Regra do duelo: cada um enfrenta um chefe idêntico com
+//   vida = (dpsVocê + dpsFantasma) / 2 × 25 SEGUNDOS — quem derruba o seu
+//   primeiro vence (build igual = corrida apertada de ~25s; build melhor =
+//   chefe cai antes dos 25s).
+// - Determinismo: RNG mulberry32 com seed combinada (XOR, comutativo) e
+//   lados canônicos ordenados por (seed, exportedAt) — as DUAS máquinas
+//   calculam o mesmo resultado, independente de quem importou quem.
 
 var PvpFantasma = {
 	// taxa nominal de golpes por segundo do duelo — os dois lados usam a
@@ -18,6 +25,11 @@ var PvpFantasma = {
 	TAXA_ATAQUE_JOGADOR: 3,
 
 	_registrado: false,
+	// estado da tela aberta: cartões em disputa, timer da animação e
+	// resultado — tudo transitório (nunca vai pro save)
+	_dueloAtual: null,
+	_resultadoDuelo: null,
+	_timerDuelo: null,
 
 	// =========================
 	// CARTÃO
@@ -148,24 +160,26 @@ var PvpFantasma = {
 		}
 	},
 
-	// Fase 1: ficha dos dois duelistas lado a lado (a corrida vem na Fase 2)
+	// Fase 1: ficha dos dois duelistas lado a lado + acesso à corrida (Fase 2)
 	AbreDuelo(cartaoFantasma) {
-		this.FechaDuelo(); // reabrir troca o adversário
+		this.FechaDuelo(); // reabrir troca o adversário e limpa estado anterior
 		const meuCartao = this.MontaCartaoBatalha();
 		const dpsMeu = this.DpsMedio(meuCartao);
 		const dpsFantasma = this.DpsMedio(cartaoFantasma);
+		this._dueloAtual = { cartaoMeu: meuCartao, cartaoFantasma };
 
 		const modal = document.createElement("div");
 		modal.id = "pvpDuelo";
 		modal.innerHTML = `
 		<div class="pvpDueloBox">
 			<div class="pvpDueloTitulo">BATALHA-FANTASMA</div>
-			<div class="pvpDueloSub">Ficha dos duelistas — a corrida contra o chefe chega na próxima etapa.</div>
+			<div class="pvpDueloSub">Ficha dos duelistas — quem derruba o chefe primeiro vence.</div>
 			<div class="pvpCartoes">
 				${this._htmlCartao("Você", meuCartao, dpsMeu, dpsFantasma)}
 				${this._htmlCartao("Fantasma", cartaoFantasma, dpsFantasma, dpsMeu)}
 			</div>
 			<div class="pvpDueloAcoes">
+				<button type="button" class="btn-Padrao pvpBtnLutar" data-pvp-lutar>Começar duelo</button>
 				<button type="button" class="btn-Padrao" data-pvp-exportar>Exportar meu cartão</button>
 				<button type="button" class="btn-Padrao" data-pvp-fechar>Fechar</button>
 			</div>
@@ -175,6 +189,12 @@ var PvpFantasma = {
 	},
 
 	FechaDuelo() {
+		if (this._timerDuelo !== null) {
+			clearInterval(this._timerDuelo);
+			this._timerDuelo = null;
+		}
+		this._dueloAtual = null;
+		this._resultadoDuelo = null;
 		const modal = document.getElementById("pvpDuelo");
 		if (modal) modal.remove();
 	},
@@ -208,6 +228,230 @@ var PvpFantasma = {
 	},
 
 	// =========================
+	// FASE 2: CORRIDA CONTRA O CHEFE
+	// =========================
+
+	// mulberry32 — PRNG simples e determinístico (mesma seed = mesma
+	// sequência em qualquer máquina)
+	_prng(seed) {
+		let a = seed >>> 0;
+		return function () {
+			a |= 0;
+			a = (a + 0x6D2B79F5) | 0;
+			let t = Math.imul(a ^ (a >>> 15), 1 | a);
+			t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+			return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+		};
+	},
+
+	// ordem canônica dos lados: as duas máquinas chegam na mesma ordem,
+	// independente de quem importou o cartão de quem
+	_ordenados(cartaoMeu, cartaoFantasma) {
+		const troca = cartaoMeu.seed > cartaoFantasma.seed
+			|| (cartaoMeu.seed === cartaoFantasma.seed
+				&& String(cartaoMeu.exportedAt) > String(cartaoFantasma.exportedAt));
+		return troca ? [cartaoFantasma, cartaoMeu] : [cartaoMeu, cartaoFantasma];
+	},
+
+	// Uma corrida: chefe com 25s de vida NORMALIZADA (vida real ÷ a média
+	// das duas builds). Round = 1 golpe (1/TAXA_ATAQUE_JOGADOR s): crítico
+	// sorteado no RNG + dano contínuo do companheiro. O kill é interpolado
+	// dentro do round para tempos finos. Retorna o tempo (s) e a série de
+	// vida por round (a animação bebe daqui).
+	_corrida(cartao, media, rnd) {
+		const dt = 1 / this.TAXA_ATAQUE_JOGADOR;
+		const golpe = cartao.danoGolpe / media;
+		const critico = cartao.danoCrit / media;
+		const companheiro = cartao.dpsCompanheiro / media * dt;
+		let hp = 25;
+		let round = 0;
+		const serie = [{ t: 0, hp }];
+		while (hp > 0 && round < 100000) {
+			// a chamada ao RNG é incondicional: a sequência não muda com
+			// chance de crítico 0 (determinismo entre as máquinas)
+			const dano = (rnd() < cartao.chanceCrit ? critico : golpe) + companheiro;
+			if (dano >= hp) {
+				// morre neste round: interpola a fração dentro dele
+				serie.push({ t: (round + hp / dano) * dt, hp: 0 });
+				return { tempo: (round + hp / dano) * dt, serie };
+			}
+			hp -= dano;
+			round++;
+			serie.push({ t: round * dt, hp });
+		}
+		// nunca deve acontecer (dano > 0 sempre): truncado com segurança
+		return { tempo: round * dt, serie };
+	},
+
+	// Simulação completa — pura função dos DOIS cartões. Mesmos cartões,
+	// mesmo resultado nas duas máquinas (seed combinada por XOR).
+	SimulaDuelo(cartaoMeu, cartaoFantasma) {
+		this.ValidarCartaoBatalha(cartaoMeu);
+		this.ValidarCartaoBatalha(cartaoFantasma);
+		const [a, b] = this._ordenados(cartaoMeu, cartaoFantasma);
+		const media = (this.DpsMedio(a) + this.DpsMedio(b)) / 2;
+		if (!(media > 0)) {
+			throw new TypeError("As builds do duelo não têm DPS válido.");
+		}
+		const rnd = this._prng((a.seed ^ b.seed) >>> 0);
+		const corridaA = this._corrida(a, media, rnd);
+		const corridaB = this._corrida(b, media, rnd);
+		// empate exato no tempo (improvável): moeda do mesmo RNG
+		const vencedor = corridaA.tempo < corridaB.tempo ? "A"
+			: corridaB.tempo < corridaA.tempo ? "B"
+				: (rnd() < 0.5 ? "A" : "B");
+		const meuEhA = a === cartaoMeu;
+		return {
+			tempoMeu: meuEhA ? corridaA.tempo : corridaB.tempo,
+			tempoFantasma: meuEhA ? corridaB.tempo : corridaA.tempo,
+			serieMeu: meuEhA ? corridaA.serie : corridaB.serie,
+			serieFantasma: meuEhA ? corridaB.serie : corridaA.serie,
+			venceu: (meuEhA ? "A" : "B") === vencedor,
+			hpSegundos: 25
+		};
+	},
+
+	// ---- execução da corrida na tela ----
+
+	IniciaDuelo() {
+		if (this._timerDuelo !== null || !this._dueloAtual) return;
+		let resultado;
+		try {
+			resultado = this.SimulaDuelo(
+				this._dueloAtual.cartaoMeu,
+				this._dueloAtual.cartaoFantasma);
+		} catch (error) {
+			console.error("Não foi possível simular o duelo:", error);
+			MostraInfo("Não foi possível simular o duelo.");
+			return;
+		}
+		this._resultadoDuelo = resultado;
+
+		const modal = document.getElementById("pvpDuelo");
+		if (!modal) return;
+		const cartoes = modal.querySelector(".pvpCartoes");
+		const botaoLutar = modal.querySelector("[data-pvp-lutar]");
+		if (botaoLutar) botaoLutar.remove();
+		if (cartoes) {
+			cartoes.insertAdjacentHTML("afterend", this._htmlCorrida());
+			cartoes.style.display = "none";
+		}
+
+		// animação: percorre a timeline da corrida em 3s (o tempo real do
+		// duelo pode ser de minutos — a animação só acelera a exibição)
+		const DURACAO_MS = 3000;
+		const tempoTotal = Math.max(resultado.tempoMeu, resultado.tempoFantasma);
+		const inicio = Date.now();
+		const atualiza = () => {
+			const el = document.getElementById("pvpDuelo");
+			const decorrido = Date.now() - inicio;
+			const t = tempoTotal * Math.min(1, decorrido / DURACAO_MS);
+			if (el) this._pintaCorrida(resultado, t);
+			if (decorrido >= DURACAO_MS) {
+				clearInterval(this._timerDuelo);
+				this._timerDuelo = null;
+				if (el) {
+					this._mostraResultado(resultado);
+				} else {
+					// fecharam o duelo durante a animação: só registra
+					this._logResultado(resultado);
+				}
+			}
+		};
+		this._timerDuelo = setInterval(atualiza, 50);
+		atualiza();
+	},
+
+	_htmlCorrida() {
+		return `
+		<div class="pvpCorrida">
+			<div class="pvpCronometro" data-pvp-cronometro>0.00s</div>
+			<div class="pvpCorridaInfo">Chefe com a vida da média das duas builds × 25s — quem derruba primeiro vence.</div>
+			<div class="pvpAlvo pvpAlvo--meu" data-pvp-alvo="meu">
+				<div class="pvpAlvoTopo"><span>Você</span><b data-pvp-tempo>—</b></div>
+				<div class="pvpBarra"><div class="pvpBarraFill" data-pvp-fill></div></div>
+			</div>
+			<div class="pvpAlvo pvpAlvo--fantasma" data-pvp-alvo="fantasma">
+				<div class="pvpAlvoTopo"><span>Fantasma</span><b data-pvp-tempo>—</b></div>
+				<div class="pvpBarra"><div class="pvpBarraFill" data-pvp-fill></div></div>
+			</div>
+			<div class="pvpResultado" data-pvp-resultado hidden></div>
+		</div>`;
+	},
+
+	// vida restante na série interpolada no instante t
+	_hpNaSerie(serie, t) {
+		const fim = serie[serie.length - 1];
+		if (t >= fim.t) return fim.hp;
+		let i = 0;
+		while (i < serie.length - 2 && serie[i + 1].t < t) i++;
+		const a = serie[i];
+		const b = serie[i + 1];
+		const frac = b.t > a.t ? (t - a.t) / (b.t - a.t) : 1;
+		return a.hp + (b.hp - a.hp) * frac;
+	},
+
+	_pintaCorrida(resultado, t) {
+		const modal = document.getElementById("pvpDuelo");
+		if (!modal) return;
+		const cronometro = modal.querySelector("[data-pvp-cronometro]");
+		if (cronometro) cronometro.textContent = t.toFixed(2) + "s";
+		const pinta = (qual, serie, tempoMorto) => {
+			const alvo = modal.querySelector(`[data-pvp-alvo="${qual}"]`);
+			if (!alvo) return;
+			const hp = this._hpNaSerie(serie, t);
+			const fill = alvo.querySelector("[data-pvp-fill]");
+			if (fill) fill.style.width = Math.max(0, hp / 25 * 100) + "%";
+			alvo.classList.toggle("pvpAlvo--morto", t >= tempoMorto);
+		};
+		pinta("meu", resultado.serieMeu, resultado.tempoMeu);
+		pinta("fantasma", resultado.serieFantasma, resultado.tempoFantasma);
+	},
+
+	// tempo do duelo na UI: acima de 1h a corrida é absurdamente
+	// desigual — mostra "> 1h" em vez de um número absurdo
+	_formataTempo(segundos) {
+		if (!Number.isFinite(segundos) || segundos >= 3600) return "> 1h";
+		return segundos.toFixed(2) + "s";
+	},
+
+	_mostraResultado(resultado) {
+		const modal = document.getElementById("pvpDuelo");
+		if (!modal) return;
+		for (const [qual, tempo] of [
+			["meu", resultado.tempoMeu],
+			["fantasma", resultado.tempoFantasma]
+		]) {
+			const alvo = modal.querySelector(`[data-pvp-alvo="${qual}"] [data-pvp-tempo]`);
+			if (alvo) alvo.textContent = this._formataTempo(tempo);
+		}
+		const cronometro = modal.querySelector("[data-pvp-cronometro]");
+		if (cronometro) {
+			cronometro.textContent = this._formataTempo(
+				Math.max(resultado.tempoMeu, resultado.tempoFantasma));
+		}
+		const box = modal.querySelector("[data-pvp-resultado]");
+		if (box) {
+			box.hidden = false;
+			box.classList.add(resultado.venceu
+				? "pvpResultado--venceu"
+				: "pvpResultado--perdeu");
+			box.innerHTML = `
+				<div class="pvpResultadoTitulo">${resultado.venceu ? "VOCÊ VENCEU!" : "O FANTASMA VENCEU"}</div>
+				<div class="pvpResultadoLinha">Você: <b>${this._formataTempo(resultado.tempoMeu)}</b> ·
+					Fantasma: <b>${this._formataTempo(resultado.tempoFantasma)}</b></div>
+				<div class="pvpResultadoNota">Resultado idêntico na máquina do rival — mesmos cartões, mesma corrida.</div>`;
+		}
+		this._logResultado(resultado);
+	},
+
+	_logResultado(resultado) {
+		MostraInfo(resultado.venceu
+			? `Batalha-fantasma vencida em ${this._formataTempo(resultado.tempoMeu)} (fantasma: ${this._formataTempo(resultado.tempoFantasma)}).`
+			: `Batalha-fantasma perdida: fantasma em ${this._formataTempo(resultado.tempoFantasma)} (você: ${this._formataTempo(resultado.tempoMeu)}).`);
+	},
+
+	// =========================
 	// LISTENERS (delegados, uma vez — sem onclick inline)
 	// =========================
 
@@ -217,6 +461,10 @@ var PvpFantasma = {
 		document.addEventListener("click", (e) => {
 			if (e.target.closest("[data-pvp-fechar]")) {
 				this.FechaDuelo();
+				return;
+			}
+			if (e.target.closest("[data-pvp-lutar]")) {
+				this.IniciaDuelo();
 				return;
 			}
 			if (e.target.closest("[data-pvp-exportar]")) {

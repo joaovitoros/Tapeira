@@ -1464,13 +1464,143 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
 
 .pvpDueloAcoes{
 	display: flex;
+	flex-wrap: wrap;
 	gap: 0.5em;
 	margin-top: 0.9em;
 }
 
 .pvpDueloAcoes .btn-Padrao{
-	flex: 1;
+	flex: 1 1 130px;
 	margin: 0;
+}
+
+/* ---- Fase 2: corrida contra o chefe ---- */
+
+.pvpBtnLutar{
+	border-color: rgba(255, 216, 74, 0.55);
+	box-shadow: 0 0 0.6em rgba(255, 216, 74, 0.18);
+}
+
+.pvpCorrida{
+	display: flex;
+	flex-direction: column;
+	gap: 0.7em;
+}
+
+.pvpCronometro{
+	text-align: center;
+	font-weight: 800;
+	font-size: 1.35em;
+	color: #9ccfff;
+	letter-spacing: 0.05em;
+	font-variant-numeric: tabular-nums;
+}
+
+.pvpCorridaInfo{
+	text-align: center;
+	color: #aab6c6;
+	font-size: 0.85em;
+}
+
+.pvpAlvo{
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(120, 160, 255, 0.18);
+	border-radius: 8px;
+	padding: 0.5em 0.65em;
+}
+
+.pvpAlvoTopo{
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.9em;
+	margin-bottom: 0.35em;
+}
+
+.pvpAlvoTopo span{
+	font-weight: 800;
+	color: #9ccfff;
+}
+
+.pvpAlvo--fantasma .pvpAlvoTopo span{
+	color: #c99bff;
+}
+
+.pvpAlvoTopo b{
+	color: #e6edf3;
+	font-variant-numeric: tabular-nums;
+}
+
+.pvpBarra{
+	height: 16px;
+	background: #0c1118;
+	border: 1px solid rgba(120, 160, 255, 0.25);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.pvpBarraFill{
+	height: 100%;
+	width: 100%;
+	border-radius: 7px;
+	transition: width 0.15s linear;
+}
+
+.pvpAlvo--meu .pvpBarraFill{
+	background: linear-gradient(90deg, #2f7fd6, #5ab0ff);
+}
+
+.pvpAlvo--fantasma .pvpBarraFill{
+	background: linear-gradient(90deg, #7b3fd6, #c06bff);
+}
+
+.pvpAlvo--morto{
+	opacity: 0.65;
+}
+
+.pvpAlvo--morto .pvpBarraFill{
+	background: #3a4152;
+}
+
+.pvpResultado{
+	text-align: center;
+	border-radius: 8px;
+	padding: 0.6em;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pvpResultado[hidden]{
+	display: none;
+}
+
+.pvpResultadoTitulo{
+	font-weight: 800;
+	font-size: 1.15em;
+	letter-spacing: 0.06em;
+}
+
+.pvpResultado--venceu .pvpResultadoTitulo{
+	color: #ffd84a;
+}
+
+.pvpResultado--perdeu .pvpResultadoTitulo{
+	color: #ff8a8a;
+}
+
+.pvpResultadoLinha{
+	margin-top: 0.3em;
+	color: #aab6c6;
+	font-size: 0.9em;
+}
+
+.pvpResultadoLinha b{
+	color: #e6edf3;
+}
+
+.pvpResultadoNota{
+	margin-top: 0.25em;
+	color: #7f8b9c;
+	font-size: 0.75em;
 }
 
 @media (max-width: 700px) {
