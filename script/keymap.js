@@ -208,6 +208,14 @@ function stopPlayerAttack() {
 function FechaJanelasAbertas() {
     let fechou = false;
 
+    // Balão do ícone de info ("i") das telas complexas (ui-info.js): fecha
+    // PRIMEIRO, uma camada por vez — senão o ESC levaria o painel inteiro
+    // junto com o balão.
+    if (typeof infoTelaAtiva !== "undefined" && infoTelaAtiva) {
+        FechaInfoTela();
+        return true;
+    }
+
     // Diálogo de pausa / confirmação de saída
     if (document.getElementById("pauseOverlay")) {
         AtualizaEstadoPausa(false);

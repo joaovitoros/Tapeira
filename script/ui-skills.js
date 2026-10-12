@@ -582,7 +582,22 @@ Object.assign(UI, {
             document.getElementById("btnRamos")?.focus();
         };
         close.addEventListener("click", fechar);
-        header.append(title, close);
+
+        // ícone de "i" (padrão reutilizável de telas complexas — ui-info.js):
+        // abre um balão com um resumo de como a tela funciona. O ESC fecha
+        // primeiro o balão e só depois o painel (stopPropagation lá no helper).
+        const infoTela = CriaInfoTela({
+            id: "ramos-tree-info",
+            rotulo: "Sobre a árvore de habilidades",
+            html: "<b>Como funciona</b>"
+                + "<p>Gaste pontos de habilidade nos <b>níveis</b> (as pílulas "
+                + "douradas são as próximas compras).</p>"
+                + "<p>Ao chegar no <b>nível 5</b>, escolha <b>UM</b> dos dois "
+                + "ramos da skill — o outro fica selado até o fim da run.</p>"
+                + "<p>No <b>nível 10</b> o segundo efeito do ramo escolhido "
+                + "completa sozinho.</p>"
+        });
+        header.append(title, infoTela, close);
 
         const corpo = document.createElement("div");
         corpo.className = "ramos-tree-corpo";

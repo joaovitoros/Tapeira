@@ -78,15 +78,8 @@ function CriaInfoTela(opcoes) {
         }, 0);
     });
 
-    // ESC fecha só o balão (o handler do overlay/painel, que fecha a tela
-    // inteira, roda DEPOIS na subida do evento — stopPropagation segura ele).
-    wrap.addEventListener("keydown", (evento) => {
-        if (evento.key === "Escape" && !balao.hidden) {
-            evento.stopPropagation();
-            FechaInfoTela();
-            botao.focus();
-        }
-    });
+    // ESC fecha o balão pelo FechaJanelasAbertas() (keymap.js), que trata o
+    // info como uma camada a mais — uma janela por ESC.
 
     wrap.append(botao, balao);
     return wrap;
