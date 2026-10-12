@@ -172,6 +172,15 @@ function FormatarGold(valor) {
         index++;
     }
 
+    // além do último sufixo ("Noqig", ~e+150): notação científica, igual ao
+    // GoldNumber.format()/formatNumber() — senão sairia um número gigante +
+    // sufixo (ex.: "10000...000.00Noqig")
+    if (valor >= 1000) {
+        const exp = Math.floor(Math.log10(valor)) + (index + 1) * 3;
+        const mant = valor / Math.pow(10, Math.floor(Math.log10(valor)));
+        return mant.toFixed(2) + "e+" + exp;
+    }
+
     return Number(valor).toFixed(2) + sufixos[index];
 }
 

@@ -888,6 +888,9 @@ test("sonda: formatação de gold nos extremos", async () => {
             // ALÉM do último sufixo ("Noqig", ~e+150) é que cai na notação
             // científica (1e36 já tem sufixo: "Ud")
             cientifico: FormatGold(1e200),
+            // FormatarGold (status/cartão de batalha: dano, DPS, crítico) usa o
+            // MESMO fallback do FormatGold
+            danoGrande: FormatarGold(1e200),
             cmGrande: FormatCM(2.299866128e29)
         }));
         assert.equal(r.zero, "0.00");
@@ -898,6 +901,7 @@ test("sonda: formatação de gold nos extremos", async () => {
         assert.equal(r.dc, "1.00Dc");
         assert.equal(r.ud, "1.00Ud");
         assert.equal(r.cientifico, "1.00e+200");
+        assert.equal(r.danoGrande, "1.00e+200");
         assert.equal(r.cmGrande, "229.99Oc");
         assert.deepEqual(pageErrors, []);
     } finally { await context.close(); }
