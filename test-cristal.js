@@ -90,7 +90,7 @@ const path = require('path');
     check("nível 5 no reset base = ×1.10", Math.abs(r.m5base - 1.10) < 1e-9, r.m5base);
     check("nível 5 com reset fundo = ×1.50", Math.abs(r.m5fundo - 1.50) < 1e-9, r.m5fundo);
     check("profundidade satura em ×5", r.profFundo === 5, r.profFundo);
-    check("custo do nível 0 = 100000 CM", r.custo0 === 100000, r.custo0);
+    check("custo do nível 0 = 1000000 CM", r.custo0 === 1000000, r.custo0);
     check("compra sem CM falha", r.semCM === false);
     check("compra com CM funciona", r.ok === true && r.nivel === 1, r.nivel);
     check("Cristal no máximo falha", r.noMax === false);

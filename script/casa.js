@@ -18,9 +18,9 @@ function CasaNivelValido(nivel) {
 	return Math.max(0, Math.min(CASA_MAX_NIVEL, n));
 }
 
-// Custo em CM do próximo nível (base 2.000, ×1,5 por nível)
+// Custo em CM do próximo nível (base 2.000 ×CUSTO_CIDADE_MULT, ×1,5 por nível)
 function CustoConfortoCasa(nivel) {
-	return Math.round(2000 * Math.pow(1.5, CasaNivelValido(nivel)));
+	return Math.round(2000 * CUSTO_CIDADE_MULT * Math.pow(1.5, CasaNivelValido(nivel)));
 }
 
 function MultiplicadorOfflineCasa() {
@@ -113,7 +113,18 @@ function AbrirCasa() {
 	close.setAttribute("aria-label", "Fechar a Casa");
 	close.textContent = "×";
 	close.addEventListener("click", FecharCasa);
-	header.append(title, close);
+	header.append(title, CriaInfoTela({
+		id: "casa-info",
+		rotulo: "Sobre a Casa",
+		html: "<b>Como funciona</b>"
+			+ "<p><b>Conforto</b>: níveis que melhoram o que você ganha "
+			+ "<b>offline</b> (+recompensa e +limite de tempo por nível), "
+			+ "pagos em CM.</p>"
+			+ "<p><b>Sala de Troféus</b>: exiba conquistas comportamentais — "
+			+ "cada troféu exibido dá <b>+"
+			+ Math.round(CASA_BONUS_TROFEU * 100) + "% de gold</b>.</p>"
+			+ "<p>Tudo aqui é <b>permanente</b> (atravessa o reset).</p>"
+	}), close);
 
 	const corpo = document.createElement("div");
 	corpo.className = "casa-corpo";

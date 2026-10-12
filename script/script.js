@@ -92,6 +92,10 @@ var trofeus = {};
 // no reset (ver mercado.js).
 var ofertasDia = 0;
 var ofertasDiaCompradas = 0;
+
+// Multiplicador global dos custos em CM da CIDADE (todos os prédios). Um botão
+// só pra recalibrar — nasceu do rebalance de ×10 pedido pelo jogador.
+const CUSTO_CIDADE_MULT = 10;
 const TEMPO_BAU_DOURADO_JOGO = 20 * 60 * 1000;
 const TEMPO_BAU_DOURADO_OFFLINE = 40 * 60 * 1000;
 var progressoBauDourado = 0;

@@ -24,9 +24,9 @@ function PrecoComReputacao(preco) {
 	return Math.max(0, Number(preco) || 0) * (1 - DescontoReputacao());
 }
 
-// Custo em CM do próximo nível (base 5.000, ×1,6 por nível)
+// Custo em CM do próximo nível (base 5.000 ×CUSTO_CIDADE_MULT, ×1,6 por nível)
 function CustoReputacao(nivel) {
-	return Math.round(5000 * Math.pow(1.6, ReputacaoValida(nivel)));
+	return Math.round(5000 * CUSTO_CIDADE_MULT * Math.pow(1.6, ReputacaoValida(nivel)));
 }
 
 function CompraReputacao() {
@@ -261,7 +261,17 @@ function AbrirMercado() {
 	close.setAttribute("aria-label", "Fechar o Mercado");
 	close.textContent = "×";
 	close.addEventListener("click", FecharMercado);
-	header.append(title, close);
+	header.append(title, CriaInfoTela({
+		id: "mercado-info",
+		rotulo: "Sobre o Mercado",
+		html: "<b>Como funciona</b>"
+			+ "<p><b>Ofertas do dia</b>: " + OFERTAS_QTD + " ofertas em gold que "
+			+ "giram à meia-noite (uma de cada por dia).</p>"
+			+ "<p><b>Reputação</b>: nível pago em CM que dá <b>desconto</b> na "
+			+ "Loja do Conhecimento.</p>"
+			+ "<p><b>Vender excedentes</b>: manda pra fora as cópias extras de "
+			+ "itens da build e as formigas sobrando — vira <b>gold</b>.</p>"
+	}), close);
 
 	const corpo = document.createElement("div");
 	corpo.className = "mercado-corpo";

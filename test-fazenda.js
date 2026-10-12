@@ -64,12 +64,14 @@ const path = require('path');
         fazendaRainha = FAZENDA_RAINHA_MAX;
         res.rainhaNoMax = CompraFazendaRainha(); // false
 
-        // ---- Produção (reusa o drop) ----
+        // ---- Produção (vai pro depósito; coletar manda pra coleção) ----
         fazendaNivel = 1; fazendaRainha = 0;
         jogoPausado = false; andar = 85; maxAndar = 120;
         const antes = totalFormigas();
         res.produzOk = ProduzFormigasFazenda();  // true
-        res.produziu = totalFormigas() - antes;  // 1
+        res.noDeposito = Tapeira.Fazenda.pendentes().length;  // 1
+        res.coletou = Tapeira.Fazenda.coletar();  // 1
+        res.produziu = totalFormigas() - antes;   // 1 (entra na coleção só na coleta)
         jogoPausado = true;
         const antesPausa = totalFormigas();
         res.produzPausado = ProduzFormigasFazenda(); // false
@@ -105,8 +107,8 @@ const path = require('path');
     check("intervalo nível 10 = 36 s", r.iv10 === 36000, r.iv10);
     check("Rainha: ×1 no 0 e ×2.5 no 5", r.multR0 === 1 && Math.abs(r.multR5 - 2.5) < 1e-9, r.multR0 + "/" + r.multR5);
     check("Rainha encurta o intervalo (90s → 36s)", r.ivRainha === 36000, r.ivRainha);
-    check("custo do nível 0 = 3000 CM", r.custo0 === 3000, r.custo0);
-    check("custo da Rainha 0 = 6000 CM", r.custoR0 === 6000, r.custoR0);
+    check("custo do nível 0 = 30000 CM", r.custo0 === 30000, r.custo0);
+    check("custo da Rainha 0 = 60000 CM", r.custoR0 === 60000, r.custoR0);
     check("compra sem CM falha", r.compraSemCM === false);
     check("compra com CM funciona", r.compraOk === true && r.nivelDepois === 1, r.nivelDepois);
     check("timer é criado ao construir", r.timerCriado === true);
@@ -114,7 +116,7 @@ const path = require('path');
     check("timer some sem nível", r.timerSemNivel === null);
     check("compra da Rainha funciona", r.rainhaOk === true && r.rainhaDepois === 1, r.rainhaDepois);
     check("Rainha no máximo falha", r.rainhaNoMax === false);
-    check("produção reusa o drop (+1 formiga)", r.produzOk === true && r.produziu === 1, r.produziu);
+    check("produz pro depósito e a coleta reusa o drop (+1 formiga)", r.produzOk === true && r.noDeposito === 1 && r.coletou === 1 && r.produziu === 1, r.produziu);
     check("não produz com o jogo pausado", r.produzPausado === false && r.naoProduziuPausado === true);
     check("não produz sem nível", r.produzSemNivel === false);
     check("save grava fazendaNivel", r.saveNivel === 5, r.saveNivel);

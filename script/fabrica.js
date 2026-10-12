@@ -13,9 +13,9 @@ function FabricaNivelValido(nivel = fabricaNivel) {
 	return Math.max(0, Math.min(FABRICA_MAX_NIVEL, n));
 }
 
-// Custo em CM do próximo nível (base 20.000, ×1,6 por nível)
+// Custo em CM do próximo nível (base 20.000 ×CUSTO_CIDADE_MULT, ×1,6 por nível)
 function CustoFabricaNivel(nivel) {
-	return Math.round(20000 * Math.pow(1.6, FabricaNivelValido(nivel)));
+	return Math.round(20000 * CUSTO_CIDADE_MULT * Math.pow(1.6, FabricaNivelValido(nivel)));
 }
 
 // Linha de montagem: auto-compras por segundo (1 base + 1 por nível)
@@ -101,7 +101,17 @@ function AbrirFabrica() {
 	close.setAttribute("aria-label", "Fechar a Fábrica");
 	close.textContent = "×";
 	close.addEventListener("click", FecharFabrica);
-	header.append(title, close);
+	header.append(title, CriaInfoTela({
+		id: "fabrica-info",
+		rotulo: "Sobre a Fábrica",
+		html: "<b>Como funciona</b>"
+			+ "<p><b>Forja</b>: junta <b>2 cópias iguais</b> de um item em 1 "
+			+ "melhorada — mesmo efeito, mas <b>libera 1 slot</b> da build. "
+			+ "Custa gold e é da run (zera no reset).</p>"
+			+ "<p><b>Linha de montagem</b>: +1 <b>auto-compra</b> da loja por "
+			+ "segundo por nível (requer a Auto-compra ligada). Pago em CM e "
+			+ "permanente.</p>"
+	}), close);
 
 	const corpo = document.createElement("div");
 	corpo.className = "fabrica-corpo";

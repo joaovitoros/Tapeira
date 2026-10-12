@@ -33,13 +33,14 @@ function FazendaRainhaValida(nivel) {
 	return Math.max(0, Math.min(FAZENDA_RAINHA_MAX, n));
 }
 
-// Custo em CM: nível base 3.000 (×1,45 por nível); Rainha base 6.000 (×1,8 por nível)
+// Custo em CM: nível base 3.000 ×CUSTO_CIDADE_MULT (×1,45 por nível);
+// Rainha base 6.000 ×CUSTO_CIDADE_MULT (×1,8 por nível)
 function CustoFazendaNivel(nivel) {
-	return Math.round(3000 * Math.pow(1.45, FazendaNivelValido(nivel)));
+	return Math.round(3000 * CUSTO_CIDADE_MULT * Math.pow(1.45, FazendaNivelValido(nivel)));
 }
 
 function CustoFazendaRainha(nivel) {
-	return Math.round(6000 * Math.pow(1.8, FazendaRainhaValida(nivel)));
+	return Math.round(6000 * CUSTO_CIDADE_MULT * Math.pow(1.8, FazendaRainhaValida(nivel)));
 }
 
 // Intervalo base por nível: 90 s no nível 1, −6 s por nível (mín 30 s).
@@ -276,7 +277,18 @@ function AbrirFazenda() {
 	close.setAttribute("aria-label", "Fechar a Fazenda");
 	close.textContent = "×";
 	close.addEventListener("click", FecharFazenda);
-	header.append(title, close);
+	header.append(title, CriaInfoTela({
+		id: "fazenda-info",
+		rotulo: "Sobre a Fazenda de Formigas",
+		html: "<b>Como funciona</b>"
+			+ "<p>A Fazenda <b>produz sozinha</b>: a cada ciclo, 1 formiga "
+			+ "aleatória cai no depósito (o mesmo drop do baú dourado).</p>"
+			+ "<p>O depósito guarda só o que a Fazenda produz em <b>5 min</b>. "
+			+ "<b>Cheio, a produção para</b> — volte e aperte <b>Coletar</b> "
+			+ "para continuar.</p>"
+			+ "<p><b>Rainha</b>: +30% de produção por nível. Níveis e Rainha "
+			+ "são <b>permanentes</b> (pagos em CM).</p>"
+	}), close);
 
 	const corpo = document.createElement("div");
 	corpo.className = "fazenda-corpo";
