@@ -87,6 +87,19 @@
 		return copias(id) + 2 * forjaDe(id);
 	}
 
+	// Efeito final do item já considerando pilha + forja: pega o "+N%" base do
+	// efeito e aplica o mesmo fator composto do jogo (base^cópias efetivas).
+	function efeitoFinal(id) {
+		const registro = item(id);
+		if (!registro) return "";
+		const efetivas = copiasEfetivas(id);
+		const m = /\+(\d+(?:[.,]\d+)?)%/.exec(registro.efeito);
+		if (!m || efetivas === 0) return registro.efeito;
+		const base = 1 + Number(m[1].replace(",", ".")) / 100;
+		const total = (Math.pow(base, efetivas) - 1) * 100;
+		return registro.efeito.replace(m[0], "+" + total.toFixed(0) + "%");
+	}
+
 	function podeForjar(id) {
 		return copias(id) >= 2 && forjaDe(id) < FORJA_MAX;
 	}
@@ -321,6 +334,10 @@
 			opcoesBauAtual = null;
 			// slotsExtras NÃO zera: espaço extra é compra permanente da loja
 		},
+
+		// ---- efeito final (pilha + forja) e cópias efetivas ----
+		efeitoFinal,
+		copiasEfetivas,
 
 		// ---- multiplicadores dos efeitos (hooks nos donos dos sistemas) ----
 		multDano: () => mult(1.25, "adaga"),
