@@ -15,6 +15,10 @@
 //   vida = (dpsVocê + dpsFantasma) / 2 × 25 SEGUNDOS — quem derruba o seu
 //   primeiro vence (build igual = corrida apertada de ~25s; build melhor =
 //   chefe cai antes dos 25s).
+// - Itens da build: só os com forja >= 5 entram no duelo
+//   (FORJA_MINIMO_PVP) — tanto nos multiplicadores Pvp quanto no resumo
+//   do cartão. A tela de builds marca esses itens com borda prateada
+//   azulada pra ficar visível o que vale.
 // - Determinismo: RNG mulberry32 com seed combinada (XOR, comutativo) e
 //   lados canônicos ordenados por (seed, exportedAt) — as DUAS máquinas
 //   calculam o mesmo resultado, independente de quem importou quem.
@@ -36,7 +40,9 @@ var PvpFantasma = {
 	// =========================
 
 	MontaCartaoBatalha() {
-		const multDanoTotal = MultiplicadorDanoFormigas() * MultiplicadorDanoNivel() * Tapeira.ItensBuild.multDano();
+		// Regra do duelo: só item de build com forja >= FORJA_MINIMO_PVP
+		// conta nos bônus (a borda prateada na tela de builds marca quais)
+		const multDanoTotal = MultiplicadorDanoFormigas() * MultiplicadorDanoNivel() * Tapeira.ItensBuild.multDanoPvp();
 		const multEspNormal = MultiplicadorDanoEspecializacao(false);
 		const multEspCritico = MultiplicadorDanoEspecializacao(true);
 		return {
@@ -48,14 +54,14 @@ var PvpFantasma = {
 			// golpes nominais (sem crítico e sem situações pontuais — guardião,
 			// pausa de fuga, buff de alquimista, cadeia de ataques)
 			danoGolpe: Math.max(0, N(danoJogador) * multDanoTotal * multEspNormal),
-			danoCrit: Math.max(0, N(danoCritJogador) * Tapeira.ItensBuild.multDanoCrit() * multDanoTotal * multEspCritico),
-			chanceCrit: Math.min(1, Math.max(0, N(chanceCrit) * Tapeira.ItensBuild.multChanceCrit())),
+			danoCrit: Math.max(0, N(danoCritJogador) * Tapeira.ItensBuild.multDanoCritPvp() * multDanoTotal * multEspCritico),
+			chanceCrit: Math.min(1, Math.max(0, N(chanceCrit) * Tapeira.ItensBuild.multChanceCritPvp())),
 			// DPS do companheiro de dano: a Velocidade multiplica os hits/s
 			dpsCompanheiro: N(danoComp) > 0
-				? Math.max(0, N(danoComp) * Tapeira.ItensBuild.multDanoComp() * multDanoTotal * multEspNormal * N(velAtaqueComp))
+				? Math.max(0, N(danoComp) * Tapeira.ItensBuild.multDanoCompPvp() * multDanoTotal * multEspNormal * N(velAtaqueComp))
 				: 0,
 			especializacao: especializacao > 0 ? ESPECIALIZACOES[especializacao].nome : null,
-			itensBuildResumo: Tapeira.ItensBuild.resumo(),
+			itensBuildResumo: Tapeira.ItensBuild.resumo(Tapeira.ItensBuild.FORJA_MINIMO_PVP),
 			taxaAtaque: this.TAXA_ATAQUE_JOGADOR,
 			seed: Math.floor(Math.random() * 2147483647)
 		};
@@ -209,7 +215,7 @@ var PvpFantasma = {
 			["DPS companheiro", FormatarGold(cartao.dpsCompanheiro)],
 			["DPS total", FormatarGold(dps)],
 			["Especialização", this._esc(cartao.especializacao || "—")],
-			["Itens da build", this._esc(cartao.itensBuildResumo || "—")]
+			["Itens 5+ (PvP)", this._esc(cartao.itensBuildResumo || "—")]
 		];
 		const corpo = linhas.map(linha =>
 			`<div class="pvpCartaoLinha"><span>${linha[0]}</span><b>${linha[1]}</b></div>`).join("");

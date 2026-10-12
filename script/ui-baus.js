@@ -292,7 +292,7 @@ Object.assign(UI, {
                 const copias = Tapeira.ItensBuild.copias(idItem);
                 const forja = Tapeira.ItensBuild.nivelForja ? Tapeira.ItensBuild.nivelForja(idItem) : 0;
                 const final = Tapeira.ItensBuild.efeitoFinal ? Tapeira.ItensBuild.efeitoFinal(idItem) : registro.efeito;
-                return `<button class="item-build-cartao item-build-sair${forja > 0 ? " item-build-cartao--forjada" : ""}" data-descartar="${idItem}">
+                return `<button class="item-build-cartao item-build-sair${forja > 0 ? " item-build-cartao--forjada" : ""}${forja >= Tapeira.ItensBuild.FORJA_MINIMO_PVP ? " item-build-cartao--pvp" : ""}" data-descartar="${idItem}">
                     <img src="${registro.icone}" alt="">
                     <span class="item-build-nome">${registro.nome}</span>
                     <span class="item-build-efeito">${registro.efeito}</span>
@@ -307,7 +307,7 @@ Object.assign(UI, {
                 const copias = Tapeira.ItensBuild.copias(idItem);
                 const forja = Tapeira.ItensBuild.nivelForja ? Tapeira.ItensBuild.nivelForja(idItem) : 0;
                 const final = Tapeira.ItensBuild.efeitoFinal ? Tapeira.ItensBuild.efeitoFinal(idItem) : registro.efeito;
-                return `<button class="item-build-cartao${forja > 0 ? " item-build-cartao--forjada" : ""}" data-item="${idItem}">
+                return `<button class="item-build-cartao${forja > 0 ? " item-build-cartao--forjada" : ""}${forja >= Tapeira.ItensBuild.FORJA_MINIMO_PVP ? " item-build-cartao--pvp" : ""}" data-item="${idItem}">
                     <img src="${registro.icone}" alt="">
                     <span class="item-build-nome">${registro.nome}</span>
                     <span class="item-build-efeito">${registro.efeito}</span>
@@ -383,7 +383,7 @@ Object.assign(UI, {
                 const copias = build.copias(idItem);
                 const forja = build.nivelForja ? build.nivelForja(idItem) : 0;
                 const final = build.efeitoFinal ? build.efeitoFinal(idItem) : registro.efeito;
-                return `<div class="item-build-cartao item-build-cartao--leitura${forja > 0 ? " item-build-cartao--forjada" : ""}">
+                return `<div class="item-build-cartao item-build-cartao--leitura${forja > 0 ? " item-build-cartao--forjada" : ""}${forja >= build.FORJA_MINIMO_PVP ? " item-build-cartao--pvp" : ""}">
                     <img src="${registro.icone}" alt="">
                     <span class="item-build-nome">${registro.nome}</span>
                     <span class="item-build-efeito">${registro.efeito}</span>

@@ -33,7 +33,18 @@ Object.assign(UI, {
             document.getElementById("btn-Formigas")?.focus();
         };
         close.addEventListener("click", fechar);
-        header.append(title, close);
+        header.append(title, CriaInfoTela({
+            id: "colecao-info",
+            rotulo: "Sobre a coleção de formigas",
+            html: "<b>Como funciona</b>"
+                + "<p>Desde o <b>andar 20</b>, inimigos podem largar uma formiga "
+                + "ao morrer (chance por abate, inclusive após o reset).</p>"
+                + "<p>Cada <b>conjunto completo</b> de " + FORMIGAS_POR_CONJUNTO
+                + " da mesma cor ativa o bônus dela — e conjuntos repetidos "
+                + "<b>acumulam</b>.</p>"
+                + "<p>A <b>Fazenda de Formigas</b> (Cidade) produz formigas "
+                + "sozinha.</p>"
+        }), close);
 
         panel.append(header, this.criaConteudoFormigas());
         overlay.appendChild(panel);

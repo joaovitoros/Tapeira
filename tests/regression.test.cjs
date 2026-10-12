@@ -2568,20 +2568,30 @@ test("árvore de ramos: ícone de info abre o balão de como funciona a tela", a
         assert.deepEqual(alternado.fechado, { oculto: true, expandido: "false" },
             "segundo clique fecha o balão");
 
-        // ESC com o balão aberto fecha SÓ o balão (o painel continua).
-        // foca o botão antes — o ESC só chega no helper se o foco estiver
-        // dentro dele (num clique real o mousedown já foca o botão).
+        // clique fora fecha (o listener nasce num setTimeout(0), então espera
+        // um tick antes de disparar o pointerdown fora do balão)
+        await page.evaluate(() => document.getElementById("ramos-tree-info").click());
+        await page.waitForTimeout(30);
+        const cliqueFora = await page.evaluate(() => {
+            document.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+            return {
+                oculto: document.querySelector("#ramosTreeModal .info-tela__balao").hidden,
+                expandido: document.getElementById("ramos-tree-info").getAttribute("aria-expanded")
+            };
+        });
+        assert.deepEqual(cliqueFora, { oculto: true, expandido: "false" },
+            "pointerdown fora do balão fecha o balão");
+
+        // ESC com o balão aberto fecha SÓ o balão (o painel continua) — o
+        // FechaJanelasAbertas (keymap.js) trata o info como camada extra.
         const escBalao = await page.evaluate(() => {
             const btn = document.getElementById("ramos-tree-info");
             btn.click();
-            btn.focus();
             return {
-                balaoAberto: !document.querySelector("#ramosTreeModal .info-tela__balao").hidden,
-                focoNoBotao: document.activeElement === btn
+                balaoAberto: !document.querySelector("#ramosTreeModal .info-tela__balao").hidden
             };
         });
-        assert.deepEqual(escBalao, { balaoAberto: true, focoNoBotao: true },
-            "balão reaberto (e focado) para testar o ESC");
+        assert.equal(escBalao.balaoAberto, true, "balão reaberto para testar o ESC");
         await page.keyboard.press("Escape");
         const escResultado = await page.evaluate(() => ({
             balaoFechado: document.querySelector("#ramosTreeModal .info-tela__balao")?.hidden ?? null,
@@ -3465,6 +3475,94 @@ test("tempo para fugir mostra no máximo duas casas decimais", async () => {
         assert.deepEqual(resultado.helper,
             ["117.05", "120", "116.5", "0.05", "0"],
             "helper formata todos os casos");
+
+        assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
+    } finally {
+        await context.close();
+    }
+});
+
+test("pvp: só itens com forja 5+ entram no cartão e ganham borda prateada na tela de builds", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        const r = await page.evaluate(() => {
+            const saida = {};
+            const monta = (id, qtd, forja) => Tapeira.ItensBuild.carrega({
+                itensBuild: Array(qtd).fill(id),
+                forja: { [id]: forja },
+                slotsExtrasBuild: 0,
+                bausBuildPendentes: 0,
+                bauBuildPendente: false,
+                opcoesBauBuild: null
+            });
+
+            saida.minimo = Tapeira.ItensBuild.FORJA_MINIMO_PVP;
+            saida.nomeAdaga = Tapeira.ItensBuild.item("adaga").nome;
+
+            // adaga com forja 4: conta no jogo, NÃO deve contar no PvP
+            monta("adaga", 3, 4);
+            saida.multNormal4 = Tapeira.ItensBuild.multDano();
+            saida.multPvp4 = Tapeira.ItensBuild.multDanoPvp();
+            saida.dano4 = PvpFantasma.MontaCartaoBatalha().danoGolpe;
+            saida.cartaoResumo4 = PvpFantasma.MontaCartaoBatalha().itensBuildResumo;
+
+            // adaga com forja 5: conta nos dois
+            monta("adaga", 3, 5);
+            saida.multNormal5 = Tapeira.ItensBuild.multDano();
+            saida.multPvp5 = Tapeira.ItensBuild.multDanoPvp();
+            const cartao5 = PvpFantasma.MontaCartaoBatalha();
+            saida.dano5 = cartao5.danoGolpe;
+            saida.cartaoResumo5 = cartao5.itensBuildResumo;
+            saida.resumoNormal5 = Tapeira.ItensBuild.resumo();
+
+            // chance crítica (pocaoVerde): mesmo filtro
+            monta("pocaoVerde", 1, 4);
+            saida.chanceNormal4 = Tapeira.ItensBuild.multChanceCrit();
+            saida.chancePvp4 = Tapeira.ItensBuild.multChanceCritPvp();
+            monta("pocaoVerde", 1, 5);
+            saida.chanceNormal5 = Tapeira.ItensBuild.multChanceCrit();
+            saida.chancePvp5 = Tapeira.ItensBuild.multChanceCritPvp();
+
+            // tela de builds: marcador visual da régua 5+
+            window.maxAndar = Math.max(Number(maxAndar) || 0, 150); // destrava a tela
+            monta("adaga", 3, 5);
+            UI.showItensBuild();
+            const cartaoDom5 = document.querySelector("#modalItensBuildView .item-build-cartao");
+            saida.classes5 = cartaoDom5 ? cartaoDom5.className : "";
+            monta("adaga", 3, 4);
+            UI.showItensBuild(); // reabre/re-renderiza
+            const cartaoDom4 = document.querySelector("#modalItensBuildView .item-build-cartao");
+            saida.classes4 = cartaoDom4 ? cartaoDom4.className : "";
+            return saida;
+        });
+
+        assert.equal(r.minimo, 5, "mínimo de forja do PvP é 5");
+
+        assert.ok(r.multNormal4 > 1, "forja 4 continua contando no jogo normal");
+        assert.equal(r.multPvp4, 1, "forja 4 NÃO conta no multiplicador do PvP");
+        assert.equal(r.cartaoResumo4, "nenhum", "resumo do cartão fica vazio sem forja 5");
+        assert.ok(r.dano5 > r.dano4, "dano do cartão sobe quando a forja chega a 5");
+
+        assert.ok(r.multNormal5 > 1, "forja 5 conta no jogo normal");
+        assert.equal(r.multPvp5, r.multNormal5, "forja 5 conta no PvP igual ao jogo");
+        assert.equal(r.cartaoResumo5,
+            r.nomeAdaga + " ×3 (+5 forjadas)",
+            "resumo do cartão lista só o item de forja 5, com as forjadas");
+        assert.ok(r.resumoNormal5.indexOf(r.nomeAdaga) >= 0,
+            "resumo normal (tela) segue listando tudo");
+
+        assert.ok(r.chanceNormal4 > 1, "pocaoVerde forja 4 conta na chance do jogo");
+        assert.equal(r.chancePvp4, 1, "pocaoVerde forja 4 NÃO conta na chance do PvP");
+        assert.equal(r.chancePvp5, r.chanceNormal5, "pocaoVerde forja 5 conta no PvP");
+
+        assert.ok(r.classes5.includes("item-build-cartao--pvp"),
+            "forja 5 ganha a borda prateada na tela de builds");
+        assert.ok(r.classes5.includes("item-build-cartao--forjada"),
+            "forja 5 mantém a dourada de base por cima");
+        assert.ok(r.classes4.includes("item-build-cartao--forjada"),
+            "forja 4 continua só com a dourada");
+        assert.ok(!r.classes4.includes("item-build-cartao--pvp"),
+            "forja 4 NÃO ganha a borda prateada");
 
         assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
     } finally {

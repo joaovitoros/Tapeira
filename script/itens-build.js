@@ -61,6 +61,11 @@
 	// É da run: zera junto com a build no Resetar.
 	let forja = {};
 	const FORJA_MAX = 50;
+	// Regra do PvP (batalha-fantasma): só item com forja >= 5 "entra" no
+	// cartão de batalha — os demais valem 1 nos multiplicadores do duelo e
+	// não aparecem no resumo do cartão. A tela de builds marca os que entram
+	// com a borda prateada (item-build-cartao--pvp).
+	const FORJA_MINIMO_PVP = 5;
 	let bausPendentes = 0;
 	let opcoesBauAtual = null;
 	// espaços extras comprados na loja de esmeraldas: permanentes (não zeram
@@ -121,7 +126,10 @@
 	// o fator, então acumular o mesmo item multiplica o bônus por cópia.
 	// Centro de Pesquisa (Cidade): a pesquisa do item potencializa o efeito
 	// (+10% por nível), aplicado aqui — ponto único de todo bônus de item.
-	function mult(base, id) {
+	function mult(base, id, minForja = 0) {
+		// Filtro do PvP: item com forja abaixo do mínimo não conta neste
+		// cálculo (vale 1). O jogo normal não passa minForja e não muda.
+		if (forjaDe(id) < minForja) return 1;
 		const efetivas = copiasEfetivas(id);
 		if (efetivas === 0) return 1;
 		const bonus = (typeof PesquisaBonusItem === "function") ? PesquisaBonusItem(id) : 1;
@@ -174,18 +182,24 @@
 		return 10 * Math.pow(2, Math.floor(slotsExtras / 5));
 	}
 
-	function resumo() {
+	function resumo(minForja = 0) {
 		const partes = [];
 		for (const registro of POOL) {
 			const n = copias(registro.id);
 			const f = forjaDe(registro.id);
+			// com filtro (ex.: resumo do cartão PvP) só entram os itens
+			// com forja >= minForja
+			if (f < minForja) continue;
 			if (n > 0 || f > 0) {
 				partes.push(registro.nome + (n > 0 ? " ×" + n : "")
 					+ (f > 0 ? " (+" + f + " forjada" + (f > 1 ? "s" : "") + ")" : ""));
 			}
 		}
-		if (partes.length === 0) return "nenhum (0/" + limiteAtual() + ")";
-		return partes.join(", ") + " (" + lista.length + "/" + limiteAtual() + ")";
+		if (partes.length === 0) {
+			return minForja > 0 ? "nenhum" : "nenhum (0/" + limiteAtual() + ")";
+		}
+		const vaga = minForja > 0 ? "" : " (" + lista.length + "/" + limiteAtual() + ")";
+		return partes.join(", ") + vaga;
 	}
 
 	window.Tapeira.ItensBuild = {
@@ -351,6 +365,13 @@
 		multDanoAuto: () => mult(1.20, "lanterna"),
 		multDanoComp: () => mult(1.20, "colarFormigas"),
 		multBau: () => mult(1.15, "bauPortatil"),
-		multEsmBau: () => mult(1.50, "esmeralda")
+		multEsmBau: () => mult(1.50, "esmeralda"),
+
+		// ---- PvP (batalha-fantasma): só conta item com forja >= FORJA_MINIMO_PVP ----
+		FORJA_MINIMO_PVP: FORJA_MINIMO_PVP,
+		multDanoPvp: () => mult(1.25, "adaga", FORJA_MINIMO_PVP),
+		multChanceCritPvp: () => mult(1.50, "pocaoVerde", FORJA_MINIMO_PVP),
+		multDanoCritPvp: () => mult(1.25, "pocaoRubra", FORJA_MINIMO_PVP),
+		multDanoCompPvp: () => mult(1.20, "colarFormigas", FORJA_MINIMO_PVP)
 	};
 })();
