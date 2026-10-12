@@ -1347,25 +1347,26 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
 @media (max-width: 700px) {
 	.infoModalBox{
 		width: min(92vw, 520px);
-		max-height: 86vh;
+		max-height: 92vh;
 		display: flex;
 		flex-direction: column;
 		font-size: 13px;
-		padding: 1em;
+		padding: 0.9em;
 	}
 	.infoModalTitulo{
 		font-size: 16px;
-		margin-bottom: 0.7em;
+		margin-bottom: 0.5em;
 		flex-shrink: 0;
 	}
 	.infoModalConteudo{
 		overflow-y: auto;
 		min-height: 0;
-		gap: 0.5em;
+		gap: 0.45em;
 		-webkit-overflow-scrolling: touch;
 	}
 	.infoLinha{
 		font-size: 13px;
+		padding: 0.5em 0.7em;
 	}
 	.infoSecao{
 		font-size: 12px;
@@ -1373,6 +1374,7 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
 	.btn-FecharModal{
 		font-size: 13px;
 		flex-shrink: 0;
+		margin-top: 0.9em;
 	}
 }
 
