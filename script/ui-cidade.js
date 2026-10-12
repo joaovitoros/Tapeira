@@ -44,7 +44,16 @@
 
     function atualizaHud() {
         const hud = document.getElementById("cidadeHud");
-        if (hud) hud.textContent = "Andar " + andar + " · " + FormatGold(gold);
+        if (!hud) return;
+        const tickets = (typeof ticketsMug !== "undefined")
+            ? Math.max(0, Math.floor(N(ticketsMug) || 0))
+            : 0;
+        let texto = "Andar " + andar + " · " + FormatGold(gold);
+        // Tickets de Caçador de Mugs: no cabeçalho, só quando existe saldo
+        if (tickets > 0) {
+            texto += " · " + formatNumber(tickets) + (tickets === 1 ? " ticket" : " tickets");
+        }
+        hud.textContent = texto;
     }
 
     // A Cidade é tela cheia: fecha os painéis laterais (Status/Loja/Config) pra
