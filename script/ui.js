@@ -310,7 +310,13 @@ const UI = {
         const percent = Math.max(0, Math.min(100, xpAtual * 100 / nextLevelXP));
 
         if (level) level.textContent = `Nível ${nivelJogador}`;
-        if (points) points.textContent = `${pontosHabilidade} ${pontosHabilidade === 1 ? "ponto" : "pontos"} de habilidade`;
+        if (points) {
+            // Com todas as skills no máximo, o recurso vira "Tickets de Caçador
+            // de Mugs" (permanente, pra Cidade) em vez de pontos de habilidade.
+            points.textContent = TodasSkillsNoMaximo()
+                ? `${ticketsMug} ${ticketsMug === 1 ? "ticket" : "tickets"} de caçador de mugs`
+                : `${pontosHabilidade} ${pontosHabilidade === 1 ? "ponto" : "pontos"} de habilidade`;
+        }
         if (progress) {
             progress.setAttribute("aria-valuenow", String(Math.min(xpAtual, nextLevelXP)));
             progress.setAttribute("aria-valuemax", String(nextLevelXP));

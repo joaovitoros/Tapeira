@@ -54,6 +54,7 @@ function CriarObjetoSave(incluirOffline = true) {
 		nivelJogador,
 		xpAtual,
 		pontosHabilidade,
+		ticketsMug,
 		nivelSkillDano,
 		nivelSkillEletrica,
 		nivelSkillGold,

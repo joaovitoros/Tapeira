@@ -66,6 +66,8 @@ function Carregar(saveData, calculaOffline = false) {
 	nivelJogador = save.nivelJogador ?? 1;
 	xpAtual = save.xpAtual ?? 0;
 	pontosHabilidade = save.pontosHabilidade ?? 0;
+	// Tickets de Caçador de Mugs: permanente (não zera no reset)
+	ticketsMug = save.ticketsMug ?? 0;
 	nivelSkillDano = save.nivelSkillDano ?? 0;
 	nivelSkillEletrica = save.nivelSkillEletrica ?? 0;
 	nivelSkillGold = save.nivelSkillGold ?? 0;

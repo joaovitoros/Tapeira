@@ -23,6 +23,10 @@ var ataquesFrenesi = 0; //toques restantes da janela ativa do Toque Frenético
 var nivelJogador = 1;
 var xpAtual = 0;
 var pontosHabilidade = 0;
+// Tickets de Caçador de Mugs: saldo PERMANENTE (não zera no reset). Quando
+// todas as skills estão no máximo, os pontos viram tickets automaticamente e
+// passam a servir pra Cidade — nunca pra skill.
+var ticketsMug = 0;
 var nivelSkillDano = 0;
 var nivelSkillEletrica = 0;
 var nivelSkillGold = 0;
@@ -249,7 +253,14 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 	xpAtual = xpDisponivel - custoNiveis(niveisGanhos);
 	if (niveisGanhos > 0) {
 		nivelJogador = Math.min(Number.MAX_SAFE_INTEGER, nivelJogador + niveisGanhos);
-		pontosHabilidade = Math.min(Number.MAX_SAFE_INTEGER, pontosHabilidade + niveisGanhos);
+		// Com TODAS as skills no máximo, os pontos viram Tickets de Caçador de
+		// Mugs (permanentes) — inclusive o que já estava sobrando. Automático.
+		if (TodasSkillsNoMaximo()) {
+			ticketsMug = Math.min(Number.MAX_SAFE_INTEGER, ticketsMug + pontosHabilidade + niveisGanhos);
+			pontosHabilidade = 0;
+		} else {
+			pontosHabilidade = Math.min(Number.MAX_SAFE_INTEGER, pontosHabilidade + niveisGanhos);
+		}
 		const marcosGanhos = ConfereMarcosNivel50();
 		const conquistaAntes = Math.floor(Math.max(0, totalNiveis | 0) / 100);
 		totalNiveis = Math.min(Number.MAX_SAFE_INTEGER, (totalNiveis | 0) + niveisGanhos);

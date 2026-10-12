@@ -207,11 +207,14 @@ function FormataMultCM(valor = MultiplicadorCM()) {
 }
 
 // Sobra de pontos vira CM (andar 65+): cada ponto de habilidade ainda na
-// mão dá +1% no Conhecimento Mug do reset — lido no VoltaAndar ANTES do
-// Resetar zerar pontosHabilidade. Sem campo no save: depende só de
-// maxAndar e dos pontos que sobrarem na hora do reset.
+// mão dá +1% no Conhecimento Mug do reset - lido no VoltaAndar ANTES do
+// Resetar zerar pontosHabilidade. Conta também os Tickets de Caçador de Mugs
+// (o que virou ticket não pode mais subir skill, mas continua valendo CM).
+// Sem campo no save: depende só de maxAndar e dos pontos que sobrarem.
 function BonusCMPontosSobra() {
-	return maxAndar >= ANDAR_SOBRA_CM ? 1 + 0.01 * Math.max(0, pontosHabilidade) : 1;
+	if (maxAndar < ANDAR_SOBRA_CM) return 1;
+	const restantes = Math.max(0, pontosHabilidade) + Math.max(0, ticketsMug);
+	return 1 + 0.01 * restantes;
 }
 
 //variaveis referentes a loja

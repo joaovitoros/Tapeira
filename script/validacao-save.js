@@ -374,6 +374,7 @@ function ValidarSave(save) {
 		["nivelJogador", 1, Number.MAX_SAFE_INTEGER],
 		["xpAtual", 0, Number.MAX_SAFE_INTEGER],
 		["pontosHabilidade", 0, Number.MAX_SAFE_INTEGER],
+		["ticketsMug", 0, Number.MAX_SAFE_INTEGER],
 		["nivelSkillDano", 0, NIVEL_MAXIMO_SKILLS],
 		["nivelSkillEletrica", 0, NIVEL_MAXIMO_SKILLS],
 		["nivelSkillGold", 0, NIVEL_MAXIMO_SKILLS],
