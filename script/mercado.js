@@ -119,9 +119,11 @@ const OFERTAS_POOL = [
 		}
 	},
 	{
-		id: "cm", nome: "Página do grimório", desc: "+15 de Conhecimento Mug", k: 15,
+		id: "cm", nome: "Página do grimório", k: 15,
+		// desc dinâmica: o CM escala com o andar (CMCompraOferta, fonte única)
+		desc: () => "+" + FormatCM(CMCompraOferta()) + " de Conhecimento Mug",
 		dar() {
-			conhecimentoMug = N(conhecimentoMug) + 15;
+			conhecimentoMug = N(conhecimentoMug) + CMCompraOferta();
 			MostraStatus?.();
 		}
 	},
@@ -316,7 +318,8 @@ function MercadoSecaoOfertas() {
 		nome.textContent = oferta.nome;
 		const det = document.createElement("span");
 		det.className = "mercado-oferta__sub";
-		det.textContent = oferta.desc + " · -" + Math.round(oferta.desconto * 100) + "% hoje";
+		const descOferta = typeof oferta.desc === "function" ? oferta.desc() : oferta.desc;
+		det.textContent = descOferta + " · -" + Math.round(oferta.desconto * 100) + "% hoje";
 		info.append(nome, det);
 
 		const botao = document.createElement("button");

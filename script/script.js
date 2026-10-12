@@ -218,6 +218,14 @@ function FormataMultCM(valor = MultiplicadorCM()) {
 	return partes[0] + "," + decimais;
 }
 
+// Quanto CM as ofertas que COMPRAM Conhecimento Mug concedem: escala com o
+// andar (20 × andar). O preço dessas ofertas também escala com o andar e o CM
+// por reset cresce com o número de abates, então a oferta continua valendo no
+// late game. Fonte única: evento Comércio + Ofertas do Mercado.
+function CMCompraOferta(andarAtual = andar) {
+	return Math.max(15, Math.round(20 * (Number(andarAtual) || 0)));
+}
+
 // Sobra de pontos vira CM (andar 65+): cada ponto de habilidade ainda na
 // mão dá +1% no Conhecimento Mug do reset - lido no VoltaAndar ANTES do
 // Resetar zerar pontosHabilidade. Conta também os Tickets de Caçador de Mugs

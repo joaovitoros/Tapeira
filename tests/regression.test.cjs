@@ -3024,6 +3024,51 @@ test("Mercado: ofertas do dia giram pela data, dão o bem e não repetem", async
     }
 });
 
+test("CM comprado escala com o andar (+20 × andar) no Comércio e no Mercado", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.CMCompraOferta === "function"
+            && window.Tapeira && window.Tapeira.Mercado);
+        const result = await page.evaluate(() => {
+            UI.showInfo = () => {};
+            window.MostraStatus = () => {};
+            const out = {};
+            out.em50 = CMCompraOferta(50);
+            out.em100 = CMCompraOferta(100);
+            out.em200 = CMCompraOferta(200);
+
+            andar = 100;
+            out.descEsperado = "+" + FormatCM(2000) + " de Conhecimento Mug";
+
+            // oferta do Comércio (evento)
+            const ofertaEvento = EVENTO_OFERTAS_POOL.find(o => o.id === "cm");
+            conhecimentoMug = 0;
+            ofertaEvento.comprar();
+            out.cmEvento = conhecimentoMug;
+            out.descEvento = typeof ofertaEvento.desc === "function" ? ofertaEvento.desc() : ofertaEvento.desc;
+
+            // oferta do Mercado
+            const ofertaMercado = window.Tapeira.Mercado.OFERTAS_POOL.find(o => o.id === "cm");
+            conhecimentoMug = 0;
+            ofertaMercado.dar();
+            out.cmMercado = conhecimentoMug;
+            out.descMercado = typeof ofertaMercado.desc === "function" ? ofertaMercado.desc() : ofertaMercado.desc;
+
+            return out;
+        });
+        assert.equal(result.em50, 1000, "andar 50 → 1.000 CM");
+        assert.equal(result.em100, 2000, "andar 100 → 2.000 CM");
+        assert.equal(result.em200, 4000, "andar 200 → 4.000 CM");
+        assert.equal(result.cmEvento, 2000, "a oferta do comerciante dá 20×andar");
+        assert.equal(result.cmMercado, 2000, "a oferta do Mercado dá 20×andar");
+        assert.equal(result.descEvento, result.descEsperado, "desc do evento dinâmica: " + result.descEvento);
+        assert.equal(result.descMercado, result.descEsperado, "desc do Mercado dinâmica: " + result.descMercado);
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("batalha-fantasma: cartão de batalha monta, valida e importa sem tocar no save", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
@@ -3100,6 +3145,108 @@ test("batalha-fantasma: cartão de batalha monta, valida e importa sem tocar no 
         const saveInvalido = await page.evaluate(
             () => ImportarSaveJson('{"saveFormat":"tapeira-save","gold":"lixo"}'));
         assert.equal(saveInvalido, false, "save inválido continua sendo rejeitado");
+
+        assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
+    } finally {
+        await context.close();
+    }
+});
+
+test("batalha-fantasma: corrida contra o chefe é determinística e decide o vencedor", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        // o "Como jogar" abre sozinho em página nova — fecha antes dos cliques
+        try {
+            await page.waitForSelector("#infoModal [data-info-fechar]", { timeout: 2500 });
+            await page.click("#infoModal [data-info-fechar]");
+        } catch (erro) { /* já fechado ou não abriu */ }
+
+        const FIX_A = {
+            saveFormat: "tapeira-cartao-batalha", saveVersion: 1,
+            exportedAt: "2026-01-01T00:00:00.000Z", nome: "A", nivel: 10,
+            danoGolpe: 1000, danoCrit: 4000, chanceCrit: 0.3,
+            dpsCompanheiro: 0, especializacao: null, itensBuildResumo: "",
+            taxaAtaque: 3, seed: 111
+        };
+        const FIX_B = { ...FIX_A, nome: "B", exportedAt: "2026-01-02T00:00:00.000Z", seed: 222 };
+
+        // 1) determinismo: mesma entrada → mesmo resultado
+        const r1 = await page.evaluate(
+            f => JSON.stringify(PvpFantasma.SimulaDuelo(f[0], f[1])), [FIX_A, FIX_B]);
+        const r2 = await page.evaluate(
+            f => JSON.stringify(PvpFantasma.SimulaDuelo(f[0], f[1])), [FIX_A, FIX_B]);
+        assert.equal(r1, r2, "mesmos cartões → mesmo resultado");
+
+        // 2) simetria: importar invertido espelha os tempos — as duas
+        //    máquinas chegam no mesmo resultado, independente de quem
+        //    importou o cartão de quem
+        const sim = await page.evaluate(f => {
+            const ab = PvpFantasma.SimulaDuelo(f[0], f[1]);
+            const ba = PvpFantasma.SimulaDuelo(f[1], f[0]);
+            return {
+                meuAB: ab.tempoMeu, fantAB: ab.tempoFantasma, venceuAB: ab.venceu,
+                meuBA: ba.tempoMeu, fantBA: ba.tempoFantasma, venceuBA: ba.venceu
+            };
+        }, [FIX_A, FIX_B]);
+        assert.equal(sim.meuAB, sim.fantBA, "tempo do A espelha ao inverter a ordem");
+        assert.equal(sim.fantAB, sim.meuBA, "tempo do B espelha ao inverter a ordem");
+        assert.equal(sim.venceuAB, !sim.venceuBA, "o vencedor espelha");
+
+        // 3) build muito mais forte vence e o lado fraco passa dos 25s
+        const forte = await page.evaluate(() => {
+            const base = {
+                saveFormat: "tapeira-cartao-batalha", saveVersion: 1,
+                exportedAt: "2026-01-01T00:00:00.000Z", nome: "Rival", nivel: 1,
+                danoGolpe: 10, danoCrit: 40, chanceCrit: 0.2,
+                dpsCompanheiro: 0, especializacao: null, itensBuildResumo: "",
+                taxaAtaque: 3, seed: 7
+            };
+            const forte = { ...base, seed: 9, danoGolpe: 100000, danoCrit: 400000 };
+            return PvpFantasma.SimulaDuelo(forte, base);
+        });
+        assert.equal(forte.venceu, true, "build mais forte vence");
+        assert.ok(forte.tempoMeu < forte.tempoFantasma, "tempo do forte é menor");
+        assert.ok(forte.tempoMeu > 0 && Number.isFinite(forte.tempoMeu), "tempo finito e positivo");
+        assert.ok(forte.tempoFantasma > 24, "lado fraco leva mais que os 25s da média");
+
+        // 4) fluxo na tela: abrir → Começar duelo → animação → resultado → fechar
+        await page.evaluate(f => PvpFantasma.AbreDuelo(f), FIX_A);
+        await page.click("[data-pvp-lutar]");
+        const sumiu = await page.evaluate(() => !document.querySelector("[data-pvp-lutar]"));
+        assert.ok(sumiu, "botão Começar some durante o duelo");
+        await page.waitForSelector("[data-pvp-resultado]:not([hidden])", { timeout: 8000 });
+        const fim = await page.evaluate(() => ({
+            texto: document.querySelector("[data-pvp-resultado]").textContent,
+            tempos: [...document.querySelectorAll("[data-pvp-tempo]")].map(e => e.textContent),
+            timer: PvpFantasma._timerDuelo,
+            cronometro: document.querySelector("[data-pvp-cronometro]").textContent,
+            larguraBarra: document.querySelector(
+                '[data-pvp-alvo="meu"] [data-pvp-fill]').style.width
+        }));
+        assert.ok(/VENCEU/.test(fim.texto), "banner de resultado aparece");
+        assert.ok(fim.tempos.every(t => /^(\d+\.\d{2}s|> 1h)$/.test(t)),
+            "tempos por lado formatados (s ou > 1h)");
+        assert.equal(fim.timer, null, "timer liberado quando a corrida acaba");
+        assert.ok(/^(\d+\.\d{2}s|> 1h)$/.test(fim.cronometro), "cronômetro final formatado");
+        assert.ok(fim.larguraBarra !== "", "barra de vida foi atualizada");
+
+        await page.click("[data-pvp-fechar]");
+        const fechou = await page.evaluate(() => ({
+            semModal: !document.getElementById("pvpDuelo"),
+            timer: PvpFantasma._timerDuelo
+        }));
+        assert.ok(fechou.semModal && fechou.timer === null, "Fechar limpa modal e timer");
+
+        // 5) fechar DURANTE a animação também cancela o timer
+        await page.evaluate(f => PvpFantasma.AbreDuelo(f), FIX_A);
+        await page.click("[data-pvp-lutar]");
+        await page.click("[data-pvp-fechar]");
+        const noMeio = await page.evaluate(() => ({
+            semModal: !document.getElementById("pvpDuelo"),
+            timer: PvpFantasma._timerDuelo
+        }));
+        assert.ok(noMeio.semModal && noMeio.timer === null,
+            "fechar no meio da animação cancela o timer");
 
         assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
     } finally {
