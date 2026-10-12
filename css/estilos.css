@@ -9750,9 +9750,9 @@ img.ramos-tree-no__tile {
 }
 
 .cidade-topo {
-	/* fica fixo no topo enquanto a cena rola (não sai pro lado ao arrastar) */
+	/* fica fixo só na HORIZONTAL: ao arrastar pros lados o cabeçalho não sai
+	   da tela; na vertical ele rola junto com a cena (não gruda no topo). */
 	position: sticky;
-	top: 0;
 	left: 0;
 	z-index: 6;
 	display: flex;
