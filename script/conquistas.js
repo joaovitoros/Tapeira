@@ -77,10 +77,6 @@ function NivelConquistaComp(indice) {
 	return Number.isInteger(v) && v > 0 ? v : 0;
 }
 
-function TemConquistaComp(indice) {
-	return NivelConquistaComp(indice) > 0;
-}
-
 // Recompensas — cada uma aplicada num único ponto de fórmula, escalando
 // linear por nível (save 0/1 antigo = nível 1 = efeito igual ao de antes):
 function MultiplicadorDanoConquistaComp() { return 1 + 0.05 * NivelConquistaComp(0); } //Velocista → MultiplicadorDanoNivel

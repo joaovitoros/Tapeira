@@ -232,24 +232,6 @@ function AddGold(valor, aplicaBonusFormigas = true) {
     return valorFinal;
 }
 
-function RemoveGold(valor) {
-    if (!(gold instanceof GoldNumber)) {
-        gold = new GoldNumber(gold);
-    }
-
-    gold.subtract(valor);
-
-    AtualizaGoldTela();
-}
-
-function TemGold(valor) {
-    if (!(gold instanceof GoldNumber)) {
-        gold = new GoldNumber(gold);
-    }
-
-    return gold.compare(valor) >= 0;
-}
-
 function AddTotalGold(valor, aplicaBonusFormigas = true) {
     if (!(totalGold instanceof GoldNumber)) {
         totalGold = new GoldNumber(totalGold);
@@ -275,26 +257,6 @@ function AtualizaGoldTela() {
     const goldDisplay = document.getElementById("contGold");
     if (goldDisplay) goldDisplay.innerHTML = FormatGold(gold);
 }
-
-function getGoldValue(gold) {
-
-    if (!gold) return 0;
-
-    if (gold instanceof GoldNumber) {
-        return gold.toNumber();
-    }
-
-    if (typeof gold === "number") {
-        return gold;
-    }
-
-    if (typeof gold === "string") {
-        return Number(gold.replace(/[^\d.-]/g, "")) || 0;
-    }
-
-    return 0;
-}
-
 
 function formatNumber(n) {
     n = Number(n);
