@@ -11900,6 +11900,35 @@ img.ramos-tree-no__tile {
 	font-size: 13px;
 }
 
+/* --- Aviso de atualização (canto inferior) --- */
+#avisoAtualizacao {
+	position: fixed;
+	left: 50%;
+	bottom: 18px;
+	transform: translateX(-50%);
+	z-index: 60;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 14px;
+	border-radius: 12px;
+	background: linear-gradient(145deg, #1d2a3a, #121822);
+	border: 1px solid rgba(255, 216, 74, 0.5);
+	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+	color: #ffe2a0;
+	font-size: 14px;
+	max-width: 92vw;
+}
+
+.avisoAtualizacao__x {
+	background: none;
+	border: 0;
+	color: #8291a8;
+	font-size: 18px;
+	line-height: 1;
+	cursor: pointer;
+}
+
 /* --- Cartão visual da Guilda (versão rica do seu cartão de batalha) --- */
 .guildaCartaoVisual {
 	background: linear-gradient(145deg, rgba(14, 18, 28, 0.97), rgba(10, 13, 20, 0.94));
