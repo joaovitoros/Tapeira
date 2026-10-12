@@ -245,7 +245,8 @@
 				arte.appendChild(cv);
 			});
 			var el = arte.querySelector('.camada[data-slot="' + sel.slot + '"]');
-			if (el) el.addEventListener("pointerdown", borracha.ativo ? iniciarBorracha : iniciarArraste);
+			// handler ÚNICO (o canvas é reaproveitado; addEventListener acumularia)
+			if (el) el.onpointerdown = function (ev) { if (borracha.ativo) iniciarBorracha(ev); else iniciarArraste(ev); };
 		}
 
 		function render() {
@@ -271,8 +272,8 @@
 			var bx = r.left + (dd.x / 100) * r.width, by = r.top + (dd.y / 100) * r.height;
 			arr = { dx: ev.clientX - bx, dy: ev.clientY - by, el: el };
 			try { el.setPointerCapture(ev.pointerId); } catch (e) {}
-			el.addEventListener("pointermove", mover);
-			el.addEventListener("pointerup", soltar);
+			el.onpointermove = mover;
+			el.onpointerup = soltar;
 		}
 		function mover(ev) {
 			if (!arr) return;
@@ -287,8 +288,8 @@
 		}
 		function soltar(ev) {
 			arr = null;
-			ev.currentTarget.removeEventListener("pointermove", mover);
-			ev.currentTarget.removeEventListener("pointerup", soltar);
+			ev.currentTarget.onpointermove = null;
+			ev.currentTarget.onpointerup = null;
 			salvar();
 		}
 
@@ -328,15 +329,15 @@
 			borracha.cv = cv;
 			borracha.ultimo = null;
 			try { el.setPointerCapture(ev.pointerId); } catch (e) {}
-			el.addEventListener("pointermove", moverBorracha);
-			el.addEventListener("pointerup", soltarBorracha);
+			el.onpointermove = moverBorracha;
+			el.onpointerup = soltarBorracha;
 			apagarEm(ev, cv);
 		}
 		function moverBorracha(ev) { if (borracha.cv) apagarEm(ev, borracha.cv); }
 		function soltarBorracha(ev) {
 			borracha.cv = null; borracha.ultimo = null;
-			ev.currentTarget.removeEventListener("pointermove", moverBorracha);
-			ev.currentTarget.removeEventListener("pointerup", soltarBorracha);
+			ev.currentTarget.onpointermove = null;
+			ev.currentTarget.onpointerup = null;
 		}
 		document.getElementById("borracha").addEventListener("change", function (e) {
 			borracha.ativo = e.target.checked;
