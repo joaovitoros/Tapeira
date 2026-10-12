@@ -250,6 +250,10 @@ function Carregar(saveData, calculaOffline = false) {
 		? Object.assign({}, save.pesquisaItens) : {};
 	pesquisaInimigos = (save.pesquisaInimigos && typeof save.pesquisaInimigos === "object" && !Array.isArray(save.pesquisaInimigos))
 		? Object.assign({}, save.pesquisaInimigos) : {};
+	// Loja de Troféus (Cidade): nível por troféu — permanente. Objeto
+	// { trofeuId: nível }; valores inválidos caem no default.
+	trofeus = (save.trofeus && typeof save.trofeus === "object" && !Array.isArray(save.trofeus))
+		? Object.assign({}, save.trofeus) : {};
 	// Mercado (Cidade): reputação (desconto nas lojas) — permanente
 	reputacao = save.reputacao ?? 0;
 	// Fábrica (Cidade): nível da linha de montagem — permanente

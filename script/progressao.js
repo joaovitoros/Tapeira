@@ -233,7 +233,9 @@ function GanhaXP(abates, piso = andar, xpFixo) {
 	// Grimório Estelar (itens da build): +20% por cópia no XP por abate
 	// Cristal (Cidade): amplia o XP conforme a profundidade do reset
 	const multCristalXP = (typeof MultiplicadorCristal === "function") ? MultiplicadorCristal() : 1;
-	const xpBase = Math.min(limiteXP, Math.floor(xpCalculado * BonusXPConhecimento() * MultiplicadorXPConquistaComp() * Tapeira.ItensBuild.multXP() * multCristalXP));
+	// Loja de Troféus (Cidade): +% de XP por nível do troféu Sábio
+	const multTrofeuXP = (typeof TrofeuBonusXP === "function") ? TrofeuBonusXP() : 1;
+	const xpBase = Math.min(limiteXP, Math.floor(xpCalculado * BonusXPConhecimento() * MultiplicadorXPConquistaComp() * Tapeira.ItensBuild.multXP() * multCristalXP * multTrofeuXP));
 	if (!Number.isSafeInteger(xpBase) || xpBase < 0) {
 		throw new TypeError("A quantidade de experiência precisa ser um inteiro não negativo.");
 	}

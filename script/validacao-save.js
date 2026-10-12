@@ -259,19 +259,24 @@ function ValidarSave(save) {
 	const pesquisaInimigoMax = (typeof PESQUISA_INIMIGO_MAX === "number") ? PESQUISA_INIMIGO_MAX : 5;
 	const idsItens = ((window.Tapeira && window.Tapeira.ItensBuild && window.Tapeira.ItensBuild.POOL) || []).map(i => i.id);
 	const idsInimigos = (typeof PESQUISA_INIMIGOS !== "undefined" ? PESQUISA_INIMIGOS : []).map(t => t.id);
-	const validaMapaPesquisa = (valor, ids, max) => {
+	const validaMapaPesquisa = (valor, ids, max, rotulo = "pesquisa") => {
 		if (valor === undefined) return;
 		if (!valor || typeof valor !== "object" || Array.isArray(valor)) {
-			throw new TypeError("Os dados de pesquisa do save são inválidos.");
+			throw new TypeError("Os dados de " + rotulo + " do save são inválidos.");
 		}
 		for (const [chave, nivel] of Object.entries(valor)) {
 			if (!ids.includes(chave) || !Number.isSafeInteger(nivel) || nivel < 0 || nivel > max) {
-				throw new TypeError("Os dados de pesquisa do save são inválidos.");
+				throw new TypeError("Os dados de " + rotulo + " do save são inválidos.");
 			}
 		}
 	};
 	validaMapaPesquisa(save.pesquisaItens, idsItens, pesquisaItemMax);
 	validaMapaPesquisa(save.pesquisaInimigos, idsInimigos, pesquisaInimigoMax);
+	// Loja de Troféus (Cidade): objeto { trofeuId: nível } com ids conhecidos e
+	// níveis dentro do teto. Campo não-numérico (whitelist abaixo).
+	const trofeuMax = (typeof TROFEU_NIVEL_MAX === "number") ? TROFEU_NIVEL_MAX : 1000;
+	const idsTrofeus = (typeof TROFEUS !== "undefined" ? TROFEUS : []).map(t => t.id);
+	validaMapaPesquisa(save.trofeus, idsTrofeus, trofeuMax, "troféus");
 	// Mercado (Cidade): reputação (desconto nas lojas) dentro do teto
 	const reputacaoMax = (typeof REPUTACAO_MAX === "number") ? REPUTACAO_MAX : 10;
 	if (save.reputacao !== undefined
@@ -499,7 +504,7 @@ function ValidarSave(save) {
 		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards",
 			"conquistasComp", "melhorGoldRun", "autoItensLoja",
 			"itensBuild", "bauBuildPendente", "opcoesBauBuild",
-			"pesquisaItens", "pesquisaInimigos", "forja"].includes(key)) continue;
+			"pesquisaItens", "pesquisaInimigos", "trofeus", "forja"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");
 		}

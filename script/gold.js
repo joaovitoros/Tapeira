@@ -212,6 +212,10 @@ function AddGold(valor, aplicaBonusFormigas = true) {
         if (typeof MultiplicadorCristal === "function") {
             valorFinal = valorFinal * MultiplicadorCristal();
         }
+        // Loja de Troféus (Cidade): +% de gold por nível do troféu Mercador
+        if (typeof TrofeuBonusGold === "function") {
+            valorFinal = valorFinal * TrofeuBonusGold();
+        }
     }
     gold.add(valorFinal);
 

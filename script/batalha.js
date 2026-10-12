@@ -144,6 +144,8 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	// do Guardião (bônus em andares múltiplos de 10, onde um guardião
 	// bloqueia o caminho)
 	dano *= Tapeira.ItensBuild.multDano();
+	// Loja de Troféus (Cidade): +% de dano por nível do troféu Caçador de Mugs
+	if (typeof TrofeuBonusDano === "function") dano *= TrofeuBonusDano();
 	if (andar % 10 === 0) dano *= Tapeira.ItensBuild.multGuardiao();
 	// Análise de inimigos (Centro de Pesquisa): +% de dano contra o tipo do
 	// andar atual (comuns / guardiões) — ponto único do bônus
@@ -591,7 +593,9 @@ function DanoCritico(critico) {
 	valida = Math.random();
 
 	// Poção de Ferro (itens da build): +50% por cópia na chance de crítico
-	if (valida <= chanceCrit * Tapeira.ItensBuild.multChanceCrit()) {
+	// Loja de Troféus (Cidade): +0,5% de chance por nível do troféu Sorte (soma)
+	const chanceTrofeu = (typeof TrofeuBonusCrit === "function") ? TrofeuBonusCrit() : 0;
+	if (valida <= chanceCrit * Tapeira.ItensBuild.multChanceCrit() + chanceTrofeu) {
 		MostraInfo("Dano critico de: " + critico);
 		return true;
 	} else {

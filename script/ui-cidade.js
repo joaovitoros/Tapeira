@@ -17,12 +17,13 @@
         pesquisa: () => Tapeira.Pesquisa.abrir(),
         fazenda: () => Tapeira.Fazenda.abrir(),
         fabrica: () => Tapeira.Fabrica.abrir(),
-        cristal: () => Tapeira.Cristal.abrir()
+        cristal: () => Tapeira.Cristal.abrir(),
+        trofeus: () => Tapeira.Trofeus.abrir()
     };
 
     // Andar máximo para destravar cada prédio (derivado, sem campo no save).
     // Bate com a tabela de gates do CIDADE.md.
-    const GATES = { casa: 80, fazenda: 85, mercado: 90, fabrica: 100, pesquisa: 110, cristal: 120 };
+    const GATES = { casa: 80, trofeus: 80, fazenda: 85, mercado: 90, fabrica: 100, pesquisa: 110, cristal: 120 };
 
     function desbloqueada() {
         return (Number(window.maxAndar) || 0) >= ANDAR_CIDADE;
@@ -73,8 +74,9 @@
         ];
         // Tickets de Caçador de Mugs: no cabeçalho, só quando existe saldo
         if (tickets > 0) {
+            const texto = (typeof FormataTickets === "function") ? FormataTickets(tickets) : formatNumber(tickets);
             chips.push(chipCidade("ticket", "imagens/hud/ticket.svg",
-                formatNumber(tickets) + (tickets === 1 ? " ticket" : " tickets")));
+                texto + (tickets === 1 ? " ticket" : " tickets")));
         }
         hud.replaceChildren(...chips);
     }

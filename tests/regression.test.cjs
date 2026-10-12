@@ -2701,3 +2701,258 @@ test("rodapé: botões horizontais à esquerda e habilidades abaixo do log, ao l
     }
 });
 
+test("Loja de Troféus: níveis, custo crescente, efeitos, save e painel", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => window.Tapeira && window.Tapeira.Trofeus);
+        const result = await page.evaluate(() => {
+            UI.showInfo = () => {};
+            window.MostraInfo = () => {};
+            const T = window.Tapeira.Trofeus;
+            const out = { ids: T.LISTA.map(t => t.id) };
+
+            // custo cresce ×1,5 por nível
+            trofeus = {};
+            out.custo0 = T.custo("cacador");
+            trofeus = { cacador: 1 };
+            out.custo1 = T.custo("cacador");
+            trofeus = { cacador: 2 };
+            out.custo2 = T.custo("cacador");
+
+            // bônus por nível (funções-fonte dos 5 efeitos)
+            trofeus = { cacador: 3, mercador: 2, sabio: 4, colecionador: 5, sorte: 6 };
+            out.bDano = T.bonusDano();
+            out.bGold = T.bonusGold();
+            out.bXP = T.bonusXP();
+            out.bCM = T.bonusCM();
+            out.bCrit = T.bonusCrit();
+
+            // o MultiplicadorCM inclui o troféu Colecionador
+            const marcosAntes = marcosNivel50, esmAntes = lvlEsmCM;
+            marcosNivel50 = 0; lvlEsmCM = 0;
+            trofeus = {};
+            const cmBase = MultiplicadorCM();
+            trofeus = { colecionador: 5 };
+            const cmComTrofeu = MultiplicadorCM();
+            marcosNivel50 = marcosAntes; lvlEsmCM = esmAntes;
+            out.cmBase = cmBase;
+            out.cmComTrofeu = cmComTrofeu;
+
+            // cada sistema consulta a função do troféu (espionando o global)
+            const espia = nome => {
+                let n = 0;
+                const orig = window[nome];
+                window[nome] = function (...a) { n++; return orig.apply(this, a); };
+                return { conta: () => n, solta: () => { window[nome] = orig; } };
+            };
+            trofeus = {};
+
+            const sGold = espia("TrofeuBonusGold");
+            AddGold(100, false);
+            out.goldChama = sGold.conta(); sGold.solta();
+
+            const sXp = espia("TrofeuBonusXP");
+            nivelJogador = 0; xpAtual = 0;
+            GanhaXP(0, 1, 100);
+            out.xpChama = sXp.conta(); sXp.solta();
+
+            const sCm = espia("TrofeuBonusCM");
+            MultiplicadorCM();
+            out.cmChama = sCm.conta(); sCm.solta();
+
+            const sCrit = espia("TrofeuBonusCrit");
+            chanceCrit = 0.5;
+            DanoCritico(10);
+            out.critChama = sCrit.conta(); sCrit.solta();
+
+            const sDano = espia("TrofeuBonusDano");
+            jogoPausado = false; fugaEmAndamento = false;
+            nivelJogador = 1; danoJogador = 10; chanceCrit = 0; lvlComp5 = 0;
+            especializacao = 0; ataquesCorrenteEletrica = 0; ataquesBonusGold = 0;
+            segundosPausaFuga = 0; numInimigosTela = 1; missaoAtual = 0;
+            vidaAndar = 1000; vidaInimigo1 = 1000;
+            try { Bater(1, true); } catch (e) { out.baterErro = String(e && e.message || e); }
+            out.danoChama = sDano.conta(); sDano.solta();
+
+            // compra consome Tickets e sobe o nível; sem saldo falha
+            trofeus = {};
+            ticketsMug = 10;
+            out.comprou = T.comprar("cacador");
+            out.nivelApos = T.nivel("cacador");
+            out.ticketsApos = ticketsMug;
+            ticketsMug = 0;
+            out.falhouSemSaldo = T.comprar("cacador");
+            out.ticketsFinal = ticketsMug;
+
+            // reset preserva troféus e tickets (permanentes)
+            trofeus = { cacador: 2 };
+            ticketsMug = 7;
+            Resetar();
+            out.trofeusAposReset = JSON.stringify(trofeus);
+            out.ticketsAposReset = ticketsMug;
+
+            // save: build inclui, validar aceita/rejeita, carregar restaura
+            // (vidaAndar/vidas precisam ser números válidos no save — o teste
+            // mexeu no combate acima)
+            vidaAndar = 1000;
+            vidaInimigo1 = 1000; vidaInimigo2 = 0; vidaInimigo3 = 0; vidaInimigo4 = 0;
+            trofeus = { cacador: 2, sorte: 1 };
+            const save = CriarObjetoSave();
+            out.saveTem = JSON.stringify(save.trofeus);
+            let ok = true, lixo = false, alto = false, desconhecido = false;
+            try { ValidarSave(save); } catch { ok = false; }
+            try { ValidarSave(Object.assign({}, save, { trofeus: { cacador: 1.5 } })); } catch { lixo = true; }
+            try { ValidarSave(Object.assign({}, save, { trofeus: { cacador: T.NIVEL_MAX + 1 } })); } catch { alto = true; }
+            try { ValidarSave(Object.assign({}, save, { trofeus: { fantasma: 1 } })); } catch { desconhecido = true; }
+            out.validou = ok; out.rejeitouLixo = lixo; out.rejeitouAlto = alto; out.rejeitouDesconhecido = desconhecido;
+            trofeus = {};
+            Carregar(JSON.stringify(save));
+            out.carregouTrofeus = JSON.stringify(trofeus);
+
+            // painel: abre, mostra o saldo, compra pelo botão e fecha
+            trofeus = {};
+            ticketsMug = 5;
+            AbrirTrofeus();
+            const modal = document.getElementById("trofeusModal");
+            out.modalAberto = !!modal;
+            out.linhas = modal ? modal.querySelectorAll(".trofeus-linha").length : 0;
+            out.saldo = modal ? (modal.querySelector(".trofeus-saldo__texto")?.textContent || "") : "";
+            const botao = modal ? modal.querySelector(".trofeus-comprar") : null;
+            if (botao) botao.click();
+            out.nivelAposClique = T.nivel("cacador");
+            out.ticketsAposClique = ticketsMug;
+            FecharTrofeus();
+            out.modalFechado = !document.getElementById("trofeusModal");
+
+            // o prédio existe na Cidade (scene)
+            out.predioExiste = !!document.querySelector('[data-cidade="trofeus"]');
+
+            return out;
+        });
+
+        assert.deepEqual(result.ids, ["cacador", "mercador", "sabio", "colecionador", "sorte"],
+            "os 5 troféus da sugestão A existem");
+        assert.equal(result.custo0, 1, "1º nível custa 1 ticket");
+        assert.equal(result.custo1, 2, "2º nível custa 2 tickets");
+        assert.equal(result.custo2, 3, "3º nível custa 3 tickets (×1,5 arredondado)");
+        assert.ok(Math.abs(result.bDano - 1.15) < 1e-12, "Caçador +5%/nível (3) = ×1,15");
+        assert.ok(Math.abs(result.bGold - 1.10) < 1e-12, "Mercador +5%/nível (2) = ×1,10");
+        assert.ok(Math.abs(result.bXP - 1.20) < 1e-12, "Sábio +5%/nível (4) = ×1,20");
+        assert.ok(Math.abs(result.bCM - 1.10) < 1e-12, "Colecionador +2%/nível (5) = ×1,10");
+        assert.ok(Math.abs(result.bCrit - 0.03) < 1e-12, "Sorte +0,5%/nível (6) = +3% (aditivo)");
+        assert.ok(Math.abs(result.cmComTrofeu / result.cmBase - 1.10) < 1e-9,
+            "MultiplicadorCM inclui o Colecionador");
+        assert.ok(result.goldChama > 0, "AddGold consulta o troféu Mercador");
+        assert.ok(result.xpChama > 0, "GanhaXP consulta o troféu Sábio");
+        assert.ok(result.cmChama > 0, "MultiplicadorCM consulta o troféu Colecionador");
+        assert.ok(result.critChama > 0, "DanoCritico consulta o troféu Sorte");
+        assert.ok(result.danoChama > 0, "Bater consulta o troféu Caçador" + (result.baterErro ? " (erro: " + result.baterErro + ")" : ""));
+        assert.equal(result.comprou, true, "compra com saldo");
+        assert.equal(result.nivelApos, 1, "nível sobe");
+        assert.equal(result.ticketsApos, 9, "tickets debitados");
+        assert.equal(result.falhouSemSaldo, false, "sem saldo não compra");
+        assert.equal(result.ticketsFinal, 0, "saldo não fica negativo");
+        assert.equal(result.trofeusAposReset, JSON.stringify({ cacador: 2 }), "reset preserva os troféus");
+        assert.equal(result.ticketsAposReset, 7, "reset preserva os tickets");
+        assert.equal(result.saveTem, JSON.stringify({ cacador: 2, sorte: 1 }), "CriarObjetoSave inclui trofeus");
+        assert.ok(result.validou, "ValidarSave aceita troféus válidos");
+        assert.ok(result.rejeitouLixo, "rejeita nível fracionário");
+        assert.ok(result.rejeitouAlto, "rejeita nível acima do teto");
+        assert.ok(result.rejeitouDesconhecido, "rejeita troféu desconhecido");
+        assert.equal(result.carregouTrofeus, JSON.stringify({ cacador: 2, sorte: 1 }), "Carregar restaura os troféus");
+        assert.ok(result.modalAberto, "o painel abre");
+        assert.equal(result.linhas, 5, "lista os 5 troféus");
+        assert.ok(/5 Tickets/.test(result.saldo), "painel mostra o saldo: " + result.saldo);
+        assert.equal(result.nivelAposClique, 1, "clique no botão compra");
+        assert.equal(result.ticketsAposClique, 4, "clique debita o ticket");
+        assert.ok(result.modalFechado, "o painel fecha");
+        assert.ok(result.predioExiste, "o prédio da Loja de Troféus existe na Cidade");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("batalha-fantasma: cartão de batalha monta, valida e importa sem tocar no save", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        const montado = await page.evaluate(() => PvpFantasma.MontaCartaoBatalha());
+        assert.equal(montado.saveFormat, "tapeira-cartao-batalha");
+        assert.equal(montado.saveVersion, 1);
+        for (const campo of ["danoGolpe", "danoCrit", "chanceCrit", "dpsCompanheiro", "taxaAtaque", "seed"]) {
+            assert.ok(Number.isFinite(montado[campo]) && montado[campo] >= 0,
+                campo + " deve ser numérico e >= 0");
+        }
+        assert.ok(montado.danoGolpe > 0, "dano do golpe positivo");
+        assert.ok(montado.chanceCrit <= 1, "chance de crítico não passa de 100%");
+
+        // validação rejeita lixo de qualquer formato (roda na página: lá
+        // existe PvpFantasma)
+        const rejeicoes = await page.evaluate(base => {
+            const lista = [
+                null,
+                {},
+                { ...base, saveFormat: "tapeira-save" },
+                { ...base, danoGolpe: "abc" },
+                { ...base, chanceCrit: 3 },
+                { ...base, taxaAtaque: 0 },
+                { ...base, itensBuildResumo: 123 }
+            ];
+            return lista.map(lixo => {
+                try {
+                    PvpFantasma.ValidarCartaoBatalha(lixo);
+                    return "aceitou";
+                } catch (erro) {
+                    return erro instanceof TypeError ? "rejeitou" : "erro-tipo: " + erro;
+                }
+            });
+        }, montado);
+        rejeicoes.forEach((resultado, i) => {
+            assert.equal(resultado, "rejeitou", "deve rejeitar com TypeError: #" + i);
+        });
+
+        // importar o cartão NÃO toca no save e abre a ficha do duelo
+        const antes = await page.evaluate(() => {
+            gold = 424242;
+            andar = 37;
+            return { gold: Number(gold), andar };
+        });
+        const resultado = await page.evaluate(c => ImportarSaveJson(JSON.stringify(c)), montado);
+        assert.equal(resultado, true, "importação do cartão retorna true");
+        const depois = await page.evaluate(() => {
+            const tela = document.getElementById("pvpDuelo");
+            return {
+                gold: Number(gold),
+                andar,
+                temTela: !!tela,
+                texto: tela ? tela.textContent : "",
+                temExportar: !!tela?.querySelector("[data-pvp-exportar]"),
+                semInline: !tela || ![...tela.querySelectorAll("button")]
+                    .some(b => b.hasAttribute("onclick"))
+            };
+        });
+        assert.equal(depois.gold, antes.gold, "gold intacto após importar o cartão");
+        assert.equal(depois.andar, antes.andar, "andar intacto após importar o cartão");
+        assert.ok(depois.temTela, "tela do duelo abriu");
+        assert.ok(depois.texto.includes(montado.nome), "ficha mostra o nome do jogador");
+        assert.ok(depois.texto.includes("Fantasma"), "ficha mostra o adversário");
+        assert.ok(depois.temExportar, "ficha tem o botão de exportar meu cartão");
+        assert.ok(depois.semInline, "sem onclick inline na tela do duelo");
+
+        // o aviso "cartão recebido" abre por cima — fecha ele e depois o duelo
+        await page.click("#infoModal [data-info-fechar]");
+        await page.click("[data-pvp-fechar]");
+        const fechada = await page.evaluate(() => !document.getElementById("pvpDuelo"));
+        assert.ok(fechada, "botão Fechar fecha a tela do duelo");
+
+        // o ramo do cartão não quebrou a rejeição do fluxo normal de save
+        const saveInvalido = await page.evaluate(
+            () => ImportarSaveJson('{"saveFormat":"tapeira-save","gold":"lixo"}'));
+        assert.equal(saveInvalido, false, "save inválido continua sendo rejeitado");
+
+        assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
+    } finally {
+        await context.close();
+    }
+});
+

@@ -120,6 +120,7 @@ function CriarObjetoSave(incluirOffline = true) {
 		fazendaRainha,
 		pesquisaItens,
 		pesquisaInimigos,
+		trofeus,
 		reputacao,
 		fabricaNivel,
 		cristalNivel,

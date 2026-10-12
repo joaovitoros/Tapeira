@@ -82,6 +82,10 @@ var reputacao = 0;
 var fabricaNivel = 0;
 // Cristal (Cidade): amplia os rendimentos conforme a profundidade do reset. Permanente.
 var cristalNivel = 0;
+// Loja de Troféus (Cidade): nível por troféu, comprado com Tickets de Caçador
+// de Mugs (os pontos de habilidade que sobram). Permanente (não zera no
+// reset). Objeto { trofeuId: nível } — ver trofeus.js.
+var trofeus = {};
 const TEMPO_BAU_DOURADO_JOGO = 20 * 60 * 1000;
 const TEMPO_BAU_DOURADO_OFFLINE = 40 * 60 * 1000;
 var progressoBauDourado = 0;
@@ -183,8 +187,10 @@ function GoldCompanheiroPorSegundo(nivel = lvlComp2) {
 // decimal; FormataMultCM formata os textos que mostram "×N")
 function MultiplicadorCM() {
 	const item = Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
+	// Loja de Troféus (Cidade): +% de CM por nível do troféu Colecionador
+	const trofeuCM = (typeof TrofeuBonusCM === "function") ? TrofeuBonusCM() : 1;
 	return (item + Math.max(0, Math.floor(Number(marcosNivel50) || 0)))
-		* BonusCMResetCurto();
+		* BonusCMResetCurto() * trofeuCM;
 }
 
 // Reset curto: reset feito PERTO do recorde — até 10 andares antes dele
