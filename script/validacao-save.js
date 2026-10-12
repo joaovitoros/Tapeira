@@ -290,11 +290,15 @@ function ValidarSave(save) {
 			|| save.ofertasDiaCompradas > ofertasMax)) {
 		throw new TypeError("As ofertas do dia do save são inválidas.");
 	}
-	// Aparência (Casa): o chapéu equipado precisa ser um id conhecido.
-	const idsChapeus = (typeof APARENCIA_CHAPEUS !== "undefined" ? APARENCIA_CHAPEUS : []).map(c => c.id);
-	if (save.chapeuEquipado !== undefined
-		&& (typeof save.chapeuEquipado !== "string" || !idsChapeus.includes(save.chapeuEquipado))) {
-		throw new TypeError("O chapéu do save é inválido.");
+	// Aparência (Casa): cada slot equipado precisa ser um id conhecido.
+	const slotsAparencia = (typeof APARENCIA_SLOTS !== "undefined") ? APARENCIA_SLOTS : [];
+	for (const slot of slotsAparencia) {
+		const v = save[slot.campo];
+		if (v === undefined) continue;
+		const ids = slot.itens.map(i => i.id).concat("nenhum");
+		if (typeof v !== "string" || !ids.includes(v)) {
+			throw new TypeError("O item de aparência do save é inválido.");
+		}
 	}
 	// Mercado (Cidade): reputação (desconto nas lojas) dentro do teto
 	const reputacaoMax = (typeof REPUTACAO_MAX === "number") ? REPUTACAO_MAX : 10;
@@ -547,7 +551,7 @@ function ValidarSave(save) {
 			"conquistasComp", "melhorGoldRun", "autoItensLoja",
 			"itensBuild", "bauBuildPendente", "opcoesBauBuild",
 			"pvpCartoesUsados", "pvpCartoesExportados", "nomeJogador",
-			"pesquisaItens", "pesquisaInimigos", "trofeus", "chapeuEquipado", "forja"].includes(key)) continue;
+			"pesquisaItens", "pesquisaInimigos", "trofeus", "chapeuEquipado", "cachecolEquipado", "forja"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");
 		}

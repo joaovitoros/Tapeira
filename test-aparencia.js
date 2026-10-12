@@ -1,5 +1,5 @@
-// Teste focado: APARÊNCIA da toupeira (customização) — chapéus.
-// Camada dentro da caixa do player + seção na Casa + save (5 passos).
+// Teste focado: APARÊNCIA da toupeira (customização) — chapéus + cachecóis.
+// Camadas dentro da caixa do player + preview na Casa + save (5 passos).
 // Roda direto da fonte (raiz do projeto): node test-aparencia.js
 const { chromium } = require('playwright');
 const path = require('path');
@@ -25,73 +25,88 @@ const path = require('path');
         document.querySelector(".offline-rewards-overlay")?.remove();
         const res = {};
         const A = window.Tapeira?.Aparencia;
+        const slotChapeu = A.slot("chapeu");
+        const slotCachecol = A.slot("cachecol");
 
         res.temApi = !!A;
-        res.qtd = A.CHAPEUS.length;
-        res.ids = A.CHAPEUS.map(c => c.id).join(",");
+        res.slots = A.SLOTS.map(s => s.id).join(",");
+        res.qtdChapeus = slotChapeu.itens.length;
+        res.qtdCachecois = slotCachecol.itens.length;
 
-        // a base e a camada vivem DENTRO da caixa do player
+        // camadas dentro da caixa do player
         res.baseDentro = !!document.querySelector(".player .player__base");
-        res.chapeuDentro = !!document.querySelector(".player .player__chapeu");
+        const chapeuImg = document.querySelector('.player .player__camada[data-aparencia-slot="chapeu"]');
+        const cachecolImg = document.querySelector('.player .player__camada[data-aparencia-slot="cachecol"]');
+        res.temCamadas = !!chapeuImg && !!cachecolImg;
 
-        // sem chapéu, a camada some; com chapéu, aparece com src e posição em %
-        chapeuEquipado = "nenhum";
+        // sem item: escondidas; com item: aparecem com src/posição
+        chapeuEquipado = "nenhum"; cachecolEquipado = "nenhum";
         A.aplica();
-        const img = document.querySelector(".player__chapeu");
-        res.escondidoSemChapeu = !!img && img.hidden;
-        res.equipouViking = A.equiparChapeu("viking");
-        res.visivelComChapeu = !!img && !img.hidden;
-        res.srcViking = img ? img.getAttribute("src") : "";
-        res.posPct = img ? (img.style.left + "/" + img.style.top + "/" + img.style.width) : "";
-        res.equipouFantasma = A.equiparChapeu("fantasma");
+        res.escondidoSemItem = chapeuImg.hidden && cachecolImg.hidden;
+        res.equipouViking = A.equipar("chapeu", "viking");
+        res.visivelComChapeu = !chapeuImg.hidden;
+        res.srcViking = chapeuImg.getAttribute("src") || "";
+        res.espelhadoViking = chapeuImg.classList.contains("is-espelhado");
+        res.equipouFantasma = A.equipar("chapeu", "fantasma");
+        res.equipouCachecol = A.equipar("cachecol", "roxo");
+        res.visivelCachecol = !cachecolImg.hidden;
+        res.srcCachecol = cachecolImg.getAttribute("src") || "";
+        res.posCachecol = cachecolImg.style.left + "/" + cachecolImg.style.top + "/" + cachecolImg.style.width;
 
-        // save: o campo vai, é aceito e volta; lixo é rejeitado
-        chapeuEquipado = "viking";
+        // save: os dois campos vão, são aceitos e voltam; lixo é rejeitado
         const save = CriarObjetoSave();
-        res.saveTem = save.chapeuEquipado;
+        res.saveChapeu = save.chapeuEquipado;
+        res.saveCachecol = save.cachecolEquipado;
         let ok = true, lixo = false, desconhecido = false;
         try { ValidarSave(save); } catch { ok = false; }
-        try { ValidarSave(Object.assign({}, save, { chapeuEquipado: 7 })); } catch { lixo = true; }
-        try { ValidarSave(Object.assign({}, save, { chapeuEquipado: "fantasma" })); } catch { desconhecido = true; }
+        try { ValidarSave(Object.assign({}, save, { cachecolEquipado: 7 })); } catch { lixo = true; }
+        try { ValidarSave(Object.assign({}, save, { cachecolEquipado: "fantasma" })); } catch { desconhecido = true; }
         res.validou = ok; res.rejeitouLixo = lixo; res.rejeitouDesconhecido = desconhecido;
-        chapeuEquipado = "nenhum";
+        chapeuEquipado = "nenhum"; cachecolEquipado = "nenhum";
         Carregar(JSON.stringify(save));
-        res.carregou = chapeuEquipado;
+        res.carregouChapeu = chapeuEquipado;
+        res.carregouCachecol = cachecolEquipado;
 
-        // seção na Casa
+        // seção na Casa + preview
         const secao = A.secaoCasa();
         res.secaoOk = secao.classList.contains("casa-secao");
-        res.botoes = secao.querySelectorAll(".aparencia-chapeu").length;
-        res.temPreview = !!secao.querySelector(".aparencia-preview .player__base");
-        const pv = secao.querySelector(".aparencia-preview .player__chapeu");
-        res.previewChapeu = !!(pv && !pv.hidden && /chapeu-05\.png$/.test(pv.getAttribute("src") || ""));
+        res.blocos = secao.querySelectorAll(".aparencia-bloco").length;
+        res.itensLista = secao.querySelectorAll(".aparencia-lista .aparencia-item").length;
+        const pvC = secao.querySelector('.aparencia-preview .player__camada[data-aparencia-slot="chapeu"]');
+        const pvS = secao.querySelector('.aparencia-preview .player__camada[data-aparencia-slot="cachecol"]');
+        res.previewChapeu = !!(pvC && !pvC.hidden && /chapeus\/chapeu-05\.png$/.test(pvC.getAttribute("src") || ""));
+        res.previewCachecol = !!(pvS && !pvS.hidden && /cachecois\/cachecol-01\.png$/.test(pvS.getAttribute("src") || ""));
 
-        // Resetar NÃO mexe no chapéu (permanente)
-        chapeuEquipado = "mago";
+        // Resetar NÃO mexe na aparência (permanente)
+        chapeuEquipado = "mago"; cachecolEquipado = "azul";
         Resetar();
-        res.aposReset = chapeuEquipado;
+        res.aposResetChapeu = chapeuEquipado;
+        res.aposResetCachecol = cachecolEquipado;
         return res;
     });
 
     check("API Tapeira.Aparencia existe", r.temApi === true);
-    check("9 opções (nenhum + 8 chapéus)", r.qtd === 9, r.qtd);
-    check("ids dos chapéus", r.ids === "nenhum,amarelo,escuro,vermelho,verde,viking,mago,palha,pirata", r.ids);
-    check("base e camada dentro da caixa do player", r.baseDentro === true && r.chapeuDentro === true);
-    check("sem chapéu, a camada fica escondida", r.escondidoSemChapeu === true);
+    check("slots: chapeu, cachecol", r.slots === "chapeu,cachecol", r.slots);
+    check("8 chapéus + 6 cachecóis", r.qtdChapeus === 8 && r.qtdCachecois === 6, r.qtdChapeus + "/" + r.qtdCachecois);
+    check("base e camadas dentro da caixa do player", r.baseDentro === true && r.temCamadas === true);
+    check("sem item, as camadas ficam escondidas", r.escondidoSemItem === true);
     check("equipar chapéu funciona", r.equipouViking === true && r.visivelComChapeu === true);
-    check("camada aponta pro arquivo do chapéu", /chapeus\/chapeu-05\.png$/.test(r.srcViking), r.srcViking);
-    check("camada posicionada em % da caixa", /%\/[0-9.]+%\/[0-9.]+%$/.test(r.posPct), r.posPct);
-    check("chapéu desconhecido é recusado", r.equipouFantasma === false);
-    check("save grava chapeuEquipado", r.saveTem === "viking", r.saveTem);
-    check("validação aceita chapéu válido", r.validou === true);
-    check("validação rejeita chapéu não-texto", r.rejeitouLixo === true);
-    check("validação rejeita chapéu desconhecido", r.rejeitouDesconhecido === true);
-    check("load restaura o chapéu", r.carregou === "viking", r.carregou);
+    check("chapéu aponta pro arquivo certo", /chapeus\/chapeu-05\.png$/.test(r.srcViking), r.srcViking);
+    check("viking vem espelhado", r.espelhadoViking === true);
+    check("item desconhecido é recusado", r.equipouFantasma === false);
+    check("equipar cachecol funciona", r.equipouCachecol === true && r.visivelCachecol === true);
+    check("cachecol aponta pro arquivo certo", /cachecois\/cachecol-01\.png$/.test(r.srcCachecol), r.srcCachecol);
+    check("cachecol posicionado em % da caixa", /%\/[0-9.]+%\/[0-9.]+%$/.test(r.posCachecol), r.posCachecol);
+    check("save grava os dois slots", r.saveChapeu === "viking" && r.saveCachecol === "roxo", r.saveChapeu + "/" + r.saveCachecol);
+    check("validação aceita itens válidos", r.validou === true);
+    check("validação rejeita cachecol não-texto", r.rejeitouLixo === true);
+    check("validação rejeita cachecol desconhecido", r.rejeitouDesconhecido === true);
+    check("load restaura os dois slots", r.carregouChapeu === "viking" && r.carregouCachecol === "roxo", r.carregouChapeu + "/" + r.carregouCachecol);
     check("seção Aparência é uma casa-secao", r.secaoOk === true);
-    check("seção lista as 9 opções", r.botoes === 9, r.botoes);
-    check("seção tem preview da toupeira", r.temPreview === true);
-    check("preview mostra o chapéu equipado", r.previewChapeu === true);
-    check("Resetar NÃO zera o chapéu", r.aposReset === "mago", r.aposReset);
+    check("seção tem um bloco por slot", r.blocos === 2, r.blocos);
+    check("seção lista 9 chapéus + 7 cachecóis (com 'nenhum')", r.itensLista === 16, r.itensLista);
+    check("preview mostra chapéu e cachecol", r.previewChapeu === true && r.previewCachecol === true);
+    check("Resetar NÃO zera a aparência", r.aposResetChapeu === "mago" && r.aposResetCachecol === "azul");
 
     await browser.close();
     let falhas = 0;

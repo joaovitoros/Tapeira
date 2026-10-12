@@ -262,11 +262,13 @@ function Carregar(saveData, calculaOffline = false) {
 	// { trofeuId: nível }; valores inválidos caem no default.
 	trofeus = (save.trofeus && typeof save.trofeus === "object" && !Array.isArray(save.trofeus))
 		? Object.assign({}, save.trofeus) : {};
-	// Aparência (Casa): chapéu equipado — permanente. Ausente/desconhecido = "nenhum".
-	chapeuEquipado = (typeof save.chapeuEquipado === "string"
-		&& APARENCIA_CHAPEUS.some(c => c.id === save.chapeuEquipado))
-		? save.chapeuEquipado : "nenhum";
-	// Aplica o chapéu FORA do caminho do load (imagem/DOM no próximo tick),
+	// Aparência (Casa): itens equipados — permanentes. Ausente/desconhecido =
+	// "nenhum". Vale pra todos os slots (chapéu, cachecol, ...).
+	for (const slot of APARENCIA_SLOTS) {
+		const v = save[slot.campo];
+		window[slot.campo] = (typeof v === "string" && slot.itens.some(i => i.id === v)) ? v : "nenhum";
+	}
+	// Aplica a aparência FORA do caminho do load (imagem/DOM no próximo tick),
 	// pra não interferir no timing de quem importa save (PvP etc.).
 	if (typeof AplicaChapeuJogador === "function") setTimeout(AplicaChapeuJogador, 0);
 	// Mercado (Cidade): ofertas do dia — stamp do dia + bitmask de compradas.

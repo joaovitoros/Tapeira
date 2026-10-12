@@ -2695,6 +2695,7 @@ caption {
 	aspect-ratio: 1166 / 1536;
 	height: 100%;
 	max-width: 100%;
+	isolation: isolate;
 }
 
 .player__base {
@@ -2704,7 +2705,7 @@ caption {
 	pointer-events: none;
 }
 
-.player__chapeu {
+.player__camada {
 	position: absolute;
 	left: 0;
 	top: 0;
@@ -2713,15 +2714,21 @@ caption {
 	filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.35));
 }
 
-.player__chapeu[hidden] {
+.player__camada[hidden] {
 	display: none;
 }
 
-.player__chapeu.is-espelhado {
+.player__camada.is-espelhado {
 	transform: translate(-50%, -100%) scaleX(-1);
 }
 
-/* Seção "Aparência" (Casa): preview ao vivo + grade de chapéus */
+/* Alguns chapéus mostram o "interior" (são vistos de baixo). Desenhar atrás da
+   cabeça faz ela tapar esse interior — parece que está vestindo. */
+.player__camada.is-atras {
+	z-index: -1;
+}
+
+/* Seção "Aparência" (Casa): preview ao vivo + listas por slot */
 .aparencia-preview {
 	width: 150px;
 	height: 190px;
@@ -2735,13 +2742,26 @@ caption {
 	margin-bottom: 10px;
 }
 
-.aparencia-chapeus {
+.aparencia-bloco {
+	margin-top: 12px;
+}
+
+.aparencia-bloco__titulo {
+	margin: 0 0 6px;
+	font-size: 12px;
+	font-weight: 600;
+	color: #a9bdd8;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.aparencia-lista {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
 }
 
-.aparencia-chapeu {
+.aparencia-item {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -2756,22 +2776,26 @@ caption {
 	cursor: pointer;
 }
 
-.aparencia-chapeu:hover {
+.aparencia-item:hover {
 	filter: brightness(1.12);
 }
 
-.aparencia-chapeu.is-ativo {
+.aparencia-item.is-ativo {
 	border-color: #7ee0a0;
 	box-shadow: inset 0 0 0 1px rgba(126, 224, 160, 0.55);
 }
 
-.aparencia-chapeu__img {
+.aparencia-item__img {
 	width: 58px;
 	height: 44px;
 	object-fit: contain;
 }
 
-.aparencia-chapeu__vazio {
+.aparencia-item__img.is-espelhado {
+	transform: scaleX(-1);
+}
+
+.aparencia-item__vazio {
 	display: grid;
 	place-items: center;
 	width: 58px;
@@ -2780,7 +2804,7 @@ caption {
 	color: #8291a8;
 }
 
-.aparencia-chapeu__nome {
+.aparencia-item__nome {
 	font-size: 11px;
 	line-height: 1.2;
 	text-align: center;

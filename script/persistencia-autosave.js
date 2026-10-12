@@ -128,6 +128,7 @@ function CriarObjetoSave(incluirOffline = true) {
 		pesquisaInimigos,
 		trofeus,
 		chapeuEquipado,
+		cachecolEquipado,
 		ofertasDia,
 		ofertasDiaCompradas,
 		reputacao,
