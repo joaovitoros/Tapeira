@@ -143,7 +143,9 @@ const servidor = http.createServer((req, res) => {
         return;
     }
     if (caminho.startsWith("/api/")) { encaminha(req, res, PORTA_CARTOES, req.url); return; }
-    if (caminho === "/jogo" || caminho.startsWith("/jogo/")) { serveJogo(req, res, caminho); return; }
+    // /jogo sem a barra no fim quebra os caminhos relativos -> redireciona
+    if (caminho === "/jogo") { res.writeHead(301, { Location: "/jogo/" }); res.end(); return; }
+    if (caminho.startsWith("/jogo/")) { serveJogo(req, res, caminho); return; }
     encaminha(req, res, PORTA_SITE, req.url);   // site (e /download/*)
 });
 
