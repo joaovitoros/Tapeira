@@ -1455,6 +1455,18 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
 	padding: 0.6em 0.7em;
 }
 
+.pvpCartaoSprite{
+	width: 112px;
+	height: 142px;
+	margin: 0.5em auto 0.6em;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 10px;
+	background: radial-gradient(circle at 50% 35%, #2b3a4f, #121822 70%);
+	overflow: hidden;
+}
+
 .pvpCartao--lider{
 	border-color: rgba(255, 216, 74, 0.45);
 	box-shadow: 0 0 0.9em rgba(255, 216, 74, 0.15);

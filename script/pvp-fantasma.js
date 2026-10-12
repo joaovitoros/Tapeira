@@ -167,6 +167,9 @@ var PvpFantasma = {
 			especializacao: especializacao > 0 ? ESPECIALIZACOES[especializacao].nome : null,
 			itensBuildResumo: Tapeira.ItensBuild.resumo(Tapeira.ItensBuild.FORJA_MINIMO_PVP),
 			taxaAtaque: this.TAXA_ATAQUE_JOGADOR,
+			// aparência (customização) — só cosmético no duelo; fica FORA da
+			// assinatura pra cartão antigo continuar válido
+			aparencia: (typeof AparenciaAtualMapa === "function") ? AparenciaAtualMapa() : null,
 			seed: Math.floor(Math.random() * 2147483647)
 		};
 		// id de integridade: deriva do segredo + o conteúdo do cartão —
@@ -394,8 +397,18 @@ var PvpFantasma = {
 		return `
 		<div class="pvpCartao${lider ? " pvpCartao--lider" : ""}">
 			<div class="pvpCartaoCab">${this._esc(rotulo)}${lider ? " · vantagem" : ""}</div>
+			${this._htmlSprite(cartao)}
 			${corpo}
 		</div>`;
+	},
+
+	// bonequinho do duelista com as customizações dele (defensivo: cartão antigo
+	// pode não ter o campo `aparencia`)
+	_htmlSprite(cartao) {
+		const html = (typeof AparenciaHtmlArte === "function")
+			? AparenciaHtmlArte(cartao && cartao.aparencia)
+			: "";
+		return `<div class="pvpCartaoSprite">${html}</div>`;
 	},
 
 	// nome do cartão — defensivo: cartão antigo pode vir sem o campo

@@ -135,6 +135,31 @@ function AparenciaItem(slot, id) {
 // Compat: id do chapéu equipado (usado no load/validação).
 function AparenciaChapeuIdAtual() { return AparenciaEquipadoId(AparenciaSlot("chapeu")); }
 
+// Mapa { slotId: itemId } da aparência equipada AGORA.
+function AparenciaAtualMapa() {
+    const mapa = {};
+    for (const slot of APARENCIA_SLOTS) mapa[slot.id] = AparenciaEquipadoId(slot);
+    return mapa;
+}
+
+// HTML de um sprite (base + camadas) a partir de um mapa { slotId: itemId } —
+// pra usar em innerHTML (ex.: a ficha do duelo PvP mostrar o fantasma com as
+// customizações dele). Ids desconhecidos são ignorados.
+function AparenciaHtmlArte(mapa) {
+    const m = (mapa && typeof mapa === "object") ? mapa : {};
+    let camadas = "";
+    for (const slot of APARENCIA_SLOTS) {
+        const item = AparenciaItem(slot, m[slot.id]);
+        if (!item) continue;
+        const a = Object.assign({}, slot.ancora, item.ancora || {});
+        const tf = "translate(-50%,-100%)"
+            + (item.flip ? " scaleX(-1)" : "")
+            + (item.rot ? " rotate(" + item.rot + "deg)" : "");
+        camadas += `<img class="player__camada${item.tras ? " is-atras" : ""}" src="${slot.dir}${item.arquivo}" alt="" style="left:${a.x}%;top:${a.y}%;width:${a.largura}%;transform:${tf}">`;
+    }
+    return `<div class="player__arte"><img class="player__base" src="imagens/personagens/player.png" alt="">${camadas}</div>`;
+}
+
 // Aplica as camadas equipadas em todos os sprites de aparência dentro de `raiz`.
 function AparenciaAplicaEm(raiz) {
     for (const slot of APARENCIA_SLOTS) {
