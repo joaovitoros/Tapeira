@@ -1519,6 +1519,10 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
 .pvpAlvoTopo span{
 	font-weight: 800;
 	color: #9ccfff;
+	/* o rótulo agora carrega o nome do jogador (Você · Nome): precisa poder
+	   quebrar linha em tela estreita sem espremer o cronômetro do lado */
+	min-width: 0;
+	overflow-wrap: anywhere;
 }
 
 .pvpAlvo--fantasma .pvpAlvoTopo span{
@@ -1528,6 +1532,7 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
 .pvpAlvoTopo b{
 	color: #e6edf3;
 	font-variant-numeric: tabular-nums;
+	flex: none;
 }
 
 .pvpBarra{
@@ -3471,8 +3476,9 @@ html.crit-shake {
 	.frenesi-explosao__nucleo,
 	.frenesi-explosao__onda,
 	.frenesi-flash-tela,
-	.ataque-risco__corpo,
+	.ataque-corte__lua,
 	.ataque-splash,
+	.ataque-faisca,
 	.player--atacando,
 	.contador--pulso,
 	.xp-fill--pulso,
@@ -5903,51 +5909,62 @@ input:focus-visible {
 	opacity: 0;
 }
 
-/* ============ Ataque (novo): risco + splash + investida do player ==========
+/* ============ Ataque (novo): corte de vento + investida do player ==========
    Substitui a animação de sprite do ataque (por hora desativada: o player não
-   some mais). O risco sai do player até o inimigo acertado e um splash estoura
-   no impacto. Mesma duração do JS (DURACAO_ATAQUE_MS = 260). */
+   some mais). Uma MEIA LUA (lado curvo na frente) voa do player até o inimigo e
+   um sopro (com faíscas) marca o impacto. O player dá uma investida "plástica"
+   de 180 ms (squash/stretch). */
 .player--atacando {
-	animation: playerInvestida 260ms ease-out;
+	animation: playerInvestida 180ms cubic-bezier(0.22, 0.68, 0.2, 1);
 }
 
+/* Investida "plástica": antecipa (encolhe), estica na direção do golpe e volta
+   com um leve contrapeso. O deslocamento vem do --investida-x (JS). */
 @keyframes playerInvestida {
 	0%   { transform: translateX(0) scale(1, 1); }
-	32%  { transform: translateX(var(--investida-x, 0)) scale(1.09, 0.91); }
+	16%  { transform: translateX(calc(var(--investida-x, 0px) * 0.25)) scale(0.9, 1.1); }
+	46%  { transform: translateX(var(--investida-x, 0px)) scale(1.18, 0.84); }
+	72%  { transform: translateX(calc(var(--investida-x, 0px) * -0.18)) scale(0.97, 1.03); }
 	100% { transform: translateX(0) scale(1, 1); }
 }
 
-.ataque-risco {
+/* A meia lua tem tamanho fixo; a DISTÂNCIA do voo vem do --corte-varre (JS).
+   O container é rotacionado na direção do inimigo. */
+.ataque-corte {
 	position: fixed;
 	z-index: 9;
-	height: clamp(8px, 1vw, 16px);
-	transform-origin: 0 50%;
+	width: clamp(54px, 6.6vw, 108px);
+	aspect-ratio: 1;
 	pointer-events: none;
 }
 
-.ataque-risco__corpo {
+/* Meia lua "cheia" (redonda): um disco com a mordida da ESQUERDA — o lado
+   curvo (convexo) fica à direita, que é a direção do inimigo. */
+.ataque-corte__lua {
 	display: block;
 	width: 100%;
 	height: 100%;
-	border-radius: 999px;
-	background: linear-gradient(90deg,
-		rgba(255, 236, 190, 0) 0%,
-		rgba(255, 226, 140, 0.35) 20%,
-		rgba(255, 244, 214, 0.95) 78%,
-		rgba(255, 255, 255, 0.98) 100%);
-	filter: blur(0.6px) drop-shadow(0 0 8px rgba(255, 200, 90, 0.85));
-	transform: scaleX(0);
-	transform-origin: 0 50%;
-	animation: ataqueRisco 260ms cubic-bezier(0.2, 0.7, 0.25, 1) forwards;
+	border-radius: 50%;
+	background: radial-gradient(circle at 38% 50%,
+		rgba(255, 255, 255, 0.98) 0%,
+		rgba(232, 248, 255, 0.9) 42%,
+		rgba(170, 214, 255, 0.5) 66%,
+		transparent 80%);
+	-webkit-mask-image: radial-gradient(circle at 18% 50%, transparent 0 50%, #000 53%);
+	mask-image: radial-gradient(circle at 18% 50%, transparent 0 50%, #000 53%);
+	filter: blur(0.4px) drop-shadow(0 0 11px rgba(185, 228, 255, 0.92));
+	animation: ataqueLua 300ms cubic-bezier(0.2, 0.75, 0.25, 1) forwards;
 }
 
-@keyframes ataqueRisco {
-	0%   { transform: scaleX(0); opacity: 0; }
-	22%  { opacity: 1; }
-	55%  { transform: scaleX(1); opacity: 1; }
-	100% { transform: scaleX(1); opacity: 0; }
+@keyframes ataqueLua {
+	0%   { opacity: 0; transform: translateX(0) scale(0.55); }
+	16%  { opacity: 1; }
+	68%  { opacity: 1; transform: translateX(var(--corte-varre, 60px)) scale(1.02); }
+	100% { opacity: 0; transform: translateX(var(--corte-varre, 60px)) scale(1.16); }
 }
 
+/* Sopro no impacto: anel fino e suave + dois jatos curtos (a direção do golpe
+   vem do --sopro-ang, setado pelo JS). */
 .ataque-splash {
 	position: fixed;
 	z-index: 9;
@@ -5956,17 +5973,58 @@ input:focus-visible {
 	transform: translate(-50%, -50%);
 	pointer-events: none;
 	background: radial-gradient(circle,
-		rgba(255, 255, 245, 0.95) 0%,
-		rgba(255, 206, 110, 0.75) 34%,
-		rgba(255, 120, 50, 0.35) 58%,
-		transparent 72%);
-	animation: ataqueSplash 260ms ease-out forwards;
+		rgba(255, 255, 255, 0) 0%,
+		rgba(224, 244, 255, 0.5) 44%,
+		rgba(160, 205, 255, 0.26) 60%,
+		transparent 74%);
+	filter: blur(1.4px);
+	animation: ataqueSopro 220ms ease-out forwards;
 }
 
-@keyframes ataqueSplash {
-	0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.25); }
-	45%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-	100% { opacity: 0; transform: translate(-50%, -50%) scale(1.35); }
+.ataque-splash::before,
+.ataque-splash::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 130%;
+	height: 9%;
+	border-radius: 999px;
+	background: linear-gradient(90deg, transparent, rgba(230, 247, 255, 0.9), transparent);
+}
+
+.ataque-splash::before {
+	transform: translate(-50%, -50%) rotate(var(--sopro-ang, 0deg));
+}
+
+.ataque-splash::after {
+	transform: translate(-50%, -50%) rotate(calc(var(--sopro-ang, 0deg) + 74deg));
+	opacity: 0.65;
+}
+
+@keyframes ataqueSopro {
+	0%   { opacity: 0.9; transform: translate(-50%, -50%) scale(0.3); }
+	50%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+	100% { opacity: 0; transform: translate(-50%, -50%) scale(1.4); }
+}
+
+/* Faíscas do impacto: pontinhos que saem em leque (o JS sorteia a direção). */
+.ataque-faisca {
+	position: fixed;
+	z-index: 10;
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: #ffffff;
+	box-shadow: 0 0 8px rgba(190, 232, 255, 0.95);
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+	animation: ataqueFaisca 340ms ease-out forwards;
+}
+
+@keyframes ataqueFaisca {
+	0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+	100% { opacity: 0; transform: translate(calc(-50% + var(--faisca-x, 0px)), calc(-50% + var(--faisca-y, 0px))) scale(0.4); }
 }
 
 .game-sprite-animation {
@@ -7433,6 +7491,34 @@ button.skill-ramo-no:focus-visible {
 	color: #e9eef5;
 	text-shadow: 0 1px 2px #000, 0 0 3px rgba(0, 0, 0, 0.9);
 	pointer-events: none; /* overlay: não rouba o clique da arena */
+}
+
+/* Aviso rápido (toast): mensagem visível que some sozinha na animação.
+   Fica acima dos painéis da cidade/pausa (z-index 60-61). */
+.aviso-rapido {
+	position: fixed;
+	top: 13vh;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 9000;
+	max-width: min(440px, 88vw);
+	padding: 0.65em 1.15em;
+	background: linear-gradient(180deg, rgba(14, 18, 28, 0.97), rgba(10, 13, 20, 0.94));
+	border: 1px solid rgba(126, 240, 184, 0.55);
+	border-radius: 0.5em;
+	color: #e9eef5;
+	font: 700 14px/1.4 "Segoe UI", sans-serif;
+	text-align: center;
+	box-shadow: 0 10px 34px rgba(0, 0, 0, 0.6);
+	pointer-events: none;
+	animation: aviso-rapido-anim 3.6s ease forwards;
+}
+
+@keyframes aviso-rapido-anim {
+	0% { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+	8% { opacity: 1; transform: translateX(-50%) translateY(0); }
+	86% { opacity: 1; transform: translateX(-50%) translateY(0); }
+	100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
 }
 
 .log-avisos[hidden] {
@@ -10718,9 +10804,10 @@ img.ramos-tree-no__tile {
 .cidade-predio--fabrica  { left: 15%; top: 70%; --largura: 27%; --altura: 32%; }
 .cidade-predio--fazenda  { left: 62%; top: 73%; --largura: 40%; --altura: 30%; }
 .cidade-predio--cristal  { left: 41%; top: 53%; --largura: 19%; --altura: 21%; }
-/* Loja de Troféus: a casa grande "GUILD" (topo-direita). Altura menor que a
-   casa pra o banner não sair da cena (overflow hidden). */
-.cidade-predio--trofeus  { left: 72%; top: 26%; --largura: 33%; --altura: 30%; z-index: 4; }
+/* Guilda: a casa grande "GUILD" do topo-direita — a arte já tem a placa e a
+   bandeira com espadas cruzadas. Altura menor que a casa pra o banner não
+   sair da cena (overflow hidden). */
+.cidade-predio--guilda   { left: 72%; top: 26%; --largura: 33%; --altura: 30%; z-index: 4; }
 
 /* realce do hover: brilho suave (sem moldura quadrada) */
 .cidade-predio:hover {
@@ -11467,6 +11554,80 @@ img.ramos-tree-no__tile {
 	}
 }
 
+/* ===================== GUILDA (hub do multiplayer) ======================
+   Reusa .ant-collection-overlay/.ant-collection-panel, no visual do painel
+   de Troféus (mas no verde-jade do PvP). */
+.guilda-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.guilda-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid rgba(126, 240, 184, 0.35);
+}
+
+.guilda-header h2 {
+	flex: 1 1 auto;
+	margin: 0;
+	color: #b6f5d4;
+	font-size: clamp(20px, 2.2vw, 28px);
+	font-weight: 800;
+	letter-spacing: 0.03em;
+}
+
+.guilda-fechar {
+	flex: 0 0 auto;
+	width: 36px;
+	height: 36px;
+	border: 1px solid rgba(126, 240, 184, 0.55);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #3c4658, #252c39);
+	color: #b6f5d4;
+	font-size: 20px;
+	font-weight: 800;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.guilda-fechar:hover {
+	filter: brightness(1.15);
+}
+
+.guilda-corpo {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.guilda-acoes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.guilda-acao {
+	flex: 1 1 180px;
+}
+
+.guilda-nota {
+	margin: 0;
+	font-size: 12px;
+	opacity: 0.8;
+	text-align: center;
+}
+
+.guilda-resumo__id {
+	margin-top: 6px;
+	font-size: 12px;
+	opacity: 0.8;
+	text-align: center;
+}
+
 /* ===================== LOJA DE TROFÉUS (painel da Cidade) ================
    Reusa .ant-collection-overlay/.ant-collection-panel. */
 .trofeus-panel {
@@ -12177,4 +12338,48 @@ img.ramos-tree-no__tile {
 
 .info-tela__balao[hidden] {
 	display: none;
+}
+
+/* ---- Casa: campo do nome do jogador (identidade nos duelos PvP) ---- */
+.casa-nome__linha {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+.casa-nome__rotulo {
+	color: #b9c8da;
+	font-size: clamp(12px, 1.05vw, 14px);
+	font-weight: 700;
+}
+
+.casa-nome__input {
+	flex: 1 1 160px;
+	min-width: 0;
+	box-sizing: border-box;
+	padding: 0.5em 0.7em;
+	border: 1px solid rgba(229, 183, 96, 0.55);
+	border-radius: 10px;
+	background: #101722;
+	color: #ffe2a0;
+	font: inherit;
+	font-weight: 800;
+	letter-spacing: 0.02em;
+}
+
+.casa-nome__input::placeholder {
+	color: #6d7a8d;
+	font-weight: 600;
+}
+
+.casa-nome__input:focus {
+	outline: 2px solid rgba(255, 224, 138, 0.75);
+	outline-offset: 1px;
+}
+
+.casa-nome__status {
+	margin: 0;
+	color: #9ccfff;
+	font-size: clamp(12px, 1.05vw, 14px);
 }

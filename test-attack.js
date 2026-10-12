@@ -45,16 +45,18 @@ const path = require('path');
       };
       const player = document.querySelector('.player');
       return {
-        risco: caixa(document.querySelector('.ataque-risco')),
+        corte: caixa(document.querySelector('.ataque-corte')),
+        lua: caixa(document.querySelector('.ataque-corte__lua')),
         splash: caixa(document.querySelector('.ataque-splash')),
         investida: !!player && player.classList.contains('player--atacando'),
         playerVisivel: !!player && getComputedStyle(player).opacity !== '0'
       };
     });
-    const ok = !!r.risco && !!r.splash && r.investida && r.playerVisivel;
+    const ok = !!r.corte && !!r.splash && r.investida && r.playerVisivel;
     console.log(
       viewport.width + 'x' + viewport.height + ': ' + (ok ? 'OK' : 'FALHOU') +
-      '  risco=' + JSON.stringify(r.risco) +
+      '  corte=' + JSON.stringify(r.corte) +
+      ' tick=' + JSON.stringify(r.tick) +
       ' splash=' + JSON.stringify(r.splash) +
       ' investida=' + r.investida +
       ' player visível=' + r.playerVisivel

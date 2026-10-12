@@ -498,6 +498,22 @@ const UI = {
     // MENSAGENS
     // =========================
 
+    // Aviso rápido na tela (toast): aparece no topo, some sozinho no fim
+    // da animação (sem timer novo) e também registra no histórico (Logs).
+    // Serve onde uma linha só no histórico passaria despercebida (ex.:
+    // import de cartão de batalha já usado com o menu de pausa aberto).
+    mostraAvisoRapido(texto) {
+        const limpo = typeof texto === "string" ? texto.trim() : "";
+        if (!limpo) return;
+        window.Tapeira?.Logs?.adiciona?.(limpo);
+        document.querySelectorAll(".aviso-rapido").forEach(el => el.remove());
+        const div = document.createElement("div");
+        div.className = "aviso-rapido";
+        div.setAttribute("role", "status");
+        div.textContent = limpo;
+        div.addEventListener("animationend", () => div.remove(), { once: true });
+        document.body.appendChild(div);
+    },
     showInfo(mensagem) {
         // a caixa "Infos" saiu da tela: a mensagem vira um registro no
         // histórico, que abre pelo botão "Logs" no menu de configurações
@@ -615,9 +631,6 @@ const UI = {
                 <td colspan="2" class="statusDetalhes">
                     <button type="button" class="btn-Padrao btn-status-dano" data-status-dano>
                         Decomposição do dano
-                    </button>
-                    <button type="button" class="btn-Padrao btn-status-pvp" data-pvp-exportar>
-                        Cartão de batalha
                     </button>
                 </td>
             </tr>
@@ -831,7 +844,7 @@ function acompanhaTamanhoPersonagem(animation, player, scale, verticalAnchor) {
 // desativada), um RISCO (faixa) parte do player até o inimigo acertado com um
 // splash no impacto, e o player dá uma leve "investida" (squash) sugerindo o
 // movimento. Mesma API do antigo (batalha.js e dev-tools seguem iguais).
-const DURACAO_ATAQUE_MS = 260;
+const DURACAO_ATAQUE_MS = 220;
 UI.playAttackAnimation = function (inimigoElement) {
     const player = document.querySelector(".player");
     if (!player || animacaoAtaqueAtiva) return;
@@ -856,44 +869,62 @@ UI.playAttackAnimation = function (inimigoElement) {
     const paraDireita = dx >= 0;
 
     // 1) investida do player (distorção leve na direção do golpe)
-    const avanco = Math.min(9, dist * 0.05).toFixed(1);
+    const avanco = Math.min(16, dist * 0.08).toFixed(1);
     player.style.setProperty("--investida-x", (paraDireita ? 1 : -1) * avanco + "px");
     player.classList.remove("player--atacando");
     void player.offsetWidth;
     player.classList.add("player--atacando");
 
-    // 2) risco (faixa) do player até o inimigo
-    const risco = document.createElement("div");
-    risco.className = "ataque-risco";
-    risco.setAttribute("aria-hidden", "true");
-    risco.style.left = pcx + "px";
-    risco.style.top = pcy + "px";
-    risco.style.width = dist + "px";
-    risco.style.transform = `translate(0, -50%) rotate(${ang}deg)`;
-    const corpo = document.createElement("span");
-    corpo.className = "ataque-risco__corpo";
-    risco.appendChild(corpo);
-    document.body.appendChild(risco);
+    // 2) corte: uma MEIA LUA (lado curvo na frente) voa do player até o inimigo
+    const corte = document.createElement("div");
+    corte.className = "ataque-corte";
+    corte.setAttribute("aria-hidden", "true");
+    corte.style.left = pcx + "px";
+    corte.style.top = pcy + "px";
+    corte.style.transform = `translate(-50%, -50%) rotate(${ang}deg)`;
+    corte.style.setProperty("--corte-varre", Math.max(30, dist - 24) + "px");
+    const lua = document.createElement("span");
+    lua.className = "ataque-corte__lua";
+    corte.appendChild(lua);
+    document.body.appendChild(corte);
 
-    // 3) splash no impacto (na posição do inimigo)
+    // 3) sopro no impacto (na posição do inimigo), alinhado à direção do golpe
     const splash = document.createElement("div");
     splash.className = "ataque-splash";
     splash.setAttribute("aria-hidden", "true");
     splash.style.left = ex + "px";
     splash.style.top = ey + "px";
+    splash.style.setProperty("--sopro-ang", ang + "deg");
     document.body.appendChild(splash);
+
+    // faíscas: partículas saindo em leque no impacto (estilo "fruit ninja")
+    const faiscas = [];
+    for (let i = 0; i < 6; i++) {
+        const f = document.createElement("span");
+        f.className = "ataque-faisca";
+        f.setAttribute("aria-hidden", "true");
+        const fa = (ang + (Math.random() * 150 - 75)) * Math.PI / 180;
+        const fd = 30 + Math.random() * 48;
+        f.style.left = ex + "px";
+        f.style.top = ey + "px";
+        f.style.setProperty("--faisca-x", (Math.cos(fa) * fd).toFixed(1) + "px");
+        f.style.setProperty("--faisca-y", (Math.sin(fa) * fd).toFixed(1) + "px");
+        document.body.appendChild(f);
+        faiscas.push(f);
+    }
 
     let concluiu = false;
     const fim = () => {
         if (concluiu) return;
         concluiu = true;
-        risco.remove();
+        corte.remove();
         splash.remove();
+        faiscas.forEach(f => f.remove());
         player.classList.remove("player--atacando");
         animacaoAtaqueAtiva = false;
     };
     splash.addEventListener("animationend", fim, { once: true });
-    setTimeout(fim, DURACAO_ATAQUE_MS + 140); // fallback (reduced-motion/aba em 2º plano)
+    setTimeout(fim, DURACAO_ATAQUE_MS + 200); // fallback (reduced-motion/aba em 2º plano)
 };
 
 UI.playEscapeAnimation = function () {
