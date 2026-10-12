@@ -8741,7 +8741,9 @@ button.skill-ramo-no:focus-visible {
    visíveis por cima do modal (fundo translúcido): o chip ITENS e o log de
    avisos do canto */
 .itens-build-tela-aberta .itens-chip,
-.itens-build-tela-aberta .log-avisos {
+.itens-build-tela-aberta .log-avisos,
+.itens-build-tela-aberta .bau-build,
+.itens-build-tela-aberta .bau-build-selo {
 	visibility: hidden;
 }
 
@@ -9421,8 +9423,59 @@ img.ramos-tree-no__tile {
 #container-Metas > .coluna-rail > .itens-chip { order: 2; }
 #container-Metas > .coluna-rail > .buff-alquimista { order: 3; }
 
-/* (5) Chip ITENS: baús de itens da build pendentes. Substitui o antigo baú
-   solto na arena; clicar abre a escolha 1 de 3 (mesmo fluxo). */
+/* (4b) Baú na arena (PC e tablet): o visual original do baú de itens da
+   build — um baú de verdade solto perto do player, com o selo "ITENS"
+   flutuando acima (posicionado pelo JS, acompanha o resize). No celular
+   (≤700px) ele sai e o chip (5) assume; a troca é só de display. */
+.bau-build {
+	top: 26vw;
+	left: 62vw;
+	z-index: 2;
+	background: radial-gradient(
+		ellipse at 50% 68%,
+		rgba(190, 120, 255, 0.22),
+		rgba(190, 120, 255, 0.08) 42%,
+		transparent 72%
+	);
+	/* sepia chapou o sprite num tom só, saturate+girada puxa tudo para o
+	   roxo forte; depois os brilhos — assim o halo continua roxo de verdade */
+	filter:
+		sepia(1) saturate(4) hue-rotate(230deg) brightness(1.05)
+		drop-shadow(0 5px 3px rgba(0, 0, 0, 0.48))
+		drop-shadow(0 0 10px rgba(185, 115, 255, 0.7));
+}
+
+.bau-build:hover {
+	filter:
+		sepia(1) saturate(5) hue-rotate(230deg) brightness(1.1)
+		drop-shadow(0 6px 4px rgba(0, 0, 0, 0.5))
+		drop-shadow(0 0 14px rgba(205, 150, 255, 0.95));
+}
+
+.bau-build-selo {
+	position: fixed;
+	transform: translate(-50%, -100%);
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: rgba(58, 30, 88, 0.92);
+	border: 1px solid rgba(200, 160, 255, 0.7);
+	color: #f2e6ff;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 1px;
+	pointer-events: none;
+	z-index: 3;
+	white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+	.bau-build,
+	.bau-build-selo { display: none; }
+}
+
+/* (5) Chip ITENS: baús de itens da build pendentes — o visual do CELULAR
+   (acima de 700px o baú da arena (4b) assume). Clicar abre a escolha
+   1 de 3 (mesmo fluxo). */
 .itens-chip {
 	box-sizing: border-box;
 	display: flex;
@@ -9452,14 +9505,9 @@ img.ramos-tree-no__tile {
 	flex: none;
 	filter: hue-rotate(215deg) saturate(1.2) drop-shadow(0 0 6px rgba(190, 120, 255, 0.7));
 }
-/* Ícone x baú clássico: PC e tablet (>700px) mostram o baú de pixel; só o
-   celular (≤700px) fica com o ícone SVG (inversão no @media de 700px).
-   A escolha é do CSS — reage ao resize sem novo spawn. */
-.itens-chip__icone { display: none; }
-.itens-chip img.itens-chip__bau {
-	width: 22px;
-	height: auto;
-	filter: drop-shadow(0 0 5px rgba(255, 196, 52, 0.45));
+/* o chip é só do celular: acima de 700px o baú da arena (4b, acima) assume */
+@media (min-width: 701px) {
+	.itens-chip { display: none; }
 }
 .itens-chip span {
 	min-width: 0;
@@ -9662,9 +9710,6 @@ img.ramos-tree-no__tile {
 		width: 16px;
 		height: 14px;
 	}
-	/* só o celular fica com o ícone SVG; o baú clássico sai */
-	.itens-chip__icone { display: inline; }
-	.itens-chip__bau { display: none; }
 }
 
 /* Balão de info do baú: em telas onde o card fica no topo (mobile retrato e
@@ -10054,6 +10099,7 @@ img.ramos-tree-no__tile {
 .cidade-predio--pesquisa { left: 79%; top: 33%; --largura: 22%; --altura: 26%; }
 .cidade-predio--fabrica  { left: 17%; top: 69%; --largura: 27%; --altura: 26%; }
 .cidade-predio--fazenda  { left: 76%; top: 67%; --largura: 24%; --altura: 24%; }
+.cidade-predio--cristal  { left: 50%; top: 47%; --largura: 17%; --altura: 17%; }
 
 /* realce do hover: brilho suave (sem moldura quadrada) */
 .cidade-predio:hover {
@@ -10942,6 +10988,129 @@ img.ramos-tree-no__tile {
 @media (prefers-reduced-motion: reduce) {
 	.fabrica-overlay,
 	.fabrica-panel {
+		animation: none;
+	}
+}
+
+/* ===================== CRISTAL (painel da Cidade) =====================
+   Reusa .ant-collection-overlay/.ant-collection-panel. */
+.cristal-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.cristal-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid rgba(120, 200, 255, 0.4);
+}
+
+.cristal-header h2 {
+	flex: 1 1 auto;
+	margin: 0;
+	color: #b9ecff;
+	font-size: clamp(20px, 2.2vw, 28px);
+	font-weight: 800;
+	letter-spacing: 0.03em;
+	text-shadow: 0 0 14px rgba(90, 200, 255, 0.35);
+}
+
+.cristal-fechar {
+	flex: 0 0 auto;
+	width: 36px;
+	height: 36px;
+	border: 1px solid rgba(120, 200, 255, 0.6);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #2c4a63, #17293a);
+	color: #cdeeff;
+	font-size: 20px;
+	font-weight: 800;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.cristal-fechar:hover {
+	filter: brightness(1.15);
+}
+
+.cristal-corpo {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.cristal-secao {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.cristal-secao__titulo {
+	margin: 0;
+	color: #b9ecff;
+	font-size: clamp(16px, 1.6vw, 20px);
+	font-weight: 800;
+}
+
+.cristal-secao__desc {
+	margin: 0;
+	color: #aeb9cc;
+	font-size: clamp(12px, 1.05vw, 14px);
+	line-height: 1.45;
+}
+
+.cristal-status {
+	margin: 0;
+	color: #e6edf3;
+	font-weight: 700;
+}
+
+.cristal-max {
+	margin: 0;
+	color: #7ee0a0;
+	font-weight: 800;
+}
+
+.cristal-compra {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.cristal-prox {
+	color: #b9c8da;
+	font-size: clamp(12px, 1.05vw, 14px);
+}
+
+.cristal-comprar {
+	flex: 0 0 auto;
+	padding: 9px 16px;
+	border: 1px solid rgba(120, 200, 255, 0.7);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #38b6ff, #1c6fb0);
+	color: #04131f;
+	font: inherit;
+	font-weight: 800;
+	cursor: pointer;
+}
+
+.cristal-comprar:hover {
+	filter: brightness(1.1);
+}
+
+.cristal-comprar:disabled {
+	filter: saturate(0.4) brightness(0.7);
+	cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cristal-overlay,
+	.cristal-panel {
 		animation: none;
 	}
 }

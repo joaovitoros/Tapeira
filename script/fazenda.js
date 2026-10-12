@@ -43,7 +43,9 @@ function MultiplicadorRainhaFazenda(rainha = fazendaRainha) {
 function IntervaloFazendaMs(nivel = fazendaNivel, rainha = fazendaRainha) {
 	const base = IntervaloFazendaBaseMs(nivel);
 	if (!Number.isFinite(base)) return Infinity;
-	return Math.max(12000, Math.round(base / MultiplicadorRainhaFazenda(rainha)));
+	// Cristal (Cidade): amplia a produção da Fazenda (intervalo mais curto)
+	const cristal = (typeof MultiplicadorCristal === "function") ? MultiplicadorCristal() : 1;
+	return Math.max(12000, Math.round(base / MultiplicadorRainhaFazenda(rainha) / cristal));
 }
 
 // Formigas por minuto (rótulo do painel)

@@ -16,12 +16,13 @@
         mercado: () => Tapeira.Mercado.abrir(),
         pesquisa: () => Tapeira.Pesquisa.abrir(),
         fazenda: () => Tapeira.Fazenda.abrir(),
-        fabrica: () => Tapeira.Fabrica.abrir()
+        fabrica: () => Tapeira.Fabrica.abrir(),
+        cristal: () => Tapeira.Cristal.abrir()
     };
 
     // Andar máximo para destravar cada prédio (derivado, sem campo no save).
     // Bate com a tabela de gates do CIDADE.md.
-    const GATES = { casa: 80, fazenda: 85, mercado: 90, fabrica: 100, pesquisa: 110 };
+    const GATES = { casa: 80, fazenda: 85, mercado: 90, fabrica: 100, pesquisa: 110, cristal: 120 };
 
     function desbloqueada() {
         return (Number(window.maxAndar) || 0) >= ANDAR_CIDADE;

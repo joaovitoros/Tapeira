@@ -80,6 +80,8 @@ var pesquisaInimigos = {};
 var reputacao = 0;
 // Fábrica (Cidade): nível da linha de montagem (auto-compra por segundo). Permanente.
 var fabricaNivel = 0;
+// Cristal (Cidade): amplia os rendimentos conforme a profundidade do reset. Permanente.
+var cristalNivel = 0;
 const TEMPO_BAU_DOURADO_JOGO = 20 * 60 * 1000;
 const TEMPO_BAU_DOURADO_OFFLINE = 40 * 60 * 1000;
 var progressoBauDourado = 0;

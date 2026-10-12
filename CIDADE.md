@@ -139,9 +139,14 @@ itens; Rainha só depois de N formigas; 2º nível de pesquisa, etc.).
       save/validação e reset.
 
 ### Fase 8 — 💎 Cristal
-- [ ] Ligação com a profundidade do reset.
-- [ ] **Save**: `cristalNivel` (se necessário).
-- [ ] Teste: reset mais fundo → mais rendimento.
+- [x] **Ligação com a profundidade do reset**: `MultiplicadorCristal() = 1 + 0,02 × nível
+      × profundidade` (profundidade = andar de reset / 15, teto ×5). Amplia **gold**
+      (`AddGold`), **XP** (`GanhaXP`) e a **produção da Fazenda** (`IntervaloFazendaMs`) —
+      sem moeda nova.
+- [x] **Save**: `cristalNivel` (permanente). Painel próprio (`script/cristal.js` +
+      `#cristalModal`); hotspot no **cristal central** da cena (gate 120).
+- [x] Teste `test-cristal.js`: multiplicador/profundidade, aplicação (gold/XP/fazenda),
+      save/validação e reset.
 
 ---
 

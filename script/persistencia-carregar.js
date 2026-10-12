@@ -250,6 +250,8 @@ function Carregar(saveData, calculaOffline = false) {
 	reputacao = save.reputacao ?? 0;
 	// Fábrica (Cidade): nível da linha de montagem — permanente
 	fabricaNivel = save.fabricaNivel ?? 0;
+	// Cristal (Cidade): nível — permanente
+	cristalNivel = save.cristalNivel ?? 0;
 	missoesCompletas = save.missoesCompletas ?? 0;
 	desafiosVencidos = save.desafiosVencidos ?? 0;
 	melhorGoldRun = GoldNumber.fromMantissaExponent(save.melhorGoldRun?.m ?? 0, save.melhorGoldRun?.e ?? 0);

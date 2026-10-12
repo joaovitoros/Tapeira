@@ -121,6 +121,7 @@ function CriarObjetoSave(incluirOffline = true) {
 		pesquisaInimigos,
 		reputacao,
 		fabricaNivel,
+		cristalNivel,
 		missoesCompletas,
 		desafiosVencidos,
 		melhorGoldRun: {

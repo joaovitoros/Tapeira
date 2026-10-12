@@ -352,6 +352,7 @@ function Resetar() {
 	// Centro de Pesquisa (Cidade): pesquisaItens e pesquisaInimigos idem.
 	// Mercado (Cidade): reputacao idem. Fábrica: fabricaNivel idem (a forja é
 	// da run e some com a build, no Tapeira.ItensBuild.limpa abaixo).
+	// Cristal (Cidade): cristalNivel idem.
 	recompensasOfflinePendentes = null;
 	ultimaDataSaveOffline = Date.now();
 	numInimigosTela = 1; //usada para validar quantos inimigos e

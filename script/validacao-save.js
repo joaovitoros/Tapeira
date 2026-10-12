@@ -284,6 +284,12 @@ function ValidarSave(save) {
 		&& (!Number.isSafeInteger(save.fabricaNivel) || save.fabricaNivel < 0 || save.fabricaNivel > fabricaMax)) {
 		throw new TypeError("O nível da Fábrica no save é inválido.");
 	}
+	// Cristal (Cidade): nível dentro do teto
+	const cristalMax = (typeof CRISTAL_MAX_NIVEL === "number") ? CRISTAL_MAX_NIVEL : 10;
+	if (save.cristalNivel !== undefined
+		&& (!Number.isSafeInteger(save.cristalNivel) || save.cristalNivel < 0 || save.cristalNivel > cristalMax)) {
+		throw new TypeError("O nível do Cristal no save é inválido.");
+	}
 	// Forja (Cidade): objeto { itemId: nível } com ids conhecidos e níveis no teto
 	if (save.forja !== undefined) {
 		if (!save.forja || typeof save.forja !== "object" || Array.isArray(save.forja)) {
