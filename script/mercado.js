@@ -167,7 +167,7 @@ function MercadoSecaoReputacao() {
 	const desc = document.createElement("p");
 	desc.className = "mercado-secao__desc";
 	desc.textContent = "Sua fama no submundo dá desconto nas lojas: -"
-		+ Math.round(REPUTACAO_DESCONTO_NIVEL * 100) + "% no preço da Loja do Conhecimento por nível.";
+		+ Math.round(REPUTACAO_DESCONTO_NIVEL * 100) + "% no preço da Loja de Conhecimento por nível.";
 
 	const status = document.createElement("p");
 	status.className = "mercado-status";
