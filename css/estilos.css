@@ -9070,6 +9070,30 @@ button.skill-ramo-no:focus-visible {
 	box-shadow: 0 0 0 1px rgba(229, 183, 96, 0.35), 0 0 14px rgba(229, 183, 96, 0.18);
 }
 
+/* Item com forja 5+: CONTA NO PvP (batalha-fantasma) — borda prateada
+   meio azul, bem mais ornamental que a dourada comum. Fica na tela como
+   marcador de quais itens entram no duelo. */
+.item-build-cartao--pvp {
+	border-color: rgba(216, 234, 255, 0.95);
+	background: linear-gradient(160deg, rgba(196, 224, 255, 0.10), rgba(136, 178, 240, 0.04));
+	box-shadow:
+		0 0 0 1px rgba(240, 248, 255, 0.70),
+		0 0 0 3px rgba(150, 195, 250, 0.45),
+		0 0 16px rgba(140, 190, 255, 0.35),
+		inset 0 0 10px rgba(160, 205, 255, 0.16);
+}
+
+/* hover: mantém o anel prateado (o roxo do cartão comum não pode cobrir) */
+.item-build-cartao--pvp:hover {
+	border-color: rgba(245, 251, 255, 1);
+	background: linear-gradient(160deg, rgba(196, 224, 255, 0.17), rgba(136, 178, 240, 0.09));
+	box-shadow:
+		0 0 0 1px rgba(248, 252, 255, 0.85),
+		0 0 0 3px rgba(170, 210, 255, 0.60),
+		0 0 20px rgba(150, 200, 255, 0.50),
+		inset 0 0 12px rgba(170, 210, 255, 0.24);
+}
+
 /* Efeito final do item (pilha + forja já consideradas) */
 .item-build-efeito-final {
 	font-size: 0.8rem;
@@ -10153,6 +10177,15 @@ img.ramos-tree-no__tile {
    mexer no HTML. */
 .cidade-aberta #container-opcoes {
 	z-index: 61;
+}
+
+/* Painel de HUD aberto (Status/Loja/Config): sobe o contexto do
+   #container-opcoes acima das habilidades de combate (z 15), dos efeitos de
+   dano/vida (z 7-8) e dos sprites (z 20), que senão passam por cima do painel.
+   Fica ABAIXO dos overlays de verdade — itens da build (z 40), info (z 30) e
+   os modais (z 1000000). */
+.hud-painel-aberto #container-opcoes {
+	z-index: 25;
 }
 
 .cidade-topo {
@@ -11959,6 +11992,10 @@ img.ramos-tree-no__tile {
 	position: relative;
 	display: inline-flex;
 	flex: none;
+	/* headers com justify-content:space-between (ant-collection) empurrariam o
+	   selo para o MEIO do cabeçalho; a margem automática à esquerda garante
+	   que ele fique sempre junto do ×, à direita, em qualquer padrão de header. */
+	margin-left: auto;
 }
 
 .info-tela__btn {

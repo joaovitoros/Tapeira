@@ -297,6 +297,14 @@ const UI = {
             button.classList.toggle("is-active", isOpen);
             button.setAttribute("aria-expanded", String(isOpen));
         });
+
+        // Painel de HUD aberto (Status/Loja/Config) sobe o contexto do
+        // #container-opcoes: acima das habilidades de combate (z 15) e dos
+        // efeitos de dano/vida (z 7-8), mas ABAIXO dos overlays de verdade
+        // (itens da build z 40, info z 30, modais). Sem mexer no HTML.
+        const painelAberto = ["DivStatus", "Loja", "LojaEsm", "LojaCM", "container-SalvaCarrega"]
+            .some(id => document.getElementById(id)?.style.visibility === "visible");
+        document.getElementById("game-root")?.classList.toggle("hud-painel-aberto", painelAberto);
     },
 
     updateSkillProgress() {

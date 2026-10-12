@@ -906,3 +906,47 @@ test("sonda: formatação de gold nos extremos", async () => {
         assert.deepEqual(pageErrors, []);
     } finally { await context.close(); }
 });
+
+test("painel de HUD aberto fica acima das habilidades/efeitos e abaixo dos overlays", async () => {
+    const { context, page, pageErrors } = await openPage();
+    try {
+        await page.waitForFunction(() => typeof UI !== "undefined" && typeof UI.syncScreenButtons === "function");
+        const r = await page.evaluate(() => {
+            const z = id => getComputedStyle(document.getElementById(id)).zIndex;
+            const classe = () => document.getElementById("game-root").classList.contains("hud-painel-aberto");
+            const mede = id => {
+                document.getElementById(id).style.visibility = "visible";
+                UI.syncScreenButtons();
+                const out = { z: z("container-opcoes"), classe: classe() };
+                document.getElementById(id).style.visibility = "hidden";
+                UI.syncScreenButtons();
+                return out;
+            };
+            const antes = { z: z("container-opcoes"), classe: classe() };
+            const status = mede("DivStatus");
+            const loja = mede("Loja");
+            // overlay de verdade (itens da build) — o z-index vem do CSS dele
+            const probe = document.createElement("div");
+            probe.className = "modal-itens-build";
+            document.body.appendChild(probe);
+            const overlayZ = getComputedStyle(probe).zIndex;
+            probe.remove();
+            return {
+                antes, status, loja, overlayZ,
+                depois: { z: z("container-opcoes"), classe: classe() },
+                skillsZ: z("container-Habilidades")
+            };
+        });
+        assert.equal(r.antes.z, "3", "fechado: z-index base do #container-opcoes");
+        assert.equal(r.antes.classe, false);
+        assert.equal(r.status.z, "25", "Status aberto sobe o contexto do #container-opcoes");
+        assert.equal(r.status.classe, true, "marca o #game-root com hud-painel-aberto");
+        assert.ok(Number(r.status.z) > Number(r.skillsZ), "acima das habilidades (z " + r.skillsZ + ")");
+        assert.ok(Number(r.status.z) > 8, "acima dos efeitos de dano/vida (z 7-8)");
+        assert.ok(Number(r.status.z) < Number(r.overlayZ), "abaixo do overlay dos itens da build (z " + r.overlayZ + ")");
+        assert.equal(r.loja.z, "25", "a Loja também conta como painel de HUD");
+        assert.equal(r.depois.z, "3", "fechado volta ao base");
+        assert.equal(r.depois.classe, false);
+        assert.deepEqual(pageErrors, []);
+    } finally { await context.close(); }
+});
