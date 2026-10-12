@@ -32,7 +32,7 @@ const UI = {
         document.getElementById("contAndar").innerHTML = andar;
         document.getElementById("contGold").innerHTML = FormatGold(gold);
         document.getElementById("contEmeraldas").innerHTML = esmeraldas;
-        document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
+        document.getElementById("contTempo").innerHTML = FormataTempoFuga(tempoAvancoInimigos);
         this.updateResetAviso();
         this.updateObjective();
         this.updateMission();
@@ -482,7 +482,7 @@ const UI = {
     updateResources() {
         document.getElementById("contGold").innerHTML = FormatGold(gold);
         document.getElementById("contEmeraldas").innerHTML = esmeraldas;
-        document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
+        document.getElementById("contTempo").innerHTML = FormataTempoFuga(tempoAvancoInimigos);
         this.updateMission();
     },
 

@@ -338,7 +338,7 @@ function CompraCM(tipo) {
 
 	ChamaSom('audio6');
 	AtualizaLojaCM();
-	document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
+	document.getElementById("contTempo").innerHTML = FormataTempoFuga(tempoAvancoInimigos);
 	MostraStatus();
 	AutoSaveLocal();
 }

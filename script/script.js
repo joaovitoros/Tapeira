@@ -161,6 +161,15 @@ function TempoFugaMax() {
 	return (tempo + BonusFugaConquistaComp()) * Tapeira.ItensBuild.multFuga();
 }
 
+// Texto do cronômetro de fuga no HUD: no máximo 2 casas decimais. A
+// multiplicação do TempoFugaMax (Relógio de Bolso ×1,1) deixa lixo de ponto
+// flutuante (117.0500000000003) e era isso que aparecia na tela.
+function FormataTempoFuga(tempo) {
+	if (!Number.isFinite(tempo)) return "0";
+	const texto = (Math.round(tempo * 100) / 100).toFixed(2);
+	return texto.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+}
+
 // Chance de drop de formiga aleatória por abate: 1% base + 0,5% por nível da
 // loja do Conhecimento (chance máxima 25%, batida no nível 48)
 function ChanceDropFormiga() {
@@ -456,7 +465,7 @@ function AvancoInimigos() {
 	if (typeof eventoAtivo !== "undefined" && eventoAtivo === "fissura") return;
 
     tempoAvancoInimigos--;
-    document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
+    document.getElementById("contTempo").innerHTML = FormataTempoFuga(tempoAvancoInimigos);
 
 	// Lógica de avanço dos inimigos
 /*
@@ -478,7 +487,7 @@ function AvancoInimigos() {
 			const chancePerkFuga = Math.min(50, perkFuga * 10);
 			if (chancePerkFuga > 0 && Math.random() * 100 < chancePerkFuga) {
 				tempoAvancoInimigos = TempoFugaMax();
-				document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
+				document.getElementById("contTempo").innerHTML = FormataTempoFuga(tempoAvancoInimigos);
 				UI.showInfo("O tempo para fugir deste andar voltou ao máximo! (chance de perk: " + chancePerkFuga + "%)");
 				return;
 			}
