@@ -11841,6 +11841,65 @@ img.ramos-tree-no__tile {
 	text-align: center;
 }
 
+/* --- Comunidade (servidor de cartões) --- */
+.guilda-secao__titulo {
+	margin: 10px 0 4px;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #ffd84a;
+	text-align: center;
+}
+
+.guilda-comunidade__lista {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-top: 8px;
+	max-height: 240px;
+	overflow-y: auto;
+}
+
+.guilda-cartao {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 6px 10px;
+	border: 1px solid rgba(120, 160, 255, 0.22);
+	border-radius: 8px;
+	background: rgba(255, 255, 255, 0.03);
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.guilda-cartao:hover {
+	filter: brightness(1.15);
+	border-color: rgba(126, 224, 160, 0.5);
+}
+
+.guilda-cartao__arte {
+	width: 46px;
+	height: 58px;
+	flex: 0 0 auto;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	border-radius: 8px;
+	background: radial-gradient(circle at 50% 35%, #2b3a4f, #121822 70%);
+	overflow: hidden;
+}
+
+.guilda-cartao__arte .player__arte {
+	height: 100%;
+}
+
+.guilda-cartao__info {
+	font-size: 13px;
+}
+
 /* --- Cartão visual da Guilda (versão rica do seu cartão de batalha) --- */
 .guildaCartaoVisual {
 	background: linear-gradient(145deg, rgba(14, 18, 28, 0.97), rgba(10, 13, 20, 0.94));

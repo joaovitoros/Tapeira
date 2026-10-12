@@ -914,6 +914,7 @@ function RenderGuildaPainel() {
 	corpo.replaceChildren(
 		GuildaCartaoResumo(),
 		GuildaAcoes(),
+		GuildaComunidade(),
 		TrofeusSaldo(),
 		TrofeusSecao()
 	);
@@ -961,6 +962,101 @@ function GuildaAcoes() {
 	nota.textContent = "Vitória: +2 esmeraldas · Derrota: nada · "
 		+ "Duelo consigo mesmo: sem recompensa depois da primeira luta";
 	bloco.appendChild(nota);
+	return bloco;
+}
+
+// ---- comunidade (servidor de cartões) ----
+// Servido pelo servidor (proxy) a API fica na MESMA origem (/api). Rodando
+// solto (arquivo/.exe/app), usa o endereço salvo em Configurações.
+function PvpApiBase() {
+	if (location.protocol === "http:" || location.protocol === "https:") return "";
+	try { return localStorage.getItem("tapeira-servidor-pvp") || ""; } catch { return ""; }
+}
+
+async function PvpEnviaCartao() {
+	try {
+		const cartao = PvpFantasma.MontaCartaoBatalha();
+		const resp = await fetch(PvpApiBase() + "/api/cartoes", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(cartao)
+		});
+		const dados = await resp.json().catch(() => ({}));
+		if (!resp.ok || !dados.ok) throw new Error(dados.erro || ("HTTP " + resp.status));
+		UI.mostraAvisoRapido(dados.jaExistia ? "Esse cartão já estava no servidor." : "Cartão enviado pro servidor! 🎉");
+	} catch (erro) {
+		console.error("Enviar cartão:", erro);
+		UI.mostraAvisoRapido("Não deu pra enviar — servidor fora do ar?");
+	}
+}
+
+async function PvpCarregaComunidade(lista) {
+	lista.textContent = "Carregando cartões…";
+	try {
+		const resp = await fetch(PvpApiBase() + "/api/cartoes");
+		const dados = await resp.json();
+		const cartoes = (dados && dados.cartoes) || [];
+		lista.replaceChildren();
+		if (!cartoes.length) {
+			const v = document.createElement("p");
+			v.className = "guilda-nota";
+			v.textContent = "Nenhum cartão na comunidade ainda. Seja o primeiro a enviar!";
+			lista.appendChild(v);
+			return;
+		}
+		for (const c of cartoes) {
+			const item = document.createElement("button");
+			item.type = "button";
+			item.className = "guilda-cartao";
+			item.title = "Lutar contra " + (c.nome || "Tapeira");
+			const arte = document.createElement("div");
+			arte.className = "guilda-cartao__arte";
+			if (typeof AparenciaHtmlArte === "function") arte.innerHTML = AparenciaHtmlArte(c.aparencia);
+			const info = document.createElement("div");
+			info.className = "guilda-cartao__info";
+			info.textContent = (c.nome || "Tapeira") + " · nível " + (c.nivel || 1) + " · DPS " + FormatGold(c.dps || 0);
+			item.append(arte, info);
+			item.addEventListener("click", async () => {
+				try {
+					const r = await fetch(PvpApiBase() + "/api/cartoes/" + c.id);
+					if (!r.ok) throw new Error("HTTP " + r.status);
+					const cartao = await r.json();
+					PvpFantasma.RecebeCartao(cartao);
+				} catch (erro) {
+					console.error("Baixar cartão:", erro);
+					UI.mostraAvisoRapido("Não deu pra baixar esse cartão.");
+				}
+			});
+			lista.appendChild(item);
+		}
+	} catch (erro) {
+		console.error("Comunidade:", erro);
+		lista.replaceChildren();
+		const v = document.createElement("p");
+		v.className = "guilda-nota";
+		v.textContent = "Servidor indisponível. Abra o jogo pelo link do servidor pra usar a comunidade.";
+		lista.appendChild(v);
+	}
+}
+
+function GuildaComunidade() {
+	const bloco = document.createElement("div");
+	bloco.className = "guilda-comunidade";
+	const titulo = document.createElement("h3");
+	titulo.className = "guilda-secao__titulo";
+	titulo.textContent = "Comunidade (servidor)";
+	const desc = document.createElement("p");
+	desc.className = "guilda-nota";
+	desc.textContent = "Envie seu cartão e enfrente os cartões de outros jogadores — sem trocar arquivo.";
+	const acoes = document.createElement("div");
+	acoes.className = "guilda-acoes";
+	const lista = document.createElement("div");
+	lista.className = "guilda-comunidade__lista";
+	acoes.append(
+		GuildaBotao("Enviar meu cartão", () => PvpEnviaCartao()),
+		GuildaBotao("Cartões da comunidade", () => PvpCarregaComunidade(lista))
+	);
+	bloco.append(titulo, desc, acoes, lista);
 	return bloco;
 }
 
