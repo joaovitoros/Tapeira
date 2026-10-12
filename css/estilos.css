@@ -10473,23 +10473,25 @@ img.ramos-tree-no__tile {
 	position: absolute;
 	left: 0;
 	bottom: 0;
-	width: clamp(14px, 1.6vw, 26px);
-	height: clamp(14px, 1.6vw, 26px);
+	width: clamp(18px, 2.1vw, 34px);
+	height: clamp(18px, 2.1vw, 34px);
 	border-radius: 50%;
-	background: radial-gradient(50% 50% at 50% 50%, rgba(214, 214, 224, 0.55), rgba(160, 165, 180, 0.14) 68%, transparent 78%);
-	filter: blur(1.5px);
+	background: radial-gradient(50% 50% at 50% 50%, rgba(226, 226, 236, 0.72), rgba(166, 170, 186, 0.24) 66%, transparent 80%);
+	filter: blur(2px);
 	opacity: 0;
-	animation: cidadeFumaca 4.6s ease-out infinite;
+	animation: cidadeFumaca 4.2s ease-out infinite;
 }
 
-.cidade-fumaca span:nth-child(2) { animation-delay: -1.15s; }
-.cidade-fumaca span:nth-child(3) { animation-delay: -2.3s; }
-.cidade-fumaca span:nth-child(4) { animation-delay: -3.45s; }
+.cidade-fumaca span:nth-child(2) { animation-delay: -0.7s; }
+.cidade-fumaca span:nth-child(3) { animation-delay: -1.4s; }
+.cidade-fumaca span:nth-child(4) { animation-delay: -2.1s; }
+.cidade-fumaca span:nth-child(5) { animation-delay: -2.8s; }
+.cidade-fumaca span:nth-child(6) { animation-delay: -3.5s; }
 
 @keyframes cidadeFumaca {
-	0%   { opacity: 0;    transform: translate(0, 0) scale(0.5); }
-	18%  { opacity: 0.65; }
-	100% { opacity: 0;    transform: translate(-18px, -110px) scale(1.7); }
+	0%   { opacity: 0;    transform: translate(0, 0) scale(0.55); }
+	15%  { opacity: 0.85; }
+	100% { opacity: 0;    transform: translate(-24px, -160px) scale(2.1); }
 }
 
 /* posições na ARTE NOVA: a chaminé da Fábrica (baixo-esquerda) e a da Casa
@@ -10531,6 +10533,29 @@ img.ramos-tree-no__tile {
 	12%  { opacity: 0.9; }
 	85%  { opacity: 0.7; }
 	100% { opacity: 0;   top: -4%; }
+}
+
+/* Faíscas de CRISTAL (azuis): metade das partículas vira faísca azul que
+   cintila (a outra metade segue poeira quente), casando com os cristais da
+   arte nova. Mesma camada — nada de elemento novo no HTML. */
+.cidade-particulas span:nth-child(even) {
+	width: clamp(2px, 0.3vw, 5px);
+	height: clamp(2px, 0.3vw, 5px);
+	background: rgba(176, 232, 255, 0.95);
+	box-shadow: 0 0 9px rgba(120, 200, 255, 0.9);
+	animation-name: cidadeFaisca;
+}
+
+.cidade-particulas span:nth-child(2) { animation-duration: 11s; animation-delay: -5s; }
+.cidade-particulas span:nth-child(4) { animation-duration: 13s; animation-delay: -2s; }
+.cidade-particulas span:nth-child(6) { animation-duration: 9s;  animation-delay: -7s; }
+.cidade-particulas span:nth-child(8) { animation-duration: 12s; animation-delay: -3s; }
+
+@keyframes cidadeFaisca {
+	0%   { opacity: 0;   top: 100%; transform: translateX(0) scale(0.7); }
+	10%  { opacity: 1; }
+	55%  { opacity: 0.9; transform: translateX(7px) scale(1.2); }
+	100% { opacity: 0;   top: 0%;   transform: translateX(-7px) scale(0.9); }
 }
 
 @media (prefers-reduced-motion: reduce) {
