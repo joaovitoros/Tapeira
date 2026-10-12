@@ -327,23 +327,36 @@ document.addEventListener("pointerdown", function(evt) {
     // Eventos de toque nÃ£o possuem um botÃ£o do mouse confiÃ¡vel em todos os WebViews.
     // ataca tocando/clicando em qualquer lugar da cena, EXCETO em controles
     // (botões/painéis/modais): o toque fora deles dá um hit
-    const emControle = !player && !!alvo && !!alvo.closest(SELETOR_SEM_ATAQUE);
-    if (emControle || (evt.pointerType === "mouse" && evt.button !== 0)) return;
+    // Só o botão esquerdo do mouse.
+    if (evt.pointerType === "mouse" && evt.button !== 0) return;
 
-    // tocar num inimigo específico foca o ataque nele; tocar em outro lugar
-    // volta pro alvo automático (o de número maior)
-    const inimigoEl = alvo ? alvo.closest("[id^='inimigo']") : null;
-    alvoFocado = inimigoEl ? (parseInt(inimigoEl.id.replace("inimigo", ""), 10) || 0) : 0;
+    // TOQUE (Android): ataca tocando em qualquer lugar da cena, EXCETO em
+    // controles (botões/painéis/modais). MOUSE (PC): continua como sempre —
+    // ataca segurando/clicando no personagem.
+    const ehToque = evt.pointerType === "touch";
+    if (!ehToque && !player) return;
+    if (ehToque && !player && !!alvo && !!alvo.closest(SELETOR_SEM_ATAQUE)) return;
+
+    if (ehToque) {
+        const inimigoEl = alvo ? alvo.closest("[id^='inimigo']") : null;
+        alvoFocado = inimigoEl ? (parseInt(inimigoEl.id.replace("inimigo", ""), 10) || 0) : 0;
+    }
 
     evt.preventDefault();
     if (attackInterval !== null) return;
     if (evt.pointerId !== undefined) {
         attackPointerId = evt.pointerId;
-        player?.setPointerCapture?.(evt.pointerId);
+        // setPointerCapture pode lançar (ponteiro já inativo / WebView antigo) —
+        // nunca deixar isso abortar o ataque.
+        try {
+            player?.setPointerCapture?.(evt.pointerId);
+        } catch (erro) {
+            // segue sem capturar o ponteiro
+        }
     }
     startPlayerAttack();
     // efeito de toque (anel) no ponto tocado — só no toque (modo Android)
-    if (evt.pointerType === "touch") MostraEfeitoToque(evt.clientX, evt.clientY);
+    if (ehToque) MostraEfeitoToque(evt.clientX, evt.clientY);
 });
 
 window.addEventListener("pointerup", function(evt) {
