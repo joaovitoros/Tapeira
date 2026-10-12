@@ -13,7 +13,7 @@
 //   x = centro do chapéu (% da largura)
 //   y = onde a aba encosta na cabeça (base do chapéu, % da altura)
 //   largura = largura do chapéu (% da largura)
-const APARENCIA_ANCORA_CHAPEU = { x: 46.5, y: 22, largura: 53 };
+const APARENCIA_ANCORA_CHAPEU = { x: 46.5, y: 27, largura: 53 };
 
 // id, nome e arquivo (imagens/personagens/chapeus/). "nenhum" = sem chapéu.
 const APARENCIA_CHAPEUS = [
