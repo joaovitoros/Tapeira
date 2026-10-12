@@ -82,6 +82,7 @@
 			<div class="linha">
 				<label><input type="checkbox" id="borracha"> Borracha</label>
 				<label class="tag">Tam. <input type="range" id="pincel" min="4" max="60" value="16" style="width:90px;vertical-align:middle"></label>
+				<button id="desfazer">Desfazer</button>
 				<button id="baixarEditadas">Baixar editadas (.zip)</button>
 			</div>
 			<div class="info" id="info">—</div>
@@ -107,6 +108,7 @@
 		var equipado = {};   // equipado[slot] = itemId
 		var sel = { slot: null, item: null };
 		var borracha = { ativo: false, tam: 16 };
+		var historico = [];   // pilha de desfazer (estado do item antes de cada traço)
 		var CHAVE = "tapeira-calibrador-aparencia";
 
 		// Se a config do jogo estiver disponível, usa pra SEMEAR os valores atuais
@@ -342,6 +344,12 @@
 			var cv = canvasDoItem(it);
 			if (!cv) return;
 			it.editado = true;
+			it._st = (it._st || 0) + 1;
+			// guarda o estado ANTES do traço (pro Desfazer)
+			try {
+				historico.push({ cv: cv, it: it, dados: cv.getContext("2d").getImageData(0, 0, cv.width, cv.height) });
+				if (historico.length > 40) historico.shift();
+			} catch (e) {}
 			borracha.cv = cv;
 			borracha.ultimo = null;
 			try { el.setPointerCapture(ev.pointerId); } catch (e) {}
@@ -361,6 +369,16 @@
 			renderArte();
 		});
 		document.getElementById("pincel").addEventListener("input", function (e) { borracha.tam = +e.target.value; });
+		document.getElementById("desfazer").addEventListener("click", function () {
+			var h = historico.pop();
+			if (!h) return;
+			h.cv.getContext("2d").putImageData(h.dados, 0, 0);
+			if (h.it) {
+				h.it._st = Math.max(0, (h.it._st || 1) - 1);
+				if (!h.it._st) h.it.editado = false;
+			}
+			renderArte();
+		});
 
 		// ---- zip mínimo (só "store") pra baixar as imagens editadas ----
 		var CRC_TABELA = (function () {
