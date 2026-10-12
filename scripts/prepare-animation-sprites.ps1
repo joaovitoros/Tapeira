@@ -117,13 +117,13 @@ function New-TransparentEscapeFrames {
 }
 
 New-TransparentSpriteStrip `
-    -Source (Join-Path $projectRoot "imagens/ataque/ataque.png") `
-    -Destination (Join-Path $projectRoot "imagens/ataque/ataque-sprites.png") `
+    -Source (Join-Path $projectRoot "imagens/animacoes/ataque/ataque.png") `
+    -Destination (Join-Path $projectRoot "imagens/animacoes/ataque/ataque-sprites.png") `
     -Frames 6 -CropTop 0 -CropHeight 256 -FrameWidth 256 -KeyColor "green"
 
 New-TransparentSpriteStrip `
-    -Source (Join-Path $projectRoot "imagens/fugindo/fugindo.png") `
-    -Destination (Join-Path $projectRoot "imagens/fugindo/fugindo-sprites.png") `
+    -Source (Join-Path $projectRoot "imagens/animacoes/fugindo/fugindo.png") `
+    -Destination (Join-Path $projectRoot "imagens/animacoes/fugindo/fugindo-sprites.png") `
     -Frames 7 -CropTop 160 -CropHeight 430 -FrameWidth 320
 
 # The escape sheet has eight poses with different widths. Keep each crop inside
@@ -139,8 +139,8 @@ $escapeFrameBounds = @(
     @(1919, 253)
 )
 New-TransparentEscapeFrames `
-    -Source (Join-Path $projectRoot "imagens/fugindo/fugindo.png") `
-    -DestinationDirectory (Join-Path $projectRoot "imagens/fugindo/frames") `
+    -Source (Join-Path $projectRoot "imagens/animacoes/fugindo/fugindo.png") `
+    -DestinationDirectory (Join-Path $projectRoot "imagens/animacoes/fugindo/frames") `
     -Bounds $escapeFrameBounds -CropTop 160 -CropHeight 430 -FrameWidth 400
 
 Write-Output "Animation sprite strips prepared"
