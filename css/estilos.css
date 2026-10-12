@@ -2705,6 +2705,9 @@ caption {
 	height: 100%;
 	max-width: 100%;
 	isolation: isolate;
+	/* TRATAMENTO ÚNICO: a base + os acessórios ganham o MESMO filtro e UMA sombra
+	   só (do conjunto) — assim parece uma arte só, não peças coladas. */
+	filter: drop-shadow(0 7px 6px rgba(0, 0, 0, 0.42)) saturate(1.06) contrast(1.04) brightness(1.02);
 }
 
 .player__base {
@@ -2721,7 +2724,6 @@ caption {
 	transform: translate(-50%, -100%);
 	transform-origin: 50% 100%;
 	pointer-events: none;
-	filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.35));
 }
 
 .player__camada[hidden] {
