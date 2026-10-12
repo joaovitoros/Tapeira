@@ -17,12 +17,13 @@
         pesquisa: () => Tapeira.Pesquisa.abrir(),
         fazenda: () => Tapeira.Fazenda.abrir(),
         fabrica: () => Tapeira.Fabrica.abrir(),
-        cristal: () => Tapeira.Cristal.abrir()
+        cristal: () => Tapeira.Cristal.abrir(),
+        guilda: () => Tapeira.Guilda.abrir()
     };
 
     // Andar máximo para destravar cada prédio (derivado, sem campo no save).
     // Bate com a tabela de gates do CIDADE.md.
-    const GATES = { casa: 80, fazenda: 85, mercado: 90, fabrica: 100, pesquisa: 110, cristal: 120 };
+    const GATES = { casa: 80, guilda: 80, fazenda: 85, mercado: 90, fabrica: 100, pesquisa: 110, cristal: 120 };
 
     function desbloqueada() {
         return (Number(window.maxAndar) || 0) >= ANDAR_CIDADE;
@@ -42,9 +43,42 @@
         return !!el && !el.hidden;
     }
 
+    // Um "chip" do cabeçalho: ícone + valor, com cor própria por tipo.
+    function chipCidade(classe, icone, texto) {
+        const chip = document.createElement("span");
+        chip.className = "cidade-chip cidade-chip--" + classe;
+        if (icone) {
+            const img = document.createElement("img");
+            img.className = "cidade-chip__icone";
+            img.src = icone;
+            img.alt = "";
+            img.setAttribute("aria-hidden", "true");
+            chip.appendChild(img);
+        }
+        const valor = document.createElement("span");
+        valor.className = "cidade-chip__valor";
+        valor.textContent = texto;
+        chip.appendChild(valor);
+        return chip;
+    }
+
     function atualizaHud() {
         const hud = document.getElementById("cidadeHud");
-        if (hud) hud.textContent = "Andar " + andar + " · " + FormatGold(gold);
+        if (!hud) return;
+        const tickets = (typeof ticketsMug !== "undefined")
+            ? Math.max(0, Math.floor(N(ticketsMug) || 0))
+            : 0;
+        const chips = [
+            chipCidade("andar", "imagens/hud/andar.svg", "Andar " + andar),
+            chipCidade("gold", "imagens/hud/gold.png", FormatGold(gold))
+        ];
+        // Tickets de Caçador de Mugs: no cabeçalho, só quando existe saldo
+        if (tickets > 0) {
+            const texto = (typeof FormataTickets === "function") ? FormataTickets(tickets) : formatNumber(tickets);
+            chips.push(chipCidade("ticket", "imagens/hud/ticket.svg",
+                texto + (tickets === 1 ? " ticket" : " tickets")));
+        }
+        hud.replaceChildren(...chips);
     }
 
     // A Cidade é tela cheia: fecha os painéis laterais (Status/Loja/Config) pra

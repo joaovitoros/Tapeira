@@ -13,9 +13,9 @@ function FabricaNivelValido(nivel = fabricaNivel) {
 	return Math.max(0, Math.min(FABRICA_MAX_NIVEL, n));
 }
 
-// Custo em CM do próximo nível (base 20.000, ×1,6 por nível)
+// Custo em CM do próximo nível (base 20.000 ×CUSTO_CIDADE_MULT, ×1,6 por nível)
 function CustoFabricaNivel(nivel) {
-	return Math.round(20000 * Math.pow(1.6, FabricaNivelValido(nivel)));
+	return Math.round(20000 * CUSTO_CIDADE_MULT * Math.pow(1.6, FabricaNivelValido(nivel)));
 }
 
 // Linha de montagem: auto-compras por segundo (1 base + 1 por nível)
@@ -41,9 +41,10 @@ function CompraFabricaNivel() {
 	return true;
 }
 
-// Custo em gold de uma forja (escala com o andar): ~8 avanços de andar
+// Custo em gold de uma forja (escala com o andar): ~80 avanços de andar.
+// (Era ×8 — a forja ficava trivial no late game; ×80 faz o custo pesar.)
 function CustoForjaItem() {
-	return BonusGoldAvanco() * 8;
+	return BonusGoldAvanco() * 80;
 }
 
 // Forja um item (2 cópias → 1 melhorada) e atualiza a tela. Custa gold.
@@ -100,7 +101,17 @@ function AbrirFabrica() {
 	close.setAttribute("aria-label", "Fechar a Fábrica");
 	close.textContent = "×";
 	close.addEventListener("click", FecharFabrica);
-	header.append(title, close);
+	header.append(title, CriaInfoTela({
+		id: "fabrica-info",
+		rotulo: "Sobre a Fábrica",
+		html: "<b>Como funciona</b>"
+			+ "<p><b>Forja</b>: junta <b>2 cópias iguais</b> de um item em 1 "
+			+ "melhorada — mesmo efeito, mas <b>libera 1 slot</b> da build. "
+			+ "Custa gold e é da run (zera no reset).</p>"
+			+ "<p><b>Linha de montagem</b>: +1 <b>auto-compra</b> da loja por "
+			+ "segundo por nível (requer a Auto-compra ligada). Pago em CM e "
+			+ "permanente.</p>"
+	}), close);
 
 	const corpo = document.createElement("div");
 	corpo.className = "fabrica-corpo";

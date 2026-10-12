@@ -48,7 +48,15 @@ Object.assign(UI, {
         fechar.setAttribute("aria-label", "Fechar");
         fechar.textContent = "×";
         fechar.addEventListener("click", () => this.fechaFeitosPanel());
-        header.append(titulo, fechar);
+        header.append(titulo, CriaInfoTela({
+            id: "feitos-info",
+            rotulo: "Sobre os Feitos",
+            html: "<b>Como funciona</b>"
+                + "<p>Quatro abas: <b>Conquistas</b> (metas que desbloqueiam "
+                + "bônus permanentes), <b>Missões</b> (tarefas curtas que pagam "
+                + "gold e se renovam), <b>Marcos</b> (marcos de progresso, sem "
+                + "bônus) e <b>Formigas</b> (a coleção).</p>"
+        }), fechar);
 
         const barraAbas = document.createElement("div");
         barraAbas.className = "feitos-abas";

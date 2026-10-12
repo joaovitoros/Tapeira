@@ -9,6 +9,31 @@ function keyPressed(evt){
 let attackInterval = null;
 let attackPointerId = null;
 let jogoPausado = false;
+// Inimigo focado pelo último toque/clique (0 = automático: o de número maior).
+// Tocar num inimigo específico mantém o ataque nele (inclusive segurando).
+let alvoFocado = 0;
+
+// Controles que NÃO devem iniciar ataque quando tocados/clicados (botões,
+// painéis, modais, rodapé, cidade, pausa). Tocar fora deles dá um hit.
+const SELETOR_SEM_ATAQUE = [
+    "button", "a", "input", "select", "textarea", "label",
+    "[role='button']", "[role='dialog']",
+    "#container-opcoes", "#container-Habilidades", "#logAvisos",
+    "#pauseOverlay", "#container-Cidade", "#gameModal",
+    "[id$='Modal']", "[id^='container-']"
+].join(",");
+
+// Efeito visual de toque/clique (anel que expande e some). Só um efeito de
+// DOM; a classe sai sozinha no fim da animação (sem timer órfão).
+function MostraEfeitoToque(x, y) {
+    const efeito = document.createElement("div");
+    efeito.className = "toque-efeito";
+    efeito.setAttribute("aria-hidden", "true");
+    efeito.style.left = x + "px";
+    efeito.style.top = y + "px";
+    document.body.appendChild(efeito);
+    efeito.addEventListener("animationend", () => efeito.remove(), { once: true });
+}
 // De onde o painel de Config veio (ele é MOVIDO pro menu de pause e volta aqui)
 let pausaConfigOrigem = null;
 
@@ -183,6 +208,19 @@ function stopPlayerAttack() {
 function FechaJanelasAbertas() {
     let fechou = false;
 
+    // Balão do ícone de info ("i") das telas complexas (ui-info.js): fecha
+    // PRIMEIRO, uma camada por vez — senão o ESC levaria o painel inteiro
+    // junto com o balão. Se o painel que segurava o balão foi destruído ou
+    // re-renderizado, o balão já não está no DOM: limpa o estado órfão sem
+    // consumir o ESC (senão o primeiro ESC faria nada de visível).
+    if (typeof infoTelaAtiva !== "undefined" && infoTelaAtiva) {
+        if (infoTelaAtiva.balao && infoTelaAtiva.balao.isConnected) {
+            FechaInfoTela();
+            return true;
+        }
+        infoTelaAtiva = null;
+    }
+
     // Diálogo de pausa / confirmação de saída
     if (document.getElementById("pauseOverlay")) {
         AtualizaEstadoPausa(false);
@@ -206,7 +244,7 @@ function FechaJanelasAbertas() {
     });
 
     // Modais removidos do DOM ao fechar
-    ["antCollectionModal", "skillUpgradeModal", "feitosModal", "infoModal", "ramosTreeModal", "casaModal", "fazendaModal", "pesquisaModal", "mercadoModal", "fabricaModal", "cristalModal"].forEach(id => {
+    ["antCollectionModal", "skillUpgradeModal", "feitosModal", "infoModal", "ramosTreeModal", "casaModal", "fazendaModal", "pesquisaModal", "mercadoModal", "fabricaModal", "cristalModal", "guildaModal"].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.remove();
@@ -297,17 +335,46 @@ document.addEventListener("keyup", function(evt) {
 });
 
 document.addEventListener("pointerdown", function(evt) {
-    const player = evt.target instanceof Element ? evt.target.closest(".player") : null;
+    const alvo = evt.target instanceof Element ? evt.target : null;
+    const player = alvo ? alvo.closest(".player") : null;
     // Eventos de toque nÃ£o possuem um botÃ£o do mouse confiÃ¡vel em todos os WebViews.
-    if (!player || (evt.pointerType === "mouse" && evt.button !== 0)) return;
+    // ataca tocando/clicando em qualquer lugar da cena, EXCETO em controles
+    // (botões/painéis/modais): o toque fora deles dá um hit
+    // Só o botão esquerdo do mouse.
+    if (evt.pointerType === "mouse" && evt.button !== 0) return;
+
+    // TOQUE (Android): ataca tocando em qualquer lugar da cena, EXCETO em
+    // controles (botões/painéis/modais). MOUSE (PC): continua como sempre —
+    // ataca segurando/clicando no personagem.
+    const ehToque = evt.pointerType === "touch";
+    if (!ehToque && !player) return;
+    if (ehToque && !player && !!alvo && !!alvo.closest(SELETOR_SEM_ATAQUE)) return;
+
+    if (ehToque) {
+        const inimigoEl = alvo ? alvo.closest("[id^='inimigo']") : null;
+        alvoFocado = inimigoEl ? (parseInt(inimigoEl.id.replace("inimigo", ""), 10) || 0) : 0;
+        // um toque é UM golpe: o ritmo de ataque (ValidaBater, 30 ticks de
+        // 30 ms) vale pra quem SEGURA o dedo atacando. Sem isso, um tap rápido
+        // só decrementa a contagem e o jogador precisa de ~30 taps pra cada
+        // hit — segurar continua atacando no ritmo de sempre.
+        ValidaBater = 0;
+    }
 
     evt.preventDefault();
     if (attackInterval !== null) return;
     if (evt.pointerId !== undefined) {
         attackPointerId = evt.pointerId;
-        player.setPointerCapture?.(evt.pointerId);
+        // setPointerCapture pode lançar (ponteiro já inativo / WebView antigo) —
+        // nunca deixar isso abortar o ataque.
+        try {
+            player?.setPointerCapture?.(evt.pointerId);
+        } catch (erro) {
+            // segue sem capturar o ponteiro
+        }
     }
     startPlayerAttack();
+    // efeito de toque (anel) no ponto tocado — só no toque (modo Android)
+    if (ehToque) MostraEfeitoToque(evt.clientX, evt.clientY);
 });
 
 window.addEventListener("pointerup", function(evt) {

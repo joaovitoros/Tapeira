@@ -53,7 +53,7 @@ const path = require('path');
         pesquisaItens = {};
         conhecimentoMug = 0;
         res.itemSemCM = CompraPesquisaItem("adaga"); // false
-        conhecimentoMug = 100000;
+        conhecimentoMug = 1000000;
         res.itemOk = CompraPesquisaItem("adaga");    // true
         res.itemNivel = NivelPesquisaItem("adaga");
         pesquisaItens = { adaga: PESQUISA_ITEM_MAX };
@@ -95,8 +95,8 @@ const path = require('path');
     check("item bônus ×1 no nível 0", r.bonus0 === 1, r.bonus0);
     check("item bônus ×1.30 no nível 3", Math.abs(r.bonus3 - 1.30) < 1e-9, r.bonus3);
     check("inimigo bônus ×1.20 no nível 2", Math.abs(r.bonusInim2 - 1.20) < 1e-9, r.bonusInim2);
-    check("custo do item nível 0 = 4000 CM", r.custoItem0 === 4000, r.custoItem0);
-    check("custo do inimigo nível 0 = 8000 CM", r.custoInim0 === 8000, r.custoInim0);
+    check("custo do item nível 0 = 200000 CM", r.custoItem0 === 200000, r.custoItem0);
+    check("custo do inimigo nível 0 = 80000 CM", r.custoInim0 === 80000, r.custoInim0);
     check("bônus de item não vale sem cópia", r.multSemCopia === 1, r.multSemCopia);
     check("tipo do andar: comuns/guardiões", r.tipoComum === "comuns" && r.tipoGuardiao === "guardioes");
     check("compra de item sem CM falha", r.itemSemCM === false);

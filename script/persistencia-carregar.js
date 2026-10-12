@@ -67,6 +67,8 @@ function Carregar(saveData, calculaOffline = false) {
 	nivelJogador = save.nivelJogador ?? 1;
 	xpAtual = save.xpAtual ?? 0;
 	pontosHabilidade = save.pontosHabilidade ?? 0;
+	// Tickets de Caçador de Mugs: permanente (não zera no reset)
+	ticketsMug = save.ticketsMug ?? 0;
 	nivelSkillDano = save.nivelSkillDano ?? 0;
 	nivelSkillEletrica = save.nivelSkillEletrica ?? 0;
 	nivelSkillGold = save.nivelSkillGold ?? 0;
@@ -121,6 +123,13 @@ function Carregar(saveData, calculaOffline = false) {
 	tempoEsperaCompanheiro = 0;
 
 	esmeraldas = save.esmeraldas ?? 0;
+	// cartões de batalha já usados no PvP: permanente (não zera no
+	// Resetar); save antigo sem o campo começa com a lista vazia
+	pvpCartoesUsados = Array.isArray(save.pvpCartoesUsados) ? save.pvpCartoesUsados.slice() : [];
+	// cartões que eu exportei (o jogo distingue "luta contra si mesmo")
+	pvpCartoesExportados = Array.isArray(save.pvpCartoesExportados) ? save.pvpCartoesExportados.slice() : [];
+	// save antigo não tem o campo: NormalizaNomeJogador devolve o padrão
+	nomeJogador = NormalizaNomeJogador(save.nomeJogador);
 	numVoltas = save.numVoltas ?? 0;
 
 	tempoAvancoInimigos = save.tempoAvancoInimigos ?? TempoFugaMax();
@@ -249,6 +258,15 @@ function Carregar(saveData, calculaOffline = false) {
 		? Object.assign({}, save.pesquisaItens) : {};
 	pesquisaInimigos = (save.pesquisaInimigos && typeof save.pesquisaInimigos === "object" && !Array.isArray(save.pesquisaInimigos))
 		? Object.assign({}, save.pesquisaInimigos) : {};
+	// Loja de Troféus (Cidade): nível por troféu — permanente. Objeto
+	// { trofeuId: nível }; valores inválidos caem no default.
+	trofeus = (save.trofeus && typeof save.trofeus === "object" && !Array.isArray(save.trofeus))
+		? Object.assign({}, save.trofeus) : {};
+	// Mercado (Cidade): ofertas do dia — stamp do dia + bitmask de compradas.
+	// Gira à meia-noite (o sync zera o bitmask se o save for de outro dia).
+	ofertasDia = save.ofertasDia ?? 0;
+	ofertasDiaCompradas = save.ofertasDiaCompradas ?? 0;
+	if (typeof SincronizaOfertasDia === "function") SincronizaOfertasDia();
 	// Mercado (Cidade): reputação (desconto nas lojas) — permanente
 	reputacao = save.reputacao ?? 0;
 	// Fábrica (Cidade): nível da linha de montagem — permanente

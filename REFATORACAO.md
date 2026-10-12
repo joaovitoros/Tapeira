@@ -175,21 +175,29 @@ carregamento e unificação do save) estão concluídos. Candidatos naturais ago
 ## Como validar
 
 ```powershell
-npm test                 # suíte principal (42 testes)
-node test-logs.js        # tela de logs
-node test-itens-build.js # itens de build (roda sobre www/)
-npm run prepare:web      # sincroniza www/ para web/Android
+npm test                     # suíte principal (61 testes)
+npm run test:auditoria       # auditoria (28 testes)
+node test-logs.js            # tela de logs
+node test-itens-build.js     # itens de build (roda sobre www/)
+npm run prepare:web          # sincroniza www/ para web/Android
 ```
 
 Rode `npm run prepare:web` antes dos testes focados que abrem `www/`.
 
 ## Pendências conhecidas
 
-- `ui.js` e `sistema.js` ainda têm **fim de linha misto** (`\r\n` e `\n`);
-  os arquivos novos usam `\n`. Ao editar, não "normalizar" o arquivo inteiro
-  num único commit — gera diff gigante sem benefício.
+- **Fim de linha misto**: alguns arquivos ainda misturam `\r\n` e `\n` — no
+  índice: `Caverna.html`, `css/estilos.css`, `script/ui-skills.js` e
+  `tests/regression.test.cjs` (no worktree, mais alguns); `ui.js`/`sistema.js`
+  já estão uniformes. Ao editar, **não** "normalizar" o arquivo inteiro num
+  commit único — gera diff gigante sem benefício (confira com
+  `git ls-files --eol`).
 - `script.js` ainda concentra o estado global e as variáveis da loja; mover
   variáveis exige conferir save, reset e validação em conjunto.
-- O save incompatível preserva o auto save local e mostra o motivo. O caso
-  relatado foi reproduzido: era o `perkFrenesi` fora do cálculo de pontos
-  (corrigido — ver item 12 de "O que foi feito").
+- ~~O save incompatível preserva o auto save local e mostra o motivo~~ —
+  **resolvido**: era o `perkFrenesi` fora do cálculo de pontos (item 12).
+- **`FormatarGold` sem fallback científico** (achado à parte, não misturado): é
+  usado só no status/cartão de batalha (dano, DPS, crítico) e, além do último
+  sufixo (~e+150), imprimiria um número gigante + "Noqig" em vez de notação
+  científica — diferente do `FormatGold`/`formatNumber`. Baixo risco hoje, mas
+  vale unificar.

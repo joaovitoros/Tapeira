@@ -23,6 +23,9 @@ debug.log
 .DS_Store
 Thumbs.db
 
+# Túnel do site de compartilhamento (baixado de cloudflared/releases)
+cloudflared.exe
+
 # Editores
 .vscode/
 .idea/

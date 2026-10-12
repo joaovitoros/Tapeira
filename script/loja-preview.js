@@ -21,8 +21,8 @@ const PREVIEWS_LOJA = {
 		if (ITENS_PATENTE.dano.noTeto()) return "Dano — ★ " + (GanhoProximaPatenteTexto("dano") || "patente máxima");
 		const prox = N(danoJogador) + N(mulDano);
 		const extra = (N(lvlDano) === 9) ? " · nível 10 dá +20%!" : "";
-		return "Dano: " + N(danoJogador).toFixed(2) + " → " + prox.toFixed(2)
-			+ " (+" + N(mulDano).toFixed(2) + ")" + extra;
+		return "Dano: " + formatNumber(N(danoJogador)) + " → " + formatNumber(prox)
+			+ " (+" + formatNumber(N(mulDano)) + ")" + extra;
 	},
 	CompraBau() {
 		if (ITENS_PATENTE.bau.noTeto()) return "Chance de baú — ★ " + (GanhoProximaPatenteTexto("bau") || "patente máxima");
@@ -36,7 +36,7 @@ const PREVIEWS_LOJA = {
 	},
 	CompraGold() {
 		const prox = N(mulGold) * (1 + N(sobeGold));
-		return "Multiplicador gold: " + N(mulGold).toFixed(2) + " → " + prox.toFixed(2);
+		return "Multiplicador gold: " + formatNumber(N(mulGold)) + " → " + formatNumber(prox);
 	},
 	CompraAvanco() {
 		if (ITENS_PATENTE.avan.noTeto()) return "Avanço rápido — ★ " + (GanhoProximaPatenteTexto("avan") || "patente máxima");
@@ -50,7 +50,7 @@ const PREVIEWS_LOJA = {
 		const proxSobe = N(sobeDCrit) * TaxaPassoLoja("dcrit");
 		let proxCrit = N(danoCritJogador) + (N(danoJogador) / 2) * (2 + proxSobe);
 		proxCrit = Math.min(proxCrit, N(danoJogador) * proxMult);
-		return "Dano crítico: " + N(danoCritJogador).toFixed(2) + " → " + proxCrit.toFixed(2)
+		return "Dano crítico: " + formatNumber(N(danoCritJogador)) + " → " + formatNumber(proxCrit)
 			+ " (máx ×" + proxMult.toFixed(1) + ")";
 	},
 	CompraSubVida() {
@@ -84,7 +84,7 @@ const PREVIEWS_LOJA = {
 	},
 	CompraAvGold() {
 		const prox = N(mulGoldAvanco) * 1.1;
-		return "Bônus de gold do avanço: " + N(mulGoldAvanco).toFixed(2) + " → " + prox.toFixed(2);
+		return "Bônus de gold do avanço: " + formatNumber(N(mulGoldAvanco)) + " → " + formatNumber(prox);
 	},
 	CompraComp2() {
 		const n = N(lvlComp2);

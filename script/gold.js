@@ -1,3 +1,16 @@
+// Sufixos de números grandes (curto alcance). Lista ÚNICA, consumida por
+// GoldNumber.format(), FormatarGold() e formatNumber() — assim todo valor do
+// jogo (gold, CM, loja…) usa os mesmos sufixos. Além de "Noqig" (~e+150) cai
+// na notação científica.
+const SUFIXOS_NUMERO = [
+    "K", "M", "B", "T",
+    "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc",
+    "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod",
+    "Vg", "Uvg", "Dvg", "Tvg", "Qavg", "Qivg", "Sxvg", "Spvg", "Ocvg", "Novg",
+    "Tg", "Utg", "Dtg", "Ttg", "Qatg", "Qitg", "Sxtg", "Sptg", "Octg", "Notg",
+    "Qig", "Uqig", "Dqig", "Tqig", "Qaqig", "Qiqig", "Sxqig", "Spqig", "Ocqig", "Noqig"
+];
+
 class GoldNumber {
     constructor(value = 0) {
         if (value instanceof GoldNumber) {
@@ -118,11 +131,7 @@ class GoldNumber {
             return (this.m * Math.pow(10, this.e)).toFixed(0);
         }
 
-        const suffixes = [
-            "", "K", "M", "B", "T",
-            "Qa", "Qi", "Sx", "Sp", "Oc",
-            "No", "Dc"
-        ];
+        const suffixes = [""].concat(SUFIXOS_NUMERO);
 
         const index = Math.floor(this.e / 3);
 
@@ -154,17 +163,22 @@ function FormatarGold(valor) {
         return Number(valor).toFixed(2);
     }
 
-    const sufixos = [
-        "K", "M", "B", "T",
-        "Qa", "Qi", "Sx", "Sp",
-        "Oc", "No", "Dc"
-    ];
+    const sufixos = SUFIXOS_NUMERO;
 
     let index = -1;
 
     while (valor >= 1000 && index < sufixos.length - 1) {
         valor /= 1000;
         index++;
+    }
+
+    // além do último sufixo ("Noqig", ~e+150): notação científica, igual ao
+    // GoldNumber.format()/formatNumber() — senão sairia um número gigante +
+    // sufixo (ex.: "10000...000.00Noqig")
+    if (valor >= 1000) {
+        const exp = Math.floor(Math.log10(valor)) + (index + 1) * 3;
+        const mant = valor / Math.pow(10, Math.floor(Math.log10(valor)));
+        return mant.toFixed(2) + "e+" + exp;
     }
 
     return Number(valor).toFixed(2) + sufixos[index];
@@ -206,6 +220,10 @@ function AddGold(valor, aplicaBonusFormigas = true) {
         // Cristal (Cidade): amplia o gold conforme a profundidade do reset
         if (typeof MultiplicadorCristal === "function") {
             valorFinal = valorFinal * MultiplicadorCristal();
+        }
+        // Loja de Troféus (Cidade): +% de gold por nível do troféu Mercador
+        if (typeof TrofeuBonusGold === "function") {
+            valorFinal = valorFinal * TrofeuBonusGold();
         }
     }
     gold.add(valorFinal);
@@ -283,10 +301,9 @@ function formatNumber(n) {
 
     if (n < 1000) return n.toFixed(2);
 
-    // mesma lista do GoldNumber.format(): até "Dc"; além disso cai na
-    // notação científica. (Antes parava em "Sx" e o valor virava um número
-    // gigante tipo "229986612.80Sx".)
-    const units = ["K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+    // mesma lista do GoldNumber.format(); além do último sufixo cai na
+    // notação científica. (Antes parava em "Dc" e o valor virava "7.44e+39".)
+    const units = SUFIXOS_NUMERO;
     let unitIndex = -1;
 
     // 999.995 = o menor valor que arredonda para "1000.00": com ele o número

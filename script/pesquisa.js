@@ -35,13 +35,14 @@ function NivelPesquisaInimigo(id) {
 	return Math.max(0, Math.min(PESQUISA_INIMIGO_MAX, n));
 }
 
-// Custo em CM do próximo nível: item base 4.000 (×1,6); inimigo base 8.000 (×1,8)
+// Custo em CM do próximo nível: item base 20.000 ×CUSTO_CIDADE_MULT (×1,6);
+// inimigo base 8.000 ×CUSTO_CIDADE_MULT (×1,8)
 function CustoPesquisaItem(id) {
-	return Math.round(4000 * Math.pow(1.6, NivelPesquisaItem(id)));
+	return Math.round(20000 * CUSTO_CIDADE_MULT * Math.pow(1.6, NivelPesquisaItem(id)));
 }
 
 function CustoPesquisaInimigo(id) {
-	return Math.round(8000 * Math.pow(1.8, NivelPesquisaInimigo(id)));
+	return Math.round(8000 * CUSTO_CIDADE_MULT * Math.pow(1.8, NivelPesquisaInimigo(id)));
 }
 
 // Multiplicador do efeito do item (fonte única, consumida por ItensBuild.mult)
@@ -130,7 +131,16 @@ function AbrirPesquisa() {
 	close.setAttribute("aria-label", "Fechar o Centro de Pesquisa");
 	close.textContent = "×";
 	close.addEventListener("click", FecharPesquisa);
-	header.append(title, close);
+	header.append(title, CriaInfoTela({
+		id: "pesquisa-info",
+		rotulo: "Sobre o Centro de Pesquisa",
+		html: "<b>Como funciona</b>"
+			+ "<p>Tudo aqui é pago em <b>CM</b> e é <b>permanente</b>.</p>"
+			+ "<p><b>Pesquisa de itens</b>: potencializa o efeito do item "
+			+ "por nível — <b>só vale se você tiver o item</b> na build.</p>"
+			+ "<p><b>Análise de inimigos</b>: +% de dano contra um tipo de "
+			+ "inimigo por nível.</p>"
+	}), close);
 
 	const corpo = document.createElement("div");
 	corpo.className = "pesquisa-corpo";

@@ -291,12 +291,13 @@ Object.assign(UI, {
                 const registro = Tapeira.ItensBuild.item(idItem);
                 const copias = Tapeira.ItensBuild.copias(idItem);
                 const forja = Tapeira.ItensBuild.nivelForja ? Tapeira.ItensBuild.nivelForja(idItem) : 0;
-                return `<button class="item-build-cartao item-build-sair" data-descartar="${idItem}">
+                const final = Tapeira.ItensBuild.efeitoFinal ? Tapeira.ItensBuild.efeitoFinal(idItem) : registro.efeito;
+                return `<button class="item-build-cartao item-build-sair${forja > 0 ? " item-build-cartao--forjada" : ""}${forja >= Tapeira.ItensBuild.FORJA_MINIMO_PVP ? " item-build-cartao--pvp" : ""}" data-descartar="${idItem}">
                     <img src="${registro.icone}" alt="">
                     <span class="item-build-nome">${registro.nome}</span>
                     <span class="item-build-efeito">${registro.efeito}</span>
-                    ${copias > 1 ? `<span class="item-build-copia">pilha ×${copias} — sai tudo</span>` : ""}
-                    ${forja > 0 ? `<span class="item-build-copia">forjada ×${forja} — sai tudo</span>` : ""}
+                    <span class="item-build-efeito-final">${final}</span>
+                    <span class="item-build-meta">${copias > 1 ? "pilha ×" + copias + " · " : ""}${forja > 0 ? "forjada ×" + forja + " · " : ""}sai tudo</span>
                     <span class="item-build-acao">tirar da build</span>
                 </button>`;
             }).join("") + `</div>`;
@@ -304,11 +305,14 @@ Object.assign(UI, {
             corpo += `<div class="itens-build-grade">` + opcoes.map(idItem => {
                 const registro = Tapeira.ItensBuild.item(idItem);
                 const copias = Tapeira.ItensBuild.copias(idItem);
-                return `<button class="item-build-cartao" data-item="${idItem}">
+                const forja = Tapeira.ItensBuild.nivelForja ? Tapeira.ItensBuild.nivelForja(idItem) : 0;
+                const final = Tapeira.ItensBuild.efeitoFinal ? Tapeira.ItensBuild.efeitoFinal(idItem) : registro.efeito;
+                return `<button class="item-build-cartao${forja > 0 ? " item-build-cartao--forjada" : ""}${forja >= Tapeira.ItensBuild.FORJA_MINIMO_PVP ? " item-build-cartao--pvp" : ""}" data-item="${idItem}">
                     <img src="${registro.icone}" alt="">
                     <span class="item-build-nome">${registro.nome}</span>
                     <span class="item-build-efeito">${registro.efeito}</span>
-                    ${copias > 0 ? `<span class="item-build-copia">já na build ×${copias} → ×${copias + 1}</span>` : ""}
+                    <span class="item-build-efeito-final">${final}</span>
+                    ${copias > 0 ? `<span class="item-build-meta">já na build ×${copias} → ×${copias + 1}</span>` : ""}
                     <span class="item-build-acao">escolher</span>
                 </button>`;
             }).join("") + `</div>`;
@@ -378,12 +382,13 @@ Object.assign(UI, {
                 const registro = build.item(idItem);
                 const copias = build.copias(idItem);
                 const forja = build.nivelForja ? build.nivelForja(idItem) : 0;
-                return `<div class="item-build-cartao item-build-cartao--leitura">
+                const final = build.efeitoFinal ? build.efeitoFinal(idItem) : registro.efeito;
+                return `<div class="item-build-cartao item-build-cartao--leitura${forja > 0 ? " item-build-cartao--forjada" : ""}${forja >= build.FORJA_MINIMO_PVP ? " item-build-cartao--pvp" : ""}">
                     <img src="${registro.icone}" alt="">
                     <span class="item-build-nome">${registro.nome}</span>
                     <span class="item-build-efeito">${registro.efeito}</span>
-                    ${copias > 1 ? `<span class="item-build-copia">pilha ×${copias}</span>` : ""}
-                    ${forja > 0 ? `<span class="item-build-copia">forjada ×${forja} · efeito ×${build.copiasEfetivas(idItem)}</span>` : ""}
+                    <span class="item-build-efeito-final">${final}</span>
+                    <span class="item-build-meta">${copias > 1 ? "pilha ×" + copias + " · " : ""}${forja > 0 ? "forjada ×" + forja + " · " : ""}efeito ×${build.copiasEfetivas(idItem)}</span>
                 </div>`;
             }).join("") + `</div>`;
         }

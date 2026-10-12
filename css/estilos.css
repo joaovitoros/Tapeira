@@ -1280,6 +1280,16 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
     background: linear-gradient(145deg, rgba(255, 216, 74, 0.12), rgba(255, 255, 255, 0.02));
 }
 
+/* Título de seção dentro do "Como jogar" */
+.infoSecao{
+    margin-top: 0.3em;
+    color: #9ccfff;
+    font-weight: 800;
+    font-size: clamp(11px, 0.95vw, 15px);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
 .btn-FecharModal{
     margin-top: 1.2em;
     width: 100%;
@@ -1328,6 +1338,289 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
 
 .btn-FecharModal{
 	font-size: clamp(11px, 0.85vw, 15px);
+}
+
+/* Celular (<=700px): o "Como jogar" virava uma coluna fina e altíssima
+   (38vw de largura) que estourava a tela em cima e em baixo, escondendo
+   o título e o botão Fechar. Agora: quase tela cheia, com rolagem interna
+   no conteúdo e o Fechar sempre visível embaixo. */
+@media (max-width: 700px) {
+	.infoModalBox{
+		width: min(92vw, 520px);
+		max-height: 92vh;
+		display: flex;
+		flex-direction: column;
+		font-size: 13px;
+		padding: 0.9em;
+	}
+	.infoModalTitulo{
+		font-size: 16px;
+		margin-bottom: 0.5em;
+		flex-shrink: 0;
+	}
+	.infoModalConteudo{
+		overflow-y: auto;
+		min-height: 0;
+		gap: 0.45em;
+		-webkit-overflow-scrolling: touch;
+	}
+	.infoLinha{
+		font-size: 13px;
+		padding: 0.5em 0.7em;
+	}
+	.infoSecao{
+		font-size: 12px;
+	}
+	.btn-FecharModal{
+		font-size: 13px;
+		flex-shrink: 0;
+		margin-top: 0.9em;
+	}
+}
+
+/* ===================== BATALHA-FANTASMA (PvP) ===================== */
+#pvpDuelo{
+	position: fixed;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.75);
+	z-index: 999999;
+}
+
+.pvpDueloBox{
+	box-sizing: border-box;
+	width: min(92vw, 640px);
+	max-height: 92vh;
+	overflow-y: auto;
+	background: linear-gradient(145deg, #1a2230, #10161f);
+	border: 2px solid rgba(120, 160, 255, 0.25);
+	border-radius: 0.6em;
+	padding: 1.1em;
+	color: #e6edf3;
+	box-shadow: 0 0 2em rgba(0, 0, 0, 0.8), 0 0 1em rgba(0, 150, 255, 0.15);
+	font-size: clamp(12px, 0.95vw, 15px);
+}
+
+.pvpDueloTitulo{
+	font-weight: 800;
+	font-size: clamp(15px, 1.2vw, 20px);
+	color: #9ccfff;
+	text-align: center;
+	letter-spacing: 0.06em;
+}
+
+.pvpDueloSub{
+	margin: 0.4em 0 0.9em;
+	text-align: center;
+	color: #aab6c6;
+	font-size: 0.85em;
+}
+
+.pvpCartoes{
+	display: flex;
+	gap: 0.8em;
+}
+
+.pvpCartao{
+	flex: 1;
+	min-width: 0;
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(120, 160, 255, 0.18);
+	border-radius: 8px;
+	padding: 0.6em 0.7em;
+}
+
+.pvpCartao--lider{
+	border-color: rgba(255, 216, 74, 0.45);
+	box-shadow: 0 0 0.9em rgba(255, 216, 74, 0.15);
+}
+
+.pvpCartaoCab{
+	font-weight: 800;
+	color: #9ccfff;
+	margin-bottom: 0.45em;
+}
+
+.pvpCartao--lider .pvpCartaoCab{
+	color: #ffd84a;
+}
+
+.pvpCartaoLinha{
+	display: flex;
+	justify-content: space-between;
+	gap: 0.5em;
+	padding: 0.18em 0;
+	font-size: 0.86em;
+	color: #aab6c6;
+}
+
+.pvpCartaoLinha b{
+	color: #e6edf3;
+	text-align: right;
+	word-break: break-word;
+}
+
+.pvpDueloAcoes{
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5em;
+	margin-top: 0.9em;
+}
+
+.pvpDueloAcoes .btn-Padrao{
+	flex: 1 1 130px;
+	margin: 0;
+}
+
+/* ---- Fase 2: corrida contra o chefe ---- */
+
+.pvpBtnLutar{
+	border-color: rgba(255, 216, 74, 0.55);
+	box-shadow: 0 0 0.6em rgba(255, 216, 74, 0.18);
+}
+
+.pvpCorrida{
+	display: flex;
+	flex-direction: column;
+	gap: 0.7em;
+}
+
+.pvpCronometro{
+	text-align: center;
+	font-weight: 800;
+	font-size: 1.35em;
+	color: #9ccfff;
+	letter-spacing: 0.05em;
+	font-variant-numeric: tabular-nums;
+}
+
+.pvpCorridaInfo{
+	text-align: center;
+	color: #aab6c6;
+	font-size: 0.85em;
+}
+
+.pvpAlvo{
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(120, 160, 255, 0.18);
+	border-radius: 8px;
+	padding: 0.5em 0.65em;
+}
+
+.pvpAlvoTopo{
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.9em;
+	margin-bottom: 0.35em;
+}
+
+.pvpAlvoTopo span{
+	font-weight: 800;
+	color: #9ccfff;
+	/* o rótulo agora carrega o nome do jogador (Você · Nome): precisa poder
+	   quebrar linha em tela estreita sem espremer o cronômetro do lado */
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.pvpAlvo--fantasma .pvpAlvoTopo span{
+	color: #c99bff;
+}
+
+.pvpAlvoTopo b{
+	color: #e6edf3;
+	font-variant-numeric: tabular-nums;
+	flex: none;
+}
+
+.pvpBarra{
+	height: 16px;
+	background: #0c1118;
+	border: 1px solid rgba(120, 160, 255, 0.25);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.pvpBarraFill{
+	height: 100%;
+	width: 100%;
+	border-radius: 7px;
+	transition: width 0.15s linear;
+}
+
+.pvpAlvo--meu .pvpBarraFill{
+	background: linear-gradient(90deg, #2f7fd6, #5ab0ff);
+}
+
+.pvpAlvo--fantasma .pvpBarraFill{
+	background: linear-gradient(90deg, #7b3fd6, #c06bff);
+}
+
+.pvpAlvo--morto{
+	opacity: 0.65;
+}
+
+.pvpAlvo--morto .pvpBarraFill{
+	background: #3a4152;
+}
+
+.pvpResultado{
+	text-align: center;
+	border-radius: 8px;
+	padding: 0.6em;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pvpResultado[hidden]{
+	display: none;
+}
+
+.pvpResultadoTitulo{
+	font-weight: 800;
+	font-size: 1.15em;
+	letter-spacing: 0.06em;
+}
+
+.pvpResultado--venceu .pvpResultadoTitulo{
+	color: #ffd84a;
+}
+
+.pvpResultado--perdeu .pvpResultadoTitulo{
+	color: #ff8a8a;
+}
+
+.pvpResultadoLinha{
+	margin-top: 0.3em;
+	color: #aab6c6;
+	font-size: 0.9em;
+}
+
+.pvpResultadoLinha b{
+	color: #e6edf3;
+}
+
+.pvpResultadoNota{
+	margin-top: 0.25em;
+	color: #7f8b9c;
+	font-size: 0.75em;
+}
+
+/* prêmio da vitória no PvP: 2 esmeraldas */
+.pvpResultadoPremio{
+	margin-top: 0.3em;
+	color: #7ef0b8;
+	font-weight: 700;
+	font-size: 1em;
+	text-shadow: 0 0 8px rgba(126, 240, 184, 0.45);
+}
+
+@media (max-width: 700px) {
+	.pvpCartoes{
+		flex-direction: column;
+	}
 }
 
 /* Layout fluido para resolucoes desktop: referencia aproximada de 1366x768. */
@@ -2622,15 +2915,95 @@ caption {
 }
 
 /* Frenesi: flash vermelho em quem sofre o dano bônus do splash (filter
-   só — não mexe no transform do impacto normal). */
+   só — não mexe no transform do impacto normal). Reforçado junto do balance
+   (25% → 50%): mais forte e um pouco mais longo. */
 .inimigo--frenesi-dano {
-	animation: inimigo-frenesi-dano 300ms ease-out;
+	animation: inimigo-frenesi-dano 420ms ease-out;
 }
 
 @keyframes inimigo-frenesi-dano {
 	0% { filter: none; }
-	30% { filter: sepia(1) saturate(6) hue-rotate(-30deg) brightness(1.35) drop-shadow(0 0 12px rgba(255, 40, 20, 0.95)); }
+	25% { filter: sepia(1) saturate(8) hue-rotate(-32deg) brightness(1.7) drop-shadow(0 0 20px rgba(255, 40, 20, 1)); }
+	60% { filter: sepia(1) saturate(5) hue-rotate(-30deg) brightness(1.25) drop-shadow(0 0 12px rgba(255, 60, 30, 0.8)); }
 	100% { filter: none; }
+}
+
+/* Frenesi: EXPLOSÃO do dano bônus (Companheiro 1) — um efeito grande e bem
+   visível quando o acumulado estoura: núcleo brilhante + onda de choque,
+   centrados no alvo marcado, mais um flash de tela curto. */
+.frenesi-explosao {
+	position: fixed;
+	z-index: 8;
+	width: 340px;
+	height: 340px;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+	animation: frenesi-explosao 660ms ease-out forwards;
+}
+
+.frenesi-explosao__nucleo {
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	width: 130px;
+	height: 130px;
+	border-radius: 50%;
+	background: radial-gradient(circle,
+		rgba(255, 255, 236, 0.98) 0%,
+		rgba(255, 182, 66, 0.9) 30%,
+		rgba(255, 62, 30, 0.6) 55%,
+		transparent 72%);
+	animation: frenesi-nucleo 660ms ease-out forwards;
+}
+
+.frenesi-explosao__onda {
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	width: 170px;
+	height: 170px;
+	border-radius: 50%;
+	border: 6px solid rgba(255, 72, 40, 0.95);
+	box-shadow:
+		0 0 26px rgba(255, 62, 30, 0.9),
+		inset 0 0 20px rgba(255, 62, 30, 0.7);
+	animation: frenesi-onda 660ms cubic-bezier(0.15, 0.72, 0.25, 1) forwards;
+}
+
+@keyframes frenesi-explosao {
+	0% { opacity: 1; }
+	72% { opacity: 1; }
+	100% { opacity: 0; }
+}
+
+@keyframes frenesi-nucleo {
+	0% { opacity: 1; transform: scale(0.25); }
+	35% { opacity: 1; transform: scale(1.05); }
+	100% { opacity: 0; transform: scale(1.75); }
+}
+
+@keyframes frenesi-onda {
+	0% { opacity: 1; transform: scale(0.25); }
+	60% { opacity: 0.9; }
+	100% { opacity: 0; transform: scale(2); }
+}
+
+/* Flash de tela (vignette vermelha) — vende o impacto da explosão */
+.frenesi-flash-tela {
+	position: fixed;
+	inset: 0;
+	z-index: 6;
+	pointer-events: none;
+	background: radial-gradient(circle at 50% 55%,
+		rgba(255, 84, 40, 0.3),
+		rgba(140, 0, 0, 0.14) 55%,
+		transparent 78%);
+	animation: frenesi-flash 540ms ease-out forwards;
+}
+
+@keyframes frenesi-flash {
+	0% { opacity: 1; }
+	100% { opacity: 0; }
 }
 
 .enemy-hit-eyes span {
@@ -3122,6 +3495,14 @@ html.crit-shake {
 	.enemy-electric-impact,
 	.inimigo--surgindo,
 	.inimigo-surgir-anel,
+	.frenesi-explosao,
+	.frenesi-explosao__nucleo,
+	.frenesi-explosao__onda,
+	.frenesi-flash-tela,
+	.ataque-corte__lua,
+	.ataque-splash,
+	.ataque-faisca,
+	.player--atacando,
 	.contador--pulso,
 	.xp-fill--pulso,
 	.floor-transition--visible,
@@ -5507,9 +5888,122 @@ input:focus-visible {
 	opacity: 0;
 }
 
-.player.is-attacking-animation {
-	opacity: 0;
-	animation: none;
+/* ============ Ataque (novo): corte de vento + investida do player ==========
+   Substitui a animação de sprite do ataque (por hora desativada: o player não
+   some mais). Uma MEIA LUA (lado curvo na frente) voa do player até o inimigo e
+   um sopro (com faíscas) marca o impacto. O player dá uma investida "plástica"
+   de 180 ms (squash/stretch). */
+.player--atacando {
+	animation: playerInvestida 180ms cubic-bezier(0.22, 0.68, 0.2, 1);
+}
+
+/* Investida "plástica": antecipa (encolhe), estica na direção do golpe e volta
+   com um leve contrapeso. O deslocamento vem do --investida-x (JS). */
+@keyframes playerInvestida {
+	0%   { transform: translateX(0) scale(1, 1); }
+	16%  { transform: translateX(calc(var(--investida-x, 0px) * 0.25)) scale(0.9, 1.1); }
+	46%  { transform: translateX(var(--investida-x, 0px)) scale(1.18, 0.84); }
+	72%  { transform: translateX(calc(var(--investida-x, 0px) * -0.18)) scale(0.97, 1.03); }
+	100% { transform: translateX(0) scale(1, 1); }
+}
+
+/* A meia lua tem tamanho fixo; a DISTÂNCIA do voo vem do --corte-varre (JS).
+   O container é rotacionado na direção do inimigo. */
+.ataque-corte {
+	position: fixed;
+	z-index: 9;
+	width: clamp(54px, 6.6vw, 108px);
+	aspect-ratio: 1;
+	pointer-events: none;
+}
+
+/* Meia lua "cheia" (redonda): um disco com a mordida da ESQUERDA — o lado
+   curvo (convexo) fica à direita, que é a direção do inimigo. */
+.ataque-corte__lua {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	background: radial-gradient(circle at 38% 50%,
+		rgba(255, 255, 255, 0.98) 0%,
+		rgba(232, 248, 255, 0.9) 42%,
+		rgba(170, 214, 255, 0.5) 66%,
+		transparent 80%);
+	-webkit-mask-image: radial-gradient(circle at 18% 50%, transparent 0 50%, #000 53%);
+	mask-image: radial-gradient(circle at 18% 50%, transparent 0 50%, #000 53%);
+	filter: blur(0.4px) drop-shadow(0 0 11px rgba(185, 228, 255, 0.92));
+	animation: ataqueLua 300ms cubic-bezier(0.2, 0.75, 0.25, 1) forwards;
+}
+
+@keyframes ataqueLua {
+	0%   { opacity: 0; transform: translateX(0) scale(0.55); }
+	16%  { opacity: 1; }
+	68%  { opacity: 1; transform: translateX(var(--corte-varre, 60px)) scale(1.02); }
+	100% { opacity: 0; transform: translateX(var(--corte-varre, 60px)) scale(1.16); }
+}
+
+/* Sopro no impacto: anel fino e suave + dois jatos curtos (a direção do golpe
+   vem do --sopro-ang, setado pelo JS). */
+.ataque-splash {
+	position: fixed;
+	z-index: 9;
+	width: clamp(46px, 6vw, 96px);
+	aspect-ratio: 1;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+	background: radial-gradient(circle,
+		rgba(255, 255, 255, 0) 0%,
+		rgba(224, 244, 255, 0.5) 44%,
+		rgba(160, 205, 255, 0.26) 60%,
+		transparent 74%);
+	filter: blur(1.4px);
+	animation: ataqueSopro 220ms ease-out forwards;
+}
+
+.ataque-splash::before,
+.ataque-splash::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 130%;
+	height: 9%;
+	border-radius: 999px;
+	background: linear-gradient(90deg, transparent, rgba(230, 247, 255, 0.9), transparent);
+}
+
+.ataque-splash::before {
+	transform: translate(-50%, -50%) rotate(var(--sopro-ang, 0deg));
+}
+
+.ataque-splash::after {
+	transform: translate(-50%, -50%) rotate(calc(var(--sopro-ang, 0deg) + 74deg));
+	opacity: 0.65;
+}
+
+@keyframes ataqueSopro {
+	0%   { opacity: 0.9; transform: translate(-50%, -50%) scale(0.3); }
+	50%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+	100% { opacity: 0; transform: translate(-50%, -50%) scale(1.4); }
+}
+
+/* Faíscas do impacto: pontinhos que saem em leque (o JS sorteia a direção). */
+.ataque-faisca {
+	position: fixed;
+	z-index: 10;
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: #ffffff;
+	box-shadow: 0 0 8px rgba(190, 232, 255, 0.95);
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+	animation: ataqueFaisca 340ms ease-out forwards;
+}
+
+@keyframes ataqueFaisca {
+	0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+	100% { opacity: 0; transform: translate(calc(-50% + var(--faisca-x, 0px)), calc(-50% + var(--faisca-y, 0px))) scale(0.4); }
 }
 
 .game-sprite-animation {
@@ -6976,6 +7470,34 @@ button.skill-ramo-no:focus-visible {
 	color: #e9eef5;
 	text-shadow: 0 1px 2px #000, 0 0 3px rgba(0, 0, 0, 0.9);
 	pointer-events: none; /* overlay: não rouba o clique da arena */
+}
+
+/* Aviso rápido (toast): mensagem visível que some sozinha na animação.
+   Fica acima dos painéis da cidade/pausa (z-index 60-61). */
+.aviso-rapido {
+	position: fixed;
+	top: 13vh;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 9000;
+	max-width: min(440px, 88vw);
+	padding: 0.65em 1.15em;
+	background: linear-gradient(180deg, rgba(14, 18, 28, 0.97), rgba(10, 13, 20, 0.94));
+	border: 1px solid rgba(126, 240, 184, 0.55);
+	border-radius: 0.5em;
+	color: #e9eef5;
+	font: 700 14px/1.4 "Segoe UI", sans-serif;
+	text-align: center;
+	box-shadow: 0 10px 34px rgba(0, 0, 0, 0.6);
+	pointer-events: none;
+	animation: aviso-rapido-anim 3.6s ease forwards;
+}
+
+@keyframes aviso-rapido-anim {
+	0% { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+	8% { opacity: 1; transform: translateX(-50%) translateY(0); }
+	86% { opacity: 1; transform: translateX(-50%) translateY(0); }
+	100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
 }
 
 .log-avisos[hidden] {
@@ -8673,6 +9195,73 @@ button.skill-ramo-no:focus-visible {
 	text-align: center;
 }
 
+/* Item forjado: borda dourada pra destacar na grade */
+.item-build-cartao--forjada {
+	border-color: rgba(229, 183, 96, 0.85);
+	box-shadow: 0 0 0 1px rgba(229, 183, 96, 0.35), 0 0 14px rgba(229, 183, 96, 0.18);
+}
+
+/* Item com forja 5+: CONTA NO PvP (batalha-fantasma) — borda prateada
+   meio azul, bem mais ornamental que a dourada comum. Fica na tela como
+   marcador de quais itens entram no duelo. */
+.item-build-cartao--pvp {
+	border-color: rgba(216, 234, 255, 0.95);
+	background: linear-gradient(160deg, rgba(196, 224, 255, 0.10), rgba(136, 178, 240, 0.04));
+	box-shadow:
+		0 0 0 1px rgba(240, 248, 255, 0.70),
+		0 0 0 3px rgba(150, 195, 250, 0.45),
+		0 0 16px rgba(140, 190, 255, 0.35),
+		inset 0 0 10px rgba(160, 205, 255, 0.16);
+}
+
+/* hover: mantém o anel prateado (o roxo do cartão comum não pode cobrir) */
+.item-build-cartao--pvp:hover {
+	border-color: rgba(245, 251, 255, 1);
+	background: linear-gradient(160deg, rgba(196, 224, 255, 0.17), rgba(136, 178, 240, 0.09));
+	box-shadow:
+		0 0 0 1px rgba(248, 252, 255, 0.85),
+		0 0 0 3px rgba(170, 210, 255, 0.60),
+		0 0 20px rgba(150, 200, 255, 0.50),
+		inset 0 0 12px rgba(170, 210, 255, 0.24);
+}
+
+/* Efeito final do item (pilha + forja já consideradas) */
+.item-build-efeito-final {
+	font-size: 0.8rem;
+	color: #7ee0a0;
+	font-weight: 800;
+	text-align: center;
+}
+
+/* Meta do item (pilha / forja / cópias efetivas) */
+.item-build-meta {
+	font-size: 0.72rem;
+	color: #9a8fb5;
+	text-align: center;
+}
+
+/* ---- Efeito de toque (modo Android): anel que expande e some ---- */
+.toque-efeito {
+	position: fixed;
+	z-index: 40;
+	width: 26px;
+	height: 26px;
+	margin: -13px 0 0 -13px;
+	border: 3px solid rgba(255, 214, 120, 0.9);
+	border-radius: 50%;
+	pointer-events: none;
+	animation: toque-efeito 420ms ease-out forwards;
+}
+
+@keyframes toque-efeito {
+	from { transform: scale(0.4); opacity: 0.95; }
+	to   { transform: scale(1.6); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.toque-efeito { animation-duration: 1ms; }
+}
+
 .item-build-acao {
 	margin-top: 4px;
 	font-size: 0.75rem;
@@ -9721,6 +10310,15 @@ img.ramos-tree-no__tile {
 	z-index: 61;
 }
 
+/* Painel de HUD aberto (Status/Loja/Config): sobe o contexto do
+   #container-opcoes acima das habilidades de combate (z 15), dos efeitos de
+   dano/vida (z 7-8) e dos sprites (z 20), que senão passam por cima do painel.
+   Fica ABAIXO dos overlays de verdade — itens da build (z 40), info (z 30) e
+   os modais (z 1000000). */
+.hud-painel-aberto #container-opcoes {
+	z-index: 25;
+}
+
 .cidade-topo {
 	/* fica fixo só na HORIZONTAL: ao arrastar pros lados o cabeçalho não sai
 	   da tela; na vertical ele rola junto com a cena (não gruda no topo). */
@@ -9745,9 +10343,82 @@ img.ramos-tree-no__tile {
 
 .cidade-hud {
 	flex: 1 1 auto;
-	color: #b9c8da;
-	font-size: clamp(12px, 1.1vw, 16px);
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	font-size: clamp(12px, 1.05vw, 15px);
 	font-variant-numeric: tabular-nums;
+}
+
+/* Cada valor do cabeçalho é um "chip" com ícone e cor própria. */
+.cidade-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 11px 4px 8px;
+	border-radius: 999px;
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	background: rgba(255, 255, 255, 0.05);
+	font-weight: 800;
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.cidade-chip__icone {
+	width: 18px;
+	height: 18px;
+	object-fit: contain;
+	animation: cidade-chip-flutua 3s ease-in-out infinite;
+}
+
+.cidade-chip__valor {
+	letter-spacing: 0.01em;
+}
+
+.cidade-chip--andar {
+	border-color: rgba(120, 180, 255, 0.4);
+	background: linear-gradient(145deg, rgba(90, 150, 255, 0.18), rgba(255, 255, 255, 0.03));
+	color: #cfe4ff;
+}
+
+.cidade-chip--gold {
+	border-color: rgba(240, 200, 90, 0.45);
+	background: linear-gradient(145deg, rgba(240, 200, 90, 0.2), rgba(255, 255, 255, 0.03));
+	color: #ffe6a0;
+	animation: cidade-chip-brilho 2.6s ease-in-out infinite;
+}
+
+.cidade-chip--ticket {
+	border-color: rgba(200, 140, 255, 0.5);
+	background: linear-gradient(145deg, rgba(180, 120, 255, 0.22), rgba(255, 255, 255, 0.03));
+	color: #e6d2ff;
+	animation: cidade-chip-brilho 2.6s ease-in-out infinite;
+}
+
+.cidade-chip--ticket .cidade-chip__icone {
+	animation: cidade-chip-ticket 2s ease-in-out infinite;
+}
+
+@keyframes cidade-chip-flutua {
+	0%, 100% { transform: translateY(0); }
+	50% { transform: translateY(-1.5px); }
+}
+
+@keyframes cidade-chip-ticket {
+	0%, 100% { transform: rotate(0deg) scale(1); }
+	45% { transform: rotate(-9deg) scale(1.08); }
+	70% { transform: rotate(6deg) scale(1.04); }
+}
+
+@keyframes cidade-chip-brilho {
+	0%, 100% { box-shadow: 0 0 0 rgba(255, 220, 120, 0); }
+	50% { box-shadow: 0 0 12px rgba(255, 220, 120, 0.28); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cidade-chip,
+	.cidade-chip__icone { animation: none; }
 }
 
 .cidade-fechar {
@@ -9831,8 +10502,8 @@ img.ramos-tree-no__tile {
 /* Brilho pulsante sobre o cristal central (a arte já está na imagem) */
 .cidade-fonte {
 	position: absolute;
-	left: 50%;
-	top: 48%;
+	left: 41%;
+	top: 50%;
 	width: 16%;
 	aspect-ratio: 1;
 	transform: translate(-50%, -50%);
@@ -9906,6 +10577,12 @@ img.ramos-tree-no__tile {
 	to   { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
 }
 
+/* A arte nova já traz o brilho da forja "assado" na imagem — a camada antiga
+   (que pertencia à arte-base) fica escondida pra não duplicar. */
+.cidade-fogo {
+	display: none;
+}
+
 .cidade-fumaca {
 	position: absolute;
 	z-index: 3;
@@ -9918,27 +10595,31 @@ img.ramos-tree-no__tile {
 	position: absolute;
 	left: 0;
 	bottom: 0;
-	width: clamp(14px, 1.6vw, 26px);
-	height: clamp(14px, 1.6vw, 26px);
+	width: clamp(18px, 2.1vw, 34px);
+	height: clamp(18px, 2.1vw, 34px);
 	border-radius: 50%;
-	background: radial-gradient(50% 50% at 50% 50%, rgba(214, 214, 224, 0.55), rgba(160, 165, 180, 0.14) 68%, transparent 78%);
-	filter: blur(1.5px);
+	background: radial-gradient(50% 50% at 50% 50%, rgba(226, 226, 236, 0.72), rgba(166, 170, 186, 0.24) 66%, transparent 80%);
+	filter: blur(2px);
 	opacity: 0;
-	animation: cidadeFumaca 4.6s ease-out infinite;
+	animation: cidadeFumaca 4.2s ease-out infinite;
 }
 
-.cidade-fumaca span:nth-child(2) { animation-delay: -1.15s; }
-.cidade-fumaca span:nth-child(3) { animation-delay: -2.3s; }
-.cidade-fumaca span:nth-child(4) { animation-delay: -3.45s; }
+.cidade-fumaca span:nth-child(2) { animation-delay: -0.7s; }
+.cidade-fumaca span:nth-child(3) { animation-delay: -1.4s; }
+.cidade-fumaca span:nth-child(4) { animation-delay: -2.1s; }
+.cidade-fumaca span:nth-child(5) { animation-delay: -2.8s; }
+.cidade-fumaca span:nth-child(6) { animation-delay: -3.5s; }
 
 @keyframes cidadeFumaca {
-	0%   { opacity: 0;    transform: translate(0, 0) scale(0.5); }
-	18%  { opacity: 0.65; }
-	100% { opacity: 0;    transform: translate(-18px, -110px) scale(1.7); }
+	0%   { opacity: 0;    transform: translate(0, 0) scale(0.55); }
+	15%  { opacity: 0.85; }
+	100% { opacity: 0;    transform: translate(-24px, -160px) scale(2.1); }
 }
 
-.cidade-fumaca--fabrica { left: 12%; top: 54%; }
-.cidade-fumaca--casa    { left: 47%; top: 11%; }
+/* posições na ARTE NOVA: a chaminé da Fábrica (baixo-esquerda) e a da Casa
+   (topo-centro); a Guilda (topo-direita) já tem fumaça "assada" na imagem */
+.cidade-fumaca--fabrica { left: 8%;  top: 56%; }
+.cidade-fumaca--casa    { left: 38%; top: 13%; }
 
 .cidade-particulas {
 	position: absolute;
@@ -9976,6 +10657,29 @@ img.ramos-tree-no__tile {
 	100% { opacity: 0;   top: -4%; }
 }
 
+/* Faíscas de CRISTAL (azuis): metade das partículas vira faísca azul que
+   cintila (a outra metade segue poeira quente), casando com os cristais da
+   arte nova. Mesma camada — nada de elemento novo no HTML. */
+.cidade-particulas span:nth-child(even) {
+	width: clamp(2px, 0.3vw, 5px);
+	height: clamp(2px, 0.3vw, 5px);
+	background: rgba(176, 232, 255, 0.95);
+	box-shadow: 0 0 9px rgba(120, 200, 255, 0.9);
+	animation-name: cidadeFaisca;
+}
+
+.cidade-particulas span:nth-child(2) { animation-duration: 11s; animation-delay: -5s; }
+.cidade-particulas span:nth-child(4) { animation-duration: 13s; animation-delay: -2s; }
+.cidade-particulas span:nth-child(6) { animation-duration: 9s;  animation-delay: -7s; }
+.cidade-particulas span:nth-child(8) { animation-duration: 12s; animation-delay: -3s; }
+
+@keyframes cidadeFaisca {
+	0%   { opacity: 0;   top: 100%; transform: translateX(0) scale(0.7); }
+	10%  { opacity: 1; }
+	55%  { opacity: 0.9; transform: translateX(7px) scale(1.2); }
+	100% { opacity: 0;   top: 0%;   transform: translateX(-7px) scale(0.9); }
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.cidade-fogo { animation: none; }
 	.cidade-lampiao { animation: none; }
@@ -10010,23 +10714,23 @@ img.ramos-tree-no__tile {
 	animation: cidadeUrsoBob 1.8s ease-in-out infinite alternate;
 }
 
-/* mineradores (embaixo-esquerda, junto da Fábrica) */
-.cidade-decor--mine1 { left: 33%; top: 63%; }
-.cidade-decor--mine2 { left: 24%; top: 66%; }
-.cidade-decor--mine3 { left: 31%; top: 73%; height: clamp(38px, 4.8vw, 80px); }
-.cidade-decor--mine4 { left: 19%; top: 62%; }
+/* mineradores (embaixo-esquerda, junto da Fábrica) — posições da ARTE NOVA */
+.cidade-decor--mine1 { left: 24%; top: 64%; }
+.cidade-decor--mine2 { left: 11%; top: 71%; }
+.cidade-decor--mine3 { left: 20%; top: 81%; height: clamp(38px, 4.8vw, 80px); }
+.cidade-decor--mine4 { left: 6%;  top: 62%; }
 
 /* pesquisadores (direita, junto do Centro de Pesquisa) */
-.cidade-decor--pesq1 { left: 79%; top: 52%; }
-.cidade-decor--pesq2 { left: 70%; top: 57%; }
-.cidade-decor--pesq3 { left: 85%; top: 60%; height: clamp(30px, 3.8vw, 62px); }
-.cidade-decor--pesq4 { left: 74%; top: 48%; }
+.cidade-decor--pesq1 { left: 74%; top: 60%; }
+.cidade-decor--pesq2 { left: 68%; top: 52%; }
+.cidade-decor--pesq3 { left: 89%; top: 64%; height: clamp(30px, 3.8vw, 62px); }
+.cidade-decor--pesq4 { left: 79%; top: 44%; }
 
-/* formigas (embaixo-direita, junto da Fazenda) */
-.cidade-decor--form1 { left: 85%; top: 76%; height: clamp(30px, 3.8vw, 62px); }
-.cidade-decor--form2 { left: 78%; top: 83%; height: clamp(32px, 4vw, 66px); }
-.cidade-decor--form3 { left: 89%; top: 81%; height: clamp(30px, 3.8vw, 62px); }
-.cidade-decor--form4 { left: 73%; top: 79%; height: clamp(28px, 3.6vw, 58px); }
+/* formigas (embaixo-centro, junto do formigueiro da Fazenda) */
+.cidade-decor--form1 { left: 50%; top: 74%; height: clamp(30px, 3.8vw, 62px); }
+.cidade-decor--form2 { left: 56%; top: 84%; height: clamp(32px, 4vw, 66px); }
+.cidade-decor--form3 { left: 68%; top: 82%; height: clamp(30px, 3.8vw, 62px); }
+.cidade-decor--form4 { left: 74%; top: 72%; height: clamp(28px, 3.6vw, 58px); }
 
 /* dessincroniza o idle de alguns pra não balançarem todos juntos */
 .cidade-decor--pesq2 img { animation-delay: -0.5s; }
@@ -10065,13 +10769,17 @@ img.ramos-tree-no__tile {
 	transition: background 140ms ease, box-shadow 140ms ease;
 }
 
-/* posições/tamanhos dos hotspots sobre os prédios da imagem */
-.cidade-predio--casa     { left: 45%; top: 28%; --largura: 26%; --altura: 30%; }
-.cidade-predio--mercado  { left: 18%; top: 35%; --largura: 25%; --altura: 26%; }
-.cidade-predio--pesquisa { left: 79%; top: 33%; --largura: 22%; --altura: 26%; }
-.cidade-predio--fabrica  { left: 17%; top: 69%; --largura: 27%; --altura: 26%; }
-.cidade-predio--fazenda  { left: 76%; top: 67%; --largura: 24%; --altura: 24%; }
-.cidade-predio--cristal  { left: 50%; top: 47%; --largura: 17%; --altura: 17%; }
+/* posições/tamanhos dos hotspots sobre os prédios da ARTE NOVA (cena.png) */
+.cidade-predio--casa     { left: 38%; top: 28%; --largura: 19%; --altura: 28%; }
+.cidade-predio--mercado  { left: 19%; top: 42%; --largura: 26%; --altura: 28%; }
+.cidade-predio--pesquisa { left: 81%; top: 52%; --largura: 28%; --altura: 30%; }
+.cidade-predio--fabrica  { left: 15%; top: 70%; --largura: 27%; --altura: 32%; }
+.cidade-predio--fazenda  { left: 62%; top: 73%; --largura: 40%; --altura: 30%; }
+.cidade-predio--cristal  { left: 41%; top: 53%; --largura: 19%; --altura: 21%; }
+/* Guilda: a casa grande "GUILD" do topo-direita — a arte já tem a placa e a
+   bandeira com espadas cruzadas. Altura menor que a casa pra o banner não
+   sair da cena (overflow hidden). */
+.cidade-predio--guilda   { left: 72%; top: 26%; --largura: 33%; --altura: 30%; z-index: 4; }
 
 /* realce do hover: brilho suave (sem moldura quadrada) */
 .cidade-predio:hover {
@@ -10603,9 +11311,152 @@ img.ramos-tree-no__tile {
 	cursor: not-allowed;
 }
 
+/* Barra de produção: quanto falta pro próximo ciclo */
+.fazenda-producao {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-top: 2px;
+}
+
+.fazenda-producao__trilha {
+	height: 12px;
+	border-radius: 999px;
+	background: rgba(10, 14, 20, 0.85);
+	border: 1px solid rgba(229, 183, 96, 0.35);
+	overflow: hidden;
+}
+
+.fazenda-producao__fill {
+	display: block;
+	height: 100%;
+	width: 0;
+	background: linear-gradient(90deg, #b9971f, #f2c14e);
+	border-radius: 999px 0 0 999px;
+}
+
+.fazenda-producao__tempo {
+	color: #b9c8da;
+	font-size: clamp(11px, 1vw, 13px);
+}
+
+/* "+1 <cor>" que sobe quando a Fazenda produz */
+.fazenda-mais1 {
+	align-self: flex-start;
+	padding: 2px 10px;
+	border-radius: 999px;
+	background: rgba(126, 224, 160, 0.16);
+	border: 1px solid rgba(126, 224, 160, 0.55);
+	color: #b7f0c9;
+	font-size: clamp(11px, 1vw, 13px);
+	font-weight: 800;
+	animation: fazendaMais1 1.3s ease-out forwards;
+}
+
+@keyframes fazendaMais1 {
+	from { opacity: 0; transform: translateY(8px); }
+	30%  { opacity: 1; transform: translateY(0); }
+	100% { opacity: 0; transform: translateY(-12px); }
+}
+
+/* Depósito: formigas esperando a coleta + botão Coletar */
+.fazenda-deposito {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 8px 10px;
+	border: 1px solid rgba(137, 177, 255, 0.28);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #1a2230, #121822);
+}
+
+.fazenda-deposito.is-cheio {
+	border-color: rgba(229, 183, 96, 0.7);
+	box-shadow: inset 0 0 10px rgba(255, 200, 90, 0.12);
+}
+
+.fazenda-deposito__topo {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.fazenda-deposito__conta {
+	color: #eaf1fc;
+	font-weight: 800;
+	font-size: clamp(12px, 1.05vw, 14px);
+}
+
+.fazenda-deposito__aviso {
+	color: #ffcf6b;
+	font-weight: 800;
+	font-size: clamp(11px, 1vw, 13px);
+}
+
+.fazenda-deposito__previa {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 3px;
+	min-height: 20px;
+}
+
+.fazenda-deposito__chip {
+	display: inline-flex;
+	width: 22px;
+	height: 20px;
+}
+
+.fazenda-deposito__chip .ant-sprite {
+	width: 100%;
+	height: 100%;
+}
+
+.fazenda-deposito__mais,
+.fazenda-deposito__vazio {
+	color: #9aa7bd;
+	font-size: clamp(11px, 0.95vw, 13px);
+}
+
+.fazenda-coletar {
+	align-self: flex-start;
+	padding: 8px 16px;
+	border: 1px solid rgba(126, 224, 160, 0.6);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #2f9e5a, #1d6b3c);
+	color: #f2fff6;
+	font: inherit;
+	font-weight: 800;
+	cursor: pointer;
+}
+
+.fazenda-coletar:hover {
+	filter: brightness(1.1);
+}
+
+.fazenda-coletar:disabled {
+	filter: saturate(0.4) brightness(0.7);
+	cursor: not-allowed;
+}
+
+/* Pulso no cartão da formiga recém-produzida */
+.ant-collection-card.is-produzindo {
+	animation: fazendaPulso 0.9s ease-out;
+}
+
+@keyframes fazendaPulso {
+	0%   { box-shadow: 0 0 0 0 rgba(126, 224, 160, 0.75); }
+	100% { box-shadow: 0 0 0 16px rgba(126, 224, 160, 0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.fazenda-overlay,
 	.fazenda-panel {
+		animation: none;
+	}
+	.fazenda-mais1,
+	.ant-collection-card.is-produzindo {
 		animation: none;
 	}
 }
@@ -10755,6 +11606,242 @@ img.ramos-tree-no__tile {
 	}
 }
 
+/* ===================== GUILDA (hub do multiplayer) ======================
+   Reusa .ant-collection-overlay/.ant-collection-panel, no visual do painel
+   de Troféus (mas no verde-jade do PvP). */
+.guilda-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.guilda-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid rgba(126, 240, 184, 0.35);
+}
+
+.guilda-header h2 {
+	flex: 1 1 auto;
+	margin: 0;
+	color: #b6f5d4;
+	font-size: clamp(20px, 2.2vw, 28px);
+	font-weight: 800;
+	letter-spacing: 0.03em;
+}
+
+.guilda-fechar {
+	flex: 0 0 auto;
+	width: 36px;
+	height: 36px;
+	border: 1px solid rgba(126, 240, 184, 0.55);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #3c4658, #252c39);
+	color: #b6f5d4;
+	font-size: 20px;
+	font-weight: 800;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.guilda-fechar:hover {
+	filter: brightness(1.15);
+}
+
+.guilda-corpo {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.guilda-acoes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.guilda-acao {
+	flex: 1 1 180px;
+}
+
+.guilda-nota {
+	margin: 0;
+	font-size: 12px;
+	opacity: 0.8;
+	text-align: center;
+}
+
+.guilda-resumo__id {
+	margin-top: 6px;
+	font-size: 12px;
+	opacity: 0.8;
+	text-align: center;
+}
+
+/* ===================== LOJA DE TROFÉUS (painel da Cidade) ================
+   Reusa .ant-collection-overlay/.ant-collection-panel. */
+.trofeus-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.trofeus-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid rgba(229, 183, 96, 0.35);
+}
+
+.trofeus-header h2 {
+	flex: 1 1 auto;
+	margin: 0;
+	color: #ffe2a0;
+	font-size: clamp(20px, 2.2vw, 28px);
+	font-weight: 800;
+	letter-spacing: 0.03em;
+}
+
+.trofeus-fechar {
+	flex: 0 0 auto;
+	width: 36px;
+	height: 36px;
+	border: 1px solid rgba(229, 183, 96, 0.55);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #3c4658, #252c39);
+	color: #ffe0a0;
+	font-size: 20px;
+	font-weight: 800;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.trofeus-fechar:hover {
+	filter: brightness(1.15);
+}
+
+.trofeus-corpo {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+/* Saldo de Tickets (a moeda da loja), destacado no topo */
+.trofeus-saldo {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	align-self: flex-start;
+	padding: 6px 14px;
+	border: 1px solid rgba(216, 168, 76, 0.55);
+	border-radius: 999px;
+	background: linear-gradient(145deg, rgba(40, 31, 14, 0.92), rgba(24, 18, 8, 0.92));
+}
+
+.trofeus-saldo__icone {
+	width: clamp(20px, 2.2vw, 26px);
+	height: clamp(20px, 2.2vw, 26px);
+	object-fit: contain;
+}
+
+.trofeus-saldo__texto {
+	color: #ffe2a0;
+	font-weight: 800;
+	font-size: clamp(13px, 1.15vw, 16px);
+}
+
+.trofeus-secao {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.trofeus-secao__desc {
+	margin: 0;
+	color: #aeb9cc;
+	font-size: clamp(12px, 1.05vw, 14px);
+	line-height: 1.45;
+}
+
+.trofeus-lista {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.trofeus-linha {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 8px 12px;
+	border: 1px solid rgba(229, 183, 96, 0.3);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #1a2230, #121822);
+}
+
+.trofeus-linha.is-max {
+	border-color: rgba(126, 224, 160, 0.5);
+}
+
+.trofeus-linha__icone {
+	flex: 0 0 auto;
+	width: clamp(30px, 3vw, 40px);
+	height: clamp(30px, 3vw, 40px);
+	object-fit: contain;
+	filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.trofeus-linha__info {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.trofeus-linha__info strong {
+	color: #eaf1fc;
+	font-size: clamp(13px, 1.1vw, 15px);
+}
+
+.trofeus-linha__sub {
+	color: #9aa7bd;
+	font-size: clamp(11px, 0.95vw, 13px);
+}
+
+.trofeus-comprar {
+	flex: 0 0 auto;
+	padding: 7px 14px;
+	border: 1px solid rgba(229, 183, 96, 0.6);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #d99a12, #a06a0d);
+	color: #1b1206;
+	font: inherit;
+	font-weight: 800;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.trofeus-comprar:hover {
+	filter: brightness(1.1);
+}
+
+.trofeus-comprar:disabled {
+	filter: saturate(0.4) brightness(0.7);
+	cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.trofeus-overlay,
+	.trofeus-panel {
+		animation: none;
+	}
+}
+
 /* ===================== MERCADO (painel da Cidade) =====================
    Reusa .ant-collection-overlay/.ant-collection-panel. */
 .mercado-panel {
@@ -10869,6 +11956,52 @@ img.ramos-tree-no__tile {
 .mercado-comprar:disabled {
 	filter: saturate(0.4) brightness(0.7);
 	cursor: not-allowed;
+}
+
+/* Ofertas do dia: nome/efeito à esquerda, botão de preço à direita; a já
+   comprada fica esmaecida. */
+.mercado-ofertas {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.mercado-oferta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 8px 12px;
+	border: 1px solid rgba(229, 183, 96, 0.3);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #1a2230, #121822);
+}
+
+.mercado-oferta.is-comprada {
+	opacity: 0.6;
+	border-color: rgba(126, 224, 160, 0.5);
+}
+
+.mercado-oferta__info {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.mercado-oferta__info strong {
+	color: #eaf1fc;
+	font-size: clamp(13px, 1.1vw, 15px);
+}
+
+.mercado-oferta__sub {
+	color: #9aa7bd;
+	font-size: clamp(11px, 0.95vw, 13px);
+}
+
+.mercado-oferta .mercado-comprar {
+	align-self: center;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -11996,4 +13129,140 @@ input[type="checkbox"]:disabled {
 	margin: 0;
 	transform: none;
 	z-index: 16;
+}
+
+/* =========================
+   ÍCONE DE INFO DE TELAS
+   =========================
+   Componente reutilizável (script/ui-info.js): o selo redondo de "i" que
+   abre um balão curto explicando como a tela funciona. Mesmo visual do info
+   do baú dourado, mas com classes genéricas para qualquer tela complexa
+   (primeiro uso: cabeçalho do painel de Ramos). */
+.info-tela {
+	position: relative;
+	display: inline-flex;
+	flex: none;
+	/* headers com justify-content:space-between (ant-collection) empurrariam o
+	   selo para o MEIO do cabeçalho; a margem automática à esquerda garante
+	   que ele fique sempre junto do ×, à direita, em qualquer padrão de header. */
+	margin-left: auto;
+}
+
+.info-tela__btn {
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 24px;
+	height: 24px;
+	min-width: 0;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	border: 1px solid rgba(255, 224, 138, 0.55);
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.5);
+	color: #ffe08a;
+	font-size: 0;
+	cursor: pointer;
+}
+
+.info-tela__btn svg {
+	width: 15px;
+	height: 15px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.2;
+	stroke-linecap: round;
+}
+
+.info-tela__btn .info-tela__ponto {
+	fill: currentColor;
+	stroke: none;
+}
+
+.info-tela__btn:hover {
+	border-color: #ffe08a;
+	background: rgba(255, 224, 138, 0.18);
+}
+
+.info-tela__btn[aria-expanded="true"] {
+	background: #ffe08a;
+	color: #2b1c05;
+}
+
+.info-tela__btn:focus-visible {
+	outline: 2px solid #fff0a3;
+	outline-offset: 2px;
+}
+
+/* Balão: sai do fluxo (não empurra o × do cabeçalho) e abre para BAIXO,
+   alinhado à direita do selo — o botão vive no canto direito do cabeçalho,
+   então right:0 mantém o balão dentro do painel em qualquer tela. */
+.info-tela__balao {
+	position: absolute;
+	top: calc(100% + 6px);
+	right: 0;
+	z-index: 30;
+	box-sizing: border-box;
+	width: min(240px, calc(100vw - 24px));
+	padding: 7px 9px;
+	border: 1px solid rgba(255, 204, 77, 0.55);
+	border-radius: 9px;
+	background: rgba(15, 14, 12, 0.98);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
+	color: #e9dcc0;
+	font-size: 11px;
+	line-height: 1.35;
+	text-align: left;
+	white-space: normal;
+}
+
+.info-tela__balao[hidden] {
+	display: none;
+}
+
+/* ---- Casa: campo do nome do jogador (identidade nos duelos PvP) ---- */
+.casa-nome__linha {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+.casa-nome__rotulo {
+	color: #b9c8da;
+	font-size: clamp(12px, 1.05vw, 14px);
+	font-weight: 700;
+}
+
+.casa-nome__input {
+	flex: 1 1 160px;
+	min-width: 0;
+	box-sizing: border-box;
+	padding: 0.5em 0.7em;
+	border: 1px solid rgba(229, 183, 96, 0.55);
+	border-radius: 10px;
+	background: #101722;
+	color: #ffe2a0;
+	font: inherit;
+	font-weight: 800;
+	letter-spacing: 0.02em;
+}
+
+.casa-nome__input::placeholder {
+	color: #6d7a8d;
+	font-weight: 600;
+}
+
+.casa-nome__input:focus {
+	outline: 2px solid rgba(255, 224, 138, 0.75);
+	outline-offset: 1px;
+}
+
+.casa-nome__status {
+	margin: 0;
+	color: #9ccfff;
+	font-size: clamp(12px, 1.05vw, 14px);
 }

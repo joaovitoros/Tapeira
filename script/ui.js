@@ -33,7 +33,7 @@ const UI = {
         document.getElementById("contGold").innerHTML = FormatGold(gold);
         document.getElementById("contEmeraldas").innerHTML = esmeraldas;
         AtualizaHUDConhecimento();
-        document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
+        document.getElementById("contTempo").innerHTML = FormataTempoFuga(tempoAvancoInimigos);
         this.updateResetAviso();
         this.updateObjective();
         this.updateMission();
@@ -298,6 +298,14 @@ const UI = {
             button.classList.toggle("is-active", isOpen);
             button.setAttribute("aria-expanded", String(isOpen));
         });
+
+        // Painel de HUD aberto (Status/Loja/Config) sobe o contexto do
+        // #container-opcoes: acima das habilidades de combate (z 15) e dos
+        // efeitos de dano/vida (z 7-8), mas ABAIXO dos overlays de verdade
+        // (itens da build z 40, info z 30, modais). Sem mexer no HTML.
+        const painelAberto = ["DivStatus", "Loja", "LojaEsm", "LojaCM", "container-SalvaCarrega"]
+            .some(id => document.getElementById(id)?.style.visibility === "visible");
+        document.getElementById("game-root")?.classList.toggle("hud-painel-aberto", painelAberto);
     },
 
     updateSkillProgress() {
@@ -311,7 +319,13 @@ const UI = {
         const percent = Math.max(0, Math.min(100, xpAtual * 100 / nextLevelXP));
 
         if (level) level.textContent = `Nível ${nivelJogador}`;
-        if (points) points.textContent = `${pontosHabilidade} ${pontosHabilidade === 1 ? "ponto" : "pontos"} de habilidade`;
+        if (points) {
+            // Com todas as skills no máximo, o recurso vira "Tickets de Caçador
+            // de Mugs" (permanente, pra Cidade) em vez de pontos de habilidade.
+            points.textContent = TodasSkillsNoMaximo()
+                ? `${ticketsMug} ${ticketsMug === 1 ? "ticket" : "tickets"} de caçador de mugs`
+                : `${pontosHabilidade} ${pontosHabilidade === 1 ? "ponto" : "pontos"} de habilidade`;
+        }
         if (progress) {
             progress.setAttribute("aria-valuenow", String(Math.min(xpAtual, nextLevelXP)));
             progress.setAttribute("aria-valuemax", String(nextLevelXP));
@@ -478,7 +492,7 @@ const UI = {
         document.getElementById("contGold").innerHTML = FormatGold(gold);
         document.getElementById("contEmeraldas").innerHTML = esmeraldas;
         AtualizaHUDConhecimento();
-        document.getElementById("contTempo").innerHTML = tempoAvancoInimigos;
+        document.getElementById("contTempo").innerHTML = FormataTempoFuga(tempoAvancoInimigos);
         this.updateMission();
     },
 
@@ -486,6 +500,22 @@ const UI = {
     // MENSAGENS
     // =========================
 
+    // Aviso rápido na tela (toast): aparece no topo, some sozinho no fim
+    // da animação (sem timer novo) e também registra no histórico (Logs).
+    // Serve onde uma linha só no histórico passaria despercebida (ex.:
+    // import de cartão de batalha já usado com o menu de pausa aberto).
+    mostraAvisoRapido(texto) {
+        const limpo = typeof texto === "string" ? texto.trim() : "";
+        if (!limpo) return;
+        window.Tapeira?.Logs?.adiciona?.(limpo);
+        document.querySelectorAll(".aviso-rapido").forEach(el => el.remove());
+        const div = document.createElement("div");
+        div.className = "aviso-rapido";
+        div.setAttribute("role", "status");
+        div.textContent = limpo;
+        div.addEventListener("animationend", () => div.remove(), { once: true });
+        document.body.appendChild(div);
+    },
     showInfo(mensagem) {
         // a caixa "Infos" saiu da tela: a mensagem vira um registro no
         // histórico, que abre pelo botão "Logs" no menu de configurações
@@ -576,7 +606,7 @@ const UI = {
 						: ""))
 				: "desbloqueia no andar 100"],
             ["Bônus XP", "+" + BonusXPLoja()],
-            ["XP por inimigo", (XPPorInimigo() * BonusXPConhecimento()).toFixed(2)],
+            ["XP por inimigo", formatNumber(XPPorInimigo() * BonusXPConhecimento())],
             // total do bônus do CM: +5% por nível
             ["Conhecimento gold", "+" + (cmNivelGold * 5) + "%"],
             ["Conhecimento XP", "+" + (cmNivelXp * 5) + "%"],
@@ -662,36 +692,46 @@ const UI = {
 
             <div class="infoModalConteudo">
 
+                <div class="infoSecao">Objetivo</div>
+
                 <div class="infoLinha">
-                    Clique nos cogumelos para destruí-los e conseguir gold
+                    Destrua os cogumelos para ganhar <b>gold</b> e subir de andar. A cada 10 andares um <b>guardião</b> bloqueia o caminho.
+                </div>
+
+                <div class="infoSecao">Atacar</div>
+
+                <div class="infoLinha">
+                    <b>No PC:</b> segure <b>Espaço</b> — ou clique/segure em qualquer lugar da cena.
                 </div>
 
                 <div class="infoLinha">
-                    Aperte L para abrir a Loja
+                    <b>No celular:</b> toque em qualquer lugar da tela para dar um golpe; <b>segure</b> para atacar sem parar.
                 </div>
 
                 <div class="infoLinha">
-                    Aperte S para abrir seu Status
+                    Os golpes vão sempre no inimigo de <b>número maior</b> (o mais forte da tela).
+                </div>
+
+                <div class="infoSecao">Telas e atalhos</div>
+
+                <div class="infoLinha">
+                    <b>Loja</b> (L) — itens comprados com gold · <b>Status</b> (S) — dano, itens e habilidades.
                 </div>
 
                 <div class="infoLinha">
-                    Aperte C para abrir as Conquistas e bônus permanentes
+                    <b>Feitos</b> (C) — conquistas e bônus permanentes · <b>Missões</b> (M) · <b>Ramos</b> — árvore de habilidades.
                 </div>
 
                 <div class="infoLinha">
-                    Aperte M para ver as missões atuais
+                    <b>Cidade</b> — hub de progresso permanente, destrava a partir do andar 80.
                 </div>
 
                 <div class="infoLinha">
-                    Segure Espaço ou clique no personagem para atacar inimigos próximos
+                    <b>ESC</b> ou <b>P</b> — pausa (salvar, carregar, volumes, sair) · <b>I</b> — esta tela.
                 </div>
 
                 <div class="infoLinha">
-                    Aperte I para rever os controles
-                </div>
-
-                <div class="infoLinha">
-                    Aperte Esc para salvar e voltar ao menu
+                    No celular, as telas ficam nos <b>botões do rodapé</b>.
                 </div>
 
                 <div class="infoLinha destaqueInfo">
@@ -802,56 +842,91 @@ function acompanhaTamanhoPersonagem(animation, player, scale, verticalAnchor) {
     return () => window.removeEventListener("resize", atualizarPosicao);
 }
 
+// Ataque: em vez de esconder o player e tocar a sprite de espadada (por hora
+// desativada), um RISCO (faixa) parte do player até o inimigo acertado com um
+// splash no impacto, e o player dá uma leve "investida" (squash) sugerindo o
+// movimento. Mesma API do antigo (batalha.js e dev-tools seguem iguais).
+const DURACAO_ATAQUE_MS = 220;
 UI.playAttackAnimation = function (inimigoElement) {
     const player = document.querySelector(".player");
     if (!player || animacaoAtaqueAtiva) return;
-
     animacaoAtaqueAtiva = true;
-    player.classList.add("is-attacking-animation");
-    const rect = player.getBoundingClientRect();
-    const animation = document.createElement("div");
-    animation.className = "game-sprite-animation attack-sprite-animation";
-    animation.setAttribute("aria-hidden", "true");
-    const pararAcompanharTamanho = acompanhaTamanhoPersonagem(animation, player, 1, 0.52);
 
-    let faceRight = true; // padrão: player olha para direita
+    const rect = player.getBoundingClientRect();
+    // ponto de partida no centro do corpo (dali sai o "golpe")
+    const pcx = rect.left + rect.width * 0.5;
+    const pcy = rect.top + rect.height * 0.5;
+
+    let ex = pcx + rect.width * 0.6; // sem alvo: ataca pra frente
+    let ey = pcy;
     if (inimigoElement) {
-        const inimigoRect = inimigoElement.getBoundingClientRect();
-        const playerCenterX = rect.left + rect.width / 2;
-        const inimigoCenterX = inimigoRect.left + inimigoRect.width / 2;
-        faceRight = inimigoCenterX > playerCenterX;
+        const r = inimigoElement.getBoundingClientRect();
+        ex = r.left + r.width / 2;
+        ey = r.top + r.height * 0.5;
+    }
+    const dx = ex - pcx;
+    const dy = ey - pcy;
+    const dist = Math.max(28, Math.hypot(dx, dy));
+    const ang = Math.atan2(dy, dx) * 180 / Math.PI;
+    const paraDireita = dx >= 0;
+
+    // 1) investida do player (distorção leve na direção do golpe)
+    const avanco = Math.min(16, dist * 0.08).toFixed(1);
+    player.style.setProperty("--investida-x", (paraDireita ? 1 : -1) * avanco + "px");
+    player.classList.remove("player--atacando");
+    void player.offsetWidth;
+    player.classList.add("player--atacando");
+
+    // 2) corte: uma MEIA LUA (lado curvo na frente) voa do player até o inimigo
+    const corte = document.createElement("div");
+    corte.className = "ataque-corte";
+    corte.setAttribute("aria-hidden", "true");
+    corte.style.left = pcx + "px";
+    corte.style.top = pcy + "px";
+    corte.style.transform = `translate(-50%, -50%) rotate(${ang}deg)`;
+    corte.style.setProperty("--corte-varre", Math.max(30, dist - 24) + "px");
+    const lua = document.createElement("span");
+    lua.className = "ataque-corte__lua";
+    corte.appendChild(lua);
+    document.body.appendChild(corte);
+
+    // 3) sopro no impacto (na posição do inimigo), alinhado à direção do golpe
+    const splash = document.createElement("div");
+    splash.className = "ataque-splash";
+    splash.setAttribute("aria-hidden", "true");
+    splash.style.left = ex + "px";
+    splash.style.top = ey + "px";
+    splash.style.setProperty("--sopro-ang", ang + "deg");
+    document.body.appendChild(splash);
+
+    // faíscas: partículas saindo em leque no impacto (estilo "fruit ninja")
+    const faiscas = [];
+    for (let i = 0; i < 6; i++) {
+        const f = document.createElement("span");
+        f.className = "ataque-faisca";
+        f.setAttribute("aria-hidden", "true");
+        const fa = (ang + (Math.random() * 150 - 75)) * Math.PI / 180;
+        const fd = 30 + Math.random() * 48;
+        f.style.left = ex + "px";
+        f.style.top = ey + "px";
+        f.style.setProperty("--faisca-x", (Math.cos(fa) * fd).toFixed(1) + "px");
+        f.style.setProperty("--faisca-y", (Math.sin(fa) * fd).toFixed(1) + "px");
+        document.body.appendChild(f);
+        faiscas.push(f);
     }
 
-    if (!faceRight) animation.classList.add("is-facing-left");
-
-    const frames = document.createElement("img");
-    frames.className = "attack-sprite-frame";
-    frames.dataset.frame = "1";
-    frames.alt = "";
-    frames.src = "imagens/animacoes/ataque/frames/ataque-1.png";
-    animation.appendChild(frames);
-    document.body.appendChild(animation);
-
-    let concluded = false;
-    let currentFrame = 1;
-    const frameTimer = setInterval(() => {
-        currentFrame++;
-        if (currentFrame <= 6) {
-            frames.dataset.frame = String(currentFrame);
-            frames.src = `imagens/animacoes/ataque/frames/ataque-${currentFrame}.png`;
-        }
-    }, 108); // 650ms / 6 frames ≈ 108ms per frame
-
-    const finish = () => {
-        if (concluded) return;
-        concluded = true;
-        clearInterval(frameTimer);
-        pararAcompanharTamanho();
-        animation.remove();
+    let concluiu = false;
+    const fim = () => {
+        if (concluiu) return;
+        concluiu = true;
+        corte.remove();
+        splash.remove();
+        faiscas.forEach(f => f.remove());
+        player.classList.remove("player--atacando");
         animacaoAtaqueAtiva = false;
-        player.classList.remove("is-attacking-animation");
     };
-    setTimeout(finish, 650);
+    splash.addEventListener("animationend", fim, { once: true });
+    setTimeout(fim, DURACAO_ATAQUE_MS + 200); // fallback (reduced-motion/aba em 2º plano)
 };
 
 UI.playEscapeAnimation = function () {

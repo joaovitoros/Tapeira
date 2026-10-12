@@ -70,9 +70,11 @@ var EVENTO_OFERTAS_POOL = [
 		}
 	},
 	{
-		id: "cm", nome: "Página do grimório", desc: "+15 de Conhecimento Mug", k: 120,
+		id: "cm", nome: "Página do grimório", k: 120,
+		// desc dinâmica: o CM escala com o andar (CMCompraOferta, fonte única)
+		desc: () => "+" + FormatCM(CMCompraOferta()) + " de Conhecimento Mug",
 		comprar() {
-			conhecimentoMug = N(conhecimentoMug) + 15;
+			conhecimentoMug = N(conhecimentoMug) + CMCompraOferta();
 			AtualizaHUDConhecimento();
 			MostraStatus?.();
 		}
@@ -296,7 +298,7 @@ function MontaPainelEvento() {
 			<div class="evento-oferta${oferta.comprada ? " evento-oferta--comprada" : ""}">
 				<div class="evento-oferta__info">
 					<b>${oferta.nome}</b>
-					<span>${oferta.desc}</span>
+					<span>${typeof oferta.desc === "function" ? oferta.desc() : oferta.desc}</span>
 				</div>
 				<div class="evento-oferta__acoes">
 					<span class="evento-oferta__preco">${FormatGold(PrecoOfertaEvento(oferta.k))}</span>

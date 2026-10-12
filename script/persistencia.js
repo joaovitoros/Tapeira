@@ -54,6 +54,33 @@ function Salvar() {
 // CARREGAR ARQUIVO
 // =========================
 
+// Núcleo da importação: valida e aplica um save a partir do CONTEÚDO JSON.
+// Usado pelo arquivo escolhido no input e também quando o app Android recebe
+// um save por Bluetooth/Compartilhar.
+function ImportarSaveJson(texto) {
+	try {
+		const dados = JSON.parse(texto);
+		// Cartão de batalha (batalha-fantasma): NÃO é save — não pode tocar
+		// no progresso local; só abre a ficha do duelo.
+		if (dados && dados.saveFormat === "tapeira-cartao-batalha") {
+			return PvpFantasma.RecebeCartao(dados);
+		}
+		// Valida antes de liberar o auto save: um JSON incompatível não pode
+		// substituir nem desbloquear o progresso local que falhou no load.
+		ValidarSave(dados);
+		autoSaveBloqueadoPorIncompatibilidade = false;
+		const autoSaveAtualizado = Carregar(texto);
+		MostraInfo(autoSaveAtualizado
+			? "Save importado e progresso local atualizado."
+			: "Save importado, mas não foi possível atualizar o auto save local.");
+		return true;
+	} catch (error) {
+		console.error("Não foi possível importar o save:", error);
+		MostraInfo(`Save inválido ou incompatível: ${error.message} O progresso atual foi mantido.`);
+		return false;
+	}
+}
+
 function CarregarArquivo(input) {
 	const fileInput = input || document.getElementById("txtfiletoread");
 	const file = fileInput?.files?.[0];
@@ -67,19 +94,7 @@ function CarregarArquivo(input) {
 
 	const reader = new FileReader();
 	reader.onload = function () {
-		try {
-			// Valida antes de liberar o auto save: um JSON incompatível não pode
-			// substituir nem desbloquear o progresso local que falhou no load.
-			ValidarSave(JSON.parse(reader.result));
-			autoSaveBloqueadoPorIncompatibilidade = false;
-			const autoSaveAtualizado = Carregar(reader.result);
-			MostraInfo(autoSaveAtualizado
-				? "Save importado e progresso local atualizado."
-				: "Save importado, mas não foi possível atualizar o auto save local.");
-		} catch (error) {
-			console.error("Não foi possível importar o save:", error);
-			MostraInfo(`Save inválido ou incompatível: ${error.message} O progresso atual foi mantido.`);
-		}
+		ImportarSaveJson(reader.result);
 	};
 	reader.onerror = function () {
 		console.error("Não foi possível ler o arquivo de save:", reader.error);

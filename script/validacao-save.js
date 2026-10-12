@@ -259,19 +259,37 @@ function ValidarSave(save) {
 	const pesquisaInimigoMax = (typeof PESQUISA_INIMIGO_MAX === "number") ? PESQUISA_INIMIGO_MAX : 5;
 	const idsItens = ((window.Tapeira && window.Tapeira.ItensBuild && window.Tapeira.ItensBuild.POOL) || []).map(i => i.id);
 	const idsInimigos = (typeof PESQUISA_INIMIGOS !== "undefined" ? PESQUISA_INIMIGOS : []).map(t => t.id);
-	const validaMapaPesquisa = (valor, ids, max) => {
+	const validaMapaPesquisa = (valor, ids, max, rotulo = "pesquisa") => {
 		if (valor === undefined) return;
 		if (!valor || typeof valor !== "object" || Array.isArray(valor)) {
-			throw new TypeError("Os dados de pesquisa do save são inválidos.");
+			throw new TypeError("Os dados de " + rotulo + " do save são inválidos.");
 		}
 		for (const [chave, nivel] of Object.entries(valor)) {
 			if (!ids.includes(chave) || !Number.isSafeInteger(nivel) || nivel < 0 || nivel > max) {
-				throw new TypeError("Os dados de pesquisa do save são inválidos.");
+				throw new TypeError("Os dados de " + rotulo + " do save são inválidos.");
 			}
 		}
 	};
 	validaMapaPesquisa(save.pesquisaItens, idsItens, pesquisaItemMax);
 	validaMapaPesquisa(save.pesquisaInimigos, idsInimigos, pesquisaInimigoMax);
+	// Loja de Troféus (Cidade): objeto { trofeuId: nível } com ids conhecidos e
+	// níveis dentro do teto. Campo não-numérico (whitelist abaixo).
+	const trofeuMax = (typeof TROFEU_NIVEL_MAX === "number") ? TROFEU_NIVEL_MAX : 1000;
+	const idsTrofeus = (typeof TROFEUS !== "undefined" ? TROFEUS : []).map(t => t.id);
+	validaMapaPesquisa(save.trofeus, idsTrofeus, trofeuMax, "troféus");
+	// Mercado (Cidade): Ofertas do dia — stamp do dia (inteiro ≥ 0) e o bitmask
+	// de compradas dentro do número de ofertas. Campos numéricos (sem whitelist).
+	if (save.ofertasDia !== undefined
+		&& (!Number.isSafeInteger(save.ofertasDia) || save.ofertasDia < 0)) {
+		throw new TypeError("As ofertas do dia do save são inválidas.");
+	}
+	const ofertasMax = (typeof OFERTAS_QTD === "number" && OFERTAS_QTD >= 0)
+		? (1 << OFERTAS_QTD) - 1 : 7;
+	if (save.ofertasDiaCompradas !== undefined
+		&& (!Number.isInteger(save.ofertasDiaCompradas) || save.ofertasDiaCompradas < 0
+			|| save.ofertasDiaCompradas > ofertasMax)) {
+		throw new TypeError("As ofertas do dia do save são inválidas.");
+	}
 	// Mercado (Cidade): reputação (desconto nas lojas) dentro do teto
 	const reputacaoMax = (typeof REPUTACAO_MAX === "number") ? REPUTACAO_MAX : 10;
 	if (save.reputacao !== undefined
@@ -374,6 +392,7 @@ function ValidarSave(save) {
 		["nivelJogador", 1, Number.MAX_SAFE_INTEGER],
 		["xpAtual", 0, Number.MAX_SAFE_INTEGER],
 		["pontosHabilidade", 0, Number.MAX_SAFE_INTEGER],
+		["ticketsMug", 0, Number.MAX_SAFE_INTEGER],
 		["nivelSkillDano", 0, NIVEL_MAXIMO_SKILLS],
 		["nivelSkillEletrica", 0, NIVEL_MAXIMO_SKILLS],
 		["nivelSkillGold", 0, NIVEL_MAXIMO_SKILLS],
@@ -469,6 +488,29 @@ function ValidarSave(save) {
 			|| (save.bausBuildPendentes ?? (save.bauBuildPendente === true ? 1 : 0)) === 0)) {
 		throw new TypeError("As opções do baú de itens da build no save são inválidas.");
 	}
+	if (save.pvpCartoesUsados !== undefined
+		&& (!Array.isArray(save.pvpCartoesUsados)
+			|| save.pvpCartoesUsados.length > 2000
+			|| save.pvpCartoesUsados.some(id =>
+				typeof id !== "string" || !/^[0-9a-f]{32}$/.test(id)))) {
+		throw new TypeError("A lista de cartões de batalha usados no save é inválida.");
+	}
+	if (save.pvpCartoesExportados !== undefined
+		&& (!Array.isArray(save.pvpCartoesExportados)
+			|| save.pvpCartoesExportados.length > 2000
+			|| save.pvpCartoesExportados.some(id =>
+				typeof id !== "string" || !/^[0-9a-f]{32}$/.test(id)))) {
+		throw new TypeError("A lista de cartões de batalha exportados no save é inválida.");
+	}
+	// Nome do jogador (Casa): string curta e sem caracteres de controle —
+	// identidade exibida nos duelos. Save antigo não tem o campo; o Carregar
+	// normaliza (corta em NOME_JOGADOR_MAX) e aplica o padrão.
+	if (save.nomeJogador !== undefined
+		&& (typeof save.nomeJogador !== "string"
+			|| save.nomeJogador.length > 40
+			|| /[\u0000-\u001f\u007f]/.test(save.nomeJogador))) {
+		throw new TypeError("O nome do jogador no save é inválido.");
+	}
 	if (save.ultimaAtualizacaoBauDourado !== undefined
 		&& (!Number.isFinite(save.ultimaAtualizacaoBauDourado)
 			|| save.ultimaAtualizacaoBauDourado < 0)) {
@@ -498,7 +540,8 @@ function ValidarSave(save) {
 		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards",
 			"conquistasComp", "melhorGoldRun", "autoItensLoja",
 			"itensBuild", "bauBuildPendente", "opcoesBauBuild",
-			"pesquisaItens", "pesquisaInimigos", "forja"].includes(key)) continue;
+			"pvpCartoesUsados", "pvpCartoesExportados", "nomeJogador",
+			"pesquisaItens", "pesquisaInimigos", "trofeus", "forja"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");
 		}

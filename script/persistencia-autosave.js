@@ -54,6 +54,7 @@ function CriarObjetoSave(incluirOffline = true) {
 		nivelJogador,
 		xpAtual,
 		pontosHabilidade,
+		ticketsMug,
 		nivelSkillDano,
 		nivelSkillEletrica,
 		nivelSkillGold,
@@ -95,6 +96,12 @@ function CriarObjetoSave(incluirOffline = true) {
 		tempoEsperaCompanheiro,
 
 		esmeraldas,
+		// ids de cartões de batalha já duelados e ids de cartões que eu
+		// exportei (anti-farm do PvP) — permanentes, não zera no Resetar
+		pvpCartoesUsados,
+		pvpCartoesExportados,
+		// nome do jogador (Casa) — identidade permanente exibida nos duelos
+		nomeJogador,
 		numVoltas,
 		tempoAvancoInimigos,
 		andarBoss,
@@ -119,6 +126,9 @@ function CriarObjetoSave(incluirOffline = true) {
 		fazendaRainha,
 		pesquisaItens,
 		pesquisaInimigos,
+		trofeus,
+		ofertasDia,
+		ofertasDiaCompradas,
 		reputacao,
 		fabricaNivel,
 		cristalNivel,

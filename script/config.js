@@ -15,6 +15,7 @@
         { id: "tremerCritico", nome: "Tremor no crítico", desc: "Treme a tela e dá um flash no acerto crítico.", padrao: true },
         { id: "avisosBau", nome: "Avisos de baú", desc: "Avisa quando um baú aparece e ao abrir.", padrao: true },
         { id: "anunciosMarco", nome: "Anúncios de marco", desc: "Banners de nível, marco de andar e conquistas.", padrao: true },
+        { id: "logsTransparentes", nome: "Registros transparentes", desc: "Deixa o painel de Registro da arena e o histórico mais transparentes.", padrao: false },
         { id: "movimentoReduzido", nome: "Reduzir movimento", desc: "Menos animações — mais leve em aparelhos fracos.", padrao: false }
     ];
 
@@ -32,9 +33,11 @@
         try { localStorage.setItem(CHAVE, JSON.stringify(valores)); } catch { /* sem storage */ }
     }
 
-    // Efeitos globais: a classe no <html> liga o CSS de "reduzir movimento".
+    // Efeitos globais: a classe no <html> liga o CSS de "reduzir movimento"
+    // e o do "registros transparentes" (modal de Logs).
     function aplica() {
         document.documentElement?.classList.toggle("config-sem-movimento", valores.movimentoReduzido === true);
+        document.documentElement?.classList.toggle("config-logs-transparente", valores.logsTransparentes === true);
     }
 
     function ativo(id) {
@@ -44,6 +47,9 @@
     function define(id, valor) {
         if (!(id in valores)) return false;
         valores[id] = valor === true;
+        // espelha o valor no checkbox quando a mudança vem de fora da UI
+        const chk = document.getElementById("config-" + id);
+        if (chk) chk.checked = valores[id];
         salva();
         aplica();
         return true;

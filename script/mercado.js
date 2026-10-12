@@ -24,9 +24,9 @@ function PrecoComReputacao(preco) {
 	return Math.max(0, Number(preco) || 0) * (1 - DescontoReputacao());
 }
 
-// Custo em CM do próximo nível (base 5.000, ×1,6 por nível)
+// Custo em CM do próximo nível (base 5.000 ×CUSTO_CIDADE_MULT, ×1,6 por nível)
 function CustoReputacao(nivel) {
-	return Math.round(5000 * Math.pow(1.6, ReputacaoValida(nivel)));
+	return Math.round(5000 * CUSTO_CIDADE_MULT * Math.pow(1.6, ReputacaoValida(nivel)));
 }
 
 function CompraReputacao() {
@@ -56,7 +56,7 @@ function FormigasExcedentes() {
 	const excedentes = [];
 	FORMIGAS.forEach(formiga => {
 		const total = QuantidadeFormigas(formiga.id);
-		const resto = total % 5;
+		const resto = total % FORMIGAS_POR_CONJUNTO;
 		if (resto > 0) excedentes.push({ formiga, qtd: resto });
 	});
 	return excedentes;
@@ -96,6 +96,139 @@ function VenderExcedentes() {
 	return { itens, formigas: totalFormigas, gold: recebido };
 }
 
+// ---- Ofertas do dia ----
+// 3 ofertas que trocam à meia-noite (data real), determinísticas pela data:
+// a mesma data sempre sorteia as mesmas ofertas e os mesmos descontos. O
+// `ofertasDia` (stamp) + `ofertasDiaCompradas` (bitmask) vão pro save; quando
+// o dia vira, o bitmask zera. Reusa os bens do evento Comércio.
+
+const OFERTAS_QTD = 3;             // ofertas por dia
+const OFERTAS_DESCONTO_MIN = 0.15; // desconto do dia: 15%..
+const OFERTAS_DESCONTO_MAX = 0.45; // ..45% (sorteado por oferta)
+
+// Pool (ids estáveis — não trocar sem migrar o save). Preço = k × gold de um
+// avanço de andar (BonusGoldAvanco), então escala sozinho com a fase.
+const OFERTAS_POOL = [
+	{
+		id: "esmeralda", nome: "Esmeralda polida", desc: "+2 Esmeraldas", k: 50,
+		dar() {
+			esmeraldas += 2;
+			const el = document.getElementById("contEmeraldas");
+			if (el) el.innerHTML = esmeraldas;
+			UI.showCurrencyReward("emerald", 2);
+		}
+	},
+	{
+		id: "cm", nome: "Página do grimório", k: 15,
+		// desc dinâmica: o CM escala com o andar (CMCompraOferta, fonte única)
+		desc: () => "+" + FormatCM(CMCompraOferta()) + " de Conhecimento Mug",
+		dar() {
+			conhecimentoMug = N(conhecimentoMug) + CMCompraOferta();
+			MostraStatus?.();
+		}
+	},
+	{
+		id: "bau", nome: "Baú comum", desc: "1 baú pra coletar agora", k: 6,
+		dar() {
+			quantidadeBausDisponiveis++;
+			UI.spawnChest(quantidadeBausDisponiveis);
+		}
+	},
+	{
+		id: "baudourado", nome: "Baú dourado", desc: "Prepara o baú dourado pra abrir", k: 40,
+		dar() {
+			bauDouradoPendente = 1;
+			UI.updateGoldenChestProgress();
+		}
+	},
+	{
+		id: "recarga", nome: "Recarga total", desc: "Habilidades carregadas ao máximo", k: 12,
+		dar() {
+			CarregaHabilidadesDesbloqueadas(false);
+		}
+	}
+];
+
+// Stamp do dia LOCAL (vira à meia-noite): ano*10000 + mês*100 + dia.
+function DiaOfertas() {
+	const d = new Date();
+	return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+// PRNG determinístico (xorshift32) semeado pelo dia: mesma data = mesmas ofertas.
+function SementeOfertas(dia) {
+	let x = (Number(dia) >>> 0) || 1;
+	return function () {
+		x ^= x << 13; x >>>= 0;
+		x ^= x >>> 17;
+		x ^= x << 5; x >>>= 0;
+		return x / 4294967296;
+	};
+}
+
+// As ofertas do dia: embaralha o pool e corta as 3 primeiras, com um desconto
+// sorteado por oferta. Recomputado a cada chamada (barato e determinístico).
+function OfertasDoDia() {
+	const rnd = SementeOfertas(DiaOfertas());
+	const indices = OFERTAS_POOL.map((_, i) => i);
+	for (let i = indices.length - 1; i > 0; i--) {
+		const j = Math.floor(rnd() * (i + 1));
+		[indices[i], indices[j]] = [indices[j], indices[i]];
+	}
+	const ofertas = [];
+	for (let i = 0; i < OFERTAS_QTD && i < indices.length; i++) {
+		const base = OFERTAS_POOL[indices[i]];
+		const desconto = OFERTAS_DESCONTO_MIN
+			+ (OFERTAS_DESCONTO_MAX - OFERTAS_DESCONTO_MIN) * rnd();
+		ofertas.push({ id: base.id, nome: base.nome, desc: base.desc, k: base.k, desconto });
+	}
+	return ofertas;
+}
+
+// Zera as compras quando o dia vira (load e abertura do painel). Retorna true
+// se girou agora.
+function SincronizaOfertasDia() {
+	const dia = DiaOfertas();
+	if (Number(ofertasDia) !== dia) {
+		ofertasDia = dia;
+		ofertasDiaCompradas = 0;
+		return true;
+	}
+	return false;
+}
+
+function OfertaComprada(indice) {
+	return ((N(ofertasDiaCompradas) | 0) & (1 << indice)) !== 0;
+}
+
+// Preço em gold: k × avanço de andar, com o desconto do dia e o da Reputação.
+function PrecoOfertaMercado(oferta) {
+	if (!oferta) return 0;
+	const base = BonusGoldAvanco() * oferta.k;
+	return Math.max(10, Math.round(base * (1 - oferta.desconto) * (1 - DescontoReputacao())));
+}
+
+function CompraOfertaMercado(indice) {
+	SincronizaOfertasDia();
+	const oferta = OfertasDoDia()[indice];
+	if (!oferta || OfertaComprada(indice)) return false;
+	const preco = PrecoOfertaMercado(oferta);
+	if (!GE(gold, preco)) {
+		UI.showInfo("Gold insuficiente pra essa oferta!");
+		return false;
+	}
+	// gasto direto (não é compra da loja: não conta pra conquista Poupado)
+	gold.add(-N(preco));
+	AtualizaGoldTela();
+	ofertasDiaCompradas = (N(ofertasDiaCompradas) | 0) | (1 << indice);
+	ChamaSom?.("audio6");
+	const base = OFERTAS_POOL.find(o => o.id === oferta.id);
+	if (base) base.dar();
+	UI.showInfo("Mercado: " + oferta.nome + " por " + FormatGold(preco) + " gold.");
+	AutoSaveLocal();
+	return true;
+}
+
 // ---- Painel ----
 function FecharMercado() {
 	const modal = document.getElementById("mercadoModal");
@@ -128,7 +261,17 @@ function AbrirMercado() {
 	close.setAttribute("aria-label", "Fechar o Mercado");
 	close.textContent = "×";
 	close.addEventListener("click", FecharMercado);
-	header.append(title, close);
+	header.append(title, CriaInfoTela({
+		id: "mercado-info",
+		rotulo: "Sobre o Mercado",
+		html: "<b>Como funciona</b>"
+			+ "<p><b>Ofertas do dia</b>: " + OFERTAS_QTD + " ofertas em gold que "
+			+ "giram à meia-noite (uma de cada por dia).</p>"
+			+ "<p><b>Reputação</b>: nível pago em CM que dá <b>desconto</b> na "
+			+ "Loja do Conhecimento.</p>"
+			+ "<p><b>Vender excedentes</b>: manda pra fora as cópias extras de "
+			+ "itens da build e as formigas sobrando — vira <b>gold</b>.</p>"
+	}), close);
 
 	const corpo = document.createElement("div");
 	corpo.className = "mercado-corpo";
@@ -152,7 +295,63 @@ function AbrirMercado() {
 function RenderMercadoPainel() {
 	const corpo = document.getElementById("mercadoCorpo");
 	if (!corpo) return;
-	corpo.replaceChildren(MercadoSecaoReputacao(), MercadoSecaoExcedentes());
+	corpo.replaceChildren(MercadoSecaoOfertas(), MercadoSecaoReputacao(), MercadoSecaoExcedentes());
+}
+
+function MercadoSecaoOfertas() {
+	SincronizaOfertasDia();
+	const ofertas = OfertasDoDia();
+	const secao = document.createElement("section");
+	secao.className = "mercado-secao";
+
+	const titulo = document.createElement("h3");
+	titulo.className = "mercado-secao__titulo";
+	titulo.textContent = "Ofertas do dia";
+
+	const desc = document.createElement("p");
+	desc.className = "mercado-secao__desc";
+	desc.textContent = OFERTAS_QTD + " ofertas especiais que trocam à meia-noite (dá pra comprar "
+		+ "uma de cada). O preço é em gold e a Reputação ainda dá desconto.";
+
+	const lista = document.createElement("div");
+	lista.className = "mercado-ofertas";
+	ofertas.forEach((oferta, i) => {
+		const comprada = OfertaComprada(i);
+		const preco = PrecoOfertaMercado(oferta);
+
+		const linha = document.createElement("div");
+		linha.className = "mercado-oferta" + (comprada ? " is-comprada" : "");
+
+		const info = document.createElement("div");
+		info.className = "mercado-oferta__info";
+		const nome = document.createElement("strong");
+		nome.textContent = oferta.nome;
+		const det = document.createElement("span");
+		det.className = "mercado-oferta__sub";
+		const descOferta = typeof oferta.desc === "function" ? oferta.desc() : oferta.desc;
+		det.textContent = descOferta + " · -" + Math.round(oferta.desconto * 100) + "% hoje";
+		info.append(nome, det);
+
+		const botao = document.createElement("button");
+		botao.type = "button";
+		botao.className = "mercado-comprar";
+		if (comprada) {
+			botao.textContent = "Comprado ✓";
+			botao.disabled = true;
+		} else {
+			botao.textContent = FormatGold(preco);
+			botao.disabled = !GE(gold, preco);
+			botao.addEventListener("click", () => {
+				if (CompraOfertaMercado(i)) RenderMercadoPainel();
+			});
+		}
+
+		linha.append(info, botao);
+		lista.appendChild(linha);
+	});
+
+	secao.append(titulo, desc, lista);
+	return secao;
 }
 
 function MercadoSecaoReputacao() {
@@ -211,7 +410,7 @@ function MercadoSecaoExcedentes() {
 
 	const desc = document.createElement("p");
 	desc.className = "mercado-secao__desc";
-	desc.textContent = "Vende as cópias extras dos itens da build (mantém 1 de cada) e as formigas que sobraram fora dos conjuntos de 5. Vira gold.";
+	desc.textContent = "Vende as cópias extras dos itens da build (mantém 1 de cada) e as formigas que sobraram fora dos conjuntos de " + FORMIGAS_POR_CONJUNTO + ". Vira gold.";
 
 	const itens = ItensExcedentes();
 	const formigas = FormigasExcedentes().reduce((t, e) => t + e.qtd, 0);
@@ -246,6 +445,14 @@ window.Tapeira.Mercado = {
 	formigasExcedentes: FormigasExcedentes,
 	itensExcedentes: ItensExcedentes,
 	venderExcedentes: VenderExcedentes,
+	OFERTAS_POOL: OFERTAS_POOL,
+	OFERTAS_QTD: OFERTAS_QTD,
+	diaOfertas: DiaOfertas,
+	ofertasDoDia: OfertasDoDia,
+	sincronizaOfertas: SincronizaOfertasDia,
+	ofertaComprada: OfertaComprada,
+	precoOferta: PrecoOfertaMercado,
+	comprarOferta: CompraOfertaMercado,
 	abrir: AbrirMercado,
 	fechar: FecharMercado,
 	render: RenderMercadoPainel

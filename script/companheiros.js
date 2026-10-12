@@ -54,11 +54,13 @@ function TentaPuloExplorador() {
 // ============================================================
 // Quando a janela do Frenesi ativa, o companheiro de dano marca um inimigo
 // aleatório (1 ou 2, só os vivos) e cada hit DURANTE a janela acumula dano
-// real. Se o marcado morrer — a qualquer momento — 25% do acumulado
-// explode em todos os inimigos vivos. Estado de janela: não é salvo;
-// zera no reset e a cada nova ativação (uma explosão por marca).
+// real. Quando a janela TERMINA, 50% do acumulado explode em todos os inimigos
+// vivos. A passiva só existe a partir do nível 5 do companheiro. Estado de
+// janela: não é salvo; zera no reset e a cada nova ativação.
 var alvoFrenesiComp = 0;       // id do inimigo marcado (0 = sem marca)
 var danoJanelaFrenesiComp = 0; // dano acumulado durante a janela ativa
+// Fração do acumulado que explode no fim da janela (fonte única do balance)
+const FRENESI_SPLASH_PCT = 0.5;
 
 // --------- Visual da marca (anel pulsante) e do dano bônus (flash) ------
 // Só DOM/efeito — nada aqui entra no save. O anel é uma div fixa no chão,
@@ -105,6 +107,49 @@ function FlashDanoFrenesiComp(el) {
 	el.addEventListener("animationend", fim);
 }
 
+// Centro da explosão: no alvo marcado se ele ainda estiver na tela; senão no
+// primeiro inimigo vivo; senão no meio do #game-root.
+function CentroExplosaoFrenesiComp(marca = 0) {
+	for (const id of [marca, 1, 2, 3, 4]) {
+		if (!id) continue;
+		const el = document.getElementById("inimigo" + id);
+		if (!el || getComputedStyle(el).visibility === "hidden") continue;
+		const r = el.getBoundingClientRect();
+		if (r.width > 0) return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+	}
+	const raiz = document.getElementById("game-root") || document.documentElement;
+	const r = raiz.getBoundingClientRect();
+	return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+
+// Efeito GRANDE e visível no momento do dano bônus: núcleo brilhante + onda de
+// choque no alvo marcado e um flash de tela curto. Some sozinho no fim da
+// animação (o reduced-motion encurta pra 1ms, como os outros efeitos). Puro DOM.
+function EfeitoExplosaoFrenesiComp(marca = 0) {
+	const centro = CentroExplosaoFrenesiComp(marca);
+
+	const explosao = document.createElement("div");
+	explosao.className = "frenesi-explosao";
+	explosao.setAttribute("aria-hidden", "true");
+	explosao.style.left = centro.x + "px";
+	explosao.style.top = centro.y + "px";
+
+	const nucleo = document.createElement("span");
+	nucleo.className = "frenesi-explosao__nucleo";
+	const onda = document.createElement("span");
+	onda.className = "frenesi-explosao__onda";
+	explosao.append(nucleo, onda);
+
+	document.body.appendChild(explosao);
+	explosao.addEventListener("animationend", () => explosao.remove(), { once: true });
+
+	const flash = document.createElement("div");
+	flash.className = "frenesi-flash-tela";
+	flash.setAttribute("aria-hidden", "true");
+	document.body.appendChild(flash);
+	flash.addEventListener("animationend", () => flash.remove(), { once: true });
+}
+
 // Sorteia o alvo entre os inimigos 1 e 2 vivos. Retorna o id marcado (0 =
 // sem companheiro de dano comprado ou ninguém elegível na tela).
 function MarcaAlvoFrenesiComp() {
@@ -112,7 +157,7 @@ function MarcaAlvoFrenesiComp() {
 	alvoFrenesiComp = 0;
 	danoJanelaFrenesiComp = 0;
 	RemoveAnelFrenesiComp(marcaAnterior); // reativação troca o anel de alvo
-	if (N(lvlComp1) <= 0) return 0;
+	if (N(lvlComp1) < 5) return 0;
 	const elegiveis = [1, 2].filter(id => N(window["vidaInimigo" + id]) > 0);
 	if (elegiveis.length === 0) return 0;
 	alvoFrenesiComp = elegiveis[Math.floor(Math.random() * elegiveis.length)];
@@ -129,18 +174,21 @@ function RegistraDanoFrenesiComp(dano, naJanela = ataquesFrenesi > 0) {
 	}
 }
 
-// Explode 25% do acumulado contra todos os inimigos vivos quando o alvo
-// marcado morre. Limpa a marca (uma explosão por marca) e retorna os ids
-// abatidos pela explosão — o chamador os insere no mesmo fluxo de
-// recompensas do abate normal (batalha.js).
+// Explode FRENESI_SPLASH_PCT (50%) do acumulado contra todos os inimigos vivos
+// quando a janela do Frenesi TERMINA (não precisa mais matar o alvo marcado).
+// Dispara o efeito visual da explosão e limpa a marca (uma explosão por marca);
+// retorna os ids abatidos pela explosão — o chamador os insere no mesmo fluxo
+// de recompensas do abate normal (batalha.js).
 function SplashFrenesiComp() {
 	if (alvoFrenesiComp <= 0) return [];
 	const marca = alvoFrenesiComp;
 	alvoFrenesiComp = 0;
 	RemoveAnelFrenesiComp(marca);
-	const dano = Math.max(0, N(danoJanelaFrenesiComp)) * 0.25;
+	const dano = Math.max(0, N(danoJanelaFrenesiComp)) * FRENESI_SPLASH_PCT;
 	danoJanelaFrenesiComp = 0;
 	if (dano <= 0) return [];
+	// efeito GRANDE e visível no momento exato do dano bônus
+	EfeitoExplosaoFrenesiComp(marca);
 	const mortos = [];
 	for (let id = 1; id <= 4; id++) {
 		if (id === marca) continue;
@@ -484,7 +532,7 @@ function TempoCompanheiros(){
 	// Fissura temporal: congela o cronômetro junto com o ganho de segundos
 	if (typeof eventoAtivo !== "undefined" && eventoAtivo === "fissura") return;
 	tempoAvancoInimigos=tempoAvancoInimigos+tempoEsperaCompanheiro;
-	document.getElementById("contTempo").innerHTML=tempoAvancoInimigos;
+	document.getElementById("contTempo").innerHTML=FormataTempoFuga(tempoAvancoInimigos);
 	if(tempoEsperaCompanheiro>0){
 		UI.showInfo("Ganhou "+tempoEsperaCompanheiro +" segundos");
 	}

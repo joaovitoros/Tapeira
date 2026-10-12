@@ -33,7 +33,18 @@ Object.assign(UI, {
             document.getElementById("btn-Formigas")?.focus();
         };
         close.addEventListener("click", fechar);
-        header.append(title, close);
+        header.append(title, CriaInfoTela({
+            id: "colecao-info",
+            rotulo: "Sobre a coleção de formigas",
+            html: "<b>Como funciona</b>"
+                + "<p>Desde o <b>andar 20</b>, inimigos podem largar uma formiga "
+                + "ao morrer (chance por abate, inclusive após o reset).</p>"
+                + "<p>Cada <b>conjunto completo</b> de " + FORMIGAS_POR_CONJUNTO
+                + " da mesma cor ativa o bônus dela — e conjuntos repetidos "
+                + "<b>acumulam</b>.</p>"
+                + "<p>A <b>Fazenda de Formigas</b> (Cidade) produz formigas "
+                + "sozinha.</p>"
+        }), close);
 
         panel.append(header, this.criaConteudoFormigas());
         overlay.appendChild(panel);
@@ -57,17 +68,19 @@ Object.assign(UI, {
         const intro = document.createElement("p");
         intro.className = "ant-collection-intro";
         intro.textContent = FormigasDesbloqueadas()
-            ? `Desde que você alcançou o andar 20, inimigos podem deixar uma formiga (${FormataPct(ChanceDropFormiga(), 1).replace(".0%", "%")} por abate), inclusive após o reset. Cada conjunto completo de 5 ativa e acumula seu bônus.`
+            ? `Desde que você alcançou o andar 20, inimigos podem deixar uma formiga (${FormataPct(ChanceDropFormiga(), 1).replace(".0%", "%")} por abate), inclusive após o reset. Cada conjunto completo de ${FORMIGAS_POR_CONJUNTO} ativa e acumula seu bônus.`
             : "As formigas começam a aparecer a partir do andar 20. Sua coleção e os bônus desbloqueados são permanentes, inclusive após o reset.";
 
         const list = document.createElement("div");
         list.className = "ant-collection-list";
         for (const formiga of FORMIGAS) {
             const total = QuantidadeFormigas(formiga.id);
-            const sets = Math.floor(total / 5);
-            const progress = total % 5;
+            const sets = Math.floor(total / FORMIGAS_POR_CONJUNTO);
+            const progress = total % FORMIGAS_POR_CONJUNTO;
             const card = document.createElement("article");
             card.className = "ant-collection-card";
+            // id da formiga no DOM: a Fazenda usa pra pulsar o cartão produzido
+            card.dataset.formiga = formiga.id;
 
             const marker = this.createAntSprite(formiga.cor);
             marker.classList.add("ant-collection-marker");
@@ -86,11 +99,11 @@ Object.assign(UI, {
             countLabel.textContent = "coletadas";
             const progressLabel = document.createElement("span");
             progressLabel.className = "ant-collection-progress-label";
-            progressLabel.textContent = `${progress}/5 no próximo conjunto`;
+            progressLabel.textContent = `${progress}/${FORMIGAS_POR_CONJUNTO} no próximo conjunto`;
             const remaining = document.createElement("strong");
             remaining.className = "ant-collection-remaining";
-            remaining.textContent = `${5 - progress} para o bônus`;
-            remaining.setAttribute("aria-label", `Faltam ${5 - progress} ${5 - progress === 1 ? "formiga" : "formigas"} para o próximo bônus`);
+            remaining.textContent = `${FORMIGAS_POR_CONJUNTO - progress} para o bônus`;
+            remaining.setAttribute("aria-label", `Faltam ${FORMIGAS_POR_CONJUNTO - progress} ${FORMIGAS_POR_CONJUNTO - progress === 1 ? "formiga" : "formigas"} para o próximo bônus`);
             countRow.append(count, countLabel, progressLabel, remaining);
             const bonus = document.createElement("p");
             bonus.className = "ant-collection-bonus";

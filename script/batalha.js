@@ -144,6 +144,8 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	// do Guardião (bônus em andares múltiplos de 10, onde um guardião
 	// bloqueia o caminho)
 	dano *= Tapeira.ItensBuild.multDano();
+	// Loja de Troféus (Cidade): +% de dano por nível do troféu Caçador de Mugs
+	if (typeof TrofeuBonusDano === "function") dano *= TrofeuBonusDano();
 	if (andar % 10 === 0) dano *= Tapeira.ItensBuild.multGuardiao();
 	// Análise de inimigos (Centro de Pesquisa): +% de dano contra o tipo do
 	// andar atual (comuns / guardiões) — ponto único do bônus
@@ -269,10 +271,11 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 		if (window["vidaInimigo" + alvo.id] <= 0) derrotados.push(alvo.id);
 	}
 
-	// Companheiro de dano + Frenesi: o alvo marcado morreu → 25% do dano
-	// acumulado na janela explode em todos os inimigos vivos; os abates da
-	// explosão entram em derrotados e seguem o mesmo fluxo de recompensas
-	if (alvoFrenesiComp > 0 && derrotados.includes(alvoFrenesiComp)) {
+	// Companheiro de dano + Frenesi: quando a JANELA TERMINA (o último toque
+	// consumiu a janela), 50% do dano acumulado explode em todos os inimigos
+	// vivos — não precisa mais matar o alvo marcado. Os abates da explosão
+	// entram em derrotados e seguem o mesmo fluxo de recompensas
+	if (janelaFrenesiAtiva && ataquesFrenesi === 0) {
 		for (const id of SplashFrenesiComp()) derrotados.push(id);
 	}
 
@@ -373,6 +376,14 @@ function DanoAutomatico(indentificador, habilidade) {
 
 		if (habilidade) {
 			indentificador = true;
+		}
+
+		// alvo focado: se o jogador tocou num inimigo específico, bate nele
+		// enquanto estiver vivo (tocar fora de inimigo volta pro automático)
+		const foco = Number(alvoFocado) | 0;
+		if (foco >= 1 && foco <= 4 && N(window["vidaInimigo" + foco]) > 0) {
+			Bater(foco, indentificador, !habilidade);
+			return;
 		}
 
 		if (andar < 5) {
@@ -582,7 +593,9 @@ function DanoCritico(critico) {
 	valida = Math.random();
 
 	// Poção de Ferro (itens da build): +50% por cópia na chance de crítico
-	if (valida <= chanceCrit * Tapeira.ItensBuild.multChanceCrit()) {
+	// Loja de Troféus (Cidade): +0,5% de chance por nível do troféu Sorte (soma)
+	const chanceTrofeu = (typeof TrofeuBonusCrit === "function") ? TrofeuBonusCrit() : 0;
+	if (valida <= chanceCrit * Tapeira.ItensBuild.multChanceCrit() + chanceTrofeu) {
 		MostraInfo("Dano critico de: " + critico);
 		return true;
 	} else {
@@ -688,6 +701,12 @@ function animarMorte(el) {
 document.addEventListener("DOMContentLoaded", () => {
 	for (let id = 1; id <= 4; id++) {
 		const inimigo = document.getElementById("inimigo" + id);
-		if (inimigo) inimigo.addEventListener("click", () => Bater(id, true));
+		if (inimigo) inimigo.addEventListener("click", () => {
+			// o toque/clique já atacou este alvo (pointerdown → foco + ataque):
+			// aqui só consome o foco pra não dar um hit duplicado. Sem foco
+			// (clique sintético/teclado), bate normalmente.
+			if (alvoFocado === id) { alvoFocado = 0; return; }
+			Bater(id, true);
+		});
 	}
 });

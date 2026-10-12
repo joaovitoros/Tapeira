@@ -353,6 +353,10 @@ function Resetar() {
 	// Mercado (Cidade): reputacao idem. Fábrica: fabricaNivel idem (a forja é
 	// da run e some com a build, no Tapeira.ItensBuild.limpa abaixo).
 	// Cristal (Cidade): cristalNivel idem.
+	// Loja de Troféus (Cidade): trofeus (nível por troféu) idem.
+	// Mercado (Cidade): as ofertas do dia (ofertasDia/ofertasDiaCompradas) idem.
+	// Nome do jogador (Casa): nomeJogador é PERMANENTE — identidade escolhida
+	// uma vez e mantida entre runs (não zera aqui; só no ZerarTodosSaves).
 	recompensasOfflinePendentes = null;
 	ultimaDataSaveOffline = Date.now();
 	numInimigosTela = 1; //usada para validar quantos inimigos e

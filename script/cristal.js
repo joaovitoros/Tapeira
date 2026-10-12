@@ -26,9 +26,9 @@ function MultiplicadorCristal() {
 	return 1 + CRISTAL_BONUS_NIVEL * nivel * CristalProfundidade();
 }
 
-// Custo em CM do próximo nível (base 100.000, ×1,65 por nível)
+// Custo em CM do próximo nível (base 100.000 ×CUSTO_CIDADE_MULT, ×1,65 por nível)
 function CustoCristalNivel(nivel) {
-	return Math.round(100000 * Math.pow(1.65, CristalNivelValido(nivel)));
+	return Math.round(100000 * CUSTO_CIDADE_MULT * Math.pow(1.65, CristalNivelValido(nivel)));
 }
 
 function CompraCristalNivel() {
@@ -82,7 +82,17 @@ function AbrirCristal() {
 	close.setAttribute("aria-label", "Fechar o Cristal");
 	close.textContent = "×";
 	close.addEventListener("click", FecharCristal);
-	header.append(title, close);
+	header.append(title, CriaInfoTela({
+		id: "cristal-info",
+		rotulo: "Sobre o Cristal",
+		html: "<b>Como funciona</b>"
+			+ "<p>Quanto <b>mais fundo</b> você reseta (andar de volta maior), "
+			+ "mais o Cristal rende — o bônus escala com a <b>profundidade</b> "
+			+ "do reset.</p>"
+			+ "<p>Ele amplia <b>gold, XP e a produção da Fazenda</b>. Nível "
+			+ "máximo " + CRISTAL_MAX_NIVEL + ", pago em CM e "
+			+ "<b>permanente</b>.</p>"
+	}), close);
 
 	const corpo = document.createElement("div");
 	corpo.className = "cristal-corpo";

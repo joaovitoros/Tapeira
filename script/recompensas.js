@@ -7,8 +7,11 @@ function QuantidadeFormigas(id) {
 	return formiga ? Math.max(0, Math.floor(Number(window[formiga.contador]) || 0)) : 0;
 }
 
+// Quantas formigas fecham um conjunto (nerf: era 5, agora 10)
+const FORMIGAS_POR_CONJUNTO = 10;
+
 function ConjuntosFormigas(id) {
-	return Math.floor(QuantidadeFormigas(id) / 5);
+	return Math.floor(QuantidadeFormigas(id) / FORMIGAS_POR_CONJUNTO);
 }
 
 function FormigasDesbloqueadas() {
@@ -40,11 +43,11 @@ function LimiteTempoOffline(quantidadePretas = QuantidadeFormigas("pretas")) {
 	const bonusCasa = (typeof CasaBonusTempoOfflineMs === "function")
 		? CasaBonusTempoOfflineMs(casaNivel)
 		: 0;
-	return maxTempoProgressoOffline + Math.floor(quantidadePretas / 5) * 2 * 60 * 1000 + bonusCasa;
+	return maxTempoProgressoOffline + Math.floor(quantidadePretas / FORMIGAS_POR_CONJUNTO) * 2 * 60 * 1000 + bonusCasa;
 }
 
 function LimiteBausOffline(quantidadeCinzas = QuantidadeFormigas("cinzas")) {
-	return maxBausOffline + Math.floor(quantidadeCinzas / 5);
+	return maxBausOffline + Math.floor(quantidadeCinzas / FORMIGAS_POR_CONJUNTO);
 }
 
 function SorteiaFormigas(abates) {
@@ -129,8 +132,10 @@ function ValorGoldBau() {
 		* MultiplicadorGoldBauFormigas();
 }
 
-function ConcedeFormigaColecao(formiga) {
+// silencioso=true: só soma a coleção (a coleta da Fazenda agrupa os avisos)
+function ConcedeFormigaColecao(formiga, silencioso = false) {
 	window[formiga.contador] = Math.min(Number.MAX_SAFE_INTEGER, window[formiga.contador] + 1);
+	if (silencioso) return;
 	UI.showAntReward(formiga);
 	UI.showInfo(`Uma formiga ${formiga.singular} entrou para sua coleção!`);
 	UI.showMilestone("Nova formiga encontrada", `Formiga ${formiga.singular} adicionada à coleção`);
