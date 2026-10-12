@@ -180,7 +180,9 @@ function AbrirTrofeus() {
 }
 
 function RenderTrofeusPainel() {
-	const corpo = document.getElementById("trofeusCorpo");
+	// a loja vive dentro da Guilda agora (o prédio saiu da Cidade);
+	// cai no painel antigo se ele estiver aberto
+	const corpo = document.getElementById("guildaCorpo") || document.getElementById("trofeusCorpo");
 	if (!corpo) return;
 	corpo.replaceChildren(TrofeusSaldo(), TrofeusSecao());
 }

@@ -646,6 +646,88 @@ test("combate aplica dano, item de build e respeita pausa", async () => {
     }
 });
 
+test("toque na cena: cada tap dá um hit, e toque em botão não ataca", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.startPlayerAttack === "function");
+        const result = await page.evaluate(() => {
+            const r = {};
+            const randomOriginal = Math.random;
+            Math.random = () => 0.99; // sem crítico nem drops aleatórios
+            volumeAtual = 0;
+            jogoPausado = false;
+            fugaEmAndamento = false;
+            andar = 1;
+            nivelJogador = 1;
+            danoJogador = 100;
+            chanceCrit = 0;
+            perkDano = 0;
+            especializacao = 0;
+            ataquesCorrenteEletrica = 0;
+            ataquesBonusGold = 0;
+            ataquesFrenesi = 0;
+            segundosPausaFuga = 0;
+            numInimigosTela = 1;
+            vidaAndar = 100000;
+            vidaInimigo1 = 100000;
+            vidaInimigo2 = vidaInimigo3 = vidaInimigo4 = 0;
+            missaoAtual = 0;
+            Tapeira.ItensBuild.limpa();
+            alvoFocado = 0;
+            // pior caso: a contagem do ritmo está cheia — um tap não pode
+            // depender dela (senão são ~30 taps por golpe)
+            ValidaBater = MaxValidaBater;
+
+            UI.playAttackAnimation = () => {};
+            UI.showDamageNumber = () => {};
+            UI.showCurrencyReward = () => {};
+            UI.updateObjective = () => {};
+            UI.showObjectiveComplete = () => {};
+            UI.updateEnemyHealth = () => {};
+            window.MostraInfo = () => {};
+            window.MostraStatus = () => {};
+            window.TocaSomSintetico = () => {};
+            window.ChamaSom = () => {};
+
+            // um tap = pointerdown + pointerup, como o dedo faz no celular
+            const tap = (alvo) => {
+                alvo.dispatchEvent(new PointerEvent("pointerdown", {
+                    bubbles: true, pointerType: "touch", pointerId: 7, button: 0
+                }));
+                window.dispatchEvent(new PointerEvent("pointerup", {
+                    bubbles: true, pointerType: "touch", pointerId: 7, button: 0
+                }));
+            };
+
+            const cena = document.getElementById("game-root");
+            const botao = document.getElementById("btnPause");
+            const player = document.querySelector(".player");
+
+            tap(cena);
+            r.aposUmTap = vidaInimigo1;
+            tap(cena);
+            r.aposDoisTaps = vidaInimigo1;
+            tap(player);
+            r.aposTapNoPlayer = vidaInimigo1;
+            tap(botao);
+            r.aposTapNoBotao = vidaInimigo1;
+
+            Math.random = randomOriginal;
+            r.semAtaqueAndando = attackInterval === null;
+            return r;
+        });
+
+        assert.ok(Math.abs(result.aposUmTap - 99900) < 1e-9, "o primeiro tap já dá um hit");
+        assert.ok(Math.abs(result.aposDoisTaps - 99800) < 1e-9, "o segundo tap também dá um hit");
+        assert.ok(Math.abs(result.aposTapNoPlayer - 99700) < 1e-9, "toque no personagem também ataca");
+        assert.equal(result.aposTapNoBotao, 99700, "toque em botão não ataca");
+        assert.equal(result.semAtaqueAndando, true, "o intervalo do ataque para ao soltar o dedo");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("hit kill no menu de debug mata com um golpe e pode ser desligado", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html?dev=1");
     try {
@@ -2696,7 +2778,7 @@ test("telas da Cidade: os 7 prédios trazem o ícone de info com balão", async 
         await page.waitForFunction(() =>
             typeof window.CriaInfoTela === "function"
             && typeof window.AbrirCasa === "function"
-            && typeof window.AbrirTrofeus === "function",
+            && typeof window.AbrirGuilda === "function",
             undefined,
             { timeout: 15000 }
         );
@@ -2713,7 +2795,7 @@ test("telas da Cidade: os 7 prédios trazem o ícone de info com balão", async 
                 { nome: "Fabrica", abre: AbrirFabrica, fecha: FecharFabrica, idModal: "fabricaModal" },
                 { nome: "Pesquisa", abre: AbrirPesquisa, fecha: FecharPesquisa, idModal: "pesquisaModal" },
                 { nome: "Cristal", abre: AbrirCristal, fecha: FecharCristal, idModal: "cristalModal" },
-                { nome: "Trofeus", abre: AbrirTrofeus, fecha: FecharTrofeus, idModal: "trofeusModal" }
+                { nome: "Guilda", abre: AbrirGuilda, fecha: FecharGuilda, idModal: "guildaModal" }
             ];
             const fora = [];
             for (const caso of casos) {
@@ -2754,9 +2836,129 @@ test("telas da Cidade: os 7 prédios trazem o ícone de info com balão", async 
         });
 
         assert.deepEqual(resultado, [],
-            "Casa, Fazenda, Mercado, Fábrica, Pesquisa, Cristal e Troféus têm o ícone de info funcional");
+            "Casa, Fazenda, Mercado, Fábrica, Pesquisa, Cristal e Guilda têm o ícone de info funcional");
 
         assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
+test("guilda: mostra o cartão, exporta e importa cartão de rival (não save)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            typeof window.Tapeira !== "undefined"
+            && window.Tapeira.Guilda
+            && typeof window.Tapeira.Guilda.abrir === "function",
+            undefined,
+            { timeout: 15000 }
+        );
+
+        // painel: cartão do jogador, as duas ações e o botão saiu do Status
+        const painel = await page.evaluate(() => {
+            document.getElementById("infoModal")?.remove();
+            window.maxAndar = 200;
+            Tapeira.Guilda.abrir();
+            const modal = document.getElementById("guildaModal");
+            const card = modal ? modal.querySelector(".pvpCartao") : null;
+            const botoes = modal
+                ? [...modal.querySelectorAll(".guilda-acao")].map(b => b.textContent.trim())
+                : [];
+            const semInline = modal
+                ? ![...modal.querySelectorAll("button")].some(b => b.hasAttribute("onclick"))
+                : false;
+            return {
+                temModal: !!modal,
+                temCartao: !!card,
+                cartaoSeu: card ? card.textContent.includes("Seu cartão") : false,
+                botoes,
+                semInline,
+                idTexto: modal
+                    ? (modal.querySelector(".guilda-resumo__id")?.textContent || "")
+                    : "",
+                statusExporta: !!document.querySelector("#StatusBody [data-pvp-exportar]")
+            };
+        });
+        assert.ok(painel.temModal, "painel da Guilda abre pela API Tapeira.Guilda");
+        assert.ok(painel.temCartao, "o cartão do jogador aparece no painel");
+        assert.ok(painel.cartaoSeu, "cartão rotulado como seu");
+        assert.deepEqual(painel.botoes,
+            ["Exportar meu cartão", "Importar cartão de rival"],
+            "as duas ações do multiplayer estão na Guilda");
+        assert.ok(painel.semInline, "sem handler inline nos botões");
+        assert.ok(painel.idTexto.includes("ID do cartão"), "id do cartão visível: " + painel.idTexto);
+        assert.equal(painel.statusExporta, false,
+            "o botão de exportar saiu do Status (ficou na Guilda)");
+
+        // importar cartão de rival (arquivo .json) → duelo abre e a Guilda fecha
+        const importa = await page.evaluate(() => new Promise(resolve => {
+            const cartao = PvpFantasma.MontaCartaoBatalha();
+            const input = {
+                files: [new File([JSON.stringify(cartao)],
+                    "TAPeira-cartao-batalha-teste.json", { type: "application/json" })]
+            };
+            PvpFantasma.ImportaCartaoArquivo(input);
+            setTimeout(() => resolve({
+                duel: !!document.getElementById("pvpDuelo"),
+                guildaAinda: !!document.getElementById("guildaModal")
+            }), 400);
+        }));
+        assert.equal(importa.duel, true, "cartão de rival importado abre a ficha do duelo");
+        assert.equal(importa.guildaAinda, false, "a Guilda fecha quando o recebimento dá certo");
+
+        // arquivo que é SAVE (não cartão) → recusado com aviso visível
+        const recusa = await page.evaluate(() => new Promise(resolve => {
+            PvpFantasma.FechaDuelo(); // fecha a ficha do duelo anterior
+            const save = CriarObjetoSave(false);
+            save.saveFormat = "tapeira-save";
+            const input = {
+                files: [new File([JSON.stringify(save)],
+                    "TAPeira-save.json", { type: "application/json" })]
+            };
+            PvpFantasma.ImportaCartaoArquivo(input);
+            setTimeout(() => {
+                const el = document.querySelector(".aviso-rapido");
+                const aviso = el ? el.textContent : "";
+                if (el) el.dispatchEvent(new Event("animationend"));
+                resolve({
+                    aviso,
+                    duelAberto: !!document.getElementById("pvpDuelo"),
+                    usados: pvpCartoesUsados.length
+                });
+            }, 400);
+        }));
+        assert.ok(recusa.aviso.includes("não um cartão"),
+            "aviso visível: esse arquivo é save, não cartão: " + recusa.aviso);
+        assert.equal(recusa.duelAberto, false, "save não abre duelo");
+        assert.equal(recusa.usados, 0, "nenhum id queimado por tentativa inválida");
+
+        // extensão errada → aviso pedindo .json (sem passar pelo FileReader)
+        const extensao = await page.evaluate(() => {
+            const input = { files: [new File(["x"], "foto.png", { type: "image/png" })] };
+            PvpFantasma.ImportaCartaoArquivo(input);
+            const el = document.querySelector(".aviso-rapido");
+            const aviso = el ? el.textContent : "";
+            if (el) el.dispatchEvent(new Event("animationend"));
+            return { aviso };
+        });
+        assert.ok(extensao.aviso.includes(".json"),
+            "extensão errada mostra aviso de .json: " + extensao.aviso);
+
+        // ESC fecha a Guilda (entrou na lista do keymap) e a API fecha também
+        const fechamento = await page.evaluate(() => {
+            Tapeira.Guilda.abrir();
+            document.dispatchEvent(new KeyboardEvent("keydown",
+                { key: "Escape", code: "Escape", bubbles: true }));
+            const escFechou = !document.getElementById("guildaModal");
+            Tapeira.Guilda.abrir();
+            Tapeira.Guilda.fechar();
+            return { escFechou, apiFechou: !document.getElementById("guildaModal") };
+        });
+        assert.ok(fechamento.escFechou, "ESC fecha o painel da Guilda");
+        assert.ok(fechamento.apiFechou, "Tapeira.Guilda.fecha fecha o painel");
+
+        assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
     } finally {
         await context.close();
     }
@@ -3065,20 +3267,22 @@ test("Loja de Troféus: níveis, custo crescente, efeitos, save e painel", async
             // painel: abre, mostra o saldo, compra pelo botão e fecha
             trofeus = {};
             ticketsMug = 5;
-            AbrirTrofeus();
-            const modal = document.getElementById("trofeusModal");
+            Tapeira.Guilda.abrir();
+            const modal = document.getElementById("guildaModal");
             out.modalAberto = !!modal;
+            out.lojaDentroDaGuilda = !!(modal && modal.querySelector(".trofeus-linha"));
             out.linhas = modal ? modal.querySelectorAll(".trofeus-linha").length : 0;
             out.saldo = modal ? (modal.querySelector(".trofeus-saldo__texto")?.textContent || "") : "";
             const botao = modal ? modal.querySelector(".trofeus-comprar") : null;
             if (botao) botao.click();
             out.nivelAposClique = T.nivel("cacador");
             out.ticketsAposClique = ticketsMug;
-            FecharTrofeus();
-            out.modalFechado = !document.getElementById("trofeusModal");
+            FecharGuilda();
+            out.modalFechado = !document.getElementById("guildaModal");
 
-            // o prédio existe na Cidade (scene)
-            out.predioExiste = !!document.querySelector('[data-cidade="trofeus"]');
+            // o prédio da Loja de Troféus saiu da Cidade (a Guilda ficou no lugar)
+            out.predioTrofeusSaiu = !document.querySelector('[data-cidade="trofeus"]');
+            out.predioGuildaExiste = !!document.querySelector('[data-cidade="guilda"]');
 
             return out;
         });
@@ -3119,7 +3323,8 @@ test("Loja de Troféus: níveis, custo crescente, efeitos, save e painel", async
         assert.equal(result.nivelAposClique, 1, "clique no botão compra");
         assert.equal(result.ticketsAposClique, 4, "clique debita o ticket");
         assert.ok(result.modalFechado, "o painel fecha");
-        assert.ok(result.predioExiste, "o prédio da Loja de Troféus existe na Cidade");
+        assert.ok(result.predioTrofeusSaiu, "o prédio da Loja de Troféus saiu da Cidade");
+        assert.ok(result.predioGuildaExiste, "o prédio da Guilda existe na Cidade");
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();
@@ -3589,6 +3794,142 @@ test("batalha-fantasma: corrida contra o chefe é determinística e decide o ven
     }
 });
 
+test("nome do jogador: Casa grava, o save carrega e o nome aparece no duelo", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            typeof window.AbrirCasa === "function"
+            && typeof window.NormalizaNomeJogador === "function"
+            && typeof window.PvpFantasma === "object"
+            && typeof window.CriarObjetoSave === "function",
+            undefined,
+            { timeout: 15000 }
+        );
+
+        const out = await page.evaluate(() => {
+            const r = {};
+            UI.showInfo = () => {};
+            window.MostraStatus = () => {};
+
+            // ---- normalização (limites) ----
+            r.padrao = NormalizaNomeJogador("");
+            r.nulo = NormalizaNomeJogador(null);
+            r.espacos = NormalizaNomeJogador("  Ana   Maria  ");
+            r.controle = NormalizaNomeJogador("A\u0001B");
+            r.corte = NormalizaNomeJogador("x".repeat(100)).length;
+
+            // ---- Casa: o campo existe e grava ao sair ----
+            window.maxAndar = 200;
+            nomeJogador = "Tapeira";
+            AbrirCasa();
+            const campo = document.getElementById("casaNomeJogador");
+            r.temCampo = !!campo;
+            r.valorInicial = campo ? campo.value : null;
+            r.semInline = campo
+                ? !["onchange", "oninput", "onblur", "onclick"].some(a => campo.hasAttribute(a))
+                : false;
+            if (campo) {
+                campo.value = "  Joao   Silva  ";
+                campo.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            r.gravou = nomeJogador;
+            r.campoRefletiu = campo ? campo.value : null;
+            const status = document.querySelector(".casa-nome__status");
+            r.statusTemNome = !!status && status.textContent.indexOf("Joao Silva") !== -1;
+            // a seção de nome é a primeira do painel
+            const primeira = document.querySelector("#casaCorpo .casa-secao");
+            r.primeiraSecao = primeira ? primeira.textContent.indexOf("Seu nome") === 0 : false;
+            FecharCasa();
+            r.casaFechou = !document.getElementById("casaModal");
+
+            // ---- contrato de save ----
+            // a página nova ainda não montou inimigo: esses campos nascem
+            // undefined e o JSON os derruba (mesmo ajuste do teste do Mercado)
+            vidaAndar = 100;
+            vidaInimigo1 = 100; vidaInimigo2 = 0; vidaInimigo3 = 0; vidaInimigo4 = 0;
+            const save = CriarObjetoSave();
+            r.saveTem = save.nomeJogador;
+            const antigo = JSON.parse(JSON.stringify(save));
+            delete antigo.nomeJogador;
+            const tenta = (alterado) => {
+                try { ValidarSave(alterado); return false; } catch { return true; }
+            };
+            let validou = false;
+            try { ValidarSave(save); validou = true; } catch { }
+            r.validou = validou;
+            r.rejeitouNumero = tenta(Object.assign({}, save, { nomeJogador: 123 }));
+            r.rejeitouLongo = tenta(Object.assign({}, save, { nomeJogador: "x".repeat(200) }));
+            r.rejeitouControle = tenta(Object.assign({}, save, { nomeJogador: "ab\u0007cd" }));
+            let aceitouAntigo = false;
+            try { ValidarSave(antigo); aceitouAntigo = true; } catch { }
+            r.aceitouAntigo = aceitouAntigo;
+
+            // round trip: save novo volta com o nome, save antigo cai no padrão
+            nomeJogador = "Tapeira";
+            Carregar(JSON.stringify(save));
+            r.carregou = nomeJogador;
+            Carregar(JSON.stringify(antigo));
+            r.carregouAntigo = nomeJogador;
+
+            // ---- o nome entra no cartão e aparece na tela do duelo ----
+            nomeJogador = "Joana Silva";
+            r.cartaoNome = PvpFantasma.MontaCartaoBatalha().nome;
+            const rival = PvpFantasma.MontaCartaoBatalha();
+            rival.nome = "Rival Sombras";
+            rival.id = PvpFantasma._assinatura(rival);
+            PvpFantasma.AbreDuelo(rival);
+            const modal = document.getElementById("pvpDuelo");
+            r.fichaTemNome = !!modal && modal.textContent.indexOf("Joana Silva") !== -1;
+            r.fichaTemRival = !!modal && modal.textContent.indexOf("Rival Sombras") !== -1;
+            PvpFantasma.IniciaDuelo();
+            const meu = document.querySelector('[data-pvp-alvo="meu"] .pvpAlvoTopo span');
+            const outro = document.querySelector('[data-pvp-alvo="fantasma"] .pvpAlvoTopo span');
+            r.corridaMeu = meu ? meu.textContent : "";
+            r.corridaFantasma = outro ? outro.textContent : "";
+            r.timerRodando = PvpFantasma._timerDuelo !== null;
+            PvpFantasma.FechaDuelo();
+            r.pvpLimpou = !document.getElementById("pvpDuelo") && PvpFantasma._timerDuelo === null;
+            return r;
+        });
+
+        assert.equal(out.padrao, "Tapeira", "nome vazio vira o padrão");
+        assert.equal(out.nulo, "Tapeira", "null vira o padrão");
+        assert.equal(out.espacos, "Ana Maria", "espaços duplos viram um só");
+        assert.equal(out.controle, "A B", "caractere de controle vira espaço");
+        assert.equal(out.corte, 20, "nome corta no teto de 20");
+
+        assert.equal(out.temCampo, true, "a Casa tem o campo de nome");
+        assert.equal(out.valorInicial, "Tapeira", "o campo nasce com o nome atual");
+        assert.equal(out.semInline, true, "sem handler inline no input");
+        assert.equal(out.gravou, "Joao Silva", "grava normalizado ao sair do campo");
+        assert.equal(out.campoRefletiu, "Joao Silva", "o campo reflete o que foi gravado");
+        assert.equal(out.statusTemNome, true, "o status mostra o nome gravado");
+        assert.equal(out.primeiraSecao, true, "a seção de nome abre o painel");
+        assert.equal(out.casaFechou, true, "a Casa fecha");
+
+        assert.equal(out.saveTem, "Joao Silva", "o nome vai pro save");
+        assert.equal(out.validou, true, "ValidarSave aceita o nome válido");
+        assert.equal(out.rejeitouNumero, true, "rejeita nome que não é string");
+        assert.equal(out.rejeitouLongo, true, "rejeita nome absurdo de longo");
+        assert.equal(out.rejeitouControle, true, "rejeita nome com caractere de controle");
+        assert.equal(out.aceitouAntigo, true, "save antigo sem o campo continua válido");
+        assert.equal(out.carregou, "Joao Silva", "Carregar devolve o nome salvo");
+        assert.equal(out.carregouAntigo, "Tapeira", "save antigo cai no padrão");
+
+        assert.equal(out.cartaoNome, "Joana Silva", "o cartão carrega o nome do jogador");
+        assert.equal(out.fichaTemNome, true, "a ficha do duelo mostra o nome");
+        assert.equal(out.fichaTemRival, true, "a ficha mostra o nome do rival");
+        assert.equal(out.corridaMeu, "Você · Joana Silva", "a corrida rotula com o seu nome");
+        assert.equal(out.corridaFantasma, "Fantasma · Rival Sombras", "a corrida rotula com o nome do rival");
+        assert.equal(out.timerRodando, true, "a corrida começou");
+        assert.equal(out.pvpLimpou, true, "fechar o duelo limpa modal e timer");
+
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("tempo para fugir mostra no máximo duas casas decimais", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
@@ -3803,6 +4144,17 @@ test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado n
         assert.equal(repetida.ok, false, "cartão usado é recusado no reimport");
         assert.equal(repetida.esmeraldas, repetida.antes, "reimportação não paga nada");
         assert.equal(repetida.usados, 1, "lista de usados não muda");
+        // aviso VISÍVEL do cartão usado (uma linha no histórico passaria
+        // despercebida com o menu de pausa aberto)
+        const aviso = await page.evaluate(() => {
+            const el = document.querySelector(".aviso-rapido");
+            const texto = el ? el.textContent : "";
+            if (el) el.dispatchEvent(new Event("animationend"));
+            return { texto, sumiuAposAnimacao: !document.querySelector(".aviso-rapido") };
+        });
+        assert.ok(aviso.texto.includes("já foi usado"),
+            "toast avisa que o cartão já foi usado: " + aviso.texto);
+        assert.ok(aviso.sumiuAposAnimacao, "toast some no animationend (sem timer novo)");
 
         // (d) derrota: queima o id também, mas não paga nada
         const derrota = await page.evaluate(() => {
@@ -3839,13 +4191,17 @@ test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado n
         const contrato = await page.evaluate(() => {
             const saida = {};
             const ids = ["a1b2c3d4e5f60718293a4b5c6d7e8f90", "00112233445566778899aabbccddeeff"];
+            const exp = ["11223344556677889900aabbccddeeff"];
             pvpCartoesUsados = ids.slice();
+            pvpCartoesExportados = exp.slice();
             const obj = CriarObjetoSave(false);
             obj.saveFormat = "tapeira-save";
             obj.saveVersion = 1;
             obj.exportedAt = new Date().toISOString();
             saida.builder = Array.isArray(obj.pvpCartoesUsados)
-                && obj.pvpCartoesUsados.length === 2;
+                && obj.pvpCartoesUsados.length === 2
+                && Array.isArray(obj.pvpCartoesExportados)
+                && obj.pvpCartoesExportados.length === 1;
             const json = JSON.stringify(obj);
             try { ValidarSave(JSON.parse(json)); saida.valido = true; }
             catch (e) { saida.valido = false; saida.erroValido = e.message; }
@@ -3857,27 +4213,117 @@ test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado n
             fora.pvpCartoesUsados = ["nao-hex"];
             try { ValidarSave(fora); saida.rejeitaFormato = false; }
             catch (e) { saida.rejeitaFormato = e instanceof TypeError; }
-            // save novo: Carregar restaura a lista
+            const lixoExp = JSON.parse(json);
+            lixoExp.pvpCartoesExportados = "nao-array";
+            try { ValidarSave(lixoExp); saida.rejeitaLixoExp = false; }
+            catch (e) { saida.rejeitaLixoExp = e instanceof TypeError; }
+            const foraExp = JSON.parse(json);
+            foraExp.pvpCartoesExportados = [123];
+            try { ValidarSave(foraExp); saida.rejeitaFormatoExp = false; }
+            catch (e) { saida.rejeitaFormatoExp = e instanceof TypeError; }
+            // save novo: Carregar restaura as duas listas
             pvpCartoesUsados = [];
+            pvpCartoesExportados = [];
             Carregar(json);
             saida.restaurado = pvpCartoesUsados.slice();
-            // save antigo sem o campo: começa vazio
+            saida.restauradoExp = pvpCartoesExportados.slice();
+            // save antigo sem os campos: começam vazias
             const antigo = JSON.parse(json);
             delete antigo.pvpCartoesUsados;
+            delete antigo.pvpCartoesExportados;
             pvpCartoesUsados = ["lixo"];
+            pvpCartoesExportados = ["lixo"];
             Carregar(JSON.stringify(antigo));
             saida.antigo = pvpCartoesUsados.slice();
+            saida.antigoExp = pvpCartoesExportados.slice();
             return saida;
         });
-        assert.ok(contrato.builder, "CriarObjetoSave leva pvpCartoesUsados");
+        assert.ok(contrato.builder, "CriarObjetoSave leva pvpCartoesUsados e pvpCartoesExportados");
         assert.equal(contrato.valido, true,
-            "ValidarSave aceita a lista (whitelist): " + (contrato.erroValido || ""));
+            "ValidarSave aceita as listas (whitelist): " + (contrato.erroValido || ""));
         assert.ok(contrato.rejeitaLixo, "lista lixo (não-array) é rejeitada");
         assert.ok(contrato.rejeitaFormato, "id fora do formato é rejeitado");
+        assert.ok(contrato.rejeitaLixoExp, "lista de exportados lixo é rejeitada");
+        assert.ok(contrato.rejeitaFormatoExp, "id de exportado fora do formato é rejeitado");
         assert.deepEqual(contrato.restaurado,
             ["a1b2c3d4e5f60718293a4b5c6d7e8f90", "00112233445566778899aabbccddeeff"],
-            "Carregar restaura a lista");
-        assert.deepEqual(contrato.antigo, [], "save antigo ganha lista vazia");
+            "Carregar restaura a lista de usados");
+        assert.deepEqual(contrato.restauradoExp,
+            ["11223344556677889900aabbccddeeff"],
+            "Carregar restaura a lista de exportados");
+        assert.deepEqual(contrato.antigo, [], "save antigo ganha lista de usados vazia");
+        assert.deepEqual(contrato.antigoExp, [], "save antigo ganha lista de exportados vazia");
+
+        // (f) regra consigo mesmo: exportar registra o id como "meu";
+        //     se a última luta foi contra si mesmo, as próximas lutam
+        //     mas não pagam — e voltam a pagar após luta contra outro
+        const self = await page.evaluate(() => {
+            const saida = {};
+            pvpCartoesUsados = [];
+            pvpCartoesExportados = [];
+            const meu = PvpFantasma.MontaCartaoBatalha();
+            // export REAL: registra o id como cartão meu antes do download
+            const antesExp = pvpCartoesExportados.length;
+            try { PvpFantasma.ExportaCartaoBatalha(); }
+            catch (e) { /* saveAs pode falhar no headless — o registro já ocorreu */ }
+            saida.exportRegistrou = pvpCartoesExportados.length > antesExp
+                && pvpCartoesExportados.includes(meu.id);
+            // 1ª luta consigo mesmo: paga (a última ainda não foi consigo)
+            let antes = esmeraldas;
+            PvpFantasma._conclui(meu.id, { venceu: true, tempoMeu: 10, tempoFantasma: 20 });
+            saida.primeira = esmeraldas - antes;
+            // cartão meu novo (progresso mudou → id novo): não paga mais
+            const meu2 = { ...meu, danoGolpe: meu.danoGolpe + 1 };
+            meu2.id = PvpFantasma._assinatura(meu2);
+            PvpFantasma._registraCartaoProprio(meu2.id);
+            antes = esmeraldas;
+            PvpFantasma._conclui(meu2.id, { venceu: true, tempoMeu: 10, tempoFantasma: 20 });
+            saida.segunda = esmeraldas - antes;
+            // derrota nunca paga (nem com a flag ligada)
+            antes = esmeraldas;
+            PvpFantasma._conclui("ffffffffffffffffffffffffffffffff",
+                { venceu: false, tempoMeu: 30, tempoFantasma: 10 });
+            saida.derrota = esmeraldas - antes;
+            // luta contra outro jogador: paga e limpa a "última foi consigo"
+            const outro = { ...meu, nome: "Rival" };
+            outro.id = PvpFantasma._assinatura(outro);
+            antes = esmeraldas;
+            PvpFantasma._conclui(outro.id, { venceu: true, tempoMeu: 10, tempoFantasma: 20 });
+            saida.terceira = esmeraldas - antes;
+            // consigo de novo: paga (a última foi do Rival)
+            const meu3 = { ...meu, danoGolpe: meu.danoGolpe + 2 };
+            meu3.id = PvpFantasma._assinatura(meu3);
+            PvpFantasma._registraCartaoProprio(meu3.id);
+            antes = esmeraldas;
+            PvpFantasma._conclui(meu3.id, { venceu: true, tempoMeu: 10, tempoFantasma: 20 });
+            saida.quarta = esmeraldas - antes;
+            saida.exportados = pvpCartoesExportados.length;
+            saida.usados = pvpCartoesUsados.length;
+            // receber o próprio cartão com a flag ligada: aviso visível
+            const base = PvpFantasma.MontaCartaoBatalha();
+            const c = { ...base, danoGolpe: base.danoGolpe + 5 };
+            c.id = PvpFantasma._assinatura(c);
+            PvpFantasma._registraCartaoProprio(c.id);
+            saida.okSelf = PvpFantasma.RecebeCartao(c);
+            const el = document.querySelector(".aviso-rapido");
+            saida.avisoSelf = el ? el.textContent : "";
+            if (el) el.dispatchEvent(new Event("animationend"));
+            return saida;
+        });
+        assert.equal(self.exportRegistrou, true, "export registra o id como cartão meu");
+        assert.equal(self.primeira, 2, "1ª luta consigo mesmo paga +2 esmeraldas");
+        assert.equal(self.segunda, 0,
+            "depois de lutar consigo, a próxima luta consigo não paga");
+        assert.equal(self.derrota, 0, "derrota não paga (com ou sem flag)");
+        assert.equal(self.terceira, 2,
+            "luta contra outro jogador paga e limpa a flag");
+        assert.equal(self.quarta, 2,
+            "com a última de outro jogador, consigo mesmo paga de novo");
+        assert.equal(self.exportados, 3, "3 cartões meus registrados");
+        assert.equal(self.usados, 5, "5 duelos concluídos (ids queimados)");
+        assert.equal(self.okSelf, true, "cartão próprio não usado é aceito (duelo abre)");
+        assert.ok(self.avisoSelf.includes("consigo mesmo"),
+            "toast avisa que é duelo consigo mesmo: " + self.avisoSelf);
 
         assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
     } finally {

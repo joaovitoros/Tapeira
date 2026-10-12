@@ -125,6 +125,10 @@ function Carregar(saveData, calculaOffline = false) {
 	// cartões de batalha já usados no PvP: permanente (não zera no
 	// Resetar); save antigo sem o campo começa com a lista vazia
 	pvpCartoesUsados = Array.isArray(save.pvpCartoesUsados) ? save.pvpCartoesUsados.slice() : [];
+	// cartões que eu exportei (o jogo distingue "luta contra si mesmo")
+	pvpCartoesExportados = Array.isArray(save.pvpCartoesExportados) ? save.pvpCartoesExportados.slice() : [];
+	// save antigo não tem o campo: NormalizaNomeJogador devolve o padrão
+	nomeJogador = NormalizaNomeJogador(save.nomeJogador);
 	numVoltas = save.numVoltas ?? 0;
 
 	tempoAvancoInimigos = save.tempoAvancoInimigos ?? TempoFugaMax();

@@ -244,7 +244,7 @@ function FechaJanelasAbertas() {
     });
 
     // Modais removidos do DOM ao fechar
-    ["antCollectionModal", "skillUpgradeModal", "feitosModal", "infoModal", "ramosTreeModal", "casaModal", "fazendaModal", "pesquisaModal", "mercadoModal", "fabricaModal", "cristalModal", "trofeusModal"].forEach(id => {
+    ["antCollectionModal", "skillUpgradeModal", "feitosModal", "infoModal", "ramosTreeModal", "casaModal", "fazendaModal", "pesquisaModal", "mercadoModal", "fabricaModal", "cristalModal", "guildaModal"].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.remove();
@@ -353,6 +353,11 @@ document.addEventListener("pointerdown", function(evt) {
     if (ehToque) {
         const inimigoEl = alvo ? alvo.closest("[id^='inimigo']") : null;
         alvoFocado = inimigoEl ? (parseInt(inimigoEl.id.replace("inimigo", ""), 10) || 0) : 0;
+        // um toque é UM golpe: o ritmo de ataque (ValidaBater, 30 ticks de
+        // 30 ms) vale pra quem SEGURA o dedo atacando. Sem isso, um tap rápido
+        // só decrementa a contagem e o jogador precisa de ~30 taps pra cada
+        // hit — segurar continua atacando no ritmo de sempre.
+        ValidaBater = 0;
     }
 
     evt.preventDefault();

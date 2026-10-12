@@ -117,6 +117,8 @@ function AbrirCasa() {
 		id: "casa-info",
 		rotulo: "Sobre a Casa",
 		html: "<b>Como funciona</b>"
+			+ "<p><b>Seu nome</b>: a identidade que aparece nos duelos da "
+			+ "Batalha-fantasma (ficha e corrida).</p>"
 			+ "<p><b>Conforto</b>: níveis que melhoram o que você ganha "
 			+ "<b>offline</b> (+recompensa e +limite de tempo por nível), "
 			+ "pagos em CM.</p>"
@@ -148,7 +150,77 @@ function AbrirCasa() {
 function RenderCasaPainel() {
 	const corpo = document.getElementById("casaCorpo");
 	if (!corpo) return;
-	corpo.replaceChildren(CasaSecaoConforto(), CasaSecaoCompanheiros(), CasaSecaoTrofeus());
+	corpo.replaceChildren(CasaSecaoNome(), CasaSecaoConforto(), CasaSecaoCompanheiros(), CasaSecaoTrofeus());
+}
+
+// ---- Nome do jogador ----
+// Identidade permanente digitada aqui e exibida nos duelos da
+// Batalha-fantasma (ficha, corrida e resultado — pvp-fantasma.js).
+function CasaSecaoNome() {
+	const secao = document.createElement("section");
+	secao.className = "casa-secao";
+
+	const titulo = document.createElement("h3");
+	titulo.className = "casa-secao__titulo";
+	titulo.textContent = "Seu nome";
+
+	const desc = document.createElement("p");
+	desc.className = "casa-secao__desc";
+	desc.textContent = "É assim que você aparece nos duelos da Batalha-fantasma — "
+		+ "na ficha dos duelistas e na hora da corrida. Vale pra sempre (atravessa o reset).";
+
+	const linha = document.createElement("div");
+	linha.className = "casa-nome__linha";
+
+	const rotulo = document.createElement("label");
+	rotulo.className = "casa-nome__rotulo";
+	rotulo.setAttribute("for", "casaNomeJogador");
+	rotulo.textContent = "Nome do jogador";
+
+	const status = document.createElement("p");
+	status.className = "casa-nome__status";
+	status.textContent = StatusNomeCasa();
+
+	const campo = document.createElement("input");
+	campo.type = "text";
+	campo.id = "casaNomeJogador";
+	campo.className = "casa-nome__input";
+	campo.value = NomeJogador();
+	campo.maxLength = NOME_JOGADOR_MAX;
+	campo.placeholder = "Tapeira";
+	campo.setAttribute("autocomplete", "off");
+	campo.setAttribute("spellcheck", "false");
+
+	// grava ao sair do campo (change/blur) — digitação parcial não salva
+	// nome pela metade no auto save
+	const grava = () => {
+		const antes = nomeJogador;
+		nomeJogador = NormalizaNomeJogador(campo.value);
+		campo.value = nomeJogador; // o campo mostra o que foi de fato gravado
+		if (nomeJogador === antes) return;
+		AutoSaveLocal();
+		status.textContent = StatusNomeCasa();
+	};
+	campo.addEventListener("change", grava);
+	campo.addEventListener("blur", grava);
+	campo.addEventListener("keydown", evento => {
+		// Enter confirma; Escape fecha o painel (o handler do overlay faz isso)
+		// e o valor digitado tem que estar gravado antes de o campo sumir
+		if (evento.key === "Enter") {
+			evento.preventDefault();
+			campo.blur();
+		} else if (evento.key === "Escape") {
+			grava();
+		}
+	});
+
+	linha.append(rotulo, campo);
+	secao.append(titulo, desc, linha, status);
+	return secao;
+}
+
+function StatusNomeCasa() {
+	return "No duelo você aparece como «" + NomeJogador() + "».";
 }
 
 // ---- Companheiros: foto + o que faz + a passiva ----

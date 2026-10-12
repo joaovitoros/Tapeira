@@ -93,6 +93,29 @@ var trofeus = {};
 var ofertasDia = 0;
 var ofertasDiaCompradas = 0;
 
+// Nome do jogador — identidade escolhida na Casa (casa.js) e exibida nos
+// duelos da Batalha-fantasma (ficha, corrida e resultado). PERMANENTE: não
+// zera no Resetar (só no ZerarTodosSaves), como o CM e os troféus.
+var nomeJogador = "Tapeira";
+const NOME_JOGADOR_MAX = 20;
+
+// Fonte única do nome exibido: tira caracteres de controle e espaços duplos,
+// corta no teto e nunca devolve vazio (o padrão é "Tapeira").
+function NormalizaNomeJogador(valor) {
+	const limpo = String(valor === undefined || valor === null ? "" : valor)
+		.replace(/[\u0000-\u001f\u007f]/g, " ")
+		.replace(/\s+/g, " ")
+		.trim()
+		.slice(0, NOME_JOGADOR_MAX);
+	return limpo || "Tapeira";
+}
+
+// O nome que o jogo mostra — sempre normalizado, mesmo se o save veio
+// editado à mão ou o campo nem existir (save antigo).
+function NomeJogador() {
+	return NormalizaNomeJogador(nomeJogador);
+}
+
 // Multiplicador global dos custos em CM da CIDADE (todos os prédios). Um botão
 // só pra recalibrar — nasceu do rebalance de ×10 pedido pelo jogador.
 const CUSTO_CIDADE_MULT = 10;

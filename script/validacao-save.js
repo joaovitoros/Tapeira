@@ -495,6 +495,22 @@ function ValidarSave(save) {
 				typeof id !== "string" || !/^[0-9a-f]{32}$/.test(id)))) {
 		throw new TypeError("A lista de cartões de batalha usados no save é inválida.");
 	}
+	if (save.pvpCartoesExportados !== undefined
+		&& (!Array.isArray(save.pvpCartoesExportados)
+			|| save.pvpCartoesExportados.length > 2000
+			|| save.pvpCartoesExportados.some(id =>
+				typeof id !== "string" || !/^[0-9a-f]{32}$/.test(id)))) {
+		throw new TypeError("A lista de cartões de batalha exportados no save é inválida.");
+	}
+	// Nome do jogador (Casa): string curta e sem caracteres de controle —
+	// identidade exibida nos duelos. Save antigo não tem o campo; o Carregar
+	// normaliza (corta em NOME_JOGADOR_MAX) e aplica o padrão.
+	if (save.nomeJogador !== undefined
+		&& (typeof save.nomeJogador !== "string"
+			|| save.nomeJogador.length > 40
+			|| /[\u0000-\u001f\u007f]/.test(save.nomeJogador))) {
+		throw new TypeError("O nome do jogador no save é inválido.");
+	}
 	if (save.ultimaAtualizacaoBauDourado !== undefined
 		&& (!Number.isFinite(save.ultimaAtualizacaoBauDourado)
 			|| save.ultimaAtualizacaoBauDourado < 0)) {
@@ -524,7 +540,7 @@ function ValidarSave(save) {
 		if (["saveFormat", "saveVersion", "exportedAt", "gold", "totalGold", "offlinePendingRewards",
 			"conquistasComp", "melhorGoldRun", "autoItensLoja",
 			"itensBuild", "bauBuildPendente", "opcoesBauBuild",
-			"pvpCartoesUsados",
+			"pvpCartoesUsados", "pvpCartoesExportados", "nomeJogador",
 			"pesquisaItens", "pesquisaInimigos", "trofeus", "forja"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");

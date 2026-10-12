@@ -39,6 +39,14 @@
 // Carregar e ValidarSave (validação própria + whitelist por ser array).
 var pvpCartoesUsados = [];
 
+// ids dos cartões que SAÍRAM daqui (exportados) — o jogo usa pra saber
+// "esse cartão é meu" na hora do duelo. Regra do jogador: se a última
+// luta foi contra si mesmo, as próximas lutam mas não pagam esmeraldas
+// (acaba com o farm de exportar e lutar contra o próprio fantasma).
+// TAMBÉM permanente: precisa atravessar o reload, senão dá pra farmar
+// reiniciando a página.
+var pvpCartoesExportados = [];
+
 var PvpFantasma = {
 	// taxa nominal de golpes por segundo do duelo — os dois lados usam a
 	// mesma, então a corrida compara builds, não a velocidade do dedo
@@ -145,7 +153,7 @@ var PvpFantasma = {
 			saveFormat: "tapeira-cartao-batalha",
 			saveVersion: 1,
 			exportedAt: new Date().toISOString(),
-			nome: "Tapeira",
+			nome: NomeJogador(),
 			nivel: Math.max(1, N(nivelJogador) | 0),
 			// golpes nominais (sem crítico e sem situações pontuais — guardião,
 			// pausa de fuga, buff de alquimista, cadeia de ataques)
@@ -223,6 +231,9 @@ var PvpFantasma = {
 			MostraInfo("Não foi possível montar o cartão de batalha.");
 			return;
 		}
+		// registra o id como "cartão meu" (regra anti-farm de lutar
+		// contra si mesmo); antes do download — vale até se cancelar
+		this._registraCartaoProprio(cartao.id);
 		const json = JSON.stringify(cartao);
 		const fileName = "TAPeira-cartao-batalha-" + cartao.exportedAt.replace(/[:.]/g, "-") + ".json";
 
@@ -264,16 +275,27 @@ var PvpFantasma = {
 	RecebeCartao(cartao) {
 		try {
 			this.ValidarCartaoBatalha(cartao);
-			// anti-farm: um cartão só conclui um duelo nesta máquina
+			// anti-farm: um cartão só conclui um duelo nesta máquina.
+			// O aviso é VISÍVEL (toast): uma linha só no histórico
+			// passaria despercebida com o menu de pausa aberto — a tela
+			// ficaria parada "sem acontecer nada".
 			if (pvpCartoesUsados.includes(cartao.id)) {
-				throw new TypeError("esse cartão de batalha já foi usado — cada cartão vale um duelo só.");
+				UI.mostraAvisoRapido("Esse cartão de batalha já foi usado — cada cartão vale um duelo só.");
+				return false;
+			}
+			// cartão meu com a última luta já consigo mesmo: o duelo roda
+			// (treino), mas avisa que não vai pagar esmeraldas
+			if (pvpCartoesExportados.includes(cartao.id) && this._ultimoFoiContraSi()) {
+				UI.mostraAvisoRapido("Duelo consigo mesmo — vale treino, mas não paga esmeraldas.");
 			}
 			this.AbreDuelo(cartao);
 			MostraInfo("Cartão de batalha recebido — a ficha do duelo está aberta.");
 			return true;
 		} catch (error) {
 			console.error("Cartão de batalha inválido:", error);
-			MostraInfo(`Cartão de batalha inválido: ${error.message} O progresso atual foi mantido.`);
+			// também visível: cartão editado/corrompido não pode deixar a
+			// tela parada sem feedback nenhum
+			UI.mostraAvisoRapido(`Cartão de batalha inválido: ${error.message} O progresso atual foi mantido.`);
 			return false;
 		}
 	},
@@ -320,7 +342,7 @@ var PvpFantasma = {
 	_htmlCartao(rotulo, cartao, dps, dpsAdversario) {
 		const lider = dps > dpsAdversario;
 		const linhas = [
-			["Nome", this._esc(cartao.nome || "Tapeira")],
+			["Nome", this._esc(this._nome(cartao))],
 			["Nível", String(cartao.nivel ?? "—")],
 			["Golpe", FormatarGold(cartao.danoGolpe)],
 			["Crítico", FormatarGold(cartao.danoCrit) + " · " + (cartao.chanceCrit * 100).toFixed(1) + "%"],
@@ -336,6 +358,11 @@ var PvpFantasma = {
 			<div class="pvpCartaoCab">${this._esc(rotulo)}${lider ? " · vantagem" : ""}</div>
 			${corpo}
 		</div>`;
+	},
+
+	// nome do cartão — defensivo: cartão antigo pode vir sem o campo
+	_nome(cartao) {
+		return cartao && cartao.nome ? String(cartao.nome) : "Tapeira";
 	},
 
 	// valores vindos de cartão de terceiros: escapa antes de provar o DOM
@@ -448,6 +475,10 @@ var PvpFantasma = {
 		// meio da animação não queima o cartão (o duelo não concluiu)
 		const idFantasma = this._dueloAtual && this._dueloAtual.cartaoFantasma
 			? this._dueloAtual.cartaoFantasma.id : null;
+		const nomes = {
+			meu: this._nome(this._dueloAtual && this._dueloAtual.cartaoMeu),
+			fantasma: this._nome(this._dueloAtual && this._dueloAtual.cartaoFantasma)
+		};
 
 		const modal = document.getElementById("pvpDuelo");
 		if (!modal) return;
@@ -455,7 +486,7 @@ var PvpFantasma = {
 		const botaoLutar = modal.querySelector("[data-pvp-lutar]");
 		if (botaoLutar) botaoLutar.remove();
 		if (cartoes) {
-			cartoes.insertAdjacentHTML("afterend", this._htmlCorrida());
+			cartoes.insertAdjacentHTML("afterend", this._htmlCorrida(nomes));
 			cartoes.style.display = "none";
 		}
 
@@ -474,25 +505,27 @@ var PvpFantasma = {
 				this._timerDuelo = null;
 				// conclusão: queima o id do cartão e paga o prêmio —
 				// acontece com ou sem modal na tela
-				this._conclui(idFantasma, resultado);
-				if (el) this._mostraResultado(resultado);
+				const semRecompensa = this._conclui(idFantasma, resultado);
+				if (el) this._mostraResultado(resultado, semRecompensa);
 			}
 		};
 		this._timerDuelo = setInterval(atualiza, 50);
 		atualiza();
 	},
 
-	_htmlCorrida() {
+	_htmlCorrida(nomes) {
+		const meu = this._esc((nomes && nomes.meu) || "Você");
+		const fantasma = this._esc((nomes && nomes.fantasma) || "Fantasma");
 		return `
 		<div class="pvpCorrida">
 			<div class="pvpCronometro" data-pvp-cronometro>0.00s</div>
 			<div class="pvpCorridaInfo">Chefe com a vida da média das duas builds × 25s — quem derruba primeiro vence.</div>
 			<div class="pvpAlvo pvpAlvo--meu" data-pvp-alvo="meu">
-				<div class="pvpAlvoTopo"><span>Você</span><b data-pvp-tempo>—</b></div>
+				<div class="pvpAlvoTopo"><span>Você · ${meu}</span><b data-pvp-tempo>—</b></div>
 				<div class="pvpBarra"><div class="pvpBarraFill" data-pvp-fill></div></div>
 			</div>
 			<div class="pvpAlvo pvpAlvo--fantasma" data-pvp-alvo="fantasma">
-				<div class="pvpAlvoTopo"><span>Fantasma</span><b data-pvp-tempo>—</b></div>
+				<div class="pvpAlvoTopo"><span>Fantasma · ${fantasma}</span><b data-pvp-tempo>—</b></div>
 				<div class="pvpBarra"><div class="pvpBarraFill" data-pvp-fill></div></div>
 			</div>
 			<div class="pvpResultado" data-pvp-resultado hidden></div>
@@ -535,10 +568,31 @@ var PvpFantasma = {
 		return segundos.toFixed(2) + "s";
 	},
 
+	// "a última luta foi contra si mesmo?" — o último id concluído é um
+	// cartão que saiu daqui (está na lista de exportados)
+	_ultimoFoiContraSi() {
+		const ultimo = pvpCartoesUsados[pvpCartoesUsados.length - 1];
+		return !!(ultimo && pvpCartoesExportados.includes(ultimo));
+	},
+
+	// marca um cartão exportado como "meu" (chamado no export)
+	_registraCartaoProprio(id) {
+		if (!id || pvpCartoesExportados.includes(id)) return;
+		pvpCartoesExportados.push(id);
+		if (pvpCartoesExportados.length > 2000) pvpCartoesExportados.shift();
+		AutoSalvar();
+	},
+
 	// o duelo CONCLUIU (vitória ou derrota): queima o id — um cartão
 	// vale um duelo só — e paga o prêmio da vitória. Marcação e prêmio
 	// no MESMO ponto: não existe caminho pra pagar 2x o mesmo cartão.
+	// Regra anti-farm consigo mesmo: se a ÚLTIMA luta foi contra si
+	// mesmo, as próximas lutam mas não pagam — passa a pagar de novo
+	// quando uma luta contra outro jogador fica como a última.
+	// Retorna true quando a vitória ficou sem recompensa.
 	_conclui(idCartao, resultado) {
+		const selfFight = !!(idCartao && pvpCartoesExportados.includes(idCartao));
+		const ultimoFoiContraSi = this._ultimoFoiContraSi();
 		if (idCartao && !pvpCartoesUsados.includes(idCartao)) {
 			pvpCartoesUsados.push(idCartao);
 			// teto defensivo: o save não cresce sem fim (2000 ids ~ 80 KB)
@@ -546,17 +600,23 @@ var PvpFantasma = {
 			AutoSalvar();
 		}
 		let premio = "";
+		let semRecompensa = false;
 		if (resultado.venceu) {
-			esmeraldas += 2;
-			const contador = document.getElementById("contEmeraldas");
-			if (contador) contador.innerHTML = esmeraldas;
-			UI.showCurrencyReward("emerald", 2);
-			premio = " Prêmio: +2 esmeraldas.";
+			if (selfFight && ultimoFoiContraSi) {
+				semRecompensa = true;
+			} else {
+				esmeraldas += 2;
+				const contador = document.getElementById("contEmeraldas");
+				if (contador) contador.innerHTML = esmeraldas;
+				UI.showCurrencyReward("emerald", 2);
+				premio = " Prêmio: +2 esmeraldas.";
+			}
 		}
-		this._logResultado(resultado, premio);
+		this._logResultado(resultado, premio, semRecompensa);
+		return semRecompensa;
 	},
 
-	_mostraResultado(resultado) {
+	_mostraResultado(resultado, semRecompensa) {
 		const modal = document.getElementById("pvpDuelo");
 		if (!modal) return;
 		for (const [qual, tempo] of [
@@ -577,25 +637,89 @@ var PvpFantasma = {
 			box.classList.add(resultado.venceu
 				? "pvpResultado--venceu"
 				: "pvpResultado--perdeu");
+			// nomes dos duelistas (cada um escolhe o seu na Casa)
+			const duel = this._dueloAtual;
+			const meu = this._esc(this._nome(duel && duel.cartaoMeu));
+			const fantasma = this._esc(this._nome(duel && duel.cartaoFantasma));
+			// vitória consigo mesmo não paga: o banner diz na hora
+			const premioLinha = resultado.venceu
+				? (semRecompensa
+					? '<div class="pvpResultadoNota">Duelo consigo mesmo — sem recompensa de esmeraldas.</div>'
+					: '<div class="pvpResultadoPremio">+2 esmeraldas</div>')
+				: "";
 			box.innerHTML = `
 				<div class="pvpResultadoTitulo">${resultado.venceu ? "VOCÊ VENCEU!" : "O FANTASMA VENCEU"}</div>
-				${resultado.venceu ? '<div class="pvpResultadoPremio">+2 esmeraldas</div>' : ""}
-				<div class="pvpResultadoLinha">Você: <b>${this._formataTempo(resultado.tempoMeu)}</b> ·
-					Fantasma: <b>${this._formataTempo(resultado.tempoFantasma)}</b></div>
+				${premioLinha}
+				<div class="pvpResultadoLinha">Você · ${meu}: <b>${this._formataTempo(resultado.tempoMeu)}</b> ·
+					Fantasma · ${fantasma}: <b>${this._formataTempo(resultado.tempoFantasma)}</b></div>
 				<div class="pvpResultadoNota">Resultado idêntico na máquina do rival — mesmos cartões, mesma corrida.</div>`;
 		}
 		// o log sai da _conclui (roda com ou sem modal na tela)
 	},
 
-	_logResultado(resultado, premio) {
+	_logResultado(resultado, premio, semRecompensa) {
+		// nomes exibidos: o do jogador (Casa) e o do rival (seu cartão)
+		const duel = this._dueloAtual;
+		const meu = this._nome(duel && duel.cartaoMeu);
+		const fantasma = this._nome(duel && duel.cartaoFantasma);
+		const nota = semRecompensa ? " Duelo consigo mesmo: sem recompensa." : "";
 		MostraInfo(resultado.venceu
-			? `Batalha-fantasma vencida em ${this._formataTempo(resultado.tempoMeu)} (fantasma: ${this._formataTempo(resultado.tempoFantasma)}).${premio || ""}`
-			: `Batalha-fantasma perdida: fantasma em ${this._formataTempo(resultado.tempoFantasma)} (você: ${this._formataTempo(resultado.tempoMeu)}).`);
+			? `Batalha-fantasma: ${meu} venceu o fantasma ${fantasma} em ${this._formataTempo(resultado.tempoMeu)} (fantasma: ${this._formataTempo(resultado.tempoFantasma)}).${premio || ""}${nota}`
+			: `Batalha-fantasma: ${fantasma} venceu ${meu} — fantasma em ${this._formataTempo(resultado.tempoFantasma)} (você: ${this._formataTempo(resultado.tempoMeu)}).`);
 	},
 
 	// =========================
 	// LISTENERS (delegados, uma vez — sem onclick inline)
 	// =========================
+
+	// =========================
+	// GUILDA: importação de cartão de rival
+	// =========================
+
+	// abre o seletor de arquivo (input temporário, sem handler inline)
+	AbreImportacaoCartao() {
+		const input = document.createElement("input");
+		input.type = "file";
+		input.accept = ".json,application/json";
+		input.addEventListener("change", () => {
+			this.ImportaCartaoArquivo(input);
+			input.remove();
+		});
+		document.body.appendChild(input);
+		input.click();
+	},
+
+	// import da Guilda: só aceita CARTÃO (save comum não entra por aqui —
+	// é o fluxo do Pausa → Carregar Save)
+	ImportaCartaoArquivo(input) {
+		const file = input && input.files && input.files[0];
+		if (!file) return;
+		if (!file.name.toLowerCase().endsWith(".json")) {
+			UI.mostraAvisoRapido("Selecione um arquivo .json de cartão de batalha.");
+			return;
+		}
+		const reader = new FileReader();
+		reader.onload = () => {
+			let dados;
+			try {
+				dados = JSON.parse(reader.result);
+			} catch (erro) {
+				UI.mostraAvisoRapido("Arquivo inválido: não é um cartão de batalha.");
+				return;
+			}
+			if (!dados || dados.saveFormat !== "tapeira-cartao-batalha") {
+				UI.mostraAvisoRapido("Esse arquivo é um save, não um cartão de batalha.");
+				return;
+			}
+			// a ficha do duelo abre por cima; a Guilda só fecha se o
+			// recebimento der certo (erro → aviso visível, painel fica)
+			if (this.RecebeCartao(dados)) FecharGuilda();
+		};
+		reader.onerror = () => {
+			UI.mostraAvisoRapido("Não foi possível ler o arquivo.");
+		};
+		reader.readAsText(file);
+	},
 
 	RegistraListeners() {
 		if (this._registrado) return;
@@ -617,3 +741,134 @@ var PvpFantasma = {
 };
 
 PvpFantasma.RegistraListeners();
+
+// ========================= GUILDA (Cidade) =========================
+// Hub do multiplayer na Cidade: o próprio cartão numa telinha, exportar
+// e importar cartões de rivais. Fica aqui (e não num arquivo novo) pra
+// não mexer no manifesto de scripts das 3 páginas.
+function FecharGuilda() {
+	const modal = document.getElementById("guildaModal");
+	if (!modal) return;
+	modal.remove();
+	UI.syncScreenButtons();
+}
+
+function AbrirGuilda() {
+	FecharGuilda();
+
+	const overlay = document.createElement("div");
+	overlay.id = "guildaModal";
+	overlay.className = "ant-collection-overlay guilda-overlay";
+	overlay.setAttribute("role", "dialog");
+	overlay.setAttribute("aria-modal", "true");
+	overlay.setAttribute("aria-labelledby", "guilda-titulo");
+
+	const panel = document.createElement("section");
+	panel.className = "ant-collection-panel guilda-panel";
+
+	const header = document.createElement("header");
+	header.className = "guilda-header";
+	const title = document.createElement("h2");
+	title.id = "guilda-titulo";
+	title.textContent = "Guilda";
+	const close = document.createElement("button");
+	close.type = "button";
+	close.className = "guilda-fechar";
+	close.setAttribute("aria-label", "Fechar a Guilda");
+	close.textContent = "×";
+	close.addEventListener("click", FecharGuilda);
+	header.append(title, CriaInfoTela({
+		id: "guilda-info",
+		rotulo: "Sobre a Guilda",
+		html: "<b>Como funciona</b>"
+			+ "<p>Ponto de encontro do <b>multiplayer por arquivo</b>: veja o "
+			+ "<b>seu cartão de batalha</b>, exporte pra mandar a um amigo e "
+			+ "importe o cartão dele pra duellar aqui.</p>"
+			+ "<p><b>Cada cartão vale um duelo só</b> — o id do cartão é "
+			+ "queimado quando o duelo acaba. Vitória paga <b>+2 esmeraldas</b>. "
+			+ "Se a última luta foi contra si mesmo, as próximas lutam mas "
+			+ "não pagam (anti-farm).</p>"
+			+ "<p>Abaixo fica também a <b>loja de troféus</b>: gaste seus "
+			+ "<b>Tickets de Caçador de Mugs</b> em bônus permanentes.</p>"
+	}), close);
+
+	const corpo = document.createElement("div");
+	corpo.className = "guilda-corpo";
+	corpo.id = "guildaCorpo";
+
+	panel.append(header, corpo);
+	overlay.appendChild(panel);
+	overlay.addEventListener("click", event => {
+		if (event.target === overlay) FecharGuilda();
+	});
+	overlay.addEventListener("keydown", event => {
+		if (event.key === "Escape") FecharGuilda();
+	});
+	document.body.appendChild(overlay);
+	UI.closeOtherPanels("guilda");
+	UI.syncScreenButtons();
+	RenderGuildaPainel();
+	close.focus();
+}
+
+function RenderGuildaPainel() {
+	const corpo = document.getElementById("guildaCorpo");
+	if (!corpo) return;
+	corpo.replaceChildren(
+		GuildaCartaoResumo(),
+		GuildaAcoes(),
+		TrofeusSaldo(),
+		TrofeusSecao()
+	);
+}
+
+// botão padrão do painel (mesmo visual dos botões do jogo)
+function GuildaBotao(rotulo, aoClicar) {
+	const btn = document.createElement("button");
+	btn.type = "button";
+	btn.className = "btn-Padrao guilda-acao";
+	btn.textContent = rotulo;
+	btn.addEventListener("click", aoClicar);
+	return btn;
+}
+
+// o próprio cartão (visual do duelo) + id curto embaixo
+function GuildaCartaoResumo() {
+	const bloco = document.createElement("div");
+	bloco.className = "guilda-resumo";
+	try {
+		const cartao = PvpFantasma.MontaCartaoBatalha();
+		const dps = PvpFantasma.DpsMedio(cartao);
+		bloco.innerHTML = PvpFantasma._htmlCartao("Seu cartão", cartao, dps, dps);
+		const id = document.createElement("div");
+		id.className = "guilda-resumo__id";
+		id.textContent = "ID do cartão: " + PvpFantasma._esc(cartao.id || "—");
+		bloco.appendChild(id);
+	} catch (erro) {
+		console.error("Guilda: não foi possível montar o cartão:", erro);
+		bloco.textContent = "Não foi possível montar seu cartão de batalha agora.";
+	}
+	return bloco;
+}
+
+// exportar o cartão daqui mesmo (o export é o fluxo que já existia)
+function GuildaAcoes() {
+	const bloco = document.createElement("div");
+	bloco.className = "guilda-acoes";
+	bloco.append(
+		GuildaBotao("Exportar meu cartão", () => PvpFantasma.ExportaCartaoBatalha()),
+		GuildaBotao("Importar cartão de rival", () => PvpFantasma.AbreImportacaoCartao())
+	);
+	const nota = document.createElement("p");
+	nota.className = "guilda-nota";
+	nota.textContent = "Vitória: +2 esmeraldas · Derrota: nada · "
+		+ "Duelo consigo mesmo: sem recompensa depois da primeira luta";
+	bloco.appendChild(nota);
+	return bloco;
+}
+
+window.Tapeira = window.Tapeira || {};
+Tapeira.Guilda = {
+	abrir: () => AbrirGuilda(),
+	fechar: () => FecharGuilda()
+};
