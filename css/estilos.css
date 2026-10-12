@@ -1603,6 +1603,15 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
 	font-size: 0.75em;
 }
 
+/* prêmio da vitória no PvP: 2 esmeraldas */
+.pvpResultadoPremio{
+	margin-top: 0.3em;
+	color: #7ef0b8;
+	font-weight: 700;
+	font-size: 1em;
+	text-shadow: 0 0 8px rgba(126, 240, 184, 0.45);
+}
+
 @media (max-width: 700px) {
 	.pvpCartoes{
 		flex-direction: column;
@@ -10371,8 +10380,8 @@ img.ramos-tree-no__tile {
 /* Brilho pulsante sobre o cristal central (a arte já está na imagem) */
 .cidade-fonte {
 	position: absolute;
-	left: 50%;
-	top: 48%;
+	left: 41%;
+	top: 50%;
 	width: 16%;
 	aspect-ratio: 1;
 	transform: translate(-50%, -50%);
@@ -10446,6 +10455,12 @@ img.ramos-tree-no__tile {
 	to   { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
 }
 
+/* A arte nova já traz o brilho da forja "assado" na imagem — a camada antiga
+   (que pertencia à arte-base) fica escondida pra não duplicar. */
+.cidade-fogo {
+	display: none;
+}
+
 .cidade-fumaca {
 	position: absolute;
 	z-index: 3;
@@ -10477,8 +10492,10 @@ img.ramos-tree-no__tile {
 	100% { opacity: 0;    transform: translate(-18px, -110px) scale(1.7); }
 }
 
-.cidade-fumaca--fabrica { left: 12%; top: 54%; }
-.cidade-fumaca--casa    { left: 47%; top: 11%; }
+/* posições na ARTE NOVA: a chaminé da Fábrica (baixo-esquerda) e a da Casa
+   (topo-centro); a Guilda (topo-direita) já tem fumaça "assada" na imagem */
+.cidade-fumaca--fabrica { left: 8%;  top: 56%; }
+.cidade-fumaca--casa    { left: 38%; top: 13%; }
 
 .cidade-particulas {
 	position: absolute;
@@ -10550,23 +10567,23 @@ img.ramos-tree-no__tile {
 	animation: cidadeUrsoBob 1.8s ease-in-out infinite alternate;
 }
 
-/* mineradores (embaixo-esquerda, junto da Fábrica) */
-.cidade-decor--mine1 { left: 33%; top: 63%; }
-.cidade-decor--mine2 { left: 24%; top: 66%; }
-.cidade-decor--mine3 { left: 31%; top: 73%; height: clamp(38px, 4.8vw, 80px); }
-.cidade-decor--mine4 { left: 19%; top: 62%; }
+/* mineradores (embaixo-esquerda, junto da Fábrica) — posições da ARTE NOVA */
+.cidade-decor--mine1 { left: 24%; top: 64%; }
+.cidade-decor--mine2 { left: 11%; top: 71%; }
+.cidade-decor--mine3 { left: 20%; top: 81%; height: clamp(38px, 4.8vw, 80px); }
+.cidade-decor--mine4 { left: 6%;  top: 62%; }
 
 /* pesquisadores (direita, junto do Centro de Pesquisa) */
-.cidade-decor--pesq1 { left: 79%; top: 52%; }
-.cidade-decor--pesq2 { left: 70%; top: 57%; }
-.cidade-decor--pesq3 { left: 85%; top: 60%; height: clamp(30px, 3.8vw, 62px); }
-.cidade-decor--pesq4 { left: 74%; top: 48%; }
+.cidade-decor--pesq1 { left: 74%; top: 60%; }
+.cidade-decor--pesq2 { left: 68%; top: 52%; }
+.cidade-decor--pesq3 { left: 89%; top: 64%; height: clamp(30px, 3.8vw, 62px); }
+.cidade-decor--pesq4 { left: 79%; top: 44%; }
 
-/* formigas (embaixo-direita, junto da Fazenda) */
-.cidade-decor--form1 { left: 85%; top: 76%; height: clamp(30px, 3.8vw, 62px); }
-.cidade-decor--form2 { left: 78%; top: 83%; height: clamp(32px, 4vw, 66px); }
-.cidade-decor--form3 { left: 89%; top: 81%; height: clamp(30px, 3.8vw, 62px); }
-.cidade-decor--form4 { left: 73%; top: 79%; height: clamp(28px, 3.6vw, 58px); }
+/* formigas (embaixo-centro, junto do formigueiro da Fazenda) */
+.cidade-decor--form1 { left: 50%; top: 74%; height: clamp(30px, 3.8vw, 62px); }
+.cidade-decor--form2 { left: 56%; top: 84%; height: clamp(32px, 4vw, 66px); }
+.cidade-decor--form3 { left: 68%; top: 82%; height: clamp(30px, 3.8vw, 62px); }
+.cidade-decor--form4 { left: 74%; top: 72%; height: clamp(28px, 3.6vw, 58px); }
 
 /* dessincroniza o idle de alguns pra não balançarem todos juntos */
 .cidade-decor--pesq2 img { animation-delay: -0.5s; }
@@ -10605,16 +10622,16 @@ img.ramos-tree-no__tile {
 	transition: background 140ms ease, box-shadow 140ms ease;
 }
 
-/* posições/tamanhos dos hotspots sobre os prédios da imagem */
-.cidade-predio--casa     { left: 45%; top: 28%; --largura: 26%; --altura: 30%; }
-.cidade-predio--mercado  { left: 18%; top: 35%; --largura: 25%; --altura: 26%; }
-.cidade-predio--pesquisa { left: 79%; top: 33%; --largura: 22%; --altura: 26%; }
-.cidade-predio--fabrica  { left: 17%; top: 69%; --largura: 27%; --altura: 26%; }
-.cidade-predio--fazenda  { left: 76%; top: 67%; --largura: 24%; --altura: 24%; }
-.cidade-predio--cristal  { left: 50%; top: 47%; --largura: 17%; --altura: 17%; }
-/* Loja de Troféus: prédio da frente (embaixo, no meio) — sobe o z-index como
-   os outros prédios da frente. Posição alinhada à imagem-base da Cidade. */
-.cidade-predio--trofeus  { left: 47%; top: 70%; --largura: 22%; --altura: 22%; z-index: 4; }
+/* posições/tamanhos dos hotspots sobre os prédios da ARTE NOVA (cena.png) */
+.cidade-predio--casa     { left: 38%; top: 28%; --largura: 19%; --altura: 28%; }
+.cidade-predio--mercado  { left: 19%; top: 42%; --largura: 26%; --altura: 28%; }
+.cidade-predio--pesquisa { left: 81%; top: 52%; --largura: 28%; --altura: 30%; }
+.cidade-predio--fabrica  { left: 15%; top: 70%; --largura: 27%; --altura: 32%; }
+.cidade-predio--fazenda  { left: 62%; top: 73%; --largura: 40%; --altura: 30%; }
+.cidade-predio--cristal  { left: 41%; top: 53%; --largura: 19%; --altura: 21%; }
+/* Loja de Troféus: a casa grande "GUILD" (topo-direita). Altura menor que a
+   casa pra o banner não sair da cena (overflow hidden). */
+.cidade-predio--trofeus  { left: 72%; top: 26%; --largura: 33%; --altura: 30%; z-index: 4; }
 
 /* realce do hover: brilho suave (sem moldura quadrada) */
 .cidade-predio:hover {

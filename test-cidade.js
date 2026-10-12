@@ -152,7 +152,7 @@ const path = require('path');
     check("cena tem bichinhos animados", r.decorTotal >= 8, r.decorTotal);
     check("imagens dos bichinhos carregam", r.decorImgsOk === true, "quebradas: " + JSON.stringify(r.decorQuebradas));
 
-    check("gates batem com a tabela", JSON.stringify(r.gates) === JSON.stringify({ casa: 80, fazenda: 85, mercado: 90, fabrica: 100, pesquisa: 110, cristal: 120 }), JSON.stringify(r.gates));
+    check("gates batem com a tabela", JSON.stringify(r.gates) === JSON.stringify({ casa: 80, trofeus: 80, fazenda: 85, mercado: 90, fabrica: 100, pesquisa: 110, cristal: 120 }), JSON.stringify(r.gates));
     check("andar 84: só a Casa livre", r.g84.casa === false && r.g84.fazenda && r.g84.mercado && r.g84.fabrica && r.g84.pesquisa, JSON.stringify(r.g84));
     check("andar 90: Casa+Fazenda+Mercado livres", r.g90.casa === false && r.g90.fazenda === false && r.g90.mercado === false && r.g90.fabrica && r.g90.pesquisa, JSON.stringify(r.g90));
     check("andar 100: só a Pesquisa trancada", r.g100.pesquisa === true && !r.g100.fabrica && !r.g100.casa, JSON.stringify(r.g100));
