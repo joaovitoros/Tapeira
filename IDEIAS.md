@@ -48,8 +48,16 @@ Ideia: dar utilidade aos pontos de habilidade depois que tudo já está no máxi
   os Tickets pra upar skill — skill só sobe com os pontos da run.
 
 Pontos em aberto (decidir quando for implementar):
-1. Tickets são um **contador separado** do de pontos, ou o mesmo contador muda de
-   uso quando as skills fecham?
-2. Taxa: **1 ponto = 1 ticket**? Ganha os tickets só **depois** de tudo no máximo?
-3. O que dá pra comprar com eles na Cidade? (ex.: a **Forja** de itens?)
-4. O ganho vira automático ao fechar todas as skills, ou o jogador escolhe?
+1. ~~Contador separado ou o mesmo?~~ **O MESMO contador** (um valor só, que muda de uso quando as skills fecham).
+2. ~~Taxa~~ **1 ponto = 1 ticket**, e só se ganha ticket **depois** de fechar todas as skills.
+3. ~~O que compra na Cidade~~ **ainda em aberto** (o usuário está pensando nas possibilidades).
+4. ~~Conversão manual ou automática~~ **automática**.
+
+Modelo proposto (confirmar na implementação):
+- Um contador visível **Tickets de Caçador de Mugs**.
+- Por run: os pontos ganhos alimentam as skills **enquanto alguma skill não
+  estiver no máximo** naquela run.
+- Quando todas fecham: os pontos da run somam ao saldo (o MESMO número) e, daí
+  em diante, só servem pra Cidade.
+- No reset: o saldo **fica** (permanente), mas a parte "gastável em skill" não
+  existe mais — as skills voltam e sobem **só** com os novos pontos da run.
