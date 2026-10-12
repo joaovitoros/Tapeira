@@ -64,13 +64,29 @@ const path = require('path');
         res.alvo = alvo;
         res.copias = IB.copias(alvo);            // 2
         res.efetivasAntes = IB.copiasEfetivas(alvo); // 2
+        // forja custa gold (escala com o andar)
+        andar = 100; mulGold = 1; vidaAndar = 100;
+        res.custoForja = CustoForjaItem();
+        gold = new GoldNumber(0);
+        res.forjaSemGold = ForjaItem(alvo);      // false
+        res.copiasIntactas = IB.copias(alvo);    // 2 (não forjou)
+        gold = new GoldNumber(res.custoForja * 10);
+        const goldAntes = gold.toNumber();
         res.podeForjar = IB.podeForjar(alvo);    // true
-        res.forjou = IB.forjar(alvo);            // true
+        res.forjou = ForjaItem(alvo);            // true
+        res.descontouGold = gold.toNumber() < goldAntes;
         res.copiasDepois = IB.copias(alvo);      // 0
         res.forjaNivel = IB.nivelForja(alvo);    // 1
         res.efetivasDepois = IB.copiasEfetivas(alvo); // 2 (mesmo efeito)
         res.podeForjarDepois = IB.podeForjar(alvo); // false (0 cópias)
-        res.forjarSemCopias = IB.forjar(alvo);   // false
+        res.forjarSemCopias = ForjaItem(alvo);   // false
+
+        // a tela de itens da build mostra a forja
+        UI.showItensBuild();
+        const view = document.getElementById("modalItensBuildView");
+        res.viewForja = /forjada/.test(view?.textContent || "");
+        view?.remove();
+        res.resumoForja = /forjada/.test(IB.resumo());
 
         // ---- save ----
         fabricaNivel = 4;
@@ -102,9 +118,14 @@ const path = require('path');
     check("compra com CM funciona", r.ok === true && r.nivel === 1, r.nivel);
     check("linha no máximo falha", r.noMax === false);
     check("2 cópias do mesmo item (via baú)", r.copias === 2, r.copias);
+    check("forja custa gold (> 0)", r.custoForja > 0, r.custoForja);
+    check("sem gold não forja", r.forjaSemGold === false && r.copiasIntactas === 2);
+    check("forja desconta o gold", r.descontouGold === true);
     check("forja junta 2 cópias em 1 melhorada", r.forjou === true && r.copiasDepois === 0 && r.forjaNivel === 1, JSON.stringify({ c: r.copiasDepois, f: r.forjaNivel }));
     check("efeito é preservado após a forja (2 cópias efetivas)", r.efetivasAntes === 2 && r.efetivasDepois === 2, r.efetivasAntes + "→" + r.efetivasDepois);
     check("não dá pra forjar sem 2 cópias", r.podeForjarDepois === false && r.forjarSemCopias === false);
+    check("tela de itens da build mostra a forja", r.viewForja === true);
+    check("resumo da build mostra a forja", r.resumoForja === true);
     check("save grava fabricaNivel", r.saveNivel === 4, r.saveNivel);
     check("save grava a forja", r.saveForja === '{"' + r.alvo + '":1}', r.saveForja);
     check("validação aceita fábrica válida", r.validaOk === true);

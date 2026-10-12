@@ -100,7 +100,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	// nos automáticos e do companheiro — ChanceMorteAssassino().
 	const morteInstantaneaAssassino = lvlComp5 > 0
 		&& Math.random() < ChanceMorteAssassino(validaDano);
-	// Assassino: passiva de veneno — 1% dos golpes tiram 3% da vida máxima do andar
+	// Assassino: passiva de veneno — 2% dos golpes tiram 5% da vida máxima do andar
 	const venenoAssassino = lvlComp5 > 0 && Math.random() < CHANCE_VENENO_ASSASSINO;
 	const danoVeneno = venenoAssassino ? N(vidaAndar) * VENENO_ASSASSINO_PCT : 0;
 	// especialização Cadeia de Ataques: este golpe conta pro stack do alvo

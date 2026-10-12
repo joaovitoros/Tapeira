@@ -41,14 +41,29 @@ function CompraFabricaNivel() {
 	return true;
 }
 
-// Forja um item (2 cópias → 1 melhorada) e atualiza a tela
+// Custo em gold de uma forja (escala com o andar): ~3 avanços de andar
+function CustoForjaItem() {
+	return BonusGoldAvanco() * 3;
+}
+
+// Forja um item (2 cópias → 1 melhorada) e atualiza a tela. Custa gold.
 function ForjaItem(id) {
 	const registro = window.Tapeira.ItensBuild.item(id);
-	if (!window.Tapeira.ItensBuild.forjar(id)) {
+	if (!window.Tapeira.ItensBuild.podeForjar(id)) {
 		UI.showInfo("Precisa de 2 cópias iguais para forjar.");
 		return false;
 	}
-	UI.showInfo("Forja: " + (registro ? registro.nome : id) + " melhorado (2 cópias → 1, sem perder efeito).");
+	const custo = CustoForjaItem();
+	if (!GE(gold, custo)) {
+		UI.showInfo("Você não tem gold suficiente para forjar (" + FormatGold(custo) + ").");
+		return false;
+	}
+	// gasto direto (não é compra da loja: não conta pra conquista Poupado)
+	gold.add(-N(custo));
+	AtualizaGoldTela();
+	window.Tapeira.ItensBuild.forjar(id);
+	UI.showInfo("Forja: " + (registro ? registro.nome : id) + " melhorado (2 cópias → 1) por "
+		+ FormatGold(custo) + " gold.");
 	AutoSaveLocal();
 	return true;
 }
@@ -122,7 +137,7 @@ function FabricaSecaoForja() {
 
 	const desc = document.createElement("p");
 	desc.className = "fabrica-secao__desc";
-	desc.textContent = "Junte 2 cópias iguais em 1 melhorada: o efeito é o mesmo, mas libera 1 slot da build. A forja é da run (zera no reset).";
+	desc.textContent = "Junte 2 cópias iguais em 1 melhorada: o efeito é o mesmo, mas libera 1 slot da build. Custa gold (escala com o andar). A forja é da run (zera no reset).";
 
 	const lista = document.createElement("div");
 	lista.className = "fabrica-lista";
@@ -152,11 +167,12 @@ function FabricaSecaoForja() {
 			+ " · efeito ×" + window.Tapeira.ItensBuild.copiasEfetivas(item.id);
 		info.append(nome, det);
 
+		const custo = CustoForjaItem();
 		const botao = document.createElement("button");
 		botao.type = "button";
 		botao.className = "fabrica-comprar";
-		botao.textContent = "Forjar (2 → 1)";
-		botao.disabled = !window.Tapeira.ItensBuild.podeForjar(item.id);
+		botao.textContent = "Forjar · " + FormatGold(custo);
+		botao.disabled = !window.Tapeira.ItensBuild.podeForjar(item.id) || !GE(gold, custo);
 		botao.addEventListener("click", () => { if (ForjaItem(item.id)) RenderFabricaPainel(); });
 
 		linha.append(img, info, botao);

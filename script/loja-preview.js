@@ -111,7 +111,7 @@ const PREVIEWS_LOJA = {
 		const n = Math.max(0, N(lvlComp5) | 0);
 		const ch = lv => 0.01 + 0.001 * Math.max(0, lv - 1);
 		return "Assassino: morte instantânea " + (n > 0 ? PctTexto(ch(n)) + " → " + PctTexto(ch(n + 1)) : PctTexto(ch(1)))
-			+ " (metade em automáticos) · veneno 1% (3% da vida)";
+			+ " (metade em automáticos) · veneno 2% (5% da vida)";
 	},
 	CompraComp6() {
 		const n = Math.max(0, N(lvlComp6) | 0);

@@ -162,12 +162,16 @@
 	}
 
 	function resumo() {
-		if (lista.length === 0) return "nenhum (0/" + limiteAtual() + ")";
 		const partes = [];
 		for (const registro of POOL) {
 			const n = copias(registro.id);
-			if (n > 0) partes.push(registro.nome + (n > 1 ? " ×" + n : ""));
+			const f = forjaDe(registro.id);
+			if (n > 0 || f > 0) {
+				partes.push(registro.nome + (n > 0 ? " ×" + n : "")
+					+ (f > 0 ? " (+" + f + " forjada" + (f > 1 ? "s" : "") + ")" : ""));
+			}
 		}
+		if (partes.length === 0) return "nenhum (0/" + limiteAtual() + ")";
 		return partes.join(", ") + " (" + lista.length + "/" + limiteAtual() + ")";
 	}
 
@@ -181,6 +185,8 @@
 		copias: copias,
 		copiasEfetivas: copiasEfetivas,
 		nivelForja: forjaDe,
+		// itens com forja (não aparecem mais na lista como cópias)
+		idsForjados: () => Object.keys(forja).filter(id => forjaDe(id) > 0),
 		podeForjar: podeForjar,
 		forjar: forjar,
 		contagem: () => lista.length,
@@ -249,8 +255,9 @@
 			if (!registro || bausPendentes <= 0 || !opcoesBauAtual?.includes(id)) return;
 			if (lista.length >= limiteAtual()) {
 				// build cheia: sem um item para descartar não pode entrar
-				if (!descarta || copias(descarta) === 0) return;
+				if (!descarta || (copias(descarta) === 0 && forjaDe(descarta) === 0)) return;
 				lista = lista.filter(idItem => idItem !== descarta);
+				delete forja[descarta]; // a pilha inteira sai (cópias + forja)
 			}
 			lista.push(id); // cada cópia ocupa um slot próprio e acumula o bônus
 			bausPendentes--;

@@ -60,15 +60,63 @@ function TentaPuloExplorador() {
 var alvoFrenesiComp = 0;       // id do inimigo marcado (0 = sem marca)
 var danoJanelaFrenesiComp = 0; // dano acumulado durante a janela ativa
 
+// --------- Visual da marca (anel pulsante) e do dano bônus (flash) ------
+// Só DOM/efeito — nada aqui entra no save. O anel é uma div fixa no chão,
+// no mesmo padrão do anel de surgimento (SurgeInimigo, ui-combate.js).
+
+function MostraAnelFrenesiComp(id) {
+	if (id <= 0) return;
+	const el = document.getElementById("inimigo" + id);
+	if (!el || document.getElementById("frenesi-anel-" + id)) return;
+	const rect = el.getBoundingClientRect();
+	const anel = document.createElement("div");
+	anel.className = "inimigo-frenesi-anel";
+	anel.id = "frenesi-anel-" + id;
+	anel.setAttribute("aria-hidden", "true");
+	anel.style.left = `${rect.left + rect.width / 2}px`;
+	anel.style.top = `${rect.top + rect.height * 0.62}px`;
+	anel.style.width = `${rect.width * 0.95}px`;
+	anel.style.height = `${rect.height * 0.42}px`;
+	document.body.appendChild(anel);
+}
+
+function RemoveAnelFrenesiComp(id) {
+	if (id <= 0) return;
+	document.getElementById("frenesi-anel-" + id)?.remove();
+}
+
+function LimpaAnelFrenesiComp() {
+	document.querySelectorAll(".inimigo-frenesi-anel").forEach(anel => anel.remove());
+}
+
+// Flash vermelho (filter) em quem sofre o dano bônus do splash. Não mexe em
+// transform, então não briga com o animarImpacto; o listener some com a
+// classe quando o CSS termina (ignora animações de outro nome no mesmo el).
+function FlashDanoFrenesiComp(el) {
+	if (!el) return;
+	el.classList.remove("inimigo--frenesi-dano");
+	void el.offsetWidth;
+	el.classList.add("inimigo--frenesi-dano");
+	const fim = (evento) => {
+		if (evento.animationName !== "inimigo-frenesi-dano") return;
+		el.classList.remove("inimigo--frenesi-dano");
+		el.removeEventListener("animationend", fim);
+	};
+	el.addEventListener("animationend", fim);
+}
+
 // Sorteia o alvo entre os inimigos 1 e 2 vivos. Retorna o id marcado (0 =
 // sem companheiro de dano comprado ou ninguém elegível na tela).
 function MarcaAlvoFrenesiComp() {
+	const marcaAnterior = alvoFrenesiComp;
 	alvoFrenesiComp = 0;
 	danoJanelaFrenesiComp = 0;
+	RemoveAnelFrenesiComp(marcaAnterior); // reativação troca o anel de alvo
 	if (N(lvlComp1) <= 0) return 0;
 	const elegiveis = [1, 2].filter(id => N(window["vidaInimigo" + id]) > 0);
 	if (elegiveis.length === 0) return 0;
 	alvoFrenesiComp = elegiveis[Math.floor(Math.random() * elegiveis.length)];
+	MostraAnelFrenesiComp(alvoFrenesiComp);
 	return alvoFrenesiComp;
 }
 
@@ -89,6 +137,7 @@ function SplashFrenesiComp() {
 	if (alvoFrenesiComp <= 0) return [];
 	const marca = alvoFrenesiComp;
 	alvoFrenesiComp = 0;
+	RemoveAnelFrenesiComp(marca);
 	const dano = Math.max(0, N(danoJanelaFrenesiComp)) * 0.25;
 	danoJanelaFrenesiComp = 0;
 	if (dano <= 0) return [];
@@ -103,6 +152,7 @@ function SplashFrenesiComp() {
 		if (el) {
 			UI.showDamageNumber(el, Math.min(dano, vida), false);
 			if (restante <= 0) animarMorte(el); else animarImpacto(el, false);
+			FlashDanoFrenesiComp(el);
 		}
 		DesceVida(id);
 		if (restante <= 0) mortos.push(id);
@@ -185,10 +235,10 @@ function ChanceMorteAssassino(manual) {
 	return (manual ? 0.01 : 0.005) + (manual ? 0.001 : 0.0005) * n;
 }
 
-// Assassino: passiva de veneno — 1% dos golpes tiram 3% da vida máxima do
+// Assassino: passiva de veneno — 2% dos golpes tiram 5% da vida máxima do
 // andar (vidaAndar), em qualquer golpe (jogador, automático ou companheiro)
-const CHANCE_VENENO_ASSASSINO = 0.01;
-const VENENO_ASSASSINO_PCT = 0.03;
+const CHANCE_VENENO_ASSASSINO = 0.02;
+const VENENO_ASSASSINO_PCT = 0.05;
 
 // Mago do Relógio: lista as skills que ele pode sortear agora.
 // Entram as skills desbloqueadas que ainda têm espaço — inclusive a de Dano

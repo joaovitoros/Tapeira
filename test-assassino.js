@@ -1,5 +1,5 @@
 // Teste focado: Assassino (comp 5) — hit kill dobrado (1% + 0,1%/nível manual;
-// metade nos automáticos) e passiva de veneno (1% dos golpes tira 3% da vida
+// metade nos automáticos) e passiva de veneno (2% dos golpes tira 5% da vida
 // máxima do andar), com efeitos visuais. Rode após `npm run prepare:web`:
 // node test-assassino.js
 const { chromium } = require('playwright');
@@ -28,7 +28,7 @@ const path = require('path');
         check("+0,1%/nível manual (nível 3 = 1,2%)", Math.abs(ChanceMorteAssassino(true) - 0.012) < 1e-9, ChanceMorteAssassino(true));
 
         // ---- veneno: constantes ----
-        check("veneno 1% / 3%", CHANCE_VENENO_ASSASSINO === 0.01 && VENENO_ASSASSINO_PCT === 0.03);
+        check("veneno 2% / 5%", CHANCE_VENENO_ASSASSINO === 0.02 && VENENO_ASSASSINO_PCT === 0.05);
 
         // ---- prepara um golpe controlado ----
         const prepara = () => {
@@ -54,10 +54,10 @@ const path = require('path');
             try { fn(); } finally { Math.random = orig; }
         };
 
-        // ---- veneno dispara: dano extra de 3% (30) + efeito visual ----
+        // ---- veneno dispara: dano extra de 5% (50) + ataque base (1) + efeito visual ----
         prepara();
         comRandom([0.9, 0.005, 0.9], () => Bater(1, true, true));
-        check("veneno tirou 3% da vida máxima (1000 → 969)", Math.abs(window.vidaInimigo1 - 969) < 0.01, window.vidaInimigo1);
+        check("veneno tirou 5% da vida máxima (1000 → 949)", Math.abs(window.vidaInimigo1 - 949) < 0.01, window.vidaInimigo1);
         check("efeito visual do veneno (.poison-number)", !!document.querySelector(".poison-number"));
         check("burst verde do veneno", !!document.querySelector(".enemy-impact-burst--veneno"));
 

@@ -158,10 +158,59 @@ Object.assign(UI, {
 	spawnBauBuild() {
 		this.removeBauBuild();
 		const quantidade = Tapeira.ItensBuild.quantidadeBausPendentes();
-		// O baú de itens da build agora é um CHIP na coluna esquerda do HUD
-		// (#container-Metas > .coluna-rail), ao lado do Objetivo/Missão —
-		// substitui o antigo baú solto na arena. Sem a coluna (ex.: menu) não
-		// há onde mostrar.
+		// Dois visuais do mesmo baú, alternados pelo CSS pela largura da tela:
+		// PC e tablet (>700px) ficam com o BAÚ NA ARENA — o visual original,
+		// um baú de verdade solto perto do player com o selo "ITENS" acima;
+		// só o celular (≤700px) usa o CHIP no HUD (#container-Metas >
+		// .coluna-rail). Os dois nascem juntos; o display:none tira o outro
+		// da jogada — reage ao resize sem novo spawn.
+		const rotulo = quantidade === 1
+			? "Abrir baú de itens da build"
+			: `Abrir ${quantidade} baús de itens da build`;
+		const dica = quantidade === 1
+			? "Baú de itens da build: escolha 1 de 3"
+			: `${quantidade} baús de itens da build pendentes: escolha 1 de 3 por baú`;
+
+		// --- baú na arena (PC/tablet) ---
+		const bau = document.createElement("img");
+		bau.src = "imagens/bau-aventura.svg";
+		bau.className = "bau bau-build";
+		bau.id = "bauBuild-arena";
+		bau.alt = "";
+		bau.setAttribute("role", "button");
+		bau.setAttribute("tabindex", "0");
+		bau.setAttribute("aria-label", rotulo);
+		bau.title = dica;
+		bau.addEventListener("click", () => Tapeira.ItensBuild.abreEscolha());
+		bau.addEventListener("keydown", event => {
+			if (event.key === "Enter" || event.key === " ") {
+				event.preventDefault();
+				Tapeira.ItensBuild.abreEscolha();
+			}
+		});
+		document.body.appendChild(bau);
+
+		const seloArena = document.createElement("span");
+		seloArena.id = "bauBuild-arena-selo";
+		seloArena.className = "bau-build-selo";
+		seloArena.setAttribute("aria-hidden", "true");
+		seloArena.textContent = quantidade > 1 ? `ITENS ×${quantidade}` : "ITENS";
+		document.body.appendChild(seloArena);
+
+		const posicionaSeloArena = () => {
+			if (!bau.isConnected || !seloArena.isConnected) return;
+			const rect = bau.getBoundingClientRect();
+			seloArena.style.left = `${rect.left + rect.width / 2}px`;
+			seloArena.style.top = `${rect.top - 4}px`;
+		};
+		if (this.bauBuildResizeHandler) {
+			window.removeEventListener("resize", this.bauBuildResizeHandler);
+		}
+		this.bauBuildResizeHandler = posicionaSeloArena;
+		window.addEventListener("resize", posicionaSeloArena);
+		posicionaSeloArena();
+
+		// --- chip no HUD (só no celular) ---
 		const rail = document.querySelector("#container-Metas > .coluna-rail");
 		if (!rail) return;
 
@@ -169,12 +218,8 @@ Object.assign(UI, {
 		chip.type = "button";
 		chip.id = "bauBuild";
 		chip.className = "itens-chip";
-		chip.setAttribute("aria-label", quantidade === 1
-			? "Abrir baú de itens da build"
-			: `Abrir ${quantidade} baús de itens da build`);
-		chip.title = quantidade === 1
-			? "Baú de itens da build: escolha 1 de 3"
-			: `${quantidade} baús de itens da build pendentes: escolha 1 de 3 por baú`;
+		chip.setAttribute("aria-label", rotulo);
+		chip.title = dica;
 
 		const icone = document.createElement("img");
 		icone.src = "imagens/bau-aventura.svg";
@@ -201,6 +246,12 @@ Object.assign(UI, {
 	},
 
 	removeBauBuild() {
+		if (this.bauBuildResizeHandler) {
+			window.removeEventListener("resize", this.bauBuildResizeHandler);
+			this.bauBuildResizeHandler = null;
+		}
+		document.getElementById("bauBuild-arena")?.remove();
+		document.getElementById("bauBuild-arena-selo")?.remove();
 		document.getElementById("bauBuild")?.remove();
 		document.getElementById("bauBuild-selo")?.remove();
 	},
@@ -235,15 +286,17 @@ Object.assign(UI, {
         let corpo = "";
         if (escolhendo) {
             // um cartão por item único: descartar leva a pilha inteira
-            const unicos = [...new Set(Tapeira.ItensBuild.pegaLista())];
+            const unicos = [...new Set([...Tapeira.ItensBuild.pegaLista(), ...(Tapeira.ItensBuild.idsForjados ? Tapeira.ItensBuild.idsForjados() : [])])];
             corpo += `<div class="itens-build-grade">` + unicos.map(idItem => {
                 const registro = Tapeira.ItensBuild.item(idItem);
                 const copias = Tapeira.ItensBuild.copias(idItem);
+                const forja = Tapeira.ItensBuild.nivelForja ? Tapeira.ItensBuild.nivelForja(idItem) : 0;
                 return `<button class="item-build-cartao item-build-sair" data-descartar="${idItem}">
                     <img src="${registro.icone}" alt="">
                     <span class="item-build-nome">${registro.nome}</span>
                     <span class="item-build-efeito">${registro.efeito}</span>
                     ${copias > 1 ? `<span class="item-build-copia">pilha ×${copias} — sai tudo</span>` : ""}
+                    ${forja > 0 ? `<span class="item-build-copia">forjada ×${forja} — sai tudo</span>` : ""}
                     <span class="item-build-acao">tirar da build</span>
                 </button>`;
             }).join("") + `</div>`;
@@ -314,21 +367,23 @@ Object.assign(UI, {
         if (!build.desbloqueada()) {
             subtitulo = "Sistema trancado";
             corpo = `<p class="logs-vazio">Desbloqueia ao chegar no andar 100.</p>`;
-        } else if (build.contagem() === 0) {
+        } else if (build.contagem() === 0 && (!build.idsForjados || build.idsForjados().length === 0)) {
             subtitulo = `0/${build.limiteAtual()} · baú de itens a cada 5 andares`;
             corpo = `<p class="logs-vazio">Nenhum item na build ainda.</p>`;
         } else {
             subtitulo = build.resumo();
             // um cartão por item único, com a pilha indicada
-            const unicos = [...new Set(build.pegaLista())];
+            const unicos = [...new Set([...build.pegaLista(), ...(build.idsForjados ? build.idsForjados() : [])])];
             corpo = `<div class="itens-build-grade">` + unicos.map(idItem => {
                 const registro = build.item(idItem);
                 const copias = build.copias(idItem);
+                const forja = build.nivelForja ? build.nivelForja(idItem) : 0;
                 return `<div class="item-build-cartao item-build-cartao--leitura">
                     <img src="${registro.icone}" alt="">
                     <span class="item-build-nome">${registro.nome}</span>
                     <span class="item-build-efeito">${registro.efeito}</span>
                     ${copias > 1 ? `<span class="item-build-copia">pilha ×${copias}</span>` : ""}
+                    ${forja > 0 ? `<span class="item-build-copia">forjada ×${forja} · efeito ×${build.copiasEfetivas(idItem)}</span>` : ""}
                 </div>`;
             }).join("") + `</div>`;
         }
