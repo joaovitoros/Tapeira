@@ -93,6 +93,7 @@
 		</aside>
 	</div>
 
+	<script src="../script/customizacao.js"></script>
 	<script>
 	(function () {
 		// slots = [{ id, nome, itens: [{ id, nome, url }] }]
@@ -101,6 +102,15 @@
 		var equipado = {};   // equipado[slot] = itemId
 		var sel = { slot: null, item: null };
 		var CHAVE = "tapeira-calibrador-aparencia";
+
+		// Se a config do jogo estiver disponível, usa pra SEMEAR os valores atuais
+		// (arquivo -> { slot, item }) — assim a pasta começa do que já está no jogo.
+		var LOOKUP = {};
+		try {
+			window.Tapeira.Aparencia.SLOTS.forEach(function (s) {
+				s.itens.forEach(function (it) { LOOKUP[it.arquivo] = { slot: s, item: it }; });
+			});
+		} catch (e) {}
 
 		// restaura o que já foi posicionado antes (posições ficam salvas no navegador)
 		try { dados = JSON.parse(localStorage.getItem(CHAVE) || "{}"); } catch (e) { dados = {}; }
@@ -132,17 +142,25 @@
 			var files = Array.prototype.slice.call(ev.target.files).filter(function (f) { return /\.(png|webp|gif|jpg|jpeg)$/i.test(f.name); });
 			if (!files.length) return;
 			var nomePasta = (files[0].webkitRelativePath || "").split("/")[0] || "itens";
-			var id = nomePasta.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-			var s = slots.find(function (x) { return x.id === id; });
-			if (!s) { s = { id: id, nome: nomePasta, itens: [] }; slots.push(s); }
+			var idPasta = nomePasta.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 			files.forEach(function (f) {
-				var nome = f.name.replace(/\.[^.]+$/, "");
-				if (s.itens.some(function (i) { return i.id === nome; })) return;
-				s.itens.push({ id: nome, nome: nome, url: URL.createObjectURL(f) });
+				var m = LOOKUP[f.name];
+				var slotId = m ? m.slot.id : idPasta;
+				var itemId = m ? m.item.id : f.name.replace(/\.[^.]+$/, "");
+				var s = slots.find(function (x) { return x.id === slotId; });
+				if (!s) { s = { id: slotId, nome: m ? m.slot.nome : nomePasta, itens: [] }; slots.push(s); }
+				if (s.itens.some(function (i) { return i.id === itemId; })) return;
+				s.itens.push({ id: itemId, nome: itemId, url: URL.createObjectURL(f) });
+				// semeia do jogo se ainda não houver posição salva
+				if (!dados[slotId]) dados[slotId] = {};
+				if (!dados[slotId][itemId] && m) {
+					var a = Object.assign({}, m.slot.ancora, m.item.ancora || {});
+					dados[slotId][itemId] = { x: a.x, y: a.y, largura: a.largura, flip: !!m.item.flip, atras: !!m.item.tras, rot: m.item.rot || 0 };
+				}
 			});
-			s.itens.sort(function (a, b) { return a.id.localeCompare(b.id); });
-			if (!sel.slot) { sel.slot = s.id; sel.item = s.itens[0].id; }
-			if (!equipado[s.id]) equipado[s.id] = s.itens[0].id;
+			slots.forEach(function (s) { s.itens.sort(function (a, b) { return a.id.localeCompare(b.id); }); });
+			if (!sel.slot && slots.length) { sel.slot = slots[0].id; sel.item = slots[0].itens[0].id; }
+			slots.forEach(function (s) { if (!equipado[s.id] && s.itens.length) equipado[s.id] = s.itens[0].id; });
 			renderSlots();
 			render();
 		});
