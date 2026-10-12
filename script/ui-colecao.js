@@ -68,6 +68,8 @@ Object.assign(UI, {
             const progress = total % FORMIGAS_POR_CONJUNTO;
             const card = document.createElement("article");
             card.className = "ant-collection-card";
+            // id da formiga no DOM: a Fazenda usa pra pulsar o cartão produzido
+            card.dataset.formiga = formiga.id;
 
             const marker = this.createAntSprite(formiga.cor);
             marker.classList.add("ant-collection-marker");

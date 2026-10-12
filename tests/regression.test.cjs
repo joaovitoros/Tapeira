@@ -3069,6 +3069,51 @@ test("CM comprado escala com o andar (+20 × andar) no Comércio e no Mercado", 
     }
 });
 
+test("Fazenda: painel mostra o progresso e pulsa o cartão ao produzir", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => window.Tapeira && window.Tapeira.Fazenda);
+        const result = await page.evaluate(async () => {
+            UI.showInfo = () => {};
+            window.maxAndar = 200;
+            fazendaNivel = 5; fazendaRainha = 0;
+            andar = 100;
+            Tapeira.Fazenda.sincroniza();
+            Tapeira.Fazenda.abrir();
+            const out = {};
+            out.tickAoAbrir = Tapeira.Fazenda.painelTickAtivo();
+            out.barraExiste = !!document.getElementById("fazendaBarraFill");
+            out.cartoesComData = document.querySelectorAll(".ant-collection-card[data-formiga]").length;
+
+            // força uma produção e espera o tick (250ms) reagir
+            ProduzFormigasFazenda();
+            await new Promise(r => setTimeout(r, 450));
+            out.mais1 = document.querySelectorAll(".fazenda-mais1").length;
+            out.pulsando = document.querySelectorAll(".ant-collection-card.is-produzindo").length;
+            out.tempo = document.getElementById("fazendaTempo")?.textContent || "";
+
+            // fecha: o tick do painel para (sem timer órfão)
+            Tapeira.Fazenda.fechar();
+            out.fechou = !document.getElementById("fazendaModal");
+            out.tickAoFechar = Tapeira.Fazenda.painelTickAtivo();
+            out.mais1AposFechar = document.querySelectorAll(".fazenda-mais1").length;
+            return out;
+        });
+        assert.ok(result.tickAoAbrir, "o tick do painel liga ao abrir");
+        assert.ok(result.barraExiste, "o painel mostra a barra de produção");
+        assert.equal(result.cartoesComData, 5, "os 5 cartões têm data-formiga");
+        assert.ok(result.mais1 > 0, "mostra o +1 ao produzir");
+        assert.ok(result.pulsando > 0, "pulsa o cartão da cor produzida");
+        assert.ok(/Próxima formiga em \d+ s/.test(result.tempo), "mostra a contagem: " + result.tempo);
+        assert.ok(result.fechou, "o painel fecha");
+        assert.equal(result.tickAoFechar, false, "o tick do painel para ao fechar (sem órfão)");
+        assert.equal(result.mais1AposFechar, 0, "o fechar limpa os efeitos");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("batalha-fantasma: cartão de batalha monta, valida e importa sem tocar no save", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

@@ -8,6 +8,16 @@
 const FAZENDA_MAX_NIVEL = 10;
 const FAZENDA_RAINHA_MAX = 5;
 
+// Estado do PAINEL (não vai pro save): quando o ciclo atual começou (barra de
+// progresso), o tick do painel enquanto aberto, o aviso da última produção e
+// os timeouts das animações (limpos ao fechar).
+let inicioCicloFazendaMs = Date.now();
+let intervaloFazendaPainel = null;
+let seqProducaoFazenda = 0;
+let ultimaProducaoFazenda = null;
+let seqVistoPainelFazenda = 0;
+let timeoutsPainelFazenda = [];
+
 function FazendaNivelValido(nivel) {
 	const n = Math.floor(Number(nivel) || 0);
 	return Math.max(0, Math.min(FAZENDA_MAX_NIVEL, n));
@@ -61,6 +71,10 @@ function ProduzFormigasFazenda() {
 	if (!FormigasDesbloqueadas()) return false;
 	const formiga = FORMIGAS[Math.floor(Math.random() * FORMIGAS.length)];
 	ConcedeFormigaColecao(formiga);
+	// marca a produção (o painel usa pra pulsar o cartão certo) e reinicia o ciclo
+	seqProducaoFazenda += 1;
+	ultimaProducaoFazenda = { id: formiga.id, seq: seqProducaoFazenda };
+	inicioCicloFazendaMs = Date.now();
 	return true;
 }
 
@@ -69,6 +83,7 @@ function SincronizaIntervaloFazenda() {
 	if (intervaloFazenda !== null) clearInterval(intervaloFazenda);
 	intervaloFazenda = null;
 	const ms = IntervaloFazendaMs();
+	inicioCicloFazendaMs = Date.now();
 	if (Number.isFinite(ms) && ms > 0) intervaloFazenda = setInterval(ProduzFormigasFazenda, ms);
 }
 
@@ -110,10 +125,82 @@ function CompraFazendaRainha() {
 	return true;
 }
 
+// ---- Painel: barra de progresso + feedback de produção ----
+// O tick roda só com o painel aberto e se encerra sozinho se o modal sumir
+// (ele pode ser fechado por outro caminho, ex.: ESC).
+function PararTickPainelFazenda() {
+	if (intervaloFazendaPainel !== null) clearInterval(intervaloFazendaPainel);
+	intervaloFazendaPainel = null;
+	timeoutsPainelFazenda.forEach(clearTimeout);
+	timeoutsPainelFazenda = [];
+}
+
+function IniciaTickPainelFazenda() {
+	PararTickPainelFazenda();
+	// parte do estado atual: não dispara o pulso de uma produção antiga
+	seqVistoPainelFazenda = ultimaProducaoFazenda ? ultimaProducaoFazenda.seq : 0;
+	intervaloFazendaPainel = setInterval(TickPainelFazenda, 250);
+	TickPainelFazenda();
+}
+
+function TickPainelFazenda() {
+	if (!document.getElementById("fazendaModal")) { PararTickPainelFazenda(); return; }
+
+	// produção nova? re-renderiza (números atualizados) e pulsa o cartão
+	const seq = ultimaProducaoFazenda ? ultimaProducaoFazenda.seq : 0;
+	if (seq !== seqVistoPainelFazenda) {
+		const produzida = ultimaProducaoFazenda ? ultimaProducaoFazenda.id : null;
+		seqVistoPainelFazenda = seq;
+		RenderFazendaPainel();
+		if (produzida) FeedbackProducaoFazenda(produzida);
+	}
+
+	// barra de progresso do próximo ciclo
+	const fill = document.getElementById("fazendaBarraFill");
+	const tempo = document.getElementById("fazendaTempo");
+	if (!fill) return;
+	const ms = IntervaloFazendaMs();
+	if (!Number.isFinite(ms) || ms <= 0) {
+		fill.style.width = "0%";
+		if (tempo) tempo.textContent = "sem produção";
+		return;
+	}
+	const decorrido = Math.max(0, Date.now() - inicioCicloFazendaMs);
+	const pct = Math.max(0, Math.min(1, decorrido / ms));
+	fill.style.width = (pct * 100).toFixed(1) + "%";
+	if (tempo) {
+		tempo.textContent = jogoPausado
+			? "produção pausada"
+			: "Próxima formiga em " + Math.max(0, Math.ceil((ms - decorrido) / 1000)) + " s";
+	}
+}
+
+// Pulsa o cartão da cor produzida e solta um "+1 <cor>" flutuante na produção
+function FeedbackProducaoFazenda(id) {
+	const modal = document.getElementById("fazendaModal");
+	if (!modal) return;
+	const card = modal.querySelector('.ant-collection-card[data-formiga="' + id + '"]');
+	if (card) {
+		card.classList.add("is-produzindo");
+		timeoutsPainelFazenda.push(setTimeout(() => card.classList.remove("is-produzindo"), 900));
+	}
+	const secao = document.getElementById("fazendaProducaoBarra")
+		|| document.getElementById("fazendaProducaoSecao");
+	if (secao) {
+		const formiga = FORMIGAS.find(f => f.id === id);
+		const flutua = document.createElement("span");
+		flutua.className = "fazenda-mais1";
+		flutua.textContent = "+1" + (formiga ? " " + formiga.nome.toLowerCase() : "");
+		secao.appendChild(flutua);
+		timeoutsPainelFazenda.push(setTimeout(() => flutua.remove(), 1300));
+	}
+}
+
 // ---- Painel ----
 function FecharFazenda() {
 	const modal = document.getElementById("fazendaModal");
 	if (!modal) return;
+	PararTickPainelFazenda();
 	modal.remove();
 	UI.syncScreenButtons();
 }
@@ -160,6 +247,7 @@ function AbrirFazenda() {
 	UI.closeOtherPanels("fazenda");
 	UI.syncScreenButtons();
 	RenderFazendaPainel();
+	IniciaTickPainelFazenda();
 	close.focus();
 }
 
@@ -185,10 +273,32 @@ function FazendaBotaoCompra(texto, preco, compra) {
 	return botao;
 }
 
+// Barra de progresso do próximo ciclo (o TickPainelFazenda preenche)
+function FazendaBarraProducao() {
+	const caixa = document.createElement("div");
+	caixa.className = "fazenda-producao";
+	caixa.id = "fazendaProducaoBarra";
+
+	const trilha = document.createElement("div");
+	trilha.className = "fazenda-producao__trilha";
+	const fill = document.createElement("span");
+	fill.className = "fazenda-producao__fill";
+	fill.id = "fazendaBarraFill";
+	trilha.appendChild(fill);
+
+	const tempo = document.createElement("span");
+	tempo.className = "fazenda-producao__tempo";
+	tempo.id = "fazendaTempo";
+
+	caixa.append(trilha, tempo);
+	return caixa;
+}
+
 function FazendaSecaoProducao() {
 	const nivel = FazendaNivelValido(fazendaNivel);
 	const secao = document.createElement("section");
 	secao.className = "fazenda-secao";
+	secao.id = "fazendaProducaoSecao";
 
 	const titulo = document.createElement("h3");
 	titulo.className = "fazenda-secao__titulo";
@@ -209,6 +319,7 @@ function FazendaSecaoProducao() {
 	}
 
 	secao.append(titulo, desc, status);
+	if (nivel > 0) secao.append(FazendaBarraProducao());
 
 	if (nivel >= FAZENDA_MAX_NIVEL) {
 		const maximo = document.createElement("p");
@@ -294,6 +405,7 @@ window.Tapeira.Fazenda = {
 	sincroniza: SincronizaIntervaloFazenda,
 	comprarNivel: CompraFazendaNivel,
 	comprarRainha: CompraFazendaRainha,
+	painelTickAtivo: () => intervaloFazendaPainel !== null,
 	abrir: AbrirFazenda,
 	fechar: FecharFazenda,
 	render: RenderFazendaPainel
