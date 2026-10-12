@@ -45,7 +45,69 @@ const APARENCIA_SLOTS = [
             { id: "branco", nome: "Cachecol branco", arquivo: "cachecol-03.png", ancora: { x: 51.2, y: 78.7, largura: 40 }, rot: -8 },
             { id: "preto", nome: "Cachecol preto", arquivo: "cachecol-04.png", ancora: { x: 51.9, y: 76.1, largura: 40 }, rot: -10 },
             { id: "azul", nome: "Cachecol azul", arquivo: "cachecol-05.png", ancora: { x: 48.4, y: 74.2, largura: 37 }, rot: -6 },
-            { id: "vermelho", nome: "Cachecol vermelho", arquivo: "cachecol-06.png", ancora: { x: 44.4, y: 72.8, largura: 40 } }
+            { id: "vermelho", nome: "Cachecol vermelho", arquivo: "cachecol-06.png", ancora: { x: 44.1, y: 73, largura: 40 } }
+        ]
+    },
+    {
+        id: "arma",
+        nome: "Arma",
+        dir: "imagens/personagens/armas/",
+        campo: "armaEquipado",
+        vazio: "Sem arma",
+        ancora: { x: 10, y: 68, largura: 45 },
+        itens: [
+            { id: "arma-01", nome: "Faca", arquivo: "arma-01.png", flip: true, rot: -16, ancora: { x: 5.6, y: 69.5, largura: 36.5 } },
+            { id: "arma-02", nome: "Picareta", arquivo: "arma-02.png", rot: 4, ancora: { x: 9.7, y: 69.7, largura: 40 } },
+            { id: "arma-03", nome: "Picareta de gelo", arquivo: "arma-03.png", rot: -1, ancora: { x: 13.8, y: 67.8, largura: 46 } },
+            { id: "arma-04", nome: "Picareta", arquivo: "arma-04.png", ancora: { x: 12.8, y: 68.7, largura: 45.5 } },
+            { id: "arma-05", nome: "Picareta escura", arquivo: "arma-05.png", ancora: { x: 7.8, y: 67.8, largura: 58.5 } },
+            { id: "arma-06", nome: "Picareta dourada", arquivo: "arma-06.png", ancora: { x: 12.5, y: 67.3, largura: 50 } },
+            { id: "arma-07", nome: "Picareta vermelha", arquivo: "arma-07.png", rot: 13, ancora: { x: 7.2, y: 67.3, largura: 60.5 } },
+            { id: "arma-08", nome: "Lança", arquivo: "arma-08.png", rot: -58, ancora: { x: 41.6, y: 51.2, largura: 66.5 } },
+            { id: "arma-09", nome: "Adaga de cristal", arquivo: "arma-09.png", rot: -50, ancora: { x: 37.5, y: 51.7, largura: 63.5 } },
+            { id: "arma-10", nome: "Pá", arquivo: "arma-10.png", rot: -57, ancora: { x: 32.8, y: 57.8, largura: 48 } },
+            { id: "arma-11", nome: "Espada", arquivo: "arma-11.png", flip: true, rot: -30, ancora: { x: -3.1, y: 61.9, largura: 52.5 } },
+            { id: "arma-12", nome: "Machado", arquivo: "arma-12.png", flip: true, rot: -21, ancora: { x: 3.4, y: 64.7, largura: 43.5 } },
+            { id: "arma-13", nome: "Maça", arquivo: "arma-13.png", rot: -51, ancora: { x: 37.5, y: 54, largura: 58.5 } },
+            { id: "arma-14", nome: "Adaga", arquivo: "arma-14.png", rot: -56, ancora: { x: 42.2, y: 50.9, largura: 73.5 } },
+            { id: "arma-15", nome: "Martelo", arquivo: "arma-15.png", rot: -50, ancora: { x: 37.2, y: 52.6, largura: 55.5 } },
+            { id: "arma-16", nome: "Varinha mágica", arquivo: "arma-16.png", rot: -60, ancora: { x: 45, y: 57.4, largura: 63.5 } },
+            { id: "arma-17", nome: "Espada", arquivo: "arma-17.png", rot: -60, ancora: { x: 32.5, y: 55.9, largura: 44 } }
+        ]
+    },
+    {
+        id: "cinto",
+        nome: "Cinto",
+        dir: "imagens/personagens/cintos/",
+        campo: "cintoEquipado",
+        vazio: "Sem cinto",
+        ancora: { x: 41.9, y: 71.6, largura: 40 },
+        itens: [
+            { id: "cinto-01", nome: "Bolsa azul", arquivo: "cinto-01.png" },
+            { id: "cinto-02", nome: "Bolsa creme", arquivo: "cinto-02.png" },
+            { id: "cinto-03", nome: "Bolsa escura", arquivo: "cinto-03.png" },
+            { id: "cinto-04", nome: "Cinto de couro", arquivo: "cinto-04.png" },
+            { id: "cinto-05", nome: "Bolsa verde", arquivo: "cinto-05.png" },
+            { id: "cinto-06", nome: "Bolsa roxa", arquivo: "cinto-06.png" },
+            { id: "cinto-07", nome: "Bolsa vermelha", arquivo: "cinto-07.png" },
+            { id: "cinto-08", nome: "Cinto escuro", arquivo: "cinto-08.png" }
+        ]
+    },
+    {
+        id: "escudo",
+        nome: "Escudo",
+        dir: "imagens/personagens/escudos/",
+        campo: "escudoEquipado",
+        vazio: "Sem escudo",
+        ancora: { x: 71.9, y: 79.2, largura: 40 },
+        itens: [
+            { id: "escudo-01", nome: "Escudo de ferro", arquivo: "escudo-01.png", ancora: { x: 74.4, y: 80.1, largura: 40 } },
+            { id: "escudo-02", nome: "Escudo de folha", arquivo: "escudo-02.png", ancora: { x: 72.8, y: 79.2, largura: 40 } },
+            { id: "escudo-03", nome: "Escudo de madeira", arquivo: "escudo-03.png", ancora: { x: 69.7, y: 76.8, largura: 40 } },
+            { id: "escudo-04", nome: "Escudo de gema", arquivo: "escudo-04.png", ancora: { x: 71.6, y: 78.2, largura: 40 } },
+            { id: "escudo-05", nome: "Escudo redondo", arquivo: "escudo-05.png", ancora: { x: 70.3, y: 76.3, largura: 40 } },
+            { id: "escudo-06", nome: "Escudo de fogo", arquivo: "escudo-06.png", ancora: { x: 71.6, y: 82.3, largura: 40 } },
+            { id: "escudo-07", nome: "Escudo de estrela", arquivo: "escudo-07.png", ancora: { x: 71.9, y: 81.6, largura: 40 } }
         ]
     }
 ];
