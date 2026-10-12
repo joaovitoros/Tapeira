@@ -530,6 +530,10 @@ var PvpFantasma = {
 			meu: this._nome(this._dueloAtual && this._dueloAtual.cartaoMeu),
 			fantasma: this._nome(this._dueloAtual && this._dueloAtual.cartaoFantasma)
 		};
+		const aparencias = {
+			meu: this._dueloAtual && this._dueloAtual.cartaoMeu ? this._dueloAtual.cartaoMeu.aparencia : null,
+			fantasma: this._dueloAtual && this._dueloAtual.cartaoFantasma ? this._dueloAtual.cartaoFantasma.aparencia : null
+		};
 
 		const modal = document.getElementById("pvpDuelo");
 		if (!modal) return;
@@ -537,7 +541,7 @@ var PvpFantasma = {
 		const botaoLutar = modal.querySelector("[data-pvp-lutar]");
 		if (botaoLutar) botaoLutar.remove();
 		if (cartoes) {
-			cartoes.insertAdjacentHTML("afterend", this._htmlCorrida(nomes));
+			cartoes.insertAdjacentHTML("afterend", this._htmlCorrida(nomes, aparencias));
 			cartoes.style.display = "none";
 		}
 
@@ -564,53 +568,46 @@ var PvpFantasma = {
 		atualiza();
 	},
 
-	_htmlCorrida(nomes) {
+	_htmlCorrida(nomes, aparencias) {
 		const meu = this._esc((nomes && nomes.meu) || "Você");
 		const fantasma = this._esc((nomes && nomes.fantasma) || "Fantasma");
+		const mini = (n, rotulo) => `
+				<div class="pvpMiniCaverna pvpMiniCaverna--${n}" data-pvp-alvo="${n}">
+					<div class="pvpMiniCaverna__bg" style="background-image:url('imagens/fundos/background.png')"></div>
+					<div class="pvpMiniCaverna__chao"></div>
+					<div class="pvpMiniCaverna__entidade pvpMiniCaverna__tapiera" style="left:18%;">
+						${this._htmlMiniTapiera(aparencias && aparencias[n])}
+					</div>
+					<div class="pvpMiniCaverna__entidade pvpMiniCaverna__boss" style="right:12%;">
+						<img class="pvpMiniSprite" src="imagens/personagens/inimigo.png" alt="" aria-hidden="true" onerror="this.src='imagens/personagens/inimigo.png'">
+					</div>
+					<div class="pvpMiniCaverna__hp"><div class="pvpMiniCaverna__hpFill" data-pvp-fill></div></div>
+					<div class="pvpMiniCaverna__label">${rotulo} · ${n === "meu" ? meu : fantasma}</div>
+					<b class="pvpMiniCaverna__tempo" data-pvp-tempo>—</b>
+					<!-- compat: teste "nome do jogador" espera .pvpAlvoTopo span -->
+					<div class="pvpAlvoTopo" aria-hidden="true" style="position:absolute;pointer-events:none;opacity:0;">
+						<span>${rotulo} · ${n === "meu" ? meu : fantasma}</span>
+						<b data-pvp-tempo>—</b>
+					</div>
+				</div>`;
 		return `
 		<div class="pvpCorrida">
 			<div class="pvpCronometroGrande" data-pvp-cronometro>0.00s</div>
 			<div class="pvpCorridaInfo">Chefe com a vida da média das duas builds × 25s — quem derruba primeiro vence.</div>
 			<div class="pvpArenaDupla">
-				<div class="pvpMiniCaverna pvpMiniCaverna--meu" data-pvp-alvo="meu">
-					<div class="pvpMiniCaverna__bg" style="background-image:url('imagens/fundos/background.png')"></div>
-					<div class="pvpMiniCaverna__chao"></div>
-					<div class="pvpMiniCaverna__entidade pvpMiniCaverna__tapiera" style="left:18%;">
-						<img class="pvpMiniSprite" src="imagens/personagens/player.png" alt="" aria-hidden="true" onerror="this.src='imagens/animacoes/player/parado.png'">
-					</div>
-					<div class="pvpMiniCaverna__entidade pvpMiniCaverna__boss" style="right:12%;">
-						<img class="pvpMiniSprite" src="imagens/personagens/inimigo.png" alt="" aria-hidden="true" onerror="this.src='imagens/personagens/inimigo.png'">
-					</div>
-					<div class="pvpMiniCaverna__hp"><div class="pvpMiniCaverna__hpFill" data-pvp-fill></div></div>
-					<div class="pvpMiniCaverna__label">Você · ${meu}</div>
-					<b class="pvpMiniCaverna__tempo" data-pvp-tempo>—</b>
-					<!-- compat: teste "nome do jogador" espera .pvpAlvoTopo span -->
-					<div class="pvpAlvoTopo" aria-hidden="true" style="position:absolute;pointer-events:none;opacity:0;">
-						<span>Você · ${meu}</span>
-						<b data-pvp-tempo>—</b>
-					</div>
-				</div>
-				<div class="pvpMiniCaverna pvpMiniCaverna--fantasma" data-pvp-alvo="fantasma">
-					<div class="pvpMiniCaverna__bg" style="background-image:url('imagens/fundos/background.png')"></div>
-					<div class="pvpMiniCaverna__chao"></div>
-					<div class="pvpMiniCaverna__entidade pvpMiniCaverna__tapiera" style="left:18%;">
-						<img class="pvpMiniSprite" src="imagens/personagens/player.png" alt="" aria-hidden="true" onerror="this.src='imagens/animacoes/player/parado.png'">
-					</div>
-					<div class="pvpMiniCaverna__entidade pvpMiniCaverna__boss" style="right:12%;">
-						<img class="pvpMiniSprite" src="imagens/personagens/inimigo.png" alt="" aria-hidden="true" onerror="this.src='imagens/personagens/inimigo.png'">
-					</div>
-					<div class="pvpMiniCaverna__hp"><div class="pvpMiniCaverna__hpFill" data-pvp-fill></div></div>
-					<div class="pvpMiniCaverna__label">Fantasma · ${fantasma}</div>
-					<b class="pvpMiniCaverna__tempo" data-pvp-tempo>—</b>
-					<!-- compat: teste "nome do jogador" espera .pvpAlvoTopo span -->
-					<div class="pvpAlvoTopo" aria-hidden="true" style="position:absolute;pointer-events:none;opacity:0;">
-						<span>Fantasma · ${fantasma}</span>
-						<b data-pvp-tempo>—</b>
-					</div>
-				</div>
+				${mini("meu", "Você")}
+				${mini("fantasma", "Fantasma")}
 			</div>
 			<div class="pvpResultado" data-pvp-resultado hidden></div>
 		</div>`;
+	},
+
+	// bonequinho da mini-batalha com as customizações (fallback: img simples)
+	_htmlMiniTapiera(aparencia) {
+		if (typeof AparenciaHtmlArte === "function") {
+			return `<div class="pvpMiniSprite pvpMiniSprite--arte" aria-hidden="true">${AparenciaHtmlArte(aparencia)}</div>`;
+		}
+		return `<img class="pvpMiniSprite" src="imagens/personagens/player.png" alt="" aria-hidden="true" onerror="this.src='imagens/animacoes/player/parado.png'">`;
 	},
 
 	// vida restante na série interpolada no instante t

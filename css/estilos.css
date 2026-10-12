@@ -12091,6 +12091,17 @@ img.ramos-tree-no__tile {
 	animation: pvpMiniRespirar 1.2s ease-in-out infinite;
 }
 
+/* mini-batalha com as customizações: a arte (base + camadas) no lugar do img */
+.pvpMiniSprite--arte {
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+}
+
+.pvpMiniSprite--arte .player__arte {
+	height: 100%;
+}
+
 .pvpMiniCaverna__tapiera {
 	left: 18%;
 	width: 52px;
