@@ -20,16 +20,16 @@ const APARENCIA_SLOTS = [
         dir: "imagens/personagens/chapeus/",
         campo: "chapeuEquipado",
         vazio: "Sem chapéu",
-        ancora: { x: 50, y: 30, largura: 53 },
+        ancora: { x: 50, y: 32, largura: 47.5 },
         itens: [
-            { id: "amarelo", nome: "Capacete amarelo", arquivo: "chapeu-01.png", flip: true },
-            { id: "escuro", nome: "Capacete escuro", arquivo: "chapeu-02.png", flip: true },
-            { id: "vermelho", nome: "Capacete vermelho", arquivo: "chapeu-03.png", flip: true },
-            { id: "verde", nome: "Capacete verde", arquivo: "chapeu-04.png", flip: true },
-            { id: "viking", nome: "Capacete viking", arquivo: "chapeu-05.png", flip: true },
-            { id: "mago", nome: "Chapéu de mago", arquivo: "chapeu-06.png", flip: true },
-            { id: "palha", nome: "Chapéu de palha", arquivo: "chapeu-07.png" },
-            { id: "pirata", nome: "Chapéu de pirata", arquivo: "chapeu-08.png", flip: true }
+            { id: "amarelo", nome: "Capacete amarelo", arquivo: "chapeu-01.png", flip: true, ancora: { x: 50, y: 32, largura: 47.5 } },
+            { id: "escuro", nome: "Capacete escuro", arquivo: "chapeu-02.png", flip: true, ancora: { x: 46.6, y: 29.1, largura: 43 } },
+            { id: "vermelho", nome: "Capacete vermelho", arquivo: "chapeu-03.png", flip: true, ancora: { x: 47.2, y: 30.1, largura: 43.5 } },
+            { id: "verde", nome: "Capacete verde", arquivo: "chapeu-04.png", flip: true, ancora: { x: 46.6, y: 27.9, largura: 43 } },
+            { id: "viking", nome: "Capacete viking", arquivo: "chapeu-05.png", flip: true, ancora: { x: 47.8, y: 30.1, largura: 46 } },
+            { id: "mago", nome: "Chapéu de mago", arquivo: "chapeu-06.png", ancora: { x: 44.7, y: 28.2, largura: 43 } },
+            { id: "palha", nome: "Chapéu de palha", arquivo: "chapeu-07.png", ancora: { x: 44.1, y: 29.1, largura: 48 } },
+            { id: "pirata", nome: "Chapéu de pirata", arquivo: "chapeu-08.png", ancora: { x: 44.7, y: 27.9, largura: 47 } }
         ]
     },
     {
