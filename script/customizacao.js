@@ -40,12 +40,12 @@ const APARENCIA_SLOTS = [
         vazio: "Sem cachecol",
         ancora: { x: 50, y: 74, largura: 40 },
         itens: [
-            { id: "roxo", nome: "Cachecol roxo", arquivo: "cachecol-01.png" },
-            { id: "xadrez", nome: "Cachecol xadrez", arquivo: "cachecol-02.png" },
-            { id: "branco", nome: "Cachecol branco", arquivo: "cachecol-03.png" },
-            { id: "preto", nome: "Cachecol preto", arquivo: "cachecol-04.png" },
-            { id: "azul", nome: "Cachecol azul", arquivo: "cachecol-05.png" },
-            { id: "vermelho", nome: "Cachecol vermelho", arquivo: "cachecol-06.png" }
+            { id: "roxo", nome: "Cachecol roxo", arquivo: "cachecol-01.png", ancora: { x: 54.7, y: 80.1, largura: 40 }, rot: -12 },
+            { id: "xadrez", nome: "Cachecol xadrez", arquivo: "cachecol-02.png", ancora: { x: 54.4, y: 80.4, largura: 40 }, rot: -12 },
+            { id: "branco", nome: "Cachecol branco", arquivo: "cachecol-03.png", ancora: { x: 51.2, y: 78.7, largura: 40 }, rot: -8 },
+            { id: "preto", nome: "Cachecol preto", arquivo: "cachecol-04.png", ancora: { x: 51.9, y: 76.1, largura: 40 }, rot: -10 },
+            { id: "azul", nome: "Cachecol azul", arquivo: "cachecol-05.png", ancora: { x: 48.4, y: 74.2, largura: 37 }, rot: -6 },
+            { id: "vermelho", nome: "Cachecol vermelho", arquivo: "cachecol-06.png", ancora: { x: 44.4, y: 72.8, largura: 40 } }
         ]
     }
 ];

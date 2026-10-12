@@ -79,6 +79,11 @@
 				<label><input type="checkbox" id="atras"> Atrás</label>
 				<label><input type="checkbox" id="grade"> Grade</label>
 			</div>
+			<div class="linha">
+				<label><input type="checkbox" id="borracha"> Borracha</label>
+				<label class="tag">Tam. <input type="range" id="pincel" min="4" max="60" value="16" style="width:90px;vertical-align:middle"></label>
+				<button id="baixarEditadas">Baixar editadas (.zip)</button>
+			</div>
 			<div class="info" id="info">—</div>
 			<div class="linha">
 				<button id="exportar">Exportar TUDO (copiar)</button>
@@ -101,6 +106,7 @@
 		var dados = {};      // dados[slot][item] = {x,y,largura,flip,atras,rot}
 		var equipado = {};   // equipado[slot] = itemId
 		var sel = { slot: null, item: null };
+		var borracha = { ativo: false, tam: 16 };
 		var CHAVE = "tapeira-calibrador-aparencia";
 
 		// Se a config do jogo estiver disponível, usa pra SEMEAR os valores atuais
@@ -150,7 +156,14 @@
 				var s = slots.find(function (x) { return x.id === slotId; });
 				if (!s) { s = { id: slotId, nome: m ? m.slot.nome : nomePasta, itens: [] }; slots.push(s); }
 				if (s.itens.some(function (i) { return i.id === itemId; })) return;
-				s.itens.push({ id: itemId, nome: itemId, url: URL.createObjectURL(f) });
+				var url = URL.createObjectURL(f);
+				var it = { id: itemId, nome: itemId, url: url, arquivo: f.name, img: null, canvas: null, editado: false };
+				s.itens.push(it);
+				(function (it) {
+					var im = new Image();
+					im.onload = function () { it.img = im; if (sel.slot === slotId && sel.item === itemId) renderArte(); };
+					im.src = url;
+				})(it);
 				// semeia do jogo se ainda não houver posição salva
 				if (!dados[slotId]) dados[slotId] = {};
 				if (!dados[slotId][itemId] && m) {
@@ -202,6 +215,16 @@
 			});
 		}
 
+		function canvasDoItem(it) {
+			if (it.canvas) return it.canvas;
+			if (!it.img) return null;
+			var cv = document.createElement("canvas");
+			cv.width = it.img.naturalWidth; cv.height = it.img.naturalHeight;
+			cv.getContext("2d").drawImage(it.img, 0, 0);
+			it.canvas = cv;
+			return cv;
+		}
+
 		function renderArte() {
 			Array.prototype.slice.call(arte.querySelectorAll(".camada")).forEach(function (e) { e.remove(); });
 			slots.forEach(function (s) {
@@ -209,20 +232,20 @@
 				if (!id || !dados[s.id] || !dados[s.id][id]) return;
 				var it = s.itens.find(function (i) { return i.id === id; });
 				if (!it) return;
+				var cv = canvasDoItem(it);
+				if (!cv) return;
 				var dd = dados[s.id][id];
-				var img = document.createElement("img");
-				img.className = "camada" + (s.id === sel.slot && id === sel.item ? " sel" : "");
-				img.dataset.slot = s.id;
-				img.src = it.url;
-				img.style.left = dd.x + "%";
-				img.style.top = dd.y + "%";
-				img.style.width = dd.largura + "%";
-				img.style.transform = "translate(-50%,-100%)" + (dd.flip ? " scaleX(-1)" : "") + (dd.rot ? " rotate(" + dd.rot + "deg)" : "");
-				if (dd.atras) img.style.zIndex = "-1";
-				arte.appendChild(img);
+				cv.className = "camada" + (s.id === sel.slot && id === sel.item ? " sel" : "");
+				cv.dataset.slot = s.id;
+				cv.style.left = dd.x + "%";
+				cv.style.top = dd.y + "%";
+				cv.style.width = dd.largura + "%";
+				cv.style.transform = "translate(-50%,-100%)" + (dd.flip ? " scaleX(-1)" : "") + (dd.rot ? " rotate(" + dd.rot + "deg)" : "");
+				cv.style.zIndex = dd.atras ? "-1" : "";
+				arte.appendChild(cv);
 			});
 			var el = arte.querySelector('.camada[data-slot="' + sel.slot + '"]');
-			if (el) el.addEventListener("pointerdown", iniciarArraste);
+			if (el) el.addEventListener("pointerdown", borracha.ativo ? iniciarBorracha : iniciarArraste);
 		}
 
 		function render() {
@@ -268,6 +291,110 @@
 			ev.currentTarget.removeEventListener("pointerup", soltar);
 			salvar();
 		}
+
+		// ---- borracha (apaga pixels do item) ----
+		function apagarEm(ev, cv) {
+			var r = cv.getBoundingClientRect();
+			var escala = cv.width / r.width;
+			var x = (ev.clientX - r.left) * escala;
+			var y = (ev.clientY - r.top) * escala;
+			var raio = (borracha.tam / 2) * escala;
+			var ctx = cv.getContext("2d");
+			ctx.save();
+			ctx.globalCompositeOperation = "destination-out";
+			ctx.lineCap = "round";
+			ctx.lineJoin = "round";
+			if (borracha.ultimo) {
+				ctx.lineWidth = raio * 2;
+				ctx.beginPath();
+				ctx.moveTo(borracha.ultimo.x, borracha.ultimo.y);
+				ctx.lineTo(x, y);
+				ctx.stroke();
+			} else {
+				ctx.beginPath();
+				ctx.arc(x, y, raio, 0, Math.PI * 2);
+				ctx.fill();
+			}
+			ctx.restore();
+			borracha.ultimo = { x: x, y: y };
+		}
+		function iniciarBorracha(ev) {
+			ev.preventDefault();
+			var el = ev.currentTarget, it = item();
+			if (!it) return;
+			var cv = canvasDoItem(it);
+			if (!cv) return;
+			it.editado = true;
+			borracha.cv = cv;
+			borracha.ultimo = null;
+			try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+			el.addEventListener("pointermove", moverBorracha);
+			el.addEventListener("pointerup", soltarBorracha);
+			apagarEm(ev, cv);
+		}
+		function moverBorracha(ev) { if (borracha.cv) apagarEm(ev, borracha.cv); }
+		function soltarBorracha(ev) {
+			borracha.cv = null; borracha.ultimo = null;
+			ev.currentTarget.removeEventListener("pointermove", moverBorracha);
+			ev.currentTarget.removeEventListener("pointerup", soltarBorracha);
+		}
+		document.getElementById("borracha").addEventListener("change", function (e) {
+			borracha.ativo = e.target.checked;
+			arte.style.cursor = borracha.ativo ? "crosshair" : "";
+			renderArte();
+		});
+		document.getElementById("pincel").addEventListener("input", function (e) { borracha.tam = +e.target.value; });
+
+		// ---- zip mínimo (só "store") pra baixar as imagens editadas ----
+		var CRC_TABELA = (function () {
+			var t = [];
+			for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; }
+			return t;
+		})();
+		function crc32(b) { var c = 0xFFFFFFFF; for (var i = 0; i < b.length; i++) c = CRC_TABELA[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+		function criaZip(arquivos) {
+			var enc = new TextEncoder(), partes = [], central = [], offset = 0;
+			arquivos.forEach(function (f) {
+				var nome = enc.encode(f.nome), crc = crc32(f.dados);
+				var lh = new Uint8Array(30 + nome.length), dv = new DataView(lh.buffer);
+				dv.setUint32(0, 0x04034b50, true); dv.setUint16(4, 20, true);
+				dv.setUint32(14, crc, true); dv.setUint32(18, f.dados.length, true); dv.setUint32(22, f.dados.length, true);
+				dv.setUint16(26, nome.length, true);
+				lh.set(nome, 30);
+				partes.push(lh, f.dados);
+				var ch = new Uint8Array(46 + nome.length), dv2 = new DataView(ch.buffer);
+				dv2.setUint32(0, 0x02014b50, true); dv2.setUint16(4, 20, true); dv2.setUint16(6, 20, true);
+				dv2.setUint32(16, crc, true); dv2.setUint32(20, f.dados.length, true); dv2.setUint32(24, f.dados.length, true);
+				dv2.setUint16(28, nome.length, true); dv2.setUint32(42, offset, true);
+				ch.set(nome, 46);
+				central.push(ch);
+				offset += lh.length + f.dados.length;
+			});
+			var tamCentral = central.reduce(function (a, c) { return a + c.length; }, 0);
+			var eocd = new Uint8Array(22), dv3 = new DataView(eocd.buffer);
+			dv3.setUint32(0, 0x06054b50, true);
+			dv3.setUint16(8, arquivos.length, true); dv3.setUint16(10, arquivos.length, true);
+			dv3.setUint32(12, tamCentral, true); dv3.setUint32(16, offset, true);
+			return new Blob(partes.concat(central, [eocd]), { type: "application/zip" });
+		}
+		document.getElementById("baixarEditadas").addEventListener("click", function () {
+			var arquivos = [];
+			slots.forEach(function (s) {
+				s.itens.forEach(function (it) {
+					if (!it.editado || !it.canvas) return;
+					var b64 = it.canvas.toDataURL("image/png").split(",")[1];
+					var bin = atob(b64), arr = new Uint8Array(bin.length);
+					for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+					arquivos.push({ nome: it.arquivo || (it.id + ".png"), dados: arr });
+				});
+			});
+			if (!arquivos.length) { alert("Nenhum item foi editado ainda."); return; }
+			var a = document.createElement("a");
+			a.href = URL.createObjectURL(criaZip(arquivos));
+			a.download = "itens-editados.zip";
+			a.click();
+			setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+		});
 
 		// ---- controles ----
 		slotSel.addEventListener("change", function () {
