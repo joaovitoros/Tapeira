@@ -827,56 +827,73 @@ function acompanhaTamanhoPersonagem(animation, player, scale, verticalAnchor) {
     return () => window.removeEventListener("resize", atualizarPosicao);
 }
 
+// Ataque: em vez de esconder o player e tocar a sprite de espadada (por hora
+// desativada), um RISCO (faixa) parte do player até o inimigo acertado com um
+// splash no impacto, e o player dá uma leve "investida" (squash) sugerindo o
+// movimento. Mesma API do antigo (batalha.js e dev-tools seguem iguais).
+const DURACAO_ATAQUE_MS = 260;
 UI.playAttackAnimation = function (inimigoElement) {
     const player = document.querySelector(".player");
     if (!player || animacaoAtaqueAtiva) return;
-
     animacaoAtaqueAtiva = true;
-    player.classList.add("is-attacking-animation");
+
     const rect = player.getBoundingClientRect();
-    const animation = document.createElement("div");
-    animation.className = "game-sprite-animation attack-sprite-animation";
-    animation.setAttribute("aria-hidden", "true");
-    const pararAcompanharTamanho = acompanhaTamanhoPersonagem(animation, player, 1, 0.52);
+    // ponto de partida no centro do corpo (dali sai o "golpe")
+    const pcx = rect.left + rect.width * 0.5;
+    const pcy = rect.top + rect.height * 0.5;
 
-    let faceRight = true; // padrão: player olha para direita
+    let ex = pcx + rect.width * 0.6; // sem alvo: ataca pra frente
+    let ey = pcy;
     if (inimigoElement) {
-        const inimigoRect = inimigoElement.getBoundingClientRect();
-        const playerCenterX = rect.left + rect.width / 2;
-        const inimigoCenterX = inimigoRect.left + inimigoRect.width / 2;
-        faceRight = inimigoCenterX > playerCenterX;
+        const r = inimigoElement.getBoundingClientRect();
+        ex = r.left + r.width / 2;
+        ey = r.top + r.height * 0.5;
     }
+    const dx = ex - pcx;
+    const dy = ey - pcy;
+    const dist = Math.max(28, Math.hypot(dx, dy));
+    const ang = Math.atan2(dy, dx) * 180 / Math.PI;
+    const paraDireita = dx >= 0;
 
-    if (!faceRight) animation.classList.add("is-facing-left");
+    // 1) investida do player (distorção leve na direção do golpe)
+    const avanco = Math.min(9, dist * 0.05).toFixed(1);
+    player.style.setProperty("--investida-x", (paraDireita ? 1 : -1) * avanco + "px");
+    player.classList.remove("player--atacando");
+    void player.offsetWidth;
+    player.classList.add("player--atacando");
 
-    const frames = document.createElement("img");
-    frames.className = "attack-sprite-frame";
-    frames.dataset.frame = "1";
-    frames.alt = "";
-    frames.src = "imagens/animacoes/ataque/frames/ataque-1.png";
-    animation.appendChild(frames);
-    document.body.appendChild(animation);
+    // 2) risco (faixa) do player até o inimigo
+    const risco = document.createElement("div");
+    risco.className = "ataque-risco";
+    risco.setAttribute("aria-hidden", "true");
+    risco.style.left = pcx + "px";
+    risco.style.top = pcy + "px";
+    risco.style.width = dist + "px";
+    risco.style.transform = `translate(0, -50%) rotate(${ang}deg)`;
+    const corpo = document.createElement("span");
+    corpo.className = "ataque-risco__corpo";
+    risco.appendChild(corpo);
+    document.body.appendChild(risco);
 
-    let concluded = false;
-    let currentFrame = 1;
-    const frameTimer = setInterval(() => {
-        currentFrame++;
-        if (currentFrame <= 6) {
-            frames.dataset.frame = String(currentFrame);
-            frames.src = `imagens/animacoes/ataque/frames/ataque-${currentFrame}.png`;
-        }
-    }, 108); // 650ms / 6 frames ≈ 108ms per frame
+    // 3) splash no impacto (na posição do inimigo)
+    const splash = document.createElement("div");
+    splash.className = "ataque-splash";
+    splash.setAttribute("aria-hidden", "true");
+    splash.style.left = ex + "px";
+    splash.style.top = ey + "px";
+    document.body.appendChild(splash);
 
-    const finish = () => {
-        if (concluded) return;
-        concluded = true;
-        clearInterval(frameTimer);
-        pararAcompanharTamanho();
-        animation.remove();
+    let concluiu = false;
+    const fim = () => {
+        if (concluiu) return;
+        concluiu = true;
+        risco.remove();
+        splash.remove();
+        player.classList.remove("player--atacando");
         animacaoAtaqueAtiva = false;
-        player.classList.remove("is-attacking-animation");
     };
-    setTimeout(finish, 650);
+    splash.addEventListener("animationend", fim, { once: true });
+    setTimeout(fim, DURACAO_ATAQUE_MS + 140); // fallback (reduced-motion/aba em 2º plano)
 };
 
 UI.playEscapeAnimation = function () {
