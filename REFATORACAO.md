@@ -158,6 +158,16 @@ navegador, Windows (Electron) e Android (Capacitor).
     `android-save` + `dev-tools`). A fonte e a suíte seguem com os scripts
     individuais; `test-bundle.js` valida o bundle sobre o `www`.
 
+20. Extração do **fundo da caverna** de `script.js` para `script/fundos.js`
+    (`FUNDOS_CAVERNA`, `IniciaFundos`, `TrocaFundoPara`, `ProximoFundo`) — corte
+    byte a byte, sem mudar comportamento. Suíte 79/79.
+21. Limpeza de assets: 38 arquivos órfãos (−3,7 MB: props da Cidade não usados,
+    animação de ataque/fuga antigas desativadas, itens e ícones obsoletos).
+    **Folhas de arte-fonte fora do pacote do PC**: corrigida a exclusão de
+    `imagens/customização/**` (faltava o acento) e excluída
+    `imagens/possiveis novos fundos/**` → **~29,5 MB a menos** (verificado no
+    `app.asar`).
+
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
 
@@ -196,11 +206,8 @@ Rode `npm run prepare:web` antes dos testes focados que abrem `www/`.
   variáveis exige conferir save, reset e validação em conjunto.
 - ~~O save incompatível preserva o auto save local e mostra o motivo~~ —
   **resolvido**: era o `perkFrenesi` fora do cálculo de pontos (item 12).
-- **`FormatarGold` sem fallback científico** (achado à parte, não misturado): é
-  usado só no status/cartão de batalha (dano, DPS, crítico) e, além do último
-  sufixo (~e+150), imprimiria um número gigante + "Noqig" em vez de notação
-  científica — diferente do `FormatGold`/`formatNumber`. Baixo risco hoje, mas
-  vale unificar.
+- ~~**`FormatarGold` sem fallback científico**~~ — **resolvido**: já cai em
+  notação científica além do último sufixo (`gold.js`, ~linhas 175-182).
 - **Customização (Aparência) — slot de CHAPÉUS pronto**: base sem chapéu
   (`imagens/personagens/player.png`) + camada `.player__chapeu` dentro da caixa
   do player + 8 chapéus (`imagens/personagens/chapeus/`) + seção "Aparência" na

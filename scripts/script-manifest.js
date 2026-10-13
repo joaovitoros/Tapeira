@@ -30,7 +30,8 @@ module.exports = {
         "script/ui-baus.js",
         "script/ui-telas.js",
         "script/ui-feitos.js",
-        // biomas: fundo e inimigos por faixa de 10 andares (só no jogo)
+        // fundo da caverna (extraído de script.js) + biomas por faixa de andar (só no jogo)
+        "script/fundos.js",
         "script/biomas.js",
         "script/casa.js",
         "script/fazenda.js",
