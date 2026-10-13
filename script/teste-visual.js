@@ -36,6 +36,30 @@ const TESTE_VISUAL_INIMIGOS = [
 
 const INIMIGO_PADRAO = "imagens/personagens/inimigo.png";
 
+// Quadros da MORTE de cada criatura (fatiados do "Atlas de Animações" por
+// scripts/fatiar-morte-inimigos.js). Sem entrada = usa a animação genérica.
+function TesteVisualMorte(nome, n) {
+    const out = [];
+    for (let i = 1; i <= n; i++) out.push("inimigos/morte/" + nome + "-" + String(i).padStart(2, "0") + ".png");
+    return out;
+}
+const TESTE_VISUAL_MORTE = {
+    normal: TesteVisualMorte("normal", 5),
+    gigante: TesteVisualMorte("gigante", 4),
+    cristal: TesteVisualMorte("cristal", 4),
+    vegetal: TesteVisualMorte("vegetal", 6),
+    metalico: TesteVisualMorte("metalico", 6),
+    lava: TesteVisualMorte("lava", 4),
+    gelo: TesteVisualMorte("gelo", 5),
+    "rei-espinhos": TesteVisualMorte("rei-espinhos", 3),
+    toxico: TesteVisualMorte("toxico", 6),
+    normal2: TesteVisualMorte("normal2", 5),
+    "rei-coroa": TesteVisualMorte("rei-coroa", 5),
+    sombrio: TesteVisualMorte("sombrio", 3),
+    poeira: TesteVisualMorte("poeira", 5)
+    // madeira: sem morte própria (cai na genérica)
+};
+
 var testeVisualFundoMostrando = null;
 
 function TesteVisualAtivo() {
@@ -57,9 +81,23 @@ function TesteVisualFundoAtual() {
     return TESTE_VISUAL_FUNDOS[i];
 }
 
-function TesteVisualInimigoAtual() {
+function TesteVisualCriaturaAtual() {
     const i = TesteVisualTier(TesteVisualAndarDeHoje()) % TESTE_VISUAL_INIMIGOS.length;
-    return "imagens/" + TESTE_VISUAL_INIMIGOS[i];
+    return TESTE_VISUAL_INIMIGOS[i].replace(/^inimigos\//, "").replace(/\.png$/, "");
+}
+
+function TesteVisualInimigoAtual() {
+    return "imagens/" + TESTE_VISUAL_INIMIGOS[TesteVisualTier(TesteVisualAndarDeHoje()) % TESTE_VISUAL_INIMIGOS.length];
+}
+
+// Quadros da morte da criatura que está no elemento (null = usa a genérica).
+// O primeiro quadro é o próprio sprite do inimigo, pra a queda começar "colada".
+function TesteVisualMorteFrames(el) {
+    if (!TesteVisualAtivo() || !el) return null;
+    const nome = el.dataset ? el.dataset.criatura : null;
+    const lista = nome ? TESTE_VISUAL_MORTE[nome] : null;
+    if (!lista || !lista.length) return null;
+    return [el.src].concat(lista.map(c => "imagens/" + c));
 }
 
 // Devolve o fundo quando ele MUDA de faixa (senão null) — assim o fundo só
@@ -73,7 +111,9 @@ function TesteVisualFundoMudou() {
 
 // Aquece as artes (evita "piscar" na primeira troca de faixa).
 function TesteVisualAquece() {
-    [...TESTE_VISUAL_FUNDOS, ...TESTE_VISUAL_INIMIGOS].forEach(function (caminho) {
+    const morte = [];
+    for (const k in TESTE_VISUAL_MORTE) morte.push(...TESTE_VISUAL_MORTE[k]);
+    [...TESTE_VISUAL_FUNDOS, ...TESTE_VISUAL_INIMIGOS, ...morte].forEach(function (caminho) {
         const img = new Image();
         img.src = "imagens/" + caminho;
     });
@@ -81,10 +121,15 @@ function TesteVisualAquece() {
 
 // Aplica o sprite da faixa nos 4 inimigos (ou volta o padrão, quando desligado).
 function TesteVisualAplicaInimigos() {
-    const src = TesteVisualAtivo() ? TesteVisualInimigoAtual() : INIMIGO_PADRAO;
+    const ativo = TesteVisualAtivo();
+    const src = ativo ? TesteVisualInimigoAtual() : INIMIGO_PADRAO;
+    const criatura = ativo ? TesteVisualCriaturaAtual() : null;
     for (let i = 1; i <= 4; i++) {
         const el = document.getElementById("inimigo" + i);
-        if (el) el.src = src;
+        if (!el) continue;
+        el.src = src;
+        if (criatura) el.dataset.criatura = criatura;
+        else delete el.dataset.criatura;
     }
 }
 
@@ -93,6 +138,7 @@ function TesteVisualAplicaInimigos() {
 function TesteVisualAplicaInimigo(el) {
     if (!el || !TesteVisualAtivo()) return;
     el.src = TesteVisualInimigoAtual();
+    el.dataset.criatura = TesteVisualCriaturaAtual();
 }
 
 // Liga/desliga e aplica na hora (fundo + inimigos).
@@ -121,6 +167,9 @@ window.Tapeira.TesteVisual = {
     tier: TesteVisualTier,
     fundo: TesteVisualFundoAtual,
     inimigo: TesteVisualInimigoAtual,
+    criatura: TesteVisualCriaturaAtual,
+    morteFrames: TesteVisualMorteFrames,
+    MORTE: TESTE_VISUAL_MORTE,
     aplicaInimigo: TesteVisualAplicaInimigo,
     FUNDOS: TESTE_VISUAL_FUNDOS,
     INIMIGOS: TESTE_VISUAL_INIMIGOS,
