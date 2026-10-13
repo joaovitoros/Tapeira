@@ -282,6 +282,9 @@ function CasaSecaoAparencia() {
         secao.appendChild(linha);
     }
 
+    // qualidade (alta/média/baixa) — por aparelho
+    if (typeof QualidadeSeletor === "function") secao.appendChild(QualidadeSeletor());
+
     for (const slot of APARENCIA_SLOTS) secao.appendChild(CasaBlocoAparencia(slot));
 
     // reflete o estado atual no preview (a seção pode ainda não estar no DOM)
