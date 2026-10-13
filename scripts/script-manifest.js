@@ -30,8 +30,8 @@ module.exports = {
         "script/ui-baus.js",
         "script/ui-telas.js",
         "script/ui-feitos.js",
-        // teste visual (só no jogo): fundos e inimigos novos por faixa de 10 andares
-        "script/teste-visual.js",
+        // biomas: fundo e inimigos por faixa de 10 andares (só no jogo)
+        "script/biomas.js",
         "script/casa.js",
         "script/fazenda.js",
         "script/pesquisa.js",

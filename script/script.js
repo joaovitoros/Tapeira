@@ -455,8 +455,8 @@ function CarregarStatus(){
 
 // ---------- Fundo da caverna ----------
 // Duas camadas fixas (#fundoA/#fundoB) se cruzam (crossfade ~1,2s; corte seco
-// em reduced-motion) a cada andar vencido. Novo fundo = jogar o PNG em imagens/
-// e listar o nome aqui. Cosmético: não vai pro save.
+// em reduced-motion). Quem escolhe a ARTE é script/biomas.js: uma por faixa de
+// 10 andares. Cosmético: não vai pro save.
 var FUNDOS_CAVERNA = ['fundos/background cristal.png', 'fundos/background.png'];
 var fundoIdxAtual = 0;
 var fundoA = null, fundoB = null, fundoAtiva = null;
@@ -498,13 +498,14 @@ function TrocaFundoPara(caminho) {
 }
 
 function ProximoFundo() {
-	// Teste visual (painel de dev): o fundo segue a FAIXA de 10 andares — só
-	// troca quando a faixa muda, não a cada andar. Ver script/teste-visual.js.
-	if (typeof TesteVisualAtivo === "function" && TesteVisualAtivo()) {
-		var caminhoTeste = TesteVisualFundoMudou();
-		if (caminhoTeste) TrocaFundoPara(caminhoTeste);
+	// Biomas: o fundo segue a FAIXA de 10 andares — só troca quando a faixa
+	// muda, não a cada andar vencido. Ver script/biomas.js.
+	if (typeof BiomaFundoMudou === "function") {
+		var caminho = BiomaFundoMudou();
+		if (caminho) TrocaFundoPara(caminho);
 		return;
 	}
+	// fallback (sem o módulo de biomas): rodízio simples a cada andar
 	fundoIdxAtual = (fundoIdxAtual + 1) % FUNDOS_CAVERNA.length;
 	TrocaFundoPara(FUNDOS_CAVERNA[fundoIdxAtual]);
 }
