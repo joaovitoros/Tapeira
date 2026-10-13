@@ -63,6 +63,35 @@ const BIOMA_MORTE = {
 
 var biomaFundoMostrando = null;
 
+// Trilha sonora por bioma (loops de 8 compassos escritos em ABC e gerados por
+// scripts/abc-para-audio.js em media/musicas/). Andar de GUARDIÃO (múltiplo de
+// 10) toca o tema de batalha.
+const BIOMA_TEMAS = [
+    "mina", "mina-viva", "mina-grave", "caverna", "cristal",
+    "mina-viva", "mina-grave", "caverna", "cristal", "mina"
+];
+const BIOMA_TEMA_GUARDIAO = "batalha";
+
+function BiomaTemaAtual() {
+    const a = Math.max(1, Math.floor(Number(BiomaAndarDeHoje()) || 1));
+    if (a % 10 === 0) return BIOMA_TEMA_GUARDIAO;
+    return BIOMA_TEMAS[BiomaTier(a) % BIOMA_TEMAS.length];
+}
+
+// Toca a trilha do andar atual. Chamado quando a CENA carrega (load e avanço de
+// andar) — NÃO no spawn dos inimigos. Só reinicia quando o tema MUDA (mesmo
+// bioma segue tocando de onde estava).
+function BiomaTocaMusica() {
+    const el = document.getElementById("audio1");
+    if (!el) return;
+    const tema = BiomaTemaAtual();
+    if (el.dataset.biomaTema === tema) return;
+    el.dataset.biomaTema = tema;
+    el.setAttribute("src", "media/musicas/" + tema + ".wav");
+    el.loop = true;
+    if (typeof ChamaSom === "function") ChamaSom("audio1");
+}
+
 // Índice da faixa: andares 1-10 -> 0, 11-20 -> 1, 21-30 -> 2, ...
 function BiomaTier(andarAtual) {
     const a = Math.max(1, Math.floor(Number(andarAtual) || 1));
@@ -139,6 +168,8 @@ document.addEventListener("DOMContentLoaded", function () {
     BiomaAplicaInimigos();
     // aplica já o fundo da faixa atual (senão só trocaria no 1º andar vencido)
     if (typeof ProximoFundo === "function") ProximoFundo();
+    // e a trilha da cena
+    BiomaTocaMusica();
 });
 
 window.Tapeira = window.Tapeira || {};
@@ -149,6 +180,9 @@ window.Tapeira.Biomas = {
     inimigo: BiomaInimigoAtual,
     criatura: BiomaCriaturaAtual,
     morteFrames: BiomaMorteFrames,
+    tema: BiomaTemaAtual,
+    tocaMusica: BiomaTocaMusica,
+    TEMAS: BIOMA_TEMAS,
     aplicaInimigo: BiomaAplicaInimigo,
     aplicaInimigos: BiomaAplicaInimigos,
     FUNDOS: BIOMA_FUNDOS,

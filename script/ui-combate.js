@@ -217,7 +217,7 @@ Object.assign(UI, {
 
     spawnEnemies() {
 
-        ChamaSom('audio1');
+        // a trilha é tocada quando a CENA carrega (script/biomas.js), não aqui
 
         let limiteInimigos = 1;
 
