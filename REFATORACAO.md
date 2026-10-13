@@ -6,29 +6,47 @@ contribuição continuam no `AGENTS.md`.
 
 ## 🚩 ONDE PARAMOS (13/10/2026)
 
-**Estado:** suíte **79/79 verde** (consertados os 3 testes que já falhavam: a asserção da
-Guilda, `test-cidade.js` e o flaky da batalha-fantasma). `main` = `joao` = **`6fd262d`**.
+**Estado:** suíte **79/79 verde**. `main` = `joao` (o commit deste doc).
 
-**Feito nesta leva:**
-- **Item 20** — extraído o **fundo da caverna** de `script.js` para **`script/fundos.js`**
-  (`FUNDOS_CAVERNA`, `IniciaFundos`, `TrocaFundoPara`, `ProximoFundo`) — corte byte a byte,
-  sem mudar comportamento. Registrado no `script-manifest.js` (Caverna = **53 scripts**).
-- **Item 21** — limpeza de **38 assets órfãos** (−3,7 MB) e **folhas de arte-fonte fora do
-  pacote do PC**: corrigida a exclusão de `imagens/customização/**` (estava sem o acento) e
-  excluída `imagens/possiveis novos fundos/**` → **~29,5 MB a menos** (verificado no `app.asar`).
-- **`FormatarGold`** — conferido: **já tem** fallback científico (`gold.js` ~175-182); a nota
-  antiga deste doc estava errada.
+**Feito nesta leva (item 13 — refatorações):**
+- **Item 20** — **fundo da caverna** extraído para `script/fundos.js` (corte byte a byte).
+- **Item 21** — limpeza de **38 assets órfãos** (−3,7 MB) + **folhas de arte-fonte fora do
+  pacote do PC** (corrigida a exclusão de `imagens/customização/**`, que estava sem o acento,
+  e excluída `imagens/possiveis novos fundos/**`) → **~29,5 MB a menos**.
+- **Item 22** — extraídos de `script.js` mais **3 blocos byte a byte** (script.js **716 → 348**
+  linhas):
+  - variáveis da loja → `script/loja-variaveis.js`
+  - avanço/fuga do andar → `script/avanco-inimigos.js`
+  - portões de dano + `VoltaAndar` + `PedeReset`/`ConfirmaReset`/`AlternaManterAndar` → `script/reset.js`
 
-**PRÓXIMO PASSO (foi onde parei):** extrair de `script.js` os blocos que faltam —
-**variáveis da loja**, **avanço de inimigos** e **portões/`VoltaAndar`**.
-⚠️ Diferente do fundo, esses estão **amarrados ao save, reset e validação**: a extração precisa
-vir **no mesmo commit** de uma conferida em `persistencia-carregar.js`,
-`persistencia-autosave.js`, `validacao-save.js` e `Resetar()` (`sistema.js`) — e a suíte tem
-que seguir **79/79**.
+  Os três entram **logo depois de `script.js` nas DUAS páginas** — o código vivia no
+  `script.js`, que carrega no menu e na caverna; assim o comportamento é idêntico. Nenhum
+  campo de save mudou (mesmos nomes globais). Suíte 79/79.
+- **Item 23** — `FormatarGold` conferido: já tinha fallback científico.
 
-**Depois disso:** item 2 restante (otimizar os sprites do build — `prepare-animation-sprites.ps1`,
-~711 KB) e o item 1 (cache de `getElementById`/consolidar ticks — **baixo valor**: medi só
-3 timers ativos e ~0,4 ms no tick de 1 s).
+**Correção de build (regressão da limpeza de assets):** `npm run prepare:web` estava
+**quebrado** — o `scripts/prepare-animation-sprites.ps1` ainda gerava as faixas `ataque` e
+`fugindo-sprites` (mortas; as folhas-fonte foram apagadas no item 21) e abortava o build
+PC/Android. Removidas as 2 chamadas, restaurada a folha-fonte
+**`imagens/animacoes/fugindo/fugindo.png`** (fonte dos frames de fuga que o jogo usa) e ela
+excluída do pacote. `prepare:web` ✓ de novo (bundles 478/283 KB).
+
+**PRÓXIMO PASSO (foi onde parei):** o que resta em `script.js` é o **estado global** (vars
+por-run e permanentes), o bloco do **Conhecimento Mug** (funções) e o `CarregarStatus` — não
+é mais "arquivo monstro" (348 linhas). Se continuar: `CarregarStatus` encaixa em
+`batalha.js`; o estado global só vale a pena quando os campos forem agrupados por dono.
+
+**Depois:** item 2 restante (os sprites do build saem sem otimização) e o item 1 (cache de
+`getElementById`/ticks — **baixo valor**: só 3 timers ativos, ~0,4 ms no tick de 1 s).
+
+⚠️ **ACHADO SEPARADO (não é refatoração, não misturado no commit):** `node test-loja-layout.js`
+falha **13/26** — e é **pré-existente** (falha igual com o `git stash` das mudanças desta
+sessão). Causa: o teste guardava o **painel lateral antigo** e mede `#container-Loja`, mas o
+redesign "LOJA (overlay + painel)" (`css/estilos.css` ~13979) transformou `#container-Loja` na
+**área do overlay**; o painel de verdade é `#container-Loja > #Loja`. Medido com o novo
+desenho: o painel **cabe na tela** em 1920×1080 (67–905), 1366×768 e 800×600. Ou o teste é
+**stale** (passar a medir o painel) ou o overlay encobrir as Metas é regressão de design —
+**decisão do dono do jogo**.
 
 ## Objetivo
 
