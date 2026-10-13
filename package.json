@@ -8,6 +8,7 @@
     "test": "node --test tests/regression.test.cjs",
     "test:auditoria": "node --test tests/auditoria.test.cjs",
     "compartilhar": "node scripts/site-compartilhamento.js",
+    "musica": "node scripts/abc-para-audio.js",
     "servidor": "node scripts/servidor-proxy.js",
     "cartoes": "node scripts/servidor-cartoes.js",
     "sync:scripts": "node scripts/sync-scripts.js",

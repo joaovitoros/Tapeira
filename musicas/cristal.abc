@@ -1,0 +1,16 @@
+% TAPeira — tema sereno (loop de 8 compassos).
+% Mi menor, 4/4, devagar; pra cidade/cristal.
+X:1
+T:Cristal Sereno
+C:TAPeira
+M:4/4
+L:1/8
+Q:1/4=76
+K:Em
+V:1 name="Melodia"
+V:2 name="Baixo"
+%
+[V:1] e4 g4 | b4 a4 | g2 f2 e2 d2 | e8 |
+[V:1] e4 a4 | g4 f4 | e2 d2 c2 B2 | e6 z2 |
+[V:2] E,4 B,,4 | E,4 B,,4 | C,4 G,4 | E,4 B,,4 |
+[V:2] A,,4 E,4 | C,4 G,4 | A,,4 B,,4 | E,4 E,4 |
