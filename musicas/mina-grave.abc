@@ -1,0 +1,16 @@
+% TAPeira — variação GRAVE do "Mina Animada" (mais lenta e funda, pra caverna
+% profunda). Ré menor, 6/8.
+X:1
+T:Mina Grave
+C:TAPeira
+M:6/8
+L:1/8
+Q:1/4=100
+K:Dm
+V:1 name="Melodia"
+V:2 name="Baixo"
+%
+[V:1] d a d' c' a f | d a d' c' a f | g d g _b a g | f2 d2 a2 |
+[V:1] d a d' c' a f | d a d' c' a f | c' a g f e d | d2 d2 d2 |
+[V:2] D,2 A,,2 D,2 | D,2 A,,2 D,2 | G,2 D,2 G,2 | D,2 A,,2 D,2 |
+[V:2] D,2 A,,2 D,2 | D,2 A,,2 D,2 | A,,2 E,2 A,,2 | D,2 A,,2 D,2 |

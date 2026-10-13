@@ -1,0 +1,17 @@
+% TAPeira — tema de BATALHA (original, inspirado na "pegada" dos temas de
+% batalha de JRPG 16-bit: rápido, menor, baixo motor em colcheias, melodia
+% urgente com sequências). Não é cópia de nenhuma melodia existente.
+X:1
+T:Batalha na Mina
+C:TAPeira
+M:4/4
+L:1/8
+Q:1/4=160
+K:Em
+V:1 name="Melodia"
+V:2 name="Motor"
+%
+[V:1] e e g a b a g e | b2 a2 g4 | c c e g a g e c | g2 e2 c4 |
+[V:1] d' d' b b g g b d' | ^d'2 b2 ^f4 | c' c' a a e e a c' | b2 a2 g2 ^f2 |
+[V:2] E,2 E,2 B,,2 E,2 | E,2 E,2 B,,2 E,2 | C,2 C,2 G,2 C,2 | C,2 C,2 G,2 C,2 |
+[V:2] G,2 G,2 D,2 G,2 | B,,2 B,,2 ^F,2 B,,2 | A,,2 A,,2 E,2 A,,2 | B,,2 ^F,2 B,,2 ^F,2 |
