@@ -1,3 +1,4 @@
+param([switch]$Forcar)
 $ErrorActionPreference = "Stop"
 
 Add-Type -AssemblyName System.Drawing
@@ -5,6 +6,14 @@ Add-Type -AssemblyName System.Drawing
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $sourcePath = Join-Path $projectRoot "imagens/personagens/player.png"
 $resourcesPath = Join-Path $projectRoot "android/app/src/main/res"
+
+# MANTÉM os ícones já existentes: o build NÃO deve trocar o ícone do app.
+# (Pra regerar de propósito, chame com -Forcar.)
+$iconeAtual = Join-Path $resourcesPath "mipmap-xxxhdpi/ic_launcher.png"
+if ((Test-Path -LiteralPath $iconeAtual) -and -not $Forcar) {
+    Write-Host "Icones do Android ja existem - mantendo os atuais (use -Forcar pra regerar)."
+    exit 0
+}
 
 if (-not (Test-Path -LiteralPath $sourcePath)) {
     throw "Player image not found: $sourcePath"
