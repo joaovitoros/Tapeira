@@ -47,6 +47,10 @@
             <input type="checkbox" data-one-hit-kill>
             Hit kill (matar com um golpe)
         </label>
+        <label class="game-dev-tools__repeat">
+            <input type="checkbox" data-teste-visual>
+            Fundos e inimigos novos (teste · muda a cada 10 andares)
+        </label>
         <div class="game-dev-tools__setting">
             <label for="dev-gold">Gold atual</label>
             <div class="game-dev-tools__input-row">
@@ -113,6 +117,18 @@
             ? "Hit kill ativado (somente nesta sessão de debug)."
             : "Hit kill desativado.");
     });
+
+    // Teste visual: fundos e inimigos novos por faixa de 10 andares (só visual)
+    const testeVisualInput = panel.querySelector("[data-teste-visual]");
+    if (testeVisualInput && typeof TesteVisualDefine === "function") {
+        testeVisualInput.checked = TesteVisualAtivo();
+        testeVisualInput.addEventListener("change", () => {
+            const ligado = TesteVisualDefine(testeVisualInput.checked);
+            reportGameState(ligado
+                ? "Fundos e inimigos novos: LIGADO (só visual; troca a cada 10 andares)."
+                : "Fundos e inimigos novos: desligado.");
+        });
+    }
 
     function reportGameState(message, isError = false) {
         gameStateReadout.textContent = message;
