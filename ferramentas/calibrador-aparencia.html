@@ -82,11 +82,12 @@
 			<div class="linha">
 				<label><input type="checkbox" id="borracha"> Borracha</label>
 				<label class="tag">Tam. <input type="range" id="pincel" min="4" max="60" value="16" style="width:90px;vertical-align:middle"></label>
+				<button id="desfazer">Desfazer</button>
 				<button id="baixarEditadas">Baixar editadas (.zip)</button>
 			</div>
 			<div class="info" id="info">—</div>
 			<div class="linha">
-				<button id="exportar">Exportar TUDO (copiar)</button>
+				<button id="exportar">Exportar TUDO</button>
 				<button id="baixar">Baixar .json</button>
 				<button id="snapshot">+ Snapshot</button>
 			</div>
@@ -95,6 +96,10 @@
 				<div id="snaps" class="snaps"></div>
 			</div>
 			<textarea id="saida" spellcheck="false" placeholder="O JSON aparece aqui…"></textarea>
+			<div class="linha">
+				<button id="copiarJson">Copiar JSON</button>
+				<button id="limparJson">Limpar JSON</button>
+			</div>
 		</aside>
 	</div>
 
@@ -107,6 +112,7 @@
 		var equipado = {};   // equipado[slot] = itemId
 		var sel = { slot: null, item: null };
 		var borracha = { ativo: false, tam: 16 };
+		var historico = [];   // pilha de desfazer (estado do item antes de cada traço)
 		var CHAVE = "tapeira-calibrador-aparencia";
 
 		// Se a config do jogo estiver disponível, usa pra SEMEAR os valores atuais
@@ -245,7 +251,8 @@
 				arte.appendChild(cv);
 			});
 			var el = arte.querySelector('.camada[data-slot="' + sel.slot + '"]');
-			if (el) el.addEventListener("pointerdown", borracha.ativo ? iniciarBorracha : iniciarArraste);
+			// handler ÚNICO (o canvas é reaproveitado; addEventListener acumularia)
+			if (el) el.onpointerdown = function (ev) { if (borracha.ativo) iniciarBorracha(ev); else iniciarArraste(ev); };
 		}
 
 		function render() {
@@ -271,8 +278,8 @@
 			var bx = r.left + (dd.x / 100) * r.width, by = r.top + (dd.y / 100) * r.height;
 			arr = { dx: ev.clientX - bx, dy: ev.clientY - by, el: el };
 			try { el.setPointerCapture(ev.pointerId); } catch (e) {}
-			el.addEventListener("pointermove", mover);
-			el.addEventListener("pointerup", soltar);
+			el.onpointermove = mover;
+			el.onpointerup = soltar;
 		}
 		function mover(ev) {
 			if (!arr) return;
@@ -287,18 +294,34 @@
 		}
 		function soltar(ev) {
 			arr = null;
-			ev.currentTarget.removeEventListener("pointermove", mover);
-			ev.currentTarget.removeEventListener("pointerup", soltar);
+			ev.currentTarget.onpointermove = null;
+			ev.currentTarget.onpointerup = null;
 			salvar();
 		}
 
 		// ---- borracha (apaga pixels do item) ----
+		// Mapeia o cursor pro pixel do canvas DESFAZENDO a transformação da camada
+		// (translate(-50%,-100%) + espelho + rotação) — senão o pincel sai deslocado.
+		function pontoCanvas(ev, cv) {
+			var dd = d();
+			var ar = arte.getBoundingClientRect();
+			var w = ar.width * dd.largura / 100;
+			var h = w * (cv.height / cv.width);
+			var ex = ar.left + ar.width * dd.x / 100;
+			var ey = ar.top + ar.height * dd.y / 100;
+			var dx = ev.clientX - (ex + w / 2);
+			var dy = ev.clientY - (ey + h);
+			dx += w / 2; dy += h;                       // desfaz translate(-50%,-100%)
+			if (dd.flip) dx *= -1;                      // desfaz o espelho
+			var a = -(dd.rot || 0) * Math.PI / 180;     // desfaz a rotação
+			var rx = dx * Math.cos(a) - dy * Math.sin(a);
+			var ry = dx * Math.sin(a) + dy * Math.cos(a);
+			var escala = cv.width / w;
+			return { x: (w / 2 + rx) * escala, y: (h + ry) * escala, escala: escala };
+		}
 		function apagarEm(ev, cv) {
-			var r = cv.getBoundingClientRect();
-			var escala = cv.width / r.width;
-			var x = (ev.clientX - r.left) * escala;
-			var y = (ev.clientY - r.top) * escala;
-			var raio = (borracha.tam / 2) * escala;
+			var p = pontoCanvas(ev, cv);
+			var raio = (borracha.tam / 2) * p.escala;
 			var ctx = cv.getContext("2d");
 			ctx.save();
 			ctx.globalCompositeOperation = "destination-out";
@@ -308,15 +331,15 @@
 				ctx.lineWidth = raio * 2;
 				ctx.beginPath();
 				ctx.moveTo(borracha.ultimo.x, borracha.ultimo.y);
-				ctx.lineTo(x, y);
+				ctx.lineTo(p.x, p.y);
 				ctx.stroke();
 			} else {
 				ctx.beginPath();
-				ctx.arc(x, y, raio, 0, Math.PI * 2);
+				ctx.arc(p.x, p.y, raio, 0, Math.PI * 2);
 				ctx.fill();
 			}
 			ctx.restore();
-			borracha.ultimo = { x: x, y: y };
+			borracha.ultimo = { x: p.x, y: p.y };
 		}
 		function iniciarBorracha(ev) {
 			ev.preventDefault();
@@ -325,18 +348,24 @@
 			var cv = canvasDoItem(it);
 			if (!cv) return;
 			it.editado = true;
+			it._st = (it._st || 0) + 1;
+			// guarda o estado ANTES do traço (pro Desfazer)
+			try {
+				historico.push({ cv: cv, it: it, dados: cv.getContext("2d").getImageData(0, 0, cv.width, cv.height) });
+				if (historico.length > 40) historico.shift();
+			} catch (e) {}
 			borracha.cv = cv;
 			borracha.ultimo = null;
 			try { el.setPointerCapture(ev.pointerId); } catch (e) {}
-			el.addEventListener("pointermove", moverBorracha);
-			el.addEventListener("pointerup", soltarBorracha);
+			el.onpointermove = moverBorracha;
+			el.onpointerup = soltarBorracha;
 			apagarEm(ev, cv);
 		}
 		function moverBorracha(ev) { if (borracha.cv) apagarEm(ev, borracha.cv); }
 		function soltarBorracha(ev) {
 			borracha.cv = null; borracha.ultimo = null;
-			ev.currentTarget.removeEventListener("pointermove", moverBorracha);
-			ev.currentTarget.removeEventListener("pointerup", soltarBorracha);
+			ev.currentTarget.onpointermove = null;
+			ev.currentTarget.onpointerup = null;
 		}
 		document.getElementById("borracha").addEventListener("change", function (e) {
 			borracha.ativo = e.target.checked;
@@ -344,6 +373,16 @@
 			renderArte();
 		});
 		document.getElementById("pincel").addEventListener("input", function (e) { borracha.tam = +e.target.value; });
+		document.getElementById("desfazer").addEventListener("click", function () {
+			var h = historico.pop();
+			if (!h) return;
+			h.cv.getContext("2d").putImageData(h.dados, 0, 0);
+			if (h.it) {
+				h.it._st = Math.max(0, (h.it._st || 1) - 1);
+				if (!h.it._st) h.it.editado = false;
+			}
+			renderArte();
+		});
 
 		// ---- zip mínimo (só "store") pra baixar as imagens editadas ----
 		var CRC_TABELA = (function () {
@@ -468,7 +507,16 @@
 		});
 		document.getElementById("exportar").addEventListener("click", function () {
 			saida.value = jsonTudo();
+		});
+		document.getElementById("copiarJson").addEventListener("click", function () {
+			if (!saida.value) saida.value = jsonTudo();
 			if (navigator.clipboard) navigator.clipboard.writeText(saida.value).catch(function () {});
+			var b = document.getElementById("copiarJson");
+			var t = b.textContent; b.textContent = "Copiado!";
+			setTimeout(function () { b.textContent = t; }, 1200);
+		});
+		document.getElementById("limparJson").addEventListener("click", function () {
+			saida.value = "";
 		});
 		document.getElementById("baixar").addEventListener("click", function () {
 			var blob = new Blob([jsonTudo()], { type: "application/json" });

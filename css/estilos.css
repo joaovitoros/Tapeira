@@ -1455,6 +1455,18 @@ html.config-logs-transparente #gameModal.gameModal--logs #gameModalContent {
 	padding: 0.6em 0.7em;
 }
 
+.pvpCartaoSprite{
+	width: 112px;
+	height: 142px;
+	margin: 0.5em auto 0.6em;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 10px;
+	background: radial-gradient(circle at 50% 35%, #2b3a4f, #121822 70%);
+	overflow: hidden;
+}
+
 .pvpCartao--lider{
 	border-color: rgba(255, 216, 74, 0.45);
 	box-shadow: 0 0 0.9em rgba(255, 216, 74, 0.15);
@@ -2705,6 +2717,9 @@ caption {
 	height: 100%;
 	max-width: 100%;
 	isolation: isolate;
+	/* TRATAMENTO ÚNICO: a base + os acessórios ganham o MESMO filtro e UMA sombra
+	   só (do conjunto) — assim parece uma arte só, não peças coladas. */
+	filter: drop-shadow(0 7px 6px rgba(0, 0, 0, 0.42)) saturate(1.06) contrast(1.04) brightness(1.02);
 }
 
 .player__base {
@@ -2721,7 +2736,6 @@ caption {
 	transform: translate(-50%, -100%);
 	transform-origin: 50% 100%;
 	pointer-events: none;
-	filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.35));
 }
 
 .player__camada[hidden] {
@@ -11838,6 +11852,94 @@ img.ramos-tree-no__tile {
 	text-align: center;
 }
 
+/* --- Comunidade (servidor de cartões) --- */
+.guilda-secao__titulo {
+	margin: 10px 0 4px;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #ffd84a;
+	text-align: center;
+}
+
+.guilda-comunidade__lista {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-top: 8px;
+	max-height: 240px;
+	overflow-y: auto;
+}
+
+.guilda-cartao {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 6px 10px;
+	border: 1px solid rgba(120, 160, 255, 0.22);
+	border-radius: 8px;
+	background: rgba(255, 255, 255, 0.03);
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.guilda-cartao:hover {
+	filter: brightness(1.15);
+	border-color: rgba(126, 224, 160, 0.5);
+}
+
+.guilda-cartao__arte {
+	width: 46px;
+	height: 58px;
+	flex: 0 0 auto;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	border-radius: 8px;
+	background: radial-gradient(circle at 50% 35%, #2b3a4f, #121822 70%);
+	overflow: hidden;
+}
+
+.guilda-cartao__arte .player__arte {
+	height: 100%;
+}
+
+.guilda-cartao__info {
+	font-size: 13px;
+}
+
+/* --- Aviso de atualização (canto inferior) --- */
+#avisoAtualizacao {
+	position: fixed;
+	left: 50%;
+	bottom: 18px;
+	transform: translateX(-50%);
+	z-index: 60;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 14px;
+	border-radius: 12px;
+	background: linear-gradient(145deg, #1d2a3a, #121822);
+	border: 1px solid rgba(255, 216, 74, 0.5);
+	box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+	color: #ffe2a0;
+	font-size: 14px;
+	max-width: 92vw;
+}
+
+.avisoAtualizacao__x {
+	background: none;
+	border: 0;
+	color: #8291a8;
+	font-size: 18px;
+	line-height: 1;
+	cursor: pointer;
+}
+
 /* --- Cartão visual da Guilda (versão rica do seu cartão de batalha) --- */
 .guildaCartaoVisual {
 	background: linear-gradient(145deg, rgba(14, 18, 28, 0.97), rgba(10, 13, 20, 0.94));
@@ -12086,6 +12188,17 @@ img.ramos-tree-no__tile {
 	object-fit: contain;
 	image-rendering: pixelated;
 	animation: pvpMiniRespirar 1.2s ease-in-out infinite;
+}
+
+/* mini-batalha com as customizações: a arte (base + camadas) no lugar do img */
+.pvpMiniSprite--arte {
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+}
+
+.pvpMiniSprite--arte .player__arte {
+	height: 100%;
 }
 
 .pvpMiniCaverna__tapiera {

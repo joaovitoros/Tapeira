@@ -2,6 +2,18 @@
   "_instrucoes": "Edite este arquivo e salve — o site mostra as mudancas na proxima recarga da pagina, sem reiniciar nada. Campos por patch: versao, data (AAAA-MM-DD), titulo (opcional), itens (lista de frases). O mais recente fica no topo (o site ordena pela data).",
   "patches": [
     {
+      "versao": "1.7.0",
+      "data": "2026-10-12",
+      "titulo": "Customização da toupeira e PvP com a sua cara",
+      "itens": [
+        "Aparência na Casa: escolha chapéu, cachecol, arma, cinto e escudo pra toupeira, com preview ao vivo.",
+        "Batalha-fantasma: a ficha e a mini batalha mostram cada duelista com as customizações dele.",
+        "Tratamento unificado no personagem (filtro + sombra única) pra parecer uma arte só.",
+        "Ferramenta de calibração de acessórios (arrasta, redimensiona, gira, borracha e desfazer).",
+        "Servidor local com o site (builds + patch notes), o jogo e os cartões de batalha num link só."
+      ]
+    },
+    {
       "versao": "1.6.0",
       "data": "2026-10-12",
       "titulo": "Android, save por Bluetooth e ajustes",

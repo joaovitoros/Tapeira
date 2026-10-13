@@ -86,7 +86,7 @@ const path = require('path');
     });
 
     check("API Tapeira.Aparencia existe", r.temApi === true);
-    check("slots: chapeu, cachecol", r.slots === "chapeu,cachecol", r.slots);
+    check("slots: chapeu, cachecol, arma, cinto, escudo", r.slots === "chapeu,cachecol,arma,cinto,escudo", r.slots);
     check("8 chapéus + 6 cachecóis", r.qtdChapeus === 8 && r.qtdCachecois === 6, r.qtdChapeus + "/" + r.qtdCachecois);
     check("base e camadas dentro da caixa do player", r.baseDentro === true && r.temCamadas === true);
     check("sem item, as camadas ficam escondidas", r.escondidoSemItem === true);
@@ -103,8 +103,8 @@ const path = require('path');
     check("validação rejeita cachecol desconhecido", r.rejeitouDesconhecido === true);
     check("load restaura os dois slots", r.carregouChapeu === "viking" && r.carregouCachecol === "roxo", r.carregouChapeu + "/" + r.carregouCachecol);
     check("seção Aparência é uma casa-secao", r.secaoOk === true);
-    check("seção tem um bloco por slot", r.blocos === 2, r.blocos);
-    check("seção lista 9 chapéus + 7 cachecóis (com 'nenhum')", r.itensLista === 16, r.itensLista);
+    check("seção tem um bloco por slot", r.blocos === 5, r.blocos);
+    check("seção lista todos os itens visíveis (9+7+18+3+8)", r.itensLista === 45, r.itensLista);
     check("preview mostra chapéu e cachecol", r.previewChapeu === true && r.previewCachecol === true);
     check("Resetar NÃO zera a aparência", r.aposResetChapeu === "mago" && r.aposResetCachecol === "azul");
 

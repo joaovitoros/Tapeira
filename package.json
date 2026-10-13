@@ -1,6 +1,6 @@
 {
   "name": "tapeira",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": true,
   "description": "TAPeira - uma aventura sob a montanha",
   "main": "desktop/main.cjs",
@@ -8,6 +8,8 @@
     "test": "node --test tests/regression.test.cjs",
     "test:auditoria": "node --test tests/auditoria.test.cjs",
     "compartilhar": "node scripts/site-compartilhamento.js",
+    "servidor": "node scripts/servidor-proxy.js",
+    "cartoes": "node scripts/servidor-cartoes.js",
     "sync:scripts": "node scripts/sync-scripts.js",
     "start:pc": "electron .",
     "build:pc": "electron-builder --win nsis",

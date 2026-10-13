@@ -32,3 +32,6 @@ cloudflared.exe
 *.iml
 visual-shots/*
 visual-shots-loja/*
+
+# cartoes de batalha enviados (dados locais do servidor)
+cartoes/

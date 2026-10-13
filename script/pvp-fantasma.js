@@ -167,6 +167,9 @@ var PvpFantasma = {
 			especializacao: especializacao > 0 ? ESPECIALIZACOES[especializacao].nome : null,
 			itensBuildResumo: Tapeira.ItensBuild.resumo(Tapeira.ItensBuild.FORJA_MINIMO_PVP),
 			taxaAtaque: this.TAXA_ATAQUE_JOGADOR,
+			// aparência (customização) — só cosmético no duelo; fica FORA da
+			// assinatura pra cartão antigo continuar válido
+			aparencia: (typeof AparenciaAtualMapa === "function") ? AparenciaAtualMapa() : null,
 			seed: Math.floor(Math.random() * 2147483647)
 		};
 		// id de integridade: deriva do segredo + o conteúdo do cartão —
@@ -272,19 +275,26 @@ var PvpFantasma = {
 
 	// Chamado por ImportarSaveJson quando o arquivo é um cartão. Nunca toca
 	// no save local — só abre a tela do duelo.
-	RecebeCartao(cartao) {
+	async RecebeCartao(cartao) {
 		try {
 			this.ValidarCartaoBatalha(cartao);
-			// anti-farm: um cartão só conclui um duelo nesta máquina.
+			// anti-farm: um cartão só conclui um duelo com recompensa.
 			// O aviso é VISÍVEL (toast): uma linha só no histórico
 			// passaria despercebida com o menu de pausa aberto — a tela
 			// ficaria parada "sem acontecer nada".
 			if (pvpCartoesUsados.includes(cartao.id)) {
-				UI.mostraAvisoRapido("Esse cartão de batalha já foi usado — cada cartão vale um duelo só.");
+				// JÁ USADO (seu ou de rival): pergunta se quer lutar mesmo assim
+				// — duelo roda, mas SEM recompensa
+				const confirmou = await this._confirmaDueloSemRecompensa(cartao);
+				if (confirmou) {
+					this.AbreDuelo(cartao, true); // true = semRecompensa
+					MostraInfo("Cartão de batalha recebido — duelo de treino (sem recompensa).");
+					return true;
+				}
 				return false;
 			}
-			// cartão meu com a última luta já consigo mesmo: o duelo roda
-			// (treino), mas avisa que não vai pagar esmeraldas
+			// PRIMEIRO USO: cartão novo, aceita normal
+			// Se for seu e a última luta foi contra si mesmo, avisa que não paga
 			if (pvpCartoesExportados.includes(cartao.id) && this._ultimoFoiContraSi()) {
 				UI.mostraAvisoRapido("Duelo consigo mesmo — vale treino, mas não paga esmeraldas.");
 			}
@@ -298,6 +308,37 @@ var PvpFantasma = {
 			UI.mostraAvisoRapido(`Cartão de batalha inválido: ${error.message} O progresso atual foi mantido.`);
 			return false;
 		}
+	},
+
+	// Cartão já usado (seu ou de rival): confirma se quer lutar sem prêmio
+	_confirmaDueloSemRecompensa(cartao) {
+		return new Promise(resolve => {
+			const overlay = document.createElement("div");
+			overlay.className = "pvpConfirmOverlay";
+			overlay.innerHTML = `
+				<div class="pvpConfirmBox">
+					<h3>Cartão já usado</h3>
+					<p>Esse cartão de batalha <b>já foi usado em outro duelo</b>.</p>
+					<p>Você ainda pode lutar contra esse fantasma, mas <b>não haverá recompensa</b> (nem esmeraldas, nem registro de vitória).</p>
+					<div class="pvpConfirmBotoes">
+						<button type="button" class="btn-Padrao" data-confirm-sim>Lutar mesmo assim (sem prêmio)</button>
+						<button type="button" class="btn-Padrao btn-secundario" data-confirm-nao>Cancelar</button>
+					</div>
+				</div>`;
+			document.body.appendChild(overlay);
+			let resolvido = false;
+			const finish = valor => {
+				if (resolvido) return;
+				resolvido = true;
+				overlay.remove();
+				resolve(valor);
+			};
+			overlay.querySelector("[data-confirm-sim]").addEventListener("click", () => finish(true));
+			overlay.querySelector("[data-confirm-nao]").addEventListener("click", () => finish(false));
+			overlay.addEventListener("click", e => { if (e.target === overlay) finish(false); });
+			// auto-cancela em 8s (evita travar testes headless sem interação)
+			setTimeout(() => finish(false), 8000);
+		});
 	},
 
 	// Fase 1: ficha dos dois duelistas lado a lado + acesso à corrida (Fase 2)
@@ -356,8 +397,18 @@ var PvpFantasma = {
 		return `
 		<div class="pvpCartao${lider ? " pvpCartao--lider" : ""}">
 			<div class="pvpCartaoCab">${this._esc(rotulo)}${lider ? " · vantagem" : ""}</div>
+			${this._htmlSprite(cartao)}
 			${corpo}
 		</div>`;
+	},
+
+	// bonequinho do duelista com as customizações dele (defensivo: cartão antigo
+	// pode não ter o campo `aparencia`)
+	_htmlSprite(cartao) {
+		const html = (typeof AparenciaHtmlArte === "function")
+			? AparenciaHtmlArte(cartao && cartao.aparencia)
+			: "";
+		return `<div class="pvpCartaoSprite">${html}</div>`;
 	},
 
 	// nome do cartão — defensivo: cartão antigo pode vir sem o campo
@@ -479,6 +530,10 @@ var PvpFantasma = {
 			meu: this._nome(this._dueloAtual && this._dueloAtual.cartaoMeu),
 			fantasma: this._nome(this._dueloAtual && this._dueloAtual.cartaoFantasma)
 		};
+		const aparencias = {
+			meu: this._dueloAtual && this._dueloAtual.cartaoMeu ? this._dueloAtual.cartaoMeu.aparencia : null,
+			fantasma: this._dueloAtual && this._dueloAtual.cartaoFantasma ? this._dueloAtual.cartaoFantasma.aparencia : null
+		};
 
 		const modal = document.getElementById("pvpDuelo");
 		if (!modal) return;
@@ -486,7 +541,7 @@ var PvpFantasma = {
 		const botaoLutar = modal.querySelector("[data-pvp-lutar]");
 		if (botaoLutar) botaoLutar.remove();
 		if (cartoes) {
-			cartoes.insertAdjacentHTML("afterend", this._htmlCorrida(nomes));
+			cartoes.insertAdjacentHTML("afterend", this._htmlCorrida(nomes, aparencias));
 			cartoes.style.display = "none";
 		}
 
@@ -513,23 +568,46 @@ var PvpFantasma = {
 		atualiza();
 	},
 
-	_htmlCorrida(nomes) {
+	_htmlCorrida(nomes, aparencias) {
 		const meu = this._esc((nomes && nomes.meu) || "Você");
 		const fantasma = this._esc((nomes && nomes.fantasma) || "Fantasma");
+		const mini = (n, rotulo) => `
+				<div class="pvpMiniCaverna pvpMiniCaverna--${n}" data-pvp-alvo="${n}">
+					<div class="pvpMiniCaverna__bg" style="background-image:url('imagens/fundos/background.png')"></div>
+					<div class="pvpMiniCaverna__chao"></div>
+					<div class="pvpMiniCaverna__entidade pvpMiniCaverna__tapiera" style="left:18%;">
+						${this._htmlMiniTapiera(aparencias && aparencias[n])}
+					</div>
+					<div class="pvpMiniCaverna__entidade pvpMiniCaverna__boss" style="right:12%;">
+						<img class="pvpMiniSprite" src="imagens/personagens/inimigo.png" alt="" aria-hidden="true" onerror="this.src='imagens/personagens/inimigo.png'">
+					</div>
+					<div class="pvpMiniCaverna__hp"><div class="pvpMiniCaverna__hpFill" data-pvp-fill></div></div>
+					<div class="pvpMiniCaverna__label">${rotulo} · ${n === "meu" ? meu : fantasma}</div>
+					<b class="pvpMiniCaverna__tempo" data-pvp-tempo>—</b>
+					<!-- compat: teste "nome do jogador" espera .pvpAlvoTopo span -->
+					<div class="pvpAlvoTopo" aria-hidden="true" style="position:absolute;pointer-events:none;opacity:0;">
+						<span>${rotulo} · ${n === "meu" ? meu : fantasma}</span>
+						<b data-pvp-tempo>—</b>
+					</div>
+				</div>`;
 		return `
 		<div class="pvpCorrida">
-			<div class="pvpCronometro" data-pvp-cronometro>0.00s</div>
+			<div class="pvpCronometroGrande" data-pvp-cronometro>0.00s</div>
 			<div class="pvpCorridaInfo">Chefe com a vida da média das duas builds × 25s — quem derruba primeiro vence.</div>
-			<div class="pvpAlvo pvpAlvo--meu" data-pvp-alvo="meu">
-				<div class="pvpAlvoTopo"><span>Você · ${meu}</span><b data-pvp-tempo>—</b></div>
-				<div class="pvpBarra"><div class="pvpBarraFill" data-pvp-fill></div></div>
-			</div>
-			<div class="pvpAlvo pvpAlvo--fantasma" data-pvp-alvo="fantasma">
-				<div class="pvpAlvoTopo"><span>Fantasma · ${fantasma}</span><b data-pvp-tempo>—</b></div>
-				<div class="pvpBarra"><div class="pvpBarraFill" data-pvp-fill></div></div>
+			<div class="pvpArenaDupla">
+				${mini("meu", "Você")}
+				${mini("fantasma", "Fantasma")}
 			</div>
 			<div class="pvpResultado" data-pvp-resultado hidden></div>
 		</div>`;
+	},
+
+	// bonequinho da mini-batalha com as customizações (fallback: img simples)
+	_htmlMiniTapiera(aparencia) {
+		if (typeof AparenciaHtmlArte === "function") {
+			return `<div class="pvpMiniSprite pvpMiniSprite--arte" aria-hidden="true">${AparenciaHtmlArte(aparencia)}</div>`;
+		}
+		return `<img class="pvpMiniSprite" src="imagens/personagens/player.png" alt="" aria-hidden="true" onerror="this.src='imagens/animacoes/player/parado.png'">`;
 	},
 
 	// vida restante na série interpolada no instante t
@@ -550,12 +628,31 @@ var PvpFantasma = {
 		const cronometro = modal.querySelector("[data-pvp-cronometro]");
 		if (cronometro) cronometro.textContent = t.toFixed(2) + "s";
 		const pinta = (qual, serie, tempoMorto) => {
-			const alvo = modal.querySelector(`[data-pvp-alvo="${qual}"]`);
-			if (!alvo) return;
+			const arena = modal.querySelector(`.pvpMiniCaverna[data-pvp-alvo="${qual}"]`);
+			if (!arena) return;
 			const hp = this._hpNaSerie(serie, t);
-			const fill = alvo.querySelector("[data-pvp-fill]");
-			if (fill) fill.style.width = Math.max(0, hp / 25 * 100) + "%";
-			alvo.classList.toggle("pvpAlvo--morto", t >= tempoMorto);
+			const hpPct = Math.max(0, hp / 25 * 100);
+			const fill = arena.querySelector("[data-pvp-fill]");
+			if (fill) fill.style.width = hpPct + "%";
+			const tempoEl = arena.querySelector("[data-pvp-tempo]");
+			if (tempoEl) tempoEl.textContent = this._formataTempo(t);
+			const morto = t >= tempoMorto;
+			arena.classList.toggle("pvpMiniCaverna--morto", morto);
+			if (morto && fill) fill.style.background = "#3a4152";
+			// animação de ataque da tapiera a cada ~0.5s (visual apenas)
+			const tapiera = arena.querySelector(".pvpMiniCaverna__tapiera");
+			const boss = arena.querySelector(".pvpMiniCaverna__boss");
+			if (tapiera && boss && !morto) {
+				const fase = (t * 2) % 1;
+				if (fase < 0.02 && !tapiera.classList.contains("atacando")) {
+					tapiera.classList.add("atacando");
+					setTimeout(() => tapiera.classList.remove("atacando"), 220);
+					if (boss) {
+						boss.classList.add("levandoDano");
+						setTimeout(() => boss.classList.remove("levandoDano"), 150);
+					}
+				}
+			}
 		};
 		pinta("meu", resultado.serieMeu, resultado.tempoMeu);
 		pinta("fantasma", resultado.serieFantasma, resultado.tempoFantasma);
@@ -817,6 +914,7 @@ function RenderGuildaPainel() {
 	corpo.replaceChildren(
 		GuildaCartaoResumo(),
 		GuildaAcoes(),
+		GuildaComunidade(),
 		TrofeusSaldo(),
 		TrofeusSecao()
 	);
@@ -864,6 +962,101 @@ function GuildaAcoes() {
 	nota.textContent = "Vitória: +2 esmeraldas · Derrota: nada · "
 		+ "Duelo consigo mesmo: sem recompensa depois da primeira luta";
 	bloco.appendChild(nota);
+	return bloco;
+}
+
+// ---- comunidade (servidor de cartões) ----
+// Servido pelo servidor (proxy) a API fica na MESMA origem (/api). Rodando
+// solto (arquivo/.exe/app), usa o endereço salvo em Configurações.
+function PvpApiBase() {
+	if (location.protocol === "http:" || location.protocol === "https:") return "";
+	try { return localStorage.getItem("tapeira-servidor-pvp") || ""; } catch { return ""; }
+}
+
+async function PvpEnviaCartao() {
+	try {
+		const cartao = PvpFantasma.MontaCartaoBatalha();
+		const resp = await fetch(PvpApiBase() + "/api/cartoes", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(cartao)
+		});
+		const dados = await resp.json().catch(() => ({}));
+		if (!resp.ok || !dados.ok) throw new Error(dados.erro || ("HTTP " + resp.status));
+		UI.mostraAvisoRapido(dados.jaExistia ? "Esse cartão já estava no servidor." : "Cartão enviado pro servidor! 🎉");
+	} catch (erro) {
+		console.error("Enviar cartão:", erro);
+		UI.mostraAvisoRapido("Não deu pra enviar — servidor fora do ar?");
+	}
+}
+
+async function PvpCarregaComunidade(lista) {
+	lista.textContent = "Carregando cartões…";
+	try {
+		const resp = await fetch(PvpApiBase() + "/api/cartoes");
+		const dados = await resp.json();
+		const cartoes = (dados && dados.cartoes) || [];
+		lista.replaceChildren();
+		if (!cartoes.length) {
+			const v = document.createElement("p");
+			v.className = "guilda-nota";
+			v.textContent = "Nenhum cartão na comunidade ainda. Seja o primeiro a enviar!";
+			lista.appendChild(v);
+			return;
+		}
+		for (const c of cartoes) {
+			const item = document.createElement("button");
+			item.type = "button";
+			item.className = "guilda-cartao";
+			item.title = "Lutar contra " + (c.nome || "Tapeira");
+			const arte = document.createElement("div");
+			arte.className = "guilda-cartao__arte";
+			if (typeof AparenciaHtmlArte === "function") arte.innerHTML = AparenciaHtmlArte(c.aparencia);
+			const info = document.createElement("div");
+			info.className = "guilda-cartao__info";
+			info.textContent = (c.nome || "Tapeira") + " · nível " + (c.nivel || 1) + " · DPS " + FormatGold(c.dps || 0);
+			item.append(arte, info);
+			item.addEventListener("click", async () => {
+				try {
+					const r = await fetch(PvpApiBase() + "/api/cartoes/" + c.id);
+					if (!r.ok) throw new Error("HTTP " + r.status);
+					const cartao = await r.json();
+					PvpFantasma.RecebeCartao(cartao);
+				} catch (erro) {
+					console.error("Baixar cartão:", erro);
+					UI.mostraAvisoRapido("Não deu pra baixar esse cartão.");
+				}
+			});
+			lista.appendChild(item);
+		}
+	} catch (erro) {
+		console.error("Comunidade:", erro);
+		lista.replaceChildren();
+		const v = document.createElement("p");
+		v.className = "guilda-nota";
+		v.textContent = "Servidor indisponível. Abra o jogo pelo link do servidor pra usar a comunidade.";
+		lista.appendChild(v);
+	}
+}
+
+function GuildaComunidade() {
+	const bloco = document.createElement("div");
+	bloco.className = "guilda-comunidade";
+	const titulo = document.createElement("h3");
+	titulo.className = "guilda-secao__titulo";
+	titulo.textContent = "Comunidade (servidor)";
+	const desc = document.createElement("p");
+	desc.className = "guilda-nota";
+	desc.textContent = "Envie seu cartão e enfrente os cartões de outros jogadores — sem trocar arquivo.";
+	const acoes = document.createElement("div");
+	acoes.className = "guilda-acoes";
+	const lista = document.createElement("div");
+	lista.className = "guilda-comunidade__lista";
+	acoes.append(
+		GuildaBotao("Enviar meu cartão", () => PvpEnviaCartao()),
+		GuildaBotao("Cartões da comunidade", () => PvpCarregaComunidade(lista))
+	);
+	bloco.append(titulo, desc, acoes, lista);
 	return bloco;
 }
 
