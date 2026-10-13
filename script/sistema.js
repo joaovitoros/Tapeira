@@ -377,6 +377,8 @@ function PreCarregamento() {
 //// Resetar
 function Resetar() {
 	EncerraEvento(true); //evento aleatório não sobrevive ao reset
+	// limpa animações de morte em voo (o reset troca a cena inteira)
+	if (typeof LimpaEfeitosMorte === "function") LimpaEfeitosMorte();
 	// Casa (Cidade): casaNivel e trofeusExibidos são PERMANENTES — não zeram
 	// aqui (só no ZerarTodosSaves), como o Conhecimento Mug e seus níveis.
 	// Fazenda de Formigas (Cidade): fazendaNivel e fazendaRainha idem.

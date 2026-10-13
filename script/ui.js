@@ -1077,7 +1077,10 @@ function SobeStatus() {
 }
 
 function RemoverInimigos() {
-    LimpaEfeitosMorte();
+    // NÃO limpa os efeitos de morte aqui: esta função roda NO MEIO do abate
+    // (wave nova e subir andar) e limpar apagava a animação de morte do
+    // inimigo que acabou de cair — dava a impressão de ele "só sumir".
+    // A animação se limpa sozinha (timeout de ≤1,2s em batalha.js).
     UI.removeAllEnemies();
 }
 
