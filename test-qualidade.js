@@ -46,6 +46,18 @@ const path = require('path');
         check("Baixa corta o filtro do personagem", filtroArte() === "none", filtroArte());
         check("Baixa reduz o movimento (config-sem-movimento)", raiz.classList.contains("config-sem-movimento"));
 
+        // efeitos decorativos da Cidade por qualidade (medido: +5 FPS ao desligar)
+        const disp = sel => getComputedStyle(document.querySelector(sel)).display;
+        check("Baixa corta todos os efeitos da Cidade",
+            disp(".cidade-fumaca") === "none" && disp(".cidade-particulas") === "none" && disp(".cidade-lampiao") === "none");
+        Q.definir("media");
+        check("Média corta a fumaça (mantém partículas e lampiões)",
+            disp(".cidade-fumaca") === "none" && disp(".cidade-particulas") !== "none" && disp(".cidade-lampiao") !== "none");
+        Q.definir("alta");
+        check("Alta mantém os efeitos da Cidade",
+            disp(".cidade-fumaca") !== "none" && disp(".cidade-particulas") !== "none" && disp(".cidade-lampiao") !== "none");
+        Q.definir("baixa"); // volta ao estado que o resto do teste espera
+
         // persistência (por aparelho)
         check("nível persistido no localStorage",
             (localStorage.getItem("tapeira-qualidade") || "") === "baixa",
