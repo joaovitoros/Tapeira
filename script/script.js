@@ -474,10 +474,11 @@ function IniciaFundos() {
 	});
 }
 
-function ProximoFundo() {
+// Troca a arte do fundo com o crossfade das duas camadas. Usado tanto pelo
+// rodízio normal (a cada andar) quanto pelo teste visual (a cada 10 andares).
+function TrocaFundoPara(caminho) {
 	if (!fundoAtiva) IniciaFundos();
 	if (!fundoAtiva) return;
-	fundoIdxAtual = (fundoIdxAtual + 1) % FUNDOS_CAVERNA.length;
 	var oculta = fundoAtiva === fundoA ? fundoB : fundoA;
 	// andares muito rápidos: conclui na hora qualquer crossfade em voo
 	fundoAtiva.style.transition = 'none';
@@ -487,13 +488,25 @@ function ProximoFundo() {
 	void oculta.offsetHeight; // aplica os estados finais sem transição
 	// a camada oculta recebe a próxima arte; as duas se cruzam (~1,2s)
 	// URL absoluta: URL relativa dentro de var() resolveria contra estilos.css (css/imagens/… = 404)
-	oculta.style.setProperty('--fundo-img', "url('" + new URL('imagens/' + FUNDOS_CAVERNA[fundoIdxAtual], document.baseURI).href + "')");
+	oculta.style.setProperty('--fundo-img', "url('" + new URL('imagens/' + caminho, document.baseURI).href + "')");
 	fundoAtiva.style.transition = '';
 	oculta.style.transition = '';
 	void oculta.offsetHeight; // reativa a transição antes de mexer no opacity
 	oculta.style.opacity = '1';
 	fundoAtiva.style.opacity = '0';
 	fundoAtiva = oculta;
+}
+
+function ProximoFundo() {
+	// Teste visual (painel de dev): o fundo segue a FAIXA de 10 andares — só
+	// troca quando a faixa muda, não a cada andar. Ver script/teste-visual.js.
+	if (typeof TesteVisualAtivo === "function" && TesteVisualAtivo()) {
+		var caminhoTeste = TesteVisualFundoMudou();
+		if (caminhoTeste) TrocaFundoPara(caminhoTeste);
+		return;
+	}
+	fundoIdxAtual = (fundoIdxAtual + 1) % FUNDOS_CAVERNA.length;
+	TrocaFundoPara(FUNDOS_CAVERNA[fundoIdxAtual]);
 }
 
 function AvancoInimigos() {

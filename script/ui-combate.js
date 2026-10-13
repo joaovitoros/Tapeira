@@ -333,6 +333,8 @@ Object.assign(UI, {
 // "surgimento" no chão. Só visual; some no animationend (sem timer novo).
 function SurgeInimigo(el) {
 	if (!el) return;
+	// Teste visual (painel de dev): troca o sprite pela criatura da faixa.
+	if (typeof TesteVisualAplicaInimigo === "function") TesteVisualAplicaInimigo(el);
 	el.classList.remove("inimigo--surgindo");
 	void el.offsetWidth;
 	el.classList.add("inimigo--surgindo");
