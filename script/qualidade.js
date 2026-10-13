@@ -10,8 +10,8 @@
 
 const QUALIDADES = [
     { id: "alta", nome: "Alta", desc: "Todos os efeitos — melhor visual (PC/desktop)." },
-    { id: "media", nome: "Média", desc: "Sem filtros no personagem e menos efeitos (celular/tablet)." },
-    { id: "baixa", nome: "Baixa", desc: "Só o essencial — pra aparelhos fracos." }
+    { id: "media", nome: "Média", desc: "Sem filtros no personagem — mais leve (celular/tablet)." },
+    { id: "baixa", nome: "Baixa", desc: "Sem filtros e com menos animações — pra aparelhos fracos." }
 ];
 const CHAVE_QUALIDADE = "tapeira-qualidade";
 
@@ -30,7 +30,17 @@ function AplicaQualidade() {
     raiz.classList.remove("q-alta", "q-media", "q-baixa");
     raiz.classList.add("q-" + q);
     raiz.dataset.qualidade = q;
+    // Unificado com o antigo "Reduzir movimento": a Qualidade Baixa também
+    // corta as animações (equivale ao prefers-reduced-motion, por escolha).
+    raiz.classList.toggle("config-sem-movimento", q === "baixa");
+    AtualizaSeletorQualidade();
     return q;
+}
+
+// Redesenha o seletor montado (se houver) pra marcar o nível atual.
+function AtualizaSeletorQualidade() {
+    const alvo = document.getElementById("configQualidade");
+    if (alvo && alvo.childElementCount) alvo.replaceChildren(QualidadeSeletor());
 }
 
 function DefineQualidade(id) {
@@ -59,11 +69,7 @@ function QualidadeSeletor() {
         btn.textContent = q.nome;
         btn.title = q.desc;
         btn.setAttribute("aria-pressed", String(atual === q.id));
-        btn.addEventListener("click", () => {
-            DefineQualidade(q.id);
-            const novo = QualidadeSeletor();
-            bloco.replaceWith(novo);
-        });
+        btn.addEventListener("click", () => DefineQualidade(q.id));
         linha.appendChild(btn);
     }
 

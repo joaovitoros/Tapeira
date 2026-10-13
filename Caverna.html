@@ -403,27 +403,30 @@
 
 			<div id="container-SalvaCarrega" style="visibility:hidden">
 				<div id="divSalvar">
-					<div class="tituloConfig">Salvar Jogo</div>
+					<div class="tituloConfig">💾 Salvar jogo</div>
 					<div class="save-help">Exporte uma cópia JSON antes de atualizar ou para levar seu progresso a outro dispositivo.</div>
 
 					<input type="button" value="Salvar Arquivo" id="btnSalvarJogo" />
 					<input type="button" value="Salvar e voltar ao menu" id="btnSalvarVoltarMenu" />
-					<input type="button" value="Apagar Auto Save" id="btnApagarSave" />
-					<input type="button" value="Apagar todos os saves" id="btnZerarJogo"
-						aria-label="Apagar todos os saves e zerar o jogo" />
 				</div>
 
 				<div id="divCarregar">
-					<div class="tituloConfig">Carregar Save</div>
+					<div class="tituloConfig">📂 Carregar save</div>
 					<div class="save-help">Selecione um arquivo JSON exportado pelo TAPeira. Saves antigos continuam compatíveis.</div>
 					<input type="file" id="txtfiletoread" accept=".json,application/json" aria-label="Importar save JSON" />
 					<div id="filecontents"> </div>
 				</div>
-				<div id="divVolume">
+				<div id="divDesempenho">
+					<div class="tituloConfig">⚡ Desempenho</div>
+					<div id="configQualidade"></div>
+				</div>
 
-					<div class="tituloConfig">
-						Volume
-					</div>
+				<div id="divAjustes">
+					<div class="tituloConfig">🎛️ Avisos e efeitos</div>
+				</div>
+
+				<div id="divVolume">
+					<div class="tituloConfig">🔊 Áudio</div>
 
 					<div id="divVolumeBotoes">
 						<div id="volumeRotulo">
@@ -442,12 +445,8 @@
 							aria-label="Volume do ambiente da caverna" />
 					</div>
 				</div>
-				<div id="divDesempenho">
-					<div class="tituloConfig">Desempenho</div>
-					<div id="configQualidade"></div>
-				</div>
 				<div id="divDesktopDisplay" hidden>
-					<div class="tituloConfig">Tela (PC)</div>
+					<div class="tituloConfig">🖥️ Tela (PC)</div>
 					<label class="desktop-setting-row" for="resolucaoJogo">
 						<span>Resolução da janela</span>
 						<select id="resolucaoJogo">
@@ -465,7 +464,16 @@
 					<div class="save-help" id="desktopDisplayStatus" role="status"></div>
 				</div>
 				<div id="divLogs">
+					<div class="tituloConfig">🧾 Registros</div>
 					<button type="button" id="btnLogs" class="btn-Padrao config-logs-button">Logs</button>
+				</div>
+
+				<div id="divPerigo">
+					<div class="tituloConfig">⚠️ Zona de perigo</div>
+					<div class="save-help">Apaga o seu progresso de vez — não tem como desfazer.</div>
+					<input type="button" value="Apagar Auto Save" id="btnApagarSave" />
+					<input type="button" value="Apagar todos os saves" id="btnZerarJogo"
+						aria-label="Apagar todos os saves e zerar o jogo" />
 				</div>
 			</div>
 

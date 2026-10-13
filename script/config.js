@@ -15,8 +15,7 @@
         { id: "tremerCritico", nome: "Tremor no crítico", desc: "Treme a tela e dá um flash no acerto crítico.", padrao: true },
         { id: "avisosBau", nome: "Avisos de baú", desc: "Avisa quando um baú aparece e ao abrir.", padrao: true },
         { id: "anunciosMarco", nome: "Anúncios de marco", desc: "Banners de nível, marco de andar e conquistas.", padrao: true },
-        { id: "logsTransparentes", nome: "Registros transparentes", desc: "Deixa o painel de Registro da arena e o histórico mais transparentes.", padrao: false },
-        { id: "movimentoReduzido", nome: "Reduzir movimento", desc: "Menos animações — mais leve em aparelhos fracos.", padrao: false }
+        { id: "logsTransparentes", nome: "Registros transparentes", desc: "Deixa o painel de Registro da arena e o histórico mais transparentes.", padrao: false }
     ];
 
     const valores = {};
@@ -33,10 +32,10 @@
         try { localStorage.setItem(CHAVE, JSON.stringify(valores)); } catch { /* sem storage */ }
     }
 
-    // Efeitos globais: a classe no <html> liga o CSS de "reduzir movimento"
-    // e o do "registros transparentes" (modal de Logs).
+    // Efeito global: a classe no <html> liga o CSS do modal de Logs transparente.
+    // As ANIMAÇÕES não ficam aqui — quem controla é a Qualidade (Baixa reduz o
+    // movimento); ver script/qualidade.js.
     function aplica() {
-        document.documentElement?.classList.toggle("config-sem-movimento", valores.movimentoReduzido === true);
         document.documentElement?.classList.toggle("config-logs-transparente", valores.logsTransparentes === true);
     }
 
@@ -55,21 +54,25 @@
         return true;
     }
 
-    // ---- UI: monta a seção "Ajustes" dentro do painel de Config ----
+    // ---- UI: monta as linhas de Ajustes dentro do cartão já existente no HTML ----
     let montado = false;
     function montaUI() {
         if (montado) return;
         const alvo = document.getElementById("container-SalvaCarrega");
         if (!alvo) return;
+
+        let secao = document.getElementById("divAjustes");
+        if (!secao) {
+            // fallback (HTML antigo): cria o cartão e o título
+            secao = document.createElement("div");
+            secao.id = "divAjustes";
+            const tituloFallback = document.createElement("div");
+            tituloFallback.className = "tituloConfig";
+            tituloFallback.textContent = "🎛️ Avisos e efeitos";
+            secao.appendChild(tituloFallback);
+            alvo.appendChild(secao);
+        }
         montado = true;
-
-        const secao = document.createElement("div");
-        secao.id = "divAjustes";
-
-        const titulo = document.createElement("div");
-        titulo.className = "tituloConfig";
-        titulo.textContent = "Ajustes";
-        secao.appendChild(titulo);
 
         for (const item of ITENS) {
             const linha = document.createElement("label");
@@ -94,11 +97,6 @@
             linha.append(texto, chk);
             secao.appendChild(linha);
         }
-
-        // entra depois do bloco de Volume (antes da Tela, no desktop)
-        const volume = document.getElementById("divVolume");
-        if (volume && volume.nextSibling) alvo.insertBefore(secao, volume.nextSibling);
-        else alvo.appendChild(secao);
     }
 
     window.Tapeira.Config = {

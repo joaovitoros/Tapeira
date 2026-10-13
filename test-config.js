@@ -23,7 +23,8 @@ const path = require('path');
         const C = window.Tapeira.Config;
         check("módulo de config existe com 6 itens", C && C.ITENS.length === 6, C ? C.ITENS.length : "-");
         check("padrão: números de dano ligado", C.ativo("numerosDano") === true);
-        check("padrão: movimento reduzido desligado", C.ativo("movimentoReduzido") === false);
+        check("movimento saiu dos ajustes (agora é da Qualidade)",
+            !C.ITENS.some(i => i.id === "movimentoReduzido"));
 
         const div = document.getElementById("divAjustes");
         check("seção Ajustes montada dentro do painel de Config",
@@ -56,11 +57,9 @@ const path = require('path');
         check("tremor do crítico desligado não cria o flash", !document.getElementById("critFlash"));
         C.define("tremerCritico", true);
 
-        // reduzir movimento
-        C.define("movimentoReduzido", true);
-        check("reduzir movimento marca o <html>", document.documentElement.classList.contains("config-sem-movimento"));
-        C.define("movimentoReduzido", false);
-        check("desligar tira a classe", !document.documentElement.classList.contains("config-sem-movimento"));
+        // movimento: agora quem manda é a Qualidade (ver test-qualidade.js)
+        check("config não mexe no movimento reduzido",
+            typeof C.valor("movimentoReduzido") === "undefined");
 
         // persistência
         C.define("efeitosImpacto", false);

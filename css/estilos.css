@@ -606,8 +606,8 @@ tr, td, th{
 	cursor: pointer;
 }
 
-/* "Reduzir movimento" (Ajustes): desliga as animações — equivale ao
-   prefers-reduced-motion, mas por escolha do jogador. */
+/* Movimento reduzido: desliga as animações — equivale ao prefers-reduced-motion.
+   A classe é aplicada pela Qualidade "Baixa" (ver script/qualidade.js). */
 html.config-sem-movimento *,
 html.config-sem-movimento *::before,
 html.config-sem-movimento *::after {
@@ -4472,10 +4472,31 @@ body.desktop-app img {
 #divSalvar,
 #divCarregar,
 #divVolume,
-#divAjustes {
+#divAjustes,
+#divDesempenho,
+#divDesktopDisplay,
+#divLogs,
+#divPerigo {
 	background: rgba(255, 255, 255, 0.035);
 	border: 1px solid rgba(255, 255, 255, 0.075);
-	border-radius: 7px;
+	border-radius: 8px;
+	padding: 10px;
+}
+
+/* Zona de perigo: mesma caixa dos outros cartões, com a borda avermelhada
+   pra deixar claro que ali se apaga progresso. */
+#divPerigo {
+	border-color: rgba(255, 122, 112, 0.4);
+	background: linear-gradient(180deg, rgba(255, 90, 80, 0.13), rgba(255, 90, 80, 0.03));
+}
+
+/* Painel de Config: um cartão por assunto, com respiro entre eles. */
+#container-SalvaCarrega {
+	gap: 12px;
+}
+
+#divLogs .config-logs-button {
+	width: 100%;
 }
 
 #btnSalvarVoltarMenu {
@@ -9497,7 +9518,7 @@ button.skill-ramo-no:focus-visible {
 /* ---- Logs (botão no fim do menu de configuração + tela de histórico) ---- */
 
 #divLogs {
-	margin-top: 0.7em;
+	margin-top: 0;
 }
 
 .config-logs-button {
@@ -11963,6 +11984,15 @@ html.q-baixa .player__camada {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	cursor: pointer;
+}
+
+/* Dentro do menu de pause, `.pause-panel button` (min-width/font-size) tem
+   especificidade maior e estourava a largura — aqui a Qualidade manda. */
+#configQualidade .qualidade-btn {
+	min-width: 0;
+	min-height: 0;
+	padding: 7px 4px;
+	font-size: 12px;
 }
 
 .qualidade-btn.is-ativo {
