@@ -120,7 +120,7 @@ function CompraAvanco(){
 			PagaLoja(precoAvan);
 
 			avanco = Math.min(N(avanco) + N(sobeAvanco), TetoLoja("avan"));
-			precoAvan = N(precoAvan) * 2;
+			precoAvan = N(precoAvan) * 2.5; // preço mais exponencial (era ×2)
 			sobeAvanco = N(sobeAvanco) * 1.005;
 			lvlAvan++;
 
@@ -285,7 +285,7 @@ function CompraQTDAvanco(){
 			PagaLoja(precoQTDAvanco);
 
 			qtdAvanco++;
-			precoQTDAvanco = N(precoQTDAvanco) * 2;
+			precoQTDAvanco = N(precoQTDAvanco) * 2.5; // preço mais exponencial (era ×2)
 			lvlQTDAvanco++;
 
 			ChamaSom('audio6');
