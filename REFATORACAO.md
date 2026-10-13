@@ -39,14 +39,12 @@ por-run e permanentes), o bloco do **Conhecimento Mug** (funções) e o `Carrega
 **Depois:** item 2 restante (os sprites do build saem sem otimização) e o item 1 (cache de
 `getElementById`/ticks — **baixo valor**: só 3 timers ativos, ~0,4 ms no tick de 1 s).
 
-⚠️ **ACHADO SEPARADO (não é refatoração, não misturado no commit):** `node test-loja-layout.js`
-falha **13/26** — e é **pré-existente** (falha igual com o `git stash` das mudanças desta
-sessão). Causa: o teste guardava o **painel lateral antigo** e mede `#container-Loja`, mas o
-redesign "LOJA (overlay + painel)" (`css/estilos.css` ~13979) transformou `#container-Loja` na
-**área do overlay**; o painel de verdade é `#container-Loja > #Loja`. Medido com o novo
-desenho: o painel **cabe na tela** em 1920×1080 (67–905), 1366×768 e 800×600. Ou o teste é
-**stale** (passar a medir o painel) ou o overlay encobrir as Metas é regressão de design —
-**decisão do dono do jogo**.
+- **Item 24** — `test-loja-layout.js` **atualizado para o desenho atual** (era stale: falhava
+  13/26). A Loja virou **overlay de tela cheia** (fade + painel centrado) e o teste antigo
+  media `#container-Loja` como se fosse o painel. Agora mede o painel de verdade
+  (`#container-Loja > #Loja`) e cobra, em 13 resoluções (1920×1080 → 800×600): painel visível,
+  cabe na tela, respeita os máximos 1300×850, o fade cobre a viewport, e a área do overlay vai
+  do topo até a faixa inferior — **65/65**.
 
 ## Objetivo
 
