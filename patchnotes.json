@@ -3,11 +3,15 @@
   "patches": [
     {
       "versao": "1.7.0",
-      "data": "2026-10-12",
-      "titulo": "Customização da toupeira e PvP com a sua cara",
+      "data": "2026-10-13",
+      "titulo": "Customização, PvP e desempenho no seu aparelho",
       "itens": [
         "Aparência na Casa: escolha chapéu, cachecol, arma, cinto e escudo pra toupeira, com preview ao vivo.",
         "Batalha-fantasma: a ficha e a mini batalha mostram cada duelista com as customizações dele.",
+        "Qualidade Alta/Média/Baixa, escolhida por aparelho nas Configurações — o PC mantém todo o visual e o celular/tablet roda mais leve.",
+        "Configurações reorganizadas em cartões (Salvar, Desempenho, Avisos e efeitos, Áudio, Tela, Registros e Zona de perigo).",
+        "Desempenho: abrir os painéis da Cidade ficou até ~60% mais rápido e os efeitos da Cidade respeitam a qualidade escolhida (+5 FPS).",
+        "A toupeira usa a imagem clássica até liberar a Cidade, com a opção de voltar a ela depois.",
         "Tratamento unificado no personagem (filtro + sombra única) pra parecer uma arte só.",
         "Ferramenta de calibração de acessórios (arrasta, redimensiona, gira, borracha e desfazer).",
         "Servidor local com o site (builds + patch notes), o jogo e os cartões de batalha num link só."
