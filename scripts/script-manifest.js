@@ -14,6 +14,10 @@ module.exports = {
         "script/gold.js",
         "script/keymap.js",
         "script/script.js",
+        // blocos extraídos de script.js (carregados logo depois dele)
+        "script/loja-variaveis.js",
+        "script/avanco-inimigos.js",
+        "script/reset.js",
         "script/qualidade.js",
         "script/atualizacao.js",
         "script/config.js",
@@ -70,6 +74,10 @@ module.exports = {
         "script/gold.js",
         "script/keymap.js",
         "script/script.js",
+        // blocos extraídos de script.js (carregados logo depois dele)
+        "script/loja-variaveis.js",
+        "script/avanco-inimigos.js",
+        "script/reset.js",
         "script/qualidade.js",
         "script/atualizacao.js",
         "script/config.js",
