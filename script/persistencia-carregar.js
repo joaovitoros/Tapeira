@@ -270,6 +270,8 @@ function Carregar(saveData, calculaOffline = false) {
 	}
 	// Aplica a aparência FORA do caminho do load (imagem/DOM no próximo tick),
 	// pra não interferir no timing de quem importa save (PvP etc.).
+	// Aparência: usar a imagem clássica (com capacete/picareta) — permanente.
+	aparenciaClassica = save.aparenciaClassica === true;
 	if (typeof AplicaChapeuJogador === "function") setTimeout(AplicaChapeuJogador, 0);
 	// Mercado (Cidade): ofertas do dia — stamp do dia + bitmask de compradas.
 	// Gira à meia-noite (o sync zera o bitmask se o save for de outro dia).

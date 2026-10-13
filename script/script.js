@@ -128,6 +128,9 @@ var cachecolEquipado = "nenhum";
 var armaEquipado = "nenhum";
 var cintoEquipado = "nenhum";
 var escudoEquipado = "nenhum";
+// Aparência: usar a imagem CLÁSSICA (com capacete/picareta) em vez da
+// customização. Antes da Cidade (andar 80) o player é sempre clássico.
+var aparenciaClassica = false;
 const TEMPO_BAU_DOURADO_JOGO = 20 * 60 * 1000;
 const TEMPO_BAU_DOURADO_OFFLINE = 40 * 60 * 1000;
 var progressoBauDourado = 0;
