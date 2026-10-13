@@ -1046,9 +1046,11 @@ test("eventos restantes aplicam o bônus do próprio tipo e encerram corretament
                 return { fora, normal, dobrado };
             });
 
+            // base do MultiplicadorCM é ×2 (CM_MULT_BASE): 1 abate = 2 CM; com o
+            // item "CM em dobro" (×2) o abate passa a 4 CM
             assert.deepEqual(result.fora, { conhecimentoMug: 0, eventoCM: 0 });
-            assert.deepEqual(result.normal, { conhecimentoMug: 3, eventoCM: 3 });
-            assert.deepEqual(result.dobrado, { conhecimentoMug: 9, eventoCM: 9 });
+            assert.deepEqual(result.normal, { conhecimentoMug: 6, eventoCM: 6 });
+            assert.deepEqual(result.dobrado, { conhecimentoMug: 18, eventoCM: 18 });
             assert.deepEqual(pageErrors, []);
         } finally {
             await context.close();

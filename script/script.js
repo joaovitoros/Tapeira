@@ -169,10 +169,12 @@ var danoBonus = 0; //variavel para armazenar os danos bonus
 // =========================
 // CONHECIMENTO MUG
 // =========================
-// Preço dos itens da loja: base 10 CM, escalonado ×1.4 por nível
-// (10, 14, 20, 27, 38...). Era ×1.5 e o crescimento ficava grande rápido.
+// Preço dos itens da loja: base 10 CM, escalonado ×1.25 por nível
+// (10, 13, 16, 20, 24...). Era ×1.4 — e antes ×1.5. A renda de CM cresce
+// ~linear com os abates do reset, então ×1.4 travava a loja no meio do jogo
+// (a auditoria de ritmo flagrou: o bot parava de comprar CM no nível ~18).
 function PrecoLojaCM(nivel) {
-	const base = 10 * Math.pow(1.4, Math.max(0, Number(nivel) || 0));
+	const base = 10 * Math.pow(1.25, Math.max(0, Number(nivel) || 0));
 	// Mercado (Cidade): a reputação dá desconto na Loja do Conhecimento
 	const preco = (typeof PrecoComReputacao === "function") ? PrecoComReputacao(base) : base;
 	return Math.round(preco);
@@ -239,8 +241,14 @@ function GoldCompanheiroPorSegundo(nivel = lvlComp2) {
 // +1 por marco de 50 níveis do jogador (marcosNivel50, permanente)
 // ×1,05 por reset curto (resetsCurtosCM, permanente — o total pode virar
 // decimal; FormataMultCM formata os textos que mostram "×N")
+// Base: ×2 desde o começo (auditoria de ritmo — o começo era o trecho mais
+// árido, e medido no bot o ×2 adianta ~1 reset por marco no early/mid sem
+// mexer no teto: lá quem manda é o preço do CM e o bônus de reset curto).
+// O "CM em dobro" da loja de esmeraldas dobra A PARTIR daqui (×2 → ×4 ...).
+const CM_MULT_BASE = 2;
+
 function MultiplicadorCM() {
-	const item = Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
+	const item = CM_MULT_BASE * Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
 	// Loja de Troféus (Cidade): +% de CM por nível do troféu Colecionador
 	const trofeuCM = (typeof TrofeuBonusCM === "function") ? TrofeuBonusCM() : 1;
 	return (item + Math.max(0, Math.floor(Number(marcosNivel50) || 0)))
