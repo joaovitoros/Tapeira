@@ -10491,6 +10491,16 @@ img.ramos-tree-no__tile {
 	z-index: 25;
 }
 
+/* Feitos/Ramos são overlays de tela cheia (z-index 1000000) — o fundo escuro
+   deles cobriria a fileira de botões. Como na loja (que sobe a navegação para
+   z 25 acima do fade), aqui a navegação sobe acima do FUNDO do overlay, um
+   passo acima dele. O painel termina acima da navegação, então não é encoberto;
+   os botões ficam visíveis e clicáveis. Vale sempre que um dos dois estiver
+   aberto (classe posta por UI.syncScreenButtons). */
+.hud-overlay-nav #container-opcoes {
+	z-index: 1000001;
+}
+
 .cidade-topo {
 	/* fica fixo só na HORIZONTAL: ao arrastar pros lados o cabeçalho não sai
 	   da tela; na vertical ele rola junto com a cena (não gruda no topo). */

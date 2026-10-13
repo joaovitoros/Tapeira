@@ -306,6 +306,14 @@ const UI = {
         const painelAberto = ["DivStatus", "Loja", "LojaEsm", "LojaCM", "container-SalvaCarrega"]
             .some(id => document.getElementById(id)?.style.visibility === "visible");
         document.getElementById("game-root")?.classList.toggle("hud-painel-aberto", painelAberto);
+
+        // Feitos/Ramos são overlays de TELA CHEIA (z 1000000): o fundo escuro
+        // do overlay cobriria a fileira de botões. Como na loja, a navegação
+        // sobe acima do FUNDO do overlay — o painel termina acima dela, então
+        // nada do painel é encoberto e os botões continuam visíveis/clicáveis.
+        const overlayNav = !!document.getElementById("feitosModal")
+            || !!document.getElementById("ramosTreeModal");
+        document.getElementById("game-root")?.classList.toggle("hud-overlay-nav", overlayNav);
     },
 
     updateSkillProgress() {

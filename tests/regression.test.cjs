@@ -2202,6 +2202,88 @@ test("btn-Loja fecha a loja a partir de QUALQUER aba (não reabre o Gold)", asyn
     }
 });
 
+test("Feitos e Ramos deixam a fileira de botões na frente do fundo do overlay", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof UI !== "undefined"
+            && typeof UI.toggleFeitosPanel === "function"
+            && typeof UI.toggleRamosTreePanel === "function"
+            && !!document.getElementById("container-opcoes"),
+            undefined, { timeout: 15000 });
+
+        // Mede a relação navegação × fundo do overlay com o painel aberto.
+        const medir = overlayId => page.evaluate(overlayId => {
+            // tira modais de boas-vindas que cobririam o hit-test dos botões
+            document.querySelectorAll("#infoModal, #gameModal, .modal, .offline-rewards-overlay")
+                .forEach(m => m.remove());
+            const overlay = document.getElementById(overlayId);
+            const painel = overlay.querySelector(".ant-collection-panel");
+            const opcoes = document.getElementById("container-opcoes");
+            const reta = el => {
+                const b = el.getBoundingClientRect();
+                return { top: Math.round(b.top), bottom: Math.round(b.bottom) };
+            };
+            const visivel = el => {
+                const b = el.getBoundingClientRect();
+                return b.width > 0 && b.height > 0;
+            };
+            // só os botões realmente visíveis (a Cidade só aparece destravada)
+            const botoes = ["btnStatus", "btn-Loja", "btnSkills", "btnRamos", "btnCidade"]
+                .map(id => document.getElementById(id))
+                .filter(el => el && visivel(el))
+                .map(el => {
+                    const b = el.getBoundingClientRect();
+                    const topo = document.elementFromPoint(
+                        Math.round(b.left + b.width / 2), Math.round(b.top + b.height / 2));
+                    return { id: el.id, ok: el.contains(topo) };
+                });
+            return {
+                zOpcoes: parseInt(getComputedStyle(opcoes).zIndex, 10) || 0,
+                zOverlay: parseInt(getComputedStyle(overlay).zIndex, 10) || 0,
+                hudNav: document.getElementById("game-root").classList.contains("hud-overlay-nav"),
+                painel: reta(painel),
+                opcoes: reta(opcoes),
+                botoes
+            };
+        }, overlayId);
+
+        const casos = [
+            { nome: "Feitos", overlay: "feitosModal", abre: () => UI.toggleFeitosPanel(), fecha: () => UI.fechaFeitosPanel() },
+            { nome: "Ramos", overlay: "ramosTreeModal", abre: () => UI.toggleRamosTreePanel(), fecha: () => UI.toggleRamosTreePanel() }
+        ];
+
+        for (const caso of casos) {
+            await page.evaluate(caso.abre);
+            await page.waitForSelector("#" + caso.overlay);
+            await page.evaluate(() => new Promise(r => requestAnimationFrame(r)));
+            const m = await medir(caso.overlay);
+
+            assert.ok(m.hudNav, caso.nome + ": marca #game-root com hud-overlay-nav");
+            assert.ok(m.zOpcoes > m.zOverlay,
+                caso.nome + ": navegação acima do fundo do overlay (z " + m.zOpcoes + " > " + m.zOverlay + ")");
+            assert.ok(m.botoes.length > 0, caso.nome + ": pelo menos um botão de navegação visível");
+            assert.ok(m.painel.bottom <= m.opcoes.top + 1,
+                caso.nome + ": painel termina acima da navegação");
+            for (const b of m.botoes) {
+                assert.ok(b.ok, caso.nome + ": " + b.id + " recebe o toque (não fica atrás do fundo)");
+            }
+
+            await page.evaluate(caso.fecha);
+            await page.waitForFunction(sel => !document.getElementById(sel), caso.overlay);
+            const fechado = await page.evaluate(() => ({
+                z: parseInt(getComputedStyle(document.getElementById("container-opcoes")).zIndex, 10) || 0,
+                hudNav: document.getElementById("game-root").classList.contains("hud-overlay-nav")
+            }));
+            assert.equal(fechado.z, 3, caso.nome + ": fechado, a navegação volta ao z-index base");
+            assert.equal(fechado.hudNav, false, caso.nome + ": fechado, remove hud-overlay-nav");
+        }
+
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("loja v2: cabeçalho + carteira + abas, sem sobrepor o rodapé/HUD", async t => {
     const abrir = async viewport => {
         const context = await browser.newContext({ viewport });
