@@ -11975,6 +11975,37 @@ html.q-baixa .player__camada {
 	filter: none;
 }
 
+/* Efeitos decorativos da Cidade (fumaça, poeira/faíscas e lampiões).
+   Medido (CPU 6x): desligar tudo dá +5 FPS com a Cidade aberta. A Média já
+   corta a fumaça (que usa filter: blur, o mais caro); a Baixa corta todos. */
+html.q-media .cidade-fumaca,
+html.q-baixa .cidade-fumaca,
+html.q-baixa .cidade-particulas,
+html.q-baixa .cidade-lampiao {
+	display: none;
+}
+
+/* ---- Desempenho: content-visibility ----
+   As seções dos painéis da Cidade são longas e cheias de imagens; o navegador
+   layoutava/pintava TUDO ao abrir, mesmo o que estava fora da tela. Com
+   `content-visibility: auto` ele só renderiza o que aparece.
+   Medido (CPU 6x, abrir o painel): Casa 48->18 ms, Pesquisa 24->12,
+   Fazenda 23->12, Guilda 25->15, Mercado 14->9. Nada muda visualmente. */
+.casa-secao,
+.mercado-secao,
+.pesquisa-secao,
+.fazenda-secao,
+.fabrica-secao,
+.cristal-secao,
+.trofeus-secao,
+.skill-secao,
+.guilda-resumo,
+.guilda-acoes,
+.guilda-comunidade {
+	content-visibility: auto;
+	contain-intrinsic-size: auto 320px;
+}
+
 .qualidade-seletor {
 	margin: 6px 0 10px;
 }
