@@ -2729,6 +2729,31 @@ caption {
 	pointer-events: none;
 }
 
+/* imagem CLÁSSICA (capacete + picareta) — antes da Cidade, ou se escolhida */
+.player__classico {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	pointer-events: none;
+}
+
+.player__base[hidden],
+.player__classico[hidden] {
+	display: none;
+}
+
+/* opção "usar a imagem clássica" (Casa) */
+.aparencia-classica {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 4px 0 10px;
+	font-size: 13px;
+	color: #cfdcec;
+	cursor: pointer;
+}
+
 .player__camada {
 	position: absolute;
 	left: 0;

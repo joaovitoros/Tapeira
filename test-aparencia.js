@@ -19,6 +19,7 @@ const path = require('path');
 
     const r = await page.evaluate(() => {
         window.ChamaSom = () => {};
+        window.maxAndar = 100;   // Cidade liberada: a customização fica ativa no teste
         document.getElementById("infoModal")?.remove();
         UI.showInfo = () => {};
         document.querySelector(".offline-rewards-claim")?.click();
