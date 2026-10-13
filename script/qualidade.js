@@ -76,9 +76,13 @@ function QualidadeSeletor() {
     return bloco;
 }
 
-// aplica já no load (o CSS reage na hora)
+// aplica já no load e encaixa o seletor nas Configurações (painel do pause)
 AplicaQualidade();
-document.addEventListener("DOMContentLoaded", AplicaQualidade);
+document.addEventListener("DOMContentLoaded", () => {
+    AplicaQualidade();
+    const alvo = document.getElementById("configQualidade");
+    if (alvo && !alvo.childElementCount) alvo.appendChild(QualidadeSeletor());
+});
 
 window.Tapeira = window.Tapeira || {};
 window.Tapeira.Qualidade = {
