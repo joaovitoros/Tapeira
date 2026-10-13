@@ -121,6 +121,10 @@ const TIPOS = {
     "1": { tipo: "triangle", vol: 0.42, eco: true },
     "2": { tipo: "sine", vol: 0.55, eco: false }
 };
+// tema de batalha pede um timbre mais agressivo (quadrada na melodia)
+const tiposDe = (nome) => nome.includes("batalha")
+    ? { "1": { tipo: "square", vol: 0.26, eco: true }, "2": { tipo: "triangle", vol: 0.5, eco: false } }
+    : TIPOS;
 
 (async () => {
     const arquivos = fs.readdirSync(DIR).filter(n => n.toLowerCase().endsWith(".abc")).sort();
@@ -133,7 +137,7 @@ const TIPOS = {
         const abc = fs.readFileSync(path.join(DIR, arq), "utf8");
         const t = parseAbc(abc);
         const vozes = Object.entries(t.vozes).map(([id, notas]) => ({
-            id, notas, ...(TIPOS[id] || { tipo: "triangle", vol: 0.4, eco: true })
+            id, notas, ...(tiposDe(nome)[id] || { tipo: "triangle", vol: 0.4, eco: true })
         }));
         const total = t.duracao + 0.6;   // cauda do eco
 
