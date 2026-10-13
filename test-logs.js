@@ -71,8 +71,8 @@ const path = require('path');
       const config = document.getElementById("container-SalvaCarrega");
       const btn = document.getElementById("btnLogs");
       check("botão Logs existe na configuração", !!btn && !!config && config.contains(btn));
-      check("botão Logs é o último bloco do menu",
-        !!config && !!config.lastElementChild && config.lastElementChild.contains(btn));
+      check("botão Logs tem o próprio cartão no menu",
+        !!btn && !!btn.closest("#divLogs") && config.contains(btn.closest("#divLogs")));
 
       // ---- tela de logs via clique real no botão ----
       L.limpa();
