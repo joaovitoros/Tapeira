@@ -13429,13 +13429,13 @@ html.q-baixa .cidade-lampiao {
 
 .loja-item__nivel {
 	flex: 0 0 auto;
-	padding: 2px 6px;
+	padding: 3px 7px;
 	border: 1px solid #2b3341;
 	border-radius: 5px;
 	background: #0e1219;
-	color: #a6adba;
-	font-size: 10px;
-	font-weight: 600;
+	color: #c3cad6;
+	font-size: 12.5px;
+	font-weight: 700;
 	white-space: nowrap;
 }
 
