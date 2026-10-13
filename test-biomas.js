@@ -89,6 +89,22 @@ const path = require('path');
         check("painel de dev presente", !!document.getElementById("game-dev-tools"));
         check("toggle do teste visual saiu do dev-tools",
             !document.querySelector("#game-dev-tools [data-teste-visual]"));
+        // trilha por bioma + batalha no guardião (toca quando a CENA carrega)
+        andar = 5;  check("andar 5 -> tema mina", B.tema() === "mina", B.tema());
+        andar = 10; check("andar 10 (guardião) -> batalha", B.tema() === "batalha", B.tema());
+        andar = 15; check("andar 15 -> mina-viva", B.tema() === "mina-viva", B.tema());
+        andar = 25; check("andar 25 -> mina-grave", B.tema() === "mina-grave", B.tema());
+        const audio = document.getElementById("audio1");
+        andar = 11; B.tocaMusica();
+        check("audio1 aponta pro tema do bioma",
+            audio.getAttribute("src") === "media/musicas/mina-viva.wav", audio.getAttribute("src"));
+        check("audio1 em loop", audio.loop === true);
+        andar = 10; B.tocaMusica();
+        check("guardião troca pro tema de batalha",
+            audio.getAttribute("src") === "media/musicas/batalha.wav", audio.getAttribute("src"));
+        const srcAntes = audio.getAttribute("src");
+        andar = 10; B.tocaMusica();
+        check("mesmo tema não reinicia/troca", audio.getAttribute("src") === srcAntes);
         return out;
     });
 

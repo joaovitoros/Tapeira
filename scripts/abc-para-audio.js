@@ -10,8 +10,9 @@ const fs = require("fs");
 const path = require("path");
 
 const RAIZ = path.resolve(__dirname, "..");
-const DIR = path.join(RAIZ, "musicas");
-const SR = 44100;
+const DIR = path.join(RAIZ, "musicas");                       // fontes .abc + página
+const DIR_SAIDA = path.join(RAIZ, "media", "musicas");        // WAVs que o JOGO toca
+const SR = 22050;   // o synth corta em ~5 kHz (lowpass), então 22 kHz sobra e pesa metade
 
 // ---------- parser ABC (subconjunto suficiente pros nossos temas) ----------
 const SEMI = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
@@ -191,7 +192,8 @@ const tiposDe = (nome) => nome.includes("batalha")
             return btoa(bin);
         }, { vozes, total, sr: SR });
 
-        const saida = path.join(DIR, nome + ".wav");
+        const saida = path.join(DIR_SAIDA, nome + ".wav");
+        fs.mkdirSync(DIR_SAIDA, { recursive: true });
         fs.writeFileSync(saida, Buffer.from(wavB64, "base64"));
         const kb = Math.round(fs.statSync(saida).size / 1024);
         temas.push({ nome, titulo: t.titulo, bpm: t.bpm, compasso: t.compasso, duracao: t.duracao, kb, arquivo: nome + ".wav" });
@@ -211,7 +213,7 @@ const tiposDe = (nome) => nome.includes("batalha")
 </style></head><body>
 <h1>TAPeira — temas em ABC</h1>
 <p class="sub">Protótipo: escritos em notação ABC e renderizados por <code>scripts/abc-para-audio.js</code>. Dá play pra ouvir.</p>
-${temas.map(t => `<div class="t"><h2>${t.titulo}</h2><small>${t.nome}.abc · ${t.bpm} bpm · ${t.compasso} · ${t.duracao.toFixed(1)}s · ${t.kb} KB</small><audio controls loop src="${t.arquivo}"></audio></div>`).join("\n")}
+${temas.map(t => `<div class="t"><h2>${t.titulo}</h2><small>${t.nome}.abc · ${t.bpm} bpm · ${t.compasso} · ${t.duracao.toFixed(1)}s · ${t.kb} KB</small><audio controls loop src="../media/musicas/${t.arquivo}"></audio></div>`).join("\n")}
 </body></html>`;
     fs.writeFileSync(path.join(DIR, "tocar.html"), html);
     console.log("\npágina pra ouvir: " + path.join(DIR, "tocar.html"));
