@@ -648,9 +648,9 @@ function CriaPoeiraMorte(rect) {
 function animarMorte(el) {
 	const rect = el.getBoundingClientRect();
 	CriaPoeiraMorte(rect);
-	// Teste visual (painel de dev): cada criatura nova tem a SUA morte (fatiada
-	// do atlas). Sem teste, usa a animação genérica do cogumelo marrom.
-	const frames = (typeof TesteVisualMorteFrames === "function" && TesteVisualMorteFrames(el)) || [
+	// Biomas: cada criatura tem a SUA morte (fatiada do atlas). Se não houver
+	// quadros pra ela, cai na animação genérica do cogumelo marrom.
+	const frames = (typeof BiomaMorteFrames === "function" && BiomaMorteFrames(el)) || [
 		"imagens/animacoes/morte/frame12.png",
 		"imagens/animacoes/morte/frame11.png",
 		"imagens/animacoes/morte/frame10.png",
