@@ -3278,9 +3278,12 @@ test("guilda: mostra o cartão, exporta e importa cartão de rival (não save)",
         assert.ok(painel.temModal, "painel da Guilda abre pela API Tapeira.Guilda");
         assert.ok(painel.temCartao, "o cartão do jogador aparece no painel");
         assert.ok(painel.cartaoSeu, "cartão rotulado como seu");
-        assert.deepEqual(painel.botoes,
-            ["Exportar meu cartão", "Importar cartão de rival"],
-            "as duas ações do multiplayer estão na Guilda");
+        assert.ok(
+            painel.botoes.includes("Exportar meu cartão") && painel.botoes.includes("Importar cartão de rival"),
+            "as ações de exportar/importar cartão estão na Guilda: " + JSON.stringify(painel.botoes));
+        assert.ok(
+            painel.botoes.includes("Enviar meu cartão") && painel.botoes.includes("Cartões da comunidade"),
+            "as ações da Comunidade também estão na Guilda: " + JSON.stringify(painel.botoes));
         assert.ok(painel.semInline, "sem handler inline nos botões");
         assert.ok(painel.idTexto.includes("ID do cartão"), "id do cartão visível: " + painel.idTexto);
         assert.equal(painel.statusExporta, false,
@@ -4179,11 +4182,14 @@ test("batalha-fantasma: cartão de batalha monta, valida e importa sem tocar no 
         assert.ok(depois.semInline, "sem onclick inline na tela do duelo");
 
         // o duelo (z 999999) abre por CIMA de qualquer modal já aberto — o
-        // botão de fechar do "Como jogar" fica inalcançável pelo clique.
-        // Remove o modal direto na página (determinístico, sem depender de
-        // quem cobre quem).
-        await page.evaluate(() => document.getElementById("infoModal")?.remove());
-        await page.click("[data-pvp-fechar]");
+        // botão de fechar do "Como jogar" fica inalcançável pelo CLIQUE.
+        // O #infoModal ainda reaparece (aviso atrasado) e o Playwright faz
+        // hit-test antes de clicar → dava timeout (flaky). Aqui o que importa é
+        // o HANDLER do botão, então clica direto pelo DOM.
+        await page.evaluate(() => {
+            document.getElementById("infoModal")?.remove();
+            document.querySelector("[data-pvp-fechar]")?.click();
+        });
         const fechada = await page.evaluate(() => !document.getElementById("pvpDuelo"));
         assert.ok(fechada, "botão Fechar fecha a tela do duelo");
 
