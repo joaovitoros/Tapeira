@@ -11965,18 +11965,24 @@ html.q-baixa .player__camada {
 }
 
 .qualidade-seletor__linha {
-	display: flex;
-	gap: 8px;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 6px;
+	width: 100%;
 }
 
 .qualidade-btn {
-	flex: 1;
-	padding: 7px 10px;
+	min-width: 0;
+	padding: 7px 4px;
 	border-radius: 8px;
 	border: 1px solid rgba(137, 177, 255, 0.28);
 	background: linear-gradient(145deg, #1a2230, #121822);
 	color: #dfe7f2;
 	font: inherit;
+	font-size: 12px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	cursor: pointer;
 }
 
