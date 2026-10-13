@@ -4,6 +4,32 @@ Este arquivo registra **onde a reorganização parou** e o que falta, para que
 qualquer pessoa (ou sessão futura) continue do ponto certo. As regras de
 contribuição continuam no `AGENTS.md`.
 
+## 🚩 ONDE PARAMOS (13/10/2026)
+
+**Estado:** suíte **79/79 verde** (consertados os 3 testes que já falhavam: a asserção da
+Guilda, `test-cidade.js` e o flaky da batalha-fantasma). `main` = `joao` = **`6fd262d`**.
+
+**Feito nesta leva:**
+- **Item 20** — extraído o **fundo da caverna** de `script.js` para **`script/fundos.js`**
+  (`FUNDOS_CAVERNA`, `IniciaFundos`, `TrocaFundoPara`, `ProximoFundo`) — corte byte a byte,
+  sem mudar comportamento. Registrado no `script-manifest.js` (Caverna = **53 scripts**).
+- **Item 21** — limpeza de **38 assets órfãos** (−3,7 MB) e **folhas de arte-fonte fora do
+  pacote do PC**: corrigida a exclusão de `imagens/customização/**` (estava sem o acento) e
+  excluída `imagens/possiveis novos fundos/**` → **~29,5 MB a menos** (verificado no `app.asar`).
+- **`FormatarGold`** — conferido: **já tem** fallback científico (`gold.js` ~175-182); a nota
+  antiga deste doc estava errada.
+
+**PRÓXIMO PASSO (foi onde parei):** extrair de `script.js` os blocos que faltam —
+**variáveis da loja**, **avanço de inimigos** e **portões/`VoltaAndar`**.
+⚠️ Diferente do fundo, esses estão **amarrados ao save, reset e validação**: a extração precisa
+vir **no mesmo commit** de uma conferida em `persistencia-carregar.js`,
+`persistencia-autosave.js`, `validacao-save.js` e `Resetar()` (`sistema.js`) — e a suíte tem
+que seguir **79/79**.
+
+**Depois disso:** item 2 restante (otimizar os sprites do build — `prepare-animation-sprites.ps1`,
+~711 KB) e o item 1 (cache de `getElementById`/consolidar ticks — **baixo valor**: medi só
+3 timers ativos e ~0,4 ms no tick de 1 s).
+
 ## Objetivo
 
 Reduzir o acoplamento dos arquivos monstro (`script.js`, `sistema.js`,
