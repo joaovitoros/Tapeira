@@ -2321,7 +2321,7 @@ body {
 	filter: drop-shadow(0 0 4px rgba(105, 205, 255, 0.55));
 }
 
-/* Ícones ilustrados (PNG): o brilho é por skill (as cores já vêm da arte) */
+/* Ícones ilustrados (SVG): o brilho é por skill (as cores já vêm da arte) */
 .combat-skill__icon--gold {
 	filter: drop-shadow(0 0 5px rgba(255, 194, 65, 0.6));
 }

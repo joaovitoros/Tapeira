@@ -3,11 +3,11 @@
 
 // Ícones dos nós raízes da árvore de habilidades (assets já existentes no jogo)
 const ICONE_SKILL = {
-	damage: "imagens/skills/skill-damage.png",
-	electric: "imagens/skills/skill-electric.png",
-	gold: "imagens/skills/skill-gold.png",
-	escape: "imagens/skills/skill-escape.png",
-	frenzy: "imagens/skills/skill-frenzy.png"
+	damage: "imagens/skills/skill-damage.svg",
+	electric: "imagens/skills/skill-electric.svg",
+	gold: "imagens/skills/skill-gold.svg",
+	escape: "imagens/skills/skill-escape.svg",
+	frenzy: "imagens/skills/skill-frenzy.svg"
 };
 
 const UI = {

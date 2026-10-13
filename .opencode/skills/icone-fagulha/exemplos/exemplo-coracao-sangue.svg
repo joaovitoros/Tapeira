@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <!-- Estilo Fagulha — motivo: coracao | esquema: sangue | faíscas: 4 -->
+  <defs>
+    <path id="spark" d="M0 -28 L8 -8 L28 0 L8 8 L0 28 L-8 8 L-28 0 L-8 -8 Z"/>
+  </defs>
+  <g transform="scale(1)">
+    <circle cx="256" cy="256" r="252" fill="#e8283c" stroke="#e8283c" stroke-width="8"/>
+    <circle cx="256" cy="256" r="214" fill="#b01224"/>
+    <circle cx="256" cy="256" r="204" fill="#42040a"/>
+    <path d="M 215.7 27.5 A 232 232 0 0 0 24.9 235.7" stroke="#ffc2c6" stroke-width="16" stroke-linecap="round"/>
+    <path d="M256 388 C176 320 152 246 190 200 C216 168 252 180 256 210 C260 180 296 168 322 200 C360 246 336 320 256 388 Z" fill="#ff5a6a" stroke="#ff5a6a" stroke-width="14" stroke-linejoin="round"/>
+    <path d="M210 216 C202 200 210 188 226 185" stroke="#fff0f0" stroke-width="9" stroke-linecap="round"/>
+    <g fill="#ff9aa4" stroke="#ff9aa4" stroke-width="4" stroke-linejoin="round">
+      <use href="#spark" xlink:href="#spark" transform="translate(286 92) scale(0.8)"/>
+      <use href="#spark" xlink:href="#spark" transform="translate(168 380) scale(0.85)"/>
+      <use href="#spark" xlink:href="#spark" transform="translate(372 150) scale(0.75)"/>
+      <use href="#spark" xlink:href="#spark" transform="translate(108 236) scale(0.55)"/>
+    </g>
+  </g>
+</svg>

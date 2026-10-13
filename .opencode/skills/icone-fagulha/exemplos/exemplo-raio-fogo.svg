@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <!-- Estilo Fagulha — motivo: raio | esquema: fogo | enfeite: faisca (10) -->
+  <defs>
+    <path id="enfeite" d="M0 -28 L8 -8 L28 0 L8 8 L0 28 L-8 8 L-28 0 L-8 -8 Z"/>
+  </defs>
+  <g transform="scale(1)">
+    <circle cx="256" cy="256" r="252" fill="#ff9d15" stroke="#ff9d15" stroke-width="8"/>
+    <circle cx="256" cy="256" r="214" fill="#ea7609"/>
+    <circle cx="256" cy="256" r="204" fill="#6f1a04"/>
+    <path d="M 215.7 27.5 A 232 232 0 0 0 24.9 235.7" stroke="#ffe6ad" stroke-width="16" stroke-linecap="round"/>
+    <path d="M296 130 L176 296 L248 296 L202 408 L344 252 L272 252 L326 130 Z" fill="#ffd400" stroke="#ffd400" stroke-width="14" stroke-linejoin="round"/>
+    <path d="M288 148 L192 286" stroke="#fffef0" stroke-width="14" stroke-linecap="round"/>
+    <g fill="#fff05a" stroke="#fff05a" stroke-width="3" stroke-linejoin="round">
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(286 92) scale(0.8)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(168 380) scale(0.85)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(372 150) scale(0.75)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(108 236) scale(0.55)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(238 424) scale(0.7)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(398 268) scale(0.9)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(150 130) scale(0.65)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(350 372) scale(0.6)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(198 172) scale(0.5)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(312 316) scale(0.6)"/>
+    </g>
+  </g>
+</svg>

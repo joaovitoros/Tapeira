@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <!-- Estilo Fagulha — motivo: espada | esquema: sangue | enfeite: estilhaco (8) -->
+  <defs>
+    <path id="enfeite" d="M-4 -28 L14 -8 L4 28 L-16 6 Z"/>
+  </defs>
+  <g transform="scale(1)">
+    <circle cx="256" cy="256" r="252" fill="#e8283c" stroke="#e8283c" stroke-width="8"/>
+    <circle cx="256" cy="256" r="214" fill="#b01224"/>
+    <circle cx="256" cy="256" r="204" fill="#42040a"/>
+    <path d="M 215.7 27.5 A 232 232 0 0 0 24.9 235.7" stroke="#ffc2c6" stroke-width="16" stroke-linecap="round"/>
+    <path d="M256 100 L284 318 L228 318 Z M192 322 H320 V350 H192 Z M240 350 H272 V398 H240 Z" fill="#ff5a6a" stroke="#ff5a6a" stroke-width="14" stroke-linejoin="round"/>
+    <path d="M254 140 L246 300" stroke="#fff0f0" stroke-width="8" stroke-linecap="round"/>
+    <g fill="#ff9aa4" stroke="#ff9aa4" stroke-width="3" stroke-linejoin="round">
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(286 92) scale(0.8)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(168 380) scale(0.85)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(372 150) scale(0.75)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(108 236) scale(0.55)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(238 424) scale(0.7)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(398 268) scale(0.9)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(150 130) scale(0.65)"/>
+      <use href="#enfeite" xlink:href="#enfeite" transform="translate(350 372) scale(0.6)"/>
+    </g>
+  </g>
+</svg>
