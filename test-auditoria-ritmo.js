@@ -26,6 +26,12 @@ const arg = (nome, padrao) => {
 const RESETS = Number(arg('resets', 12));
 const POLITICA = arg('politica', 'valor');
 const SEED = Number(arg('seed', 1));
+// Cenários de balanceamento (opcional): sobrescrevem o jogo NA PÁGINA, sem tocar
+// no código — pra medir antes/depois com o mesmo seed.
+//   cmStep=1.4|1.25  → passo do preço da Loja do Conhecimento (padrão: o do jogo)
+//   cmBase=1|2       → multiplicador de CM ganho no reset (1 = o do jogo)
+const CM_STEP = arg('cmStep', '');
+const CM_BASE = Number(arg('cmBase', 0));
 
 // Ordem de compra por política (todas as funções existem no jogo).
 const POLITICAS = {
@@ -56,8 +62,19 @@ const PATENTE_DA_COMPRA = {
 
     await page.goto('file://' + path.resolve(__dirname, 'Caverna.html'));
     await page.waitForFunction(() => window.andar !== undefined, { timeout: 15000 });
+    await page.evaluate(({ step, base }) => { window.__CM_STEP__ = step; window.__CM_BASE__ = base; },
+        { step: CM_STEP ? Number(CM_STEP) : 0, base: CM_BASE || 0 });
 
     const saida = await page.evaluate(async ({ RESETS, ORDEM, PATENTE_DA_COMPRA, SEED }) => {
+        // ---------- cenário de balanceamento (opcional) ----------
+        if (window.__CM_STEP__) {
+            const passo = window.__CM_STEP__;
+            PrecoLojaCM = (nivel) => Math.round(10 * Math.pow(passo, Math.max(0, Number(nivel) || 0)));
+        }
+        if (window.__CM_BASE__ && window.__CM_BASE__ !== 1) {
+            const base = window.__CM_BASE__, original = MultiplicadorCM;
+            MultiplicadorCM = () => base * original();
+        }
         // ---------- ambiente determinístico e silencioso ----------
         let semente = SEED >>> 0;
         Math.random = () => { semente = (semente * 1664525 + 1013904223) >>> 0; return semente / 4294967296; };
@@ -108,11 +125,50 @@ const PATENTE_DA_COMPRA = {
             f(arg);
             return Number(gold) !== g0 || Number(esmeraldas) !== e0 || Number(conhecimentoMug) !== c0;
         };
+        // ---- Cidade (destrava no andar 80): usa os prédios pelas APIs deles ----
+        const cidadeAberta = () => {
+            try { return !!(window.Tapeira && window.Tapeira.Cidade && window.Tapeira.Cidade.desbloqueada && window.Tapeira.Cidade.desbloqueada()); }
+            catch (e) { return false; }
+        };
+        const comprarCidade = () => {
+            const C = window.Tapeira || {};
+            let fez = false;
+            const tenta = (f) => {
+                try {
+                    const g0 = Number(gold), e0 = Number(esmeraldas), m0 = Number(conhecimentoMug), t0 = Number(ticketsMug);
+                    f();
+                    return Number(gold) !== g0 || Number(esmeraldas) !== e0 || Number(conhecimentoMug) !== m0 || Number(ticketsMug) !== t0;
+                } catch (e) { return false; }
+            };
+            if (C.Pesquisa && typeof C.Pesquisa.comprarItem === 'function') {
+                for (let i = 0; i < C.Pesquisa.ITEM_MAX; i++) if (tenta(() => C.Pesquisa.comprarItem(i))) fez = true;
+                for (let i = 0; i < C.Pesquisa.INIMIGO_MAX; i++) if (tenta(() => C.Pesquisa.comprarInimigo(i))) fez = true;
+            }
+            if (C.Cristal && typeof C.Cristal.comprarNivel === 'function' && tenta(() => C.Cristal.comprarNivel())) fez = true;
+            if (C.Fabrica && typeof C.Fabrica.comprarNivel === 'function' && tenta(() => C.Fabrica.comprarNivel())) fez = true;
+            if (C.Mercado && typeof C.Mercado.comprarReputacao === 'function' && tenta(() => C.Mercado.comprarReputacao())) fez = true;
+            if (C.Casa && typeof C.Casa.comprarConforto === 'function' && tenta(() => C.Casa.comprarConforto())) fez = true;
+            if (C.Trofeus && typeof C.Trofeus.comprar === 'function') {
+                for (let i = 0; i < 10; i++) if (tenta(() => C.Trofeus.comprar(i))) fez = true;
+            }
+            if (C.Fazenda && typeof C.Fazenda.coletar === 'function') { try { C.Fazenda.coletar(); } catch (e) { } }
+            return fez;
+        };
+
         const comprar = () => {
             let comprou = true;
             while (comprou) {
                 comprou = false;
                 for (const nome of ORDEM) { if (tentar(nome)) { comprou = true; break; } }
+                // Especialização (build): Força Bruta (+40% de dano) — troca barata,
+                // desbloqueia depois do 1º reset e zera no Resetar (recompra por run).
+                if (especializacao === 0 && typeof EspecializacaoDesbloqueada === 'function'
+                    && EspecializacaoDesbloqueada(1) && gold >= PrecoEspecializacao()) {
+                    const g0 = Number(gold);
+                    EscolheEspecializacao(1);
+                    if (Number(gold) !== g0) comprou = true;
+                }
+                if (cidadeAberta() && comprarCidade()) comprou = true;
                 if (quantidadeBausDisponiveis > 0) ColetaBau();
             }
         };
