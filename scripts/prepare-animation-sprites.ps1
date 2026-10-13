@@ -116,15 +116,10 @@ function New-TransparentEscapeFrames {
     }
 }
 
-New-TransparentSpriteStrip `
-    -Source (Join-Path $projectRoot "imagens/animacoes/ataque/ataque.png") `
-    -Destination (Join-Path $projectRoot "imagens/animacoes/ataque/ataque-sprites.png") `
-    -Frames 6 -CropTop 0 -CropHeight 256 -FrameWidth 256 -KeyColor "green"
-
-New-TransparentSpriteStrip `
-    -Source (Join-Path $projectRoot "imagens/animacoes/fugindo/fugindo.png") `
-    -Destination (Join-Path $projectRoot "imagens/animacoes/fugindo/fugindo-sprites.png") `
-    -Frames 7 -CropTop 160 -CropHeight 430 -FrameWidth 320
+# (As faixas "ataque-sprites" e "fugindo-sprites" saíram: a animação de ataque
+#  foi desativada e o jogo só usa os frames de fuga gerados abaixo — ver
+#  REFATORACAO.md. A folha-fonte fugindo.png fica no repositório, mas fora do
+#  pacote: só serve para regenerar os frames.)
 
 # The escape sheet has eight poses with different widths. Keep each crop inside
 # its pose so adjacent characters do not leak into the animation frame.

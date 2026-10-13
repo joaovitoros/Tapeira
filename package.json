@@ -50,6 +50,7 @@
       "!imagens/inimigos-futuros/**",
       "!imagens/customização/**",
       "!imagens/possiveis novos fundos/**",
+      "!imagens/animacoes/fugindo/fugindo.png",
       "!imagens/cidade/edificios/**",
       "!imagens/cidade/props *.png",
       "!imagens/cidade/cidade background*.png",
