@@ -648,19 +648,9 @@ function CriaPoeiraMorte(rect) {
 function animarMorte(el) {
 	const rect = el.getBoundingClientRect();
 	CriaPoeiraMorte(rect);
-	const morte = document.createElement("img");
-	morte.className = "morteAnim";
-	morte.src = "imagens/animacoes/morte/frame12.png";
-	morte.style.left = `${rect.left}px`;
-	morte.style.top = `${rect.top}px`;
-	morte.style.width = `${rect.width}px`;
-	morte.style.height = `${rect.height}px`;
-	morte.style.transform = el.style.transform;
-	morte.style.filter = getComputedStyle(el).filter;
-	document.body.appendChild(morte);
-	el.style.visibility = "hidden";
-
-	const frames = [
+	// Teste visual (painel de dev): cada criatura nova tem a SUA morte (fatiada
+	// do atlas). Sem teste, usa a animação genérica do cogumelo marrom.
+	const frames = (typeof TesteVisualMorteFrames === "function" && TesteVisualMorteFrames(el)) || [
 		"imagens/animacoes/morte/frame12.png",
 		"imagens/animacoes/morte/frame11.png",
 		"imagens/animacoes/morte/frame10.png",
@@ -675,6 +665,18 @@ function animarMorte(el) {
 		"imagens/animacoes/morte/frame1.png"
 	];
 
+	const morte = document.createElement("img");
+	morte.className = "morteAnim";
+	morte.src = frames[0];
+	morte.style.left = `${rect.left}px`;
+	morte.style.top = `${rect.top}px`;
+	morte.style.width = `${rect.width}px`;
+	morte.style.height = `${rect.height}px`;
+	morte.style.transform = el.style.transform;
+	morte.style.filter = getComputedStyle(el).filter;
+	document.body.appendChild(morte);
+	el.style.visibility = "hidden";
+
 	let frame = 0;
 	const limpa = () => {
 		const animacao = efeitosMorteAtivos.get(morte);
@@ -684,6 +686,8 @@ function animarMorte(el) {
 		efeitosMorteAtivos.delete(morte);
 		morte.remove();
 	};
+	// poucos quadros (morte por criatura) pedem um passo mais lento
+	const intervaloMs = frames.length <= 6 ? 150 : 80;
 	const intervalo = setInterval(() => {
 		frame++;
 		if (frame >= frames.length) {
@@ -691,7 +695,7 @@ function animarMorte(el) {
 			return;
 		}
 		morte.src = frames[frame];
-	}, 80);
+	}, intervaloMs);
 	const limite = setTimeout(limpa, 1200);
 	efeitosMorteAtivos.set(morte, { intervalo, limite });
 }

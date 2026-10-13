@@ -14,7 +14,7 @@ const path = require('path');
     await page.goto('file://' + path.resolve(__dirname, 'Caverna.html') + '?dev=1');
     await page.waitForFunction(() => window.andar !== undefined, { timeout: 15000 });
 
-    const resultados = await page.evaluate(() => {
+    const resultados = await page.evaluate(async () => {
         const out = [];
         const check = (nome, ok, detalhe) => out.push({ nome, ok: !!ok, detalhe: detalhe === undefined ? "" : String(detalhe) });
         window.ChamaSom = () => {};
@@ -66,6 +66,38 @@ const path = require('path');
         el.src = "imagens/personagens/inimigo.png";
         SurgeInimigo(el);
         check("SurgeInimigo troca o sprite", el.src.includes("inimigos/" + TV.INIMIGOS[2].split("/")[1]));
+
+        // ---- morte animada POR CRIATURA ----
+        const criaturaEsperada = TV.INIMIGOS[2].split("/")[1].replace(".png", "");
+        check("o elemento guarda a criatura", el.dataset.criatura === criaturaEsperada, el.dataset.criatura);
+        const fr = TV.morteFrames(el);
+        check("quadros de morte da criatura",
+            Array.isArray(fr) && fr.length >= 3 && fr[1].includes("inimigos/morte/" + criaturaEsperada + "-01.png"),
+            fr ? fr.length + " quadros" : "null");
+        el.style.visibility = "visible";
+        animarMorte(el);
+        const anim = document.querySelector(".morteAnim");
+        check("morteAnim começa no sprite (transição colada)",
+            !!anim && anim.src.includes(criaturaEsperada + ".png"),
+            anim ? anim.src.split("/").slice(-2).join("/") : "sem");
+        await new Promise(r => setTimeout(r, 220));
+        const animMeio = document.querySelector(".morteAnim");
+        check("morteAnim passa pros quadros da criatura",
+            !!animMeio && animMeio.src.includes("inimigos/morte/" + criaturaEsperada + "-"),
+            animMeio ? animMeio.src.split("/").slice(-2).join("/") : "sem");
+        LimpaEfeitosMorte();
+
+        // sem o teste, a morte volta a ser a genérica
+        TV.define(false);
+        el.style.visibility = "visible";
+        animarMorte(el);
+        const anim2 = document.querySelector(".morteAnim");
+        check("desligado usa a morte genérica",
+            !!anim2 && anim2.src.includes("animacoes/morte/"),
+            anim2 ? anim2.src.split("/").slice(-2).join("/") : "sem");
+        LimpaEfeitosMorte();
+        TV.define(true);
+        andar = 12;
 
         // desligar volta tudo ao padrão
         TV.define(false);
