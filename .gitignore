@@ -35,3 +35,7 @@ visual-shots-loja/*
 
 # cartoes de batalha enviados (dados locais do servidor)
 cartoes/
+
+# Temas em ABC: o WAV e a pagina de audicao sao GERADOS (npm run musica)
+musicas/*.wav
+musicas/tocar.html
