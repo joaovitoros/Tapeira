@@ -67,6 +67,12 @@ const PATENTE_DA_COMPRA = {
     const page = await ctx.newPage();
     const erros = [];
     page.on('pageerror', e => { if (!/play\(\) failed because the user didn't interact/.test(e.message)) erros.push(e.message); });
+    // Progresso AO VIVO: o bot emite uma linha por run. Sem isso, um run longo é
+    // uma caixa preta (não dá pra saber se está na run 3 ou na 12, nem se travou).
+    page.on('console', m => {
+        const t = m.text();
+        if (t.startsWith('AUDIT-RUN ')) console.log("  " + t.slice('AUDIT-RUN '.length));
+    });
 
     await page.goto('file://' + path.resolve(__dirname, 'Caverna.html'));
     await page.waitForFunction(() => window.andar !== undefined, { timeout: 15000 });
@@ -345,6 +351,11 @@ const PATENTE_DA_COMPRA = {
                 danoReset: Number(danoResetQtd), mulGold: Number(mulGold),
                 danoJogador: Number(danoJogador), vidaAndar: Number(vidaAndar)
             });
+            // Linha de progresso por run (o Node imprime ao vivo via page.on('console')).
+            console.log("AUDIT-RUN run " + r + "/" + RESETS + " | recorde " + recorde + " | " +
+                (snapshotParede
+                    ? snapshotParede.derrotados + "/" + snapshotParede.quota + " abates (" + snapshotParede.motivo + ")"
+                    : "passou os 300 andares"));
             // reset de verdade (portões +5%, CM, esmeraldas)
             if (andar >= Math.min(andarVolta, 20)) VoltaAndar();
             if (andar > 5) { andar = 1; CarregarStatus(); CriarInimigos(); }  // rede de segurança
