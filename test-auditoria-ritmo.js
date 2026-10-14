@@ -32,13 +32,17 @@ const SEED = Number(arg('seed', 1));
 //   cmBase=1|2       → multiplicador de CM ganho no reset (1 = o do jogo)
 const CM_STEP = arg('cmStep', '');
 const CM_BASE = Number(arg('cmBase', 0));
+// fusao=fixo → desliga o escalonamento do fundo com os abates (mede o efeito
+// do escalonamento isolado, já que as SKILLS agora estão modeladas).
+const FUSAO_FIXA = arg('fusao', '') === 'fixo';
 
 // Ordem de compra por política (todas as funções existem no jogo).
 const POLITICAS = {
     // "valor": o item mais forte do jogo primeiro (corta vida), depois o CM
     // (dano/crítico compostos e +2 s de fundo), depois dano/crítico, ritmo e economia.
     valor: ['CompraSubVida', 'CompraCM:dano', 'CompraDano', 'CompraCM:crit', 'CompraDCrit',
-        'CompraCM:comp', 'CompraComp1', 'CompraBEspaco', 'CompraCCrit', 'CompraCM:fuga',
+        'CompraCM:comp', 'CompraComp1', 'CompraComp3', 'CompraBEspaco', 'CompraCCrit',
+        'CompraCM:fuga', 'CompraComp6',
         'CompraGold', 'CompraQTDAvanco', 'CompraAvanco', 'CompraCM:gold', 'CompraXP',
         'CompraVelComp', 'CompraAvGold', 'CompraEsmCM', 'CompraBau'],
     // "dano": um jogador que só investe em dano direto (pra comparar).
@@ -62,8 +66,8 @@ const PATENTE_DA_COMPRA = {
 
     await page.goto('file://' + path.resolve(__dirname, 'Caverna.html'));
     await page.waitForFunction(() => window.andar !== undefined, { timeout: 15000 });
-    await page.evaluate(({ step, base }) => { window.__CM_STEP__ = step; window.__CM_BASE__ = base; },
-        { step: CM_STEP ? Number(CM_STEP) : 0, base: CM_BASE || 0 });
+    await page.evaluate(({ step, base, fusaoFixa }) => { window.__CM_STEP__ = step; window.__CM_BASE__ = base; window.__FUSAO_FIXA__ = fusaoFixa; },
+        { step: CM_STEP ? Number(CM_STEP) : 0, base: CM_BASE || 0, fusaoFixa: FUSAO_FIXA });
 
     const saida = await page.evaluate(async ({ RESETS, ORDEM, PATENTE_DA_COMPRA, SEED }) => {
         // ---------- cenário de balanceamento (opcional) ----------
@@ -74,6 +78,13 @@ const PATENTE_DA_COMPRA = {
         if (window.__CM_BASE__ && window.__CM_BASE__ !== 1) {
             const base = window.__CM_BASE__, original = MultiplicadorCM;
             MultiplicadorCM = () => base * original();
+        }
+        if (window.__FUSAO_FIXA__) {
+            TempoFugaMax = () => {
+                const base = 90 + cmNivelFuga * 2;
+                const tempo = especializacao === 4 ? Math.floor(base * 0.2) : base;
+                return (tempo + BonusFugaConquistaComp()) * Tapeira.ItensBuild.multFuga();
+            };
         }
         // ---------- ambiente determinístico e silencioso ----------
         let semente = SEED >>> 0;
@@ -169,6 +180,27 @@ const PATENTE_DA_COMPRA = {
                     if (Number(gold) !== g0) comprou = true;
                 }
                 if (cidadeAberta() && comprarCidade()) comprou = true;
+                // Skills e perks: gasta os pontos em escolhas ALEATÓRIAS (modela
+                // um jogador típico). É daqui que sai o perkFuga (o que restaura
+                // o cronômetro de fuga) e o perk de dano.
+                let treinou = false;
+                if (typeof pontosHabilidade !== "undefined" && pontosHabilidade > 0 && typeof EvoluiSkill === "function") {
+                    const ids = (typeof habilidadesCombate !== "undefined" && habilidadesCombate.length)
+                        ? habilidadesCombate.map(s => s.id) : [];
+                    for (let k = 0; k < 40 && pontosHabilidade > 0 && ids.length; k++) {
+                        const id = ids[Math.floor(Math.random() * ids.length)];
+                        try { if (EvoluiSkill(id)) treinou = true; else break; } catch (e) { break; }
+                    }
+                }
+                if (typeof PontosPerkDisponiveis === "function" && typeof CompraPerk === "function"
+                    && PontosPerkDisponiveis() > 0) {
+                    const perks = ["dano", "escape", "gold", "electric", "frenzy"];
+                    for (let k = 0; k < 20 && PontosPerkDisponiveis() > 0; k++) {
+                        const id = perks[Math.floor(Math.random() * perks.length)];
+                        try { if (CompraPerk(id)) treinou = true; else break; } catch (e) { break; }
+                    }
+                }
+                if (treinou) comprou = true;
                 if (quantidadeBausDisponiveis > 0) ColetaBau();
             }
         };
@@ -185,14 +217,29 @@ const PATENTE_DA_COMPRA = {
                 while (andar === andarInicio) {
                     DanoAutomatico(true, false);
                     if (quantidadeBausDisponiveis > 0) ColetaBau();
+                    // Skill "Pausa da fuga" (libera no andar 35): enquanto ativa o
+                    // cronômetro NÃO corre. A própria função do jogo decide se está
+                    // pronta (abates >= exigido) — chamar sempre é seguro.
+                    if (typeof AtivaHabilidadeCombate === "function") {
+                        try { AtivaHabilidadeCombate("escape"); } catch (e) { }
+                    }
                     ticks++; ms += 30;
-                    if (ms >= 1000) { ms -= 1000; tempoAvancoInimigos--; }
+                    if (ms >= 1000) {
+                        ms -= 1000;
+                        // a pausa da fuga impede o tique do cronômetro
+                        if (typeof AtualizaRelogioHabilidade !== "function" || !AtualizaRelogioHabilidade()) tempoAvancoInimigos--;
+                    }
                     if (ticks % 100 === 0) comprar();
-                    if (tempoAvancoInimigos <= 0) { parede = true; break; }
-                    if (ticks > 400000) { parede = true; break; }   // guarda
+                    if (tempoAvancoInimigos <= 0) {
+                        // perkFuga (até 50%): restaura o fundo ao máximo em vez de fugir
+                        const chance = Math.min(50, Number(typeof perkFuga !== "undefined" ? perkFuga : 0) * 10);
+                        if (chance > 0 && Math.random() * 100 < chance) tempoAvancoInimigos = TempoFugaMax();
+                        else { parede = true; break; }
+                    }
+                    if (ticks > 40000) { parede = true; break; }   // guarda (1200 s simulados no andar)
                 }
                 porAndar.push({ andar: andarInicio, seg: ticks * 30 / 1000, fim: parede });
-                if (Date.now() - t0 > 20000) { parede = true; }      // guarda de tempo real
+                if (Date.now() - t0 > 15000) { parede = true; }      // guarda de tempo real
             }
             return { porAndar, recorde: Math.max(andar, ...porAndar.map(p => p.andar)), parede };
         }

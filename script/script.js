@@ -190,12 +190,21 @@ function BonusXPConhecimento() {
 	return 1 + cmNivelXp * 0.05;
 }
 
-// Tempo máximo do cronômetro de fuga: base 90 + 2 s por nível da loja. O
-// Canhão de Vidro corta 80% do teto (sobra 20%, arredondado pra baixo); como o
+// Tempo máximo do cronômetro de fuga. A exigência de abates do andar cresce com
+// o andar (1 no andar 1, ~100 no andar 100), então um teto FIXO virava o gargalo
+// do jogo inteiro — a auditoria de ritmo mediu o bot colado em 90-133 s/andar em
+// TODAS as runs (o ritmo era ditado pelo cronômetro, não pela força do build).
+// Agora o fundo escala com o trabalho do andar: ×1 até FUSAO_ABATES_REF abates
+// (o começo não muda) e linear daí pra frente.
+// O Canhão de Vidro corta 80% do teto (sobra 20%, arredondado pra baixo); como o
 // cronômetro só reabastece na troca de andar/onda, a troca de build vale a
-// partir do próximo abastecimento
+// partir do próximo abastecimento.
+const FUSAO_ABATES_REF = 10;
+
 function TempoFugaMax() {
-	const base = 90 + cmNivelFuga * 2;
+	const abates = (typeof QuotaAndar === "function") ? Number(QuotaAndar()) : 1;
+	const escala = Math.max(1, (Number.isFinite(abates) ? abates : 1) / FUSAO_ABATES_REF);
+	const base = (90 + cmNivelFuga * 2) * escala;
 	const tempo = especializacao === 4 ? Math.floor(base * 0.2) : base;
 	// +5 s da conquista Destemido entra por fora (sempre +5, mesmo no −80% do Canhão)
 	// Relógio de Bolso (itens da build): +10% por cópia no tempo total
