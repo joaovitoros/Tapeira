@@ -283,6 +283,11 @@ const PATENTE_DA_COMPRA = {
                 const andarInicio = andar;
                 const t0 = Date.now();
                 let ticks = 0, ms = 0;
+                // Orçamento do andar: no máximo 20000 ticks = 600 s simulados. O
+                // simulador é ~30x mais lento que o relógio do jogo, então este é o
+                // teto que cabe no tempo real — e é folgado para o cronômetro de
+                // fuga da mecânica (90-570 s nos andares que o bot alcança).
+                const ticksMaxAndar = 20000;
                 while (andar === andarInicio) {
                     DanoAutomatico(true, false);
                     if (quantidadeBausDisponiveis > 0) ColetaBau();
@@ -308,16 +313,16 @@ const PATENTE_DA_COMPRA = {
                             snapshotParede = tiraFoto(motivoParede, ticks); break;
                         }
                     }
-                    if (ticks > 40000) {                                  // guarda (1200 s simulados no andar)
-                        parede = true; motivoParede = "ticks (1200 s sem passar)";
+                    if (ticks > ticksMaxAndar) {                          // prazo da fuga (2x) esgotado
+                        parede = true; motivoParede = "prazo da fuga esgotado (" + Math.round(ticksMaxAndar * 0.03) + " s)";
                         snapshotParede = tiraFoto(motivoParede, ticks); break;
                     }
                 }
                 porAndar.push({ andar: andarInicio, seg: ticks * 30 / 1000, fim: parede });
-                if (Date.now() - t0 > 15000) {                       // guarda de tempo real
+                if (Date.now() - t0 > 200000) {                      // trava de segurança (200 s reais)
                     parede = true;
                     if (!motivoParede) {
-                        motivoParede = "tempo-real (ARTEFATO da simulacao)";
+                        motivoParede = "trava de tempo real da simulacao (200 s)";
                         snapshotParede = tiraFoto(motivoParede, ticks);
                     }
                 }
