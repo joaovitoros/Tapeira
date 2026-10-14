@@ -73,7 +73,7 @@ const PATENTE_DA_COMPRA = {
     await page.evaluate(({ step, base, fusaoFixa, danoPreco, danoTaxa }) => { window.__CM_STEP__ = step; window.__CM_BASE__ = base; window.__FUSAO_FIXA__ = fusaoFixa; window.__DANO_PRECO__ = danoPreco; window.__DANO_TAXA__ = danoTaxa; },
         { step: CM_STEP ? Number(CM_STEP) : 0, base: CM_BASE || 0, fusaoFixa: FUSAO_FIXA, danoPreco: DANO_PRECO || 0, danoTaxa: DANO_TAXA || 0 });
 
-    const saida = await page.evaluate(async ({ RESETS, ORDEM, PATENTE_DA_COMPRA, SEED, COMPRAR_PATENTE }) => {
+    const saida = await page.evaluate(async ({ RESETS, ORDEM, PATENTE_DA_COMPRA, SEED, COMPRAR_PATENTE, CIDADE_PRIMEIRO }) => {
         // ---------- cenário de balanceamento (opcional) ----------
         if (window.__CM_STEP__) {
             const passo = window.__CM_STEP__;
@@ -182,6 +182,7 @@ const PATENTE_DA_COMPRA = {
             let comprou = true;
             while (comprou) {
                 comprou = false;
+                if (CIDADE_PRIMEIRO && cidadeAberta() && comprarCidade()) comprou = true;
                 for (const nome of ORDEM) { if (tentar(nome)) { comprou = true; break; } }
                 // Especialização (build): Força Bruta (+40% de dano) — troca barata,
                 // desbloqueia depois do 1º reset e zera no Resetar (recompra por run).
@@ -191,7 +192,7 @@ const PATENTE_DA_COMPRA = {
                     EscolheEspecializacao(1);
                     if (Number(gold) !== g0) comprou = true;
                 }
-                if (cidadeAberta() && comprarCidade()) comprou = true;
+                if (!CIDADE_PRIMEIRO && cidadeAberta() && comprarCidade()) comprou = true;
                 // Skills e perks: gasta os pontos em escolhas ALEATÓRIAS (modela
                 // um jogador típico). É daqui que sai o perkFuga (o que restaura
                 // o cronômetro de fuga) e o perk de dano.
@@ -276,7 +277,7 @@ const PATENTE_DA_COMPRA = {
             if (andar > 5) { andar = 1; CarregarStatus(); CriarInimigos(); }  // rede de segurança
         }
         return { runs, errosPagina: [] };
-    }, { RESETS, ORDEM: POLITICAS[POLITICA] || POLITICAS.valor, PATENTE_DA_COMPRA, SEED, COMPRAR_PATENTE: POLITICA === "patente" });
+    }, { RESETS, ORDEM: POLITICAS[POLITICA] || POLITICAS.valor, PATENTE_DA_COMPRA, SEED, COMPRAR_PATENTE: POLITICA === "patente", CIDADE_PRIMEIRO: POLITICA === "cidade" });
 
     await browser.close();
 
