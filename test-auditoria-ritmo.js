@@ -149,9 +149,22 @@ const PATENTE_DA_COMPRA = {
             return Number(gold) !== g0 || Number(esmeraldas) !== e0 || Number(conhecimentoMug) !== c0;
         };
         // ---- Cidade (destrava no andar 80): usa os prédios pelas APIs deles ----
+        const errosCidade = [];
+        const estadoCidade = { temObjeto: null, temAPIs: null, desbloqueada: null, erro: null };
         const cidadeAberta = () => {
-            try { return !!(window.Tapeira && window.Tapeira.Cidade && window.Tapeira.Cidade.desbloqueada && window.Tapeira.Cidade.desbloqueada()); }
-            catch (e) { return false; }
+            try {
+                if (estadoCidade.desbloqueada === null && Number(maxAndar) >= 80) {
+                    estadoCidade.temObjeto = !!(window.Tapeira && window.Tapeira.Cidade);
+                    estadoCidade.temAPIs = !!(window.Tapeira && window.Tapeira.Pesquisa
+                        && typeof window.Tapeira.Pesquisa.comprarItem === "function");
+                    estadoCidade.desbloqueada = window.Tapeira?.Cidade?.desbloqueada
+                        ? String(window.Tapeira.Cidade.desbloqueada()) : "sem funcao";
+                }
+                return !!(window.Tapeira && window.Tapeira.Cidade && window.Tapeira.Cidade.desbloqueada && window.Tapeira.Cidade.desbloqueada());
+            } catch (e) {
+                estadoCidade.erro = String((e && e.message) || e);
+                return false;
+            }
         };
         const comprarCidade = () => {
             const C = window.Tapeira || {};
@@ -160,8 +173,13 @@ const PATENTE_DA_COMPRA = {
                 try {
                     const g0 = Number(gold), e0 = Number(esmeraldas), m0 = Number(conhecimentoMug), t0 = Number(ticketsMug);
                     f();
-                    return Number(gold) !== g0 || Number(esmeraldas) !== e0 || Number(conhecimentoMug) !== m0 || Number(ticketsMug) !== t0;
-                } catch (e) { return false; }
+                    const mudou = Number(gold) !== g0 || Number(esmeraldas) !== e0 || Number(conhecimentoMug) !== m0 || Number(ticketsMug) !== t0;
+                    if (mudou) estadoCidade.compras = (estadoCidade.compras || 0) + 1;
+                    return mudou;
+                } catch (e) {
+                    if (errosCidade.length < 6) errosCidade.push(String((e && e.message) || e));
+                    return false;
+                }
             };
             if (C.Pesquisa && typeof C.Pesquisa.comprarItem === 'function') {
                 for (let i = 0; i < C.Pesquisa.ITEM_MAX; i++) if (tenta(() => C.Pesquisa.comprarItem(i))) fez = true;
@@ -276,7 +294,7 @@ const PATENTE_DA_COMPRA = {
             if (andar >= Math.min(andarVolta, 20)) VoltaAndar();
             if (andar > 5) { andar = 1; CarregarStatus(); CriarInimigos(); }  // rede de segurança
         }
-        return { runs, errosPagina: [] };
+        return { runs, errosPagina: [], errosCidade, estadoCidade };
     }, { RESETS, ORDEM: POLITICAS[POLITICA] || POLITICAS.valor, PATENTE_DA_COMPRA, SEED, COMPRAR_PATENTE: POLITICA === "patente", CIDADE_PRIMEIRO: POLITICA === "cidade" });
 
     await browser.close();
@@ -308,5 +326,6 @@ const PATENTE_DA_COMPRA = {
     console.log("\n-- travamento --");
     console.log("  recorde final: andar " + saida.runs[saida.runs.length - 1].recorde +
         " | resets parados no mesmo recorde: " + (saida.runs.filter(x => x.recorde === saida.runs[saida.runs.length - 1].recorde).length));
+    console.log("\ncidade: " + JSON.stringify(saida.estadoCidade) + " | erros das compras: " + (saida.errosCidade.length ? saida.errosCidade.join(" | ") : "nenhum"));
     if (erros.length) console.log("erros de pagina: " + erros.slice(0, 3).join(" | "));
 })();
