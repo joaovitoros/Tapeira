@@ -115,6 +115,12 @@ const PATENTE_DA_COMPRA = {
         }
         AutoSaveLocal = () => true;
         TutorialComp1Pendente = () => false;
+        // Em vez de engolir as mensagens do jogo, guarda (deduplicadas no fim):
+        // é o que revela POR QUE a Cidade não compra.
+        const mensagens = [];
+        const captura = (...a) => { const t = a.map(v => String(v)).join(" "); if (mensagens.length < 500) mensagens.push(t); };
+        MostraInfo = captura; window.MostraInfo = captura;
+        if (typeof UI === "object" && UI) UI.showInfo = captura;
         // as funções de conquista rodam 1x a cada 400 golpes (as reais continuam valendo)
         for (const g of ['Conquistas', 'ConquistasComportamentais']) {
             if (typeof window[g] === 'function') {
@@ -294,7 +300,7 @@ const PATENTE_DA_COMPRA = {
             if (andar >= Math.min(andarVolta, 20)) VoltaAndar();
             if (andar > 5) { andar = 1; CarregarStatus(); CriarInimigos(); }  // rede de segurança
         }
-        return { runs, errosPagina: [], errosCidade, estadoCidade };
+        return { runs, errosPagina: [], errosCidade, estadoCidade, mensagens };
     }, { RESETS, ORDEM: POLITICAS[POLITICA] || POLITICAS.valor, PATENTE_DA_COMPRA, SEED, COMPRAR_PATENTE: POLITICA === "patente", CIDADE_PRIMEIRO: POLITICA === "cidade" });
 
     await browser.close();
@@ -327,5 +333,10 @@ const PATENTE_DA_COMPRA = {
     console.log("  recorde final: andar " + saida.runs[saida.runs.length - 1].recorde +
         " | resets parados no mesmo recorde: " + (saida.runs.filter(x => x.recorde === saida.runs[saida.runs.length - 1].recorde).length));
     console.log("\ncidade: " + JSON.stringify(saida.estadoCidade) + " | erros das compras: " + (saida.errosCidade.length ? saida.errosCidade.join(" | ") : "nenhum"));
+    const contagem = new Map();
+    for (const m of (saida.mensagens || [])) contagem.set(m, (contagem.get(m) || 0) + 1);
+    const top = [...contagem.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+    console.log("\nmensagens do jogo (top 12, deduplicadas):");
+    for (const par of top) console.log("  (" + par[1] + "x) " + par[0].slice(0, 120));
     if (erros.length) console.log("erros de pagina: " + erros.slice(0, 3).join(" | "));
 })();
