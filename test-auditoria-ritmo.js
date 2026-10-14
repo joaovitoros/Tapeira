@@ -258,7 +258,26 @@ const PATENTE_DA_COMPRA = {
         // ---------- uma run ----------
         function rodaRun(limiteAndar) {
             const porAndar = [];
-            let parede = false;
+            let parede = false, motivoParede = null, snapshotParede = null;
+            // Foto do INSTANTE da parede: é o que diz POR QUE o andar foi perdido
+            // (fuga zerada = DPS insuficiente; ticks = andar infinito; tempo-real = artefato).
+            const tiraFoto = (motivo, ticks) => {
+                let vidaMax = 0, vidaSoma = 0;
+                for (let e = 1; e <= 4; e++) {
+                    const v = Number(window["vidaInimigo" + e]) || 0;
+                    if (v > vidaMax) vidaMax = v;
+                    vidaSoma += v;
+                }
+                return {
+                    andar: Number(andar), motivo,
+                    derrotados: Number(inimigosDerrotados), quota: Number(QuotaAndar()),
+                    segNoAndar: Math.round(ticks * 30 / 1000),
+                    danoJogador: Number(danoJogador), vidaMax, vidaSoma,
+                    fugaMax: Number(TempoFugaMax()), fugaRestante: Number(tempoAvancoInimigos),
+                    recarga: Number(MaxValidaBater), qtd: Number(qtdAvanco),
+                    subVida: Number(subVidaInimigo), cmFuga: Number(cmNivelFuga), cmDano: Number(cmNivelDano)
+                };
+            };
             for (let i = 0; i < limiteAndar && !parede; i++) {
                 comprar();
                 const andarInicio = andar;
@@ -284,22 +303,34 @@ const PATENTE_DA_COMPRA = {
                         // perkFuga (até 50%): restaura o fundo ao máximo em vez de fugir
                         const chance = Math.min(50, Number(typeof perkFuga !== "undefined" ? perkFuga : 0) * 10);
                         if (chance > 0 && Math.random() * 100 < chance) tempoAvancoInimigos = TempoFugaMax();
-                        else { parede = true; break; }
+                        else {
+                            parede = true; motivoParede = "fuga zerada (DPS insuficiente)";
+                            snapshotParede = tiraFoto(motivoParede, ticks); break;
+                        }
                     }
-                    if (ticks > 40000) { parede = true; break; }   // guarda (1200 s simulados no andar)
+                    if (ticks > 40000) {                                  // guarda (1200 s simulados no andar)
+                        parede = true; motivoParede = "ticks (1200 s sem passar)";
+                        snapshotParede = tiraFoto(motivoParede, ticks); break;
+                    }
                 }
                 porAndar.push({ andar: andarInicio, seg: ticks * 30 / 1000, fim: parede });
-                if (Date.now() - t0 > 15000) { parede = true; }      // guarda de tempo real
+                if (Date.now() - t0 > 15000) {                       // guarda de tempo real
+                    parede = true;
+                    if (!motivoParede) {
+                        motivoParede = "tempo-real (ARTEFATO da simulacao)";
+                        snapshotParede = tiraFoto(motivoParede, ticks);
+                    }
+                }
             }
-            return { porAndar, recorde: Math.max(andar, ...porAndar.map(p => p.andar)), parede };
+            return { porAndar, recorde: Math.max(andar, ...porAndar.map(p => p.andar)), parede, motivoParede, snapshotParede };
         }
 
         const runs = [];
         for (let r = 1; r <= RESETS; r++) {
-            const { porAndar, recorde } = rodaRun(300);
+            const { porAndar, recorde, snapshotParede } = rodaRun(300);
             runs.push({
                 run: r, recorde,
-                porAndar,
+                porAndar, snapshotParede,
                 nivel: Number(nivelJogador),
                 lvDano: Number(lvlDano), lvSub: Number(lvlSubVida), lvEspaco: Number(lvlBEspaco),
                 maxBater: Number(MaxValidaBater), lvCCrit: Number(lvlCCrit), qtd: Number(qtdAvanco),
@@ -345,6 +376,18 @@ const PATENTE_DA_COMPRA = {
     console.log("\n-- travamento --");
     console.log("  recorde final: andar " + saida.runs[saida.runs.length - 1].recorde +
         " | resets parados no mesmo recorde: " + (saida.runs.filter(x => x.recorde === saida.runs[saida.runs.length - 1].recorde).length));
+
+    // POR QUE parou: a foto do andar perdido em cada run. É o diagnóstico do teto.
+    console.log("\n-- por que parou (foto do andar perdido, por run) --");
+    for (const r of saida.runs) {
+        const s = r.snapshotParede;
+        if (!s) { console.log("  run " + String(r.run).padStart(2) + ": NAO parou (passou os 300 andares do teste)"); continue; }
+        const golpes = (s.danoJogador > 0 && s.vidaMax > 0) ? (s.vidaMax / s.danoJogador).toFixed(0) : "?";
+        console.log("  run " + String(r.run).padStart(2) + ": andar " + String(s.andar).padStart(3) +
+            " | " + s.motivo + " | abates " + s.derrotados + "/" + s.quota + " em " + s.segNoAndar + "s" +
+            " | fuga " + s.fugaMax + "s | dano " + f(s.danoJogador) + " vs vida " + f(s.vidaMax) +
+            " (" + golpes + " golpes p/ matar) | CMdano " + s.cmDano + " CMfuga " + s.cmFuga);
+    }
     console.log("\ncidade: " + JSON.stringify(saida.estadoCidade) + " | erros das compras: " + (saida.errosCidade.length ? saida.errosCidade.join(" | ") : "nenhum"));
     const contagem = new Map();
     for (const m of (saida.mensagens || [])) contagem.set(m, (contagem.get(m) || 0) + 1);
