@@ -69,7 +69,7 @@ const PATENTE_DA_COMPRA = {
     await page.evaluate(({ step, base, fusaoFixa }) => { window.__CM_STEP__ = step; window.__CM_BASE__ = base; window.__FUSAO_FIXA__ = fusaoFixa; },
         { step: CM_STEP ? Number(CM_STEP) : 0, base: CM_BASE || 0, fusaoFixa: FUSAO_FIXA });
 
-    const saida = await page.evaluate(async ({ RESETS, ORDEM, PATENTE_DA_COMPRA, SEED }) => {
+    const saida = await page.evaluate(async ({ RESETS, ORDEM, PATENTE_DA_COMPRA, SEED, COMPRAR_PATENTE }) => {
         // ---------- cenário de balanceamento (opcional) ----------
         if (window.__CM_STEP__) {
             const passo = window.__CM_STEP__;
@@ -121,6 +121,9 @@ const PATENTE_DA_COMPRA = {
 
         // ---------- helpers ----------
         const podeComprar = (nome) => {
+            // politica "patente": não pula o item no teto — a própria CompraX
+            // roteia pro CompraPatenteLoja(id) e sobe a ★
+            if (COMPRAR_PATENTE) return true;
             const id = PATENTE_DA_COMPRA[nome];
             if (!id) return true;
             const cfg = ITENS_PATENTE[id];
@@ -264,7 +267,7 @@ const PATENTE_DA_COMPRA = {
             if (andar > 5) { andar = 1; CarregarStatus(); CriarInimigos(); }  // rede de segurança
         }
         return { runs, errosPagina: [] };
-    }, { RESETS, ORDEM: POLITICAS[POLITICA] || POLITICAS.valor, PATENTE_DA_COMPRA, SEED });
+    }, { RESETS, ORDEM: POLITICAS[POLITICA] || POLITICAS.valor, PATENTE_DA_COMPRA, SEED, COMPRAR_PATENTE: POLITICA === "patente" });
 
     await browser.close();
 
