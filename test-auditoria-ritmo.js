@@ -156,7 +156,8 @@ const PATENTE_DA_COMPRA = {
         };
         // ---- Cidade (destrava no andar 80): usa os prédios pelas APIs deles ----
         const errosCidade = [];
-        const estadoCidade = { temObjeto: null, temAPIs: null, desbloqueada: null, erro: null };
+        const estadoCidade = { temObjeto: null, temAPIs: null, desbloqueada: null, erro: null, flagCidadePrimeiro: null, goldNaTentativa: null, custoPesquisa: null, tentativas: 0 };
+        estadoCidade.flagCidadePrimeiro = !!CIDADE_PRIMEIRO;
         const cidadeAberta = () => {
             try {
                 if (estadoCidade.desbloqueada === null && Number(maxAndar) >= 80) {
@@ -175,6 +176,12 @@ const PATENTE_DA_COMPRA = {
         const comprarCidade = () => {
             const C = window.Tapeira || {};
             let fez = false;
+            estadoCidade.tentativas++;
+            if (estadoCidade.goldNaTentativa === null) {
+                estadoCidade.goldNaTentativa = Number(gold);
+                estadoCidade.custoPesquisa = (C.Pesquisa && typeof C.Pesquisa.custoItem === "function")
+                    ? Number(C.Pesquisa.custoItem(0)) : "sem custoItem";
+            }
             const tenta = (f) => {
                 try {
                     const g0 = Number(gold), e0 = Number(esmeraldas), m0 = Number(conhecimentoMug), t0 = Number(ticketsMug);
@@ -187,9 +194,15 @@ const PATENTE_DA_COMPRA = {
                     return false;
                 }
             };
-            if (C.Pesquisa && typeof C.Pesquisa.comprarItem === 'function') {
-                for (let i = 0; i < C.Pesquisa.ITEM_MAX; i++) if (tenta(() => C.Pesquisa.comprarItem(i))) fez = true;
-                for (let i = 0; i < C.Pesquisa.INIMIGO_MAX; i++) if (tenta(() => C.Pesquisa.comprarInimigo(i))) fez = true;
+            if (C.Pesquisa && typeof C.Pesquisa.comprarItem === "function") {
+                // Os ids da Pesquisa são os dos ITENS DE BUILD (12) e o nível máx é
+                // PESQUISA_ITEM_MAX = 5. O custo é em CONHECIMENTO MUG (não ouro).
+                const idsItens = ["adaga", "escudo", "moedas", "mapa", "relogio", "grimorio",
+                    "pocaoVerde", "pocaoRubra", "lanterna", "colarFormigas", "bauPortatil", "esmeralda"];
+                for (const id of idsItens) if (tenta(() => C.Pesquisa.comprarItem(id))) fez = true;
+                for (const ini of (C.Pesquisa.INIMIGOS || [])) {
+                    if (tenta(() => C.Pesquisa.comprarInimigo(ini.id))) fez = true;
+                }
             }
             if (C.Cristal && typeof C.Cristal.comprarNivel === 'function' && tenta(() => C.Cristal.comprarNivel())) fez = true;
             if (C.Fabrica && typeof C.Fabrica.comprarNivel === 'function' && tenta(() => C.Fabrica.comprarNivel())) fez = true;
