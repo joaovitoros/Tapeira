@@ -37,6 +37,7 @@ var danoCritJogador = 2; //dano critico atual do jogador
 var chanceCrit = 0.01; //chance em porcentagem de se causar um dano critico
 var multiplicadorMaximoDanoCritico = 4;
 var vidaAndar; //usado para marcar a vida maximo que os inimigos podem ter no andar atual
+var vidaAndarGold = 0; //vida do andar SEM o desconto do item "subtrair vida" — base do gold de avanço/baú
 var vidaInimigo1; //vida atual do inimigo 1
 var vidaInimigo2; //vida atual do inimigo 2
 var vidaInimigo3; //vida atual do inimigo 3
@@ -359,6 +360,12 @@ function CarregarStatus(){
 			andarBoss=andarBoss+10;
 		}
 	}
+
+	// Gold do avanço/baú: a vida do andar vira ouro, mas SEM o desconto do item
+	// "subtrair vida do inimigo" — comprar esse item não pode cortar a renda
+	// (antes, com −60% de vida, o bônus de avanço caía junto e o item se sabotava).
+	// O ×1,5 do chefe continua valendo, como sempre.
+	vidaAndarGold = (subVidaInimigo < 1) ? vidaAndar / (1 - subVidaInimigo) : vidaAndar;
 }
 
 // ---------- Fundo da caverna ----------

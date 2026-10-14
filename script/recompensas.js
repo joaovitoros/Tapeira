@@ -124,7 +124,11 @@ function ColetaBau(){
 // igual ao de antes (×2,5 ×0,4 = 1) — único lugar para tunar isso.
 function BonusGoldAvanco(){
 	const FRACAO_VIDA_GOLD = 0.4;
-	return ((andar * mulGold) + (vidaAndar * mulGold) * FRACAO_VIDA_GOLD * mulGoldAvanco);
+	// Usa a vida do andar SEM o desconto do item "subtrair vida" (vidaAndarGold):
+	// comprar o item não pode diminuir o ouro do avanço/baú. Se ainda não foi
+	// calculada (fora do CarregarStatus), cai na vida normal.
+	const vida = (Number(vidaAndarGold) > 0) ? vidaAndarGold : vidaAndar;
+	return ((andar * mulGold) + (vida * mulGold) * FRACAO_VIDA_GOLD * mulGoldAvanco);
 }
 
 function ValorGoldBau() {
