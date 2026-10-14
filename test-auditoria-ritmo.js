@@ -283,11 +283,11 @@ const PATENTE_DA_COMPRA = {
                 const andarInicio = andar;
                 const t0 = Date.now();
                 let ticks = 0, ms = 0;
-                // Orçamento do andar: no máximo 20000 ticks = 600 s simulados. O
+                // Orçamento do andar: no máximo 25000 ticks = 750 s simulados. O
                 // simulador é ~30x mais lento que o relógio do jogo, então este é o
-                // teto que cabe no tempo real — e é folgado para o cronômetro de
-                // fuga da mecânica (90-570 s nos andares que o bot alcança).
-                const ticksMaxAndar = 20000;
+                // teto que cabe no tempo real — e cobre o cronômetro de fuga dos
+                // andares que o bot alcança (fuga ~700 s no andar 95).
+                const ticksMaxAndar = 25000;
                 while (andar === andarInicio) {
                     DanoAutomatico(true, false);
                     if (quantidadeBausDisponiveis > 0) ColetaBau();
