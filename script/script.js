@@ -123,8 +123,15 @@ function NomeJogador() {
 }
 
 // Multiplicador global dos custos em CM da CIDADE (todos os prédios). Um botão
-// só pra recalibrar — nasceu do rebalance de ×10 pedido pelo jogador.
-const CUSTO_CIDADE_MULT = 10;
+// só pra recalibrar.
+// Era ×10: cobrando em CM a preço de OURO — a Pesquisa custava 200 mil CM com
+// uma renda de ~10-25 mil CM por run, então a Cidade inteira era impagável e o
+// dano de 80+ (Pesquisa: +10% por nível, 5 níveis) ficava fora de alcance. A
+// auditoria de ritmo flagrou o bot batendo em "não tem Conhecimento Mug
+// suficiente" 122x numa run. Agora o preço é da ordem de "uma run" (÷100).
+// CM é moeda PERMANENTE (não reseta) — por isso a Cidade é em CM, não em ouro.
+// (Lido no load: o "Dificuldade antiga" do painel F2 exige recarregar.)
+var CUSTO_CIDADE_MULT = balanceAntigo ? 10 : 0.1;
 
 // Aparência (customização): id do item equipado em cada slot (ver
 // customizacao.js). PERMANENTE — não zera no Resetar. Ausente em save antigo =
