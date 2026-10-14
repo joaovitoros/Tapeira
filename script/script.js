@@ -1,5 +1,10 @@
 ﻿//variaveis de regras
 var avancoInterval;
+
+// Painel de DEV (F2): roda o jogo com a dificuldade de ANTES do rebalanceamento
+// (preço do CM ×1,4, sem o ×2 base e sem o fundo escalável). De propósito NÃO vai
+// pro save: é um comparador de sessão, não um modo de jogo do jogador.
+var balanceAntigo = false;
 var numInimigosTela = 1; //usada para validar quantos inimigos e
 var andar = 1;	//usada para contagem do andar atual do jogo (Necessario para calculos progressivos)
 var andarMaxRun = 1; //pico de andar desta run (base dos pontos de perk; zera no reset)
@@ -174,7 +179,8 @@ var danoBonus = 0; //variavel para armazenar os danos bonus
 // ~linear com os abates do reset, então ×1.4 travava a loja no meio do jogo
 // (a auditoria de ritmo flagrou: o bot parava de comprar CM no nível ~18).
 function PrecoLojaCM(nivel) {
-	const base = 10 * Math.pow(1.25, Math.max(0, Number(nivel) || 0));
+	const passo = balanceAntigo ? 1.4 : 1.25; // 1,4 = dificuldade antiga (painel F2)
+	const base = 10 * Math.pow(passo, Math.max(0, Number(nivel) || 0));
 	// Mercado (Cidade): a reputação dá desconto na Loja do Conhecimento
 	const preco = (typeof PrecoComReputacao === "function") ? PrecoComReputacao(base) : base;
 	return Math.round(preco);
@@ -203,7 +209,7 @@ const FUSAO_ABATES_REF = 10;
 
 function TempoFugaMax() {
 	const abates = (typeof QuotaAndar === "function") ? Number(QuotaAndar()) : 1;
-	const escala = Math.max(1, (Number.isFinite(abates) ? abates : 1) / FUSAO_ABATES_REF);
+	const escala = balanceAntigo ? 1 : Math.max(1, (Number.isFinite(abates) ? abates : 1) / FUSAO_ABATES_REF);
 	const base = (90 + cmNivelFuga * 2) * escala;
 	const tempo = especializacao === 4 ? Math.floor(base * 0.2) : base;
 	// +5 s da conquista Destemido entra por fora (sempre +5, mesmo no −80% do Canhão)
@@ -257,7 +263,7 @@ function GoldCompanheiroPorSegundo(nivel = lvlComp2) {
 const CM_MULT_BASE = 2;
 
 function MultiplicadorCM() {
-	const item = CM_MULT_BASE * Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
+	const item = (balanceAntigo ? 1 : CM_MULT_BASE) * Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
 	// Loja de Troféus (Cidade): +% de CM por nível do troféu Colecionador
 	const trofeuCM = (typeof TrofeuBonusCM === "function") ? TrofeuBonusCM() : 1;
 	return (item + Math.max(0, Math.floor(Number(marcosNivel50) || 0)))
