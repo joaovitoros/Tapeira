@@ -11,8 +11,9 @@ function CompraDano(){
 			PagaLoja(precoDano);
 
 			danoJogador = N(danoJogador) + N(mulDano);
-			// Começo mais amigável: os 5 primeiros níveis sobem 40% em vez de 50%
-			precoDano = N(precoDano) * (lvlDano < 5 ? 1.4 : 1.5);
+			// Começo mais amigável: os 5 primeiros níveis sobem 40%. Do 5º em
+			// diante vale o PASSO_PRECO_DANO (×1,35; o balanço antigo era ×1,5)
+			precoDano = N(precoDano) * (lvlDano < 5 ? 1.4 : (balanceAntigo ? 1.5 : PASSO_PRECO_DANO));
 			// Passo dinâmico: ×1,025 na ★I e +0,005 por patente (ITENS_PATENTE.dano.taxas)
 			mulDano = N(mulDano) * TaxaPassoLoja("dano");
 			danoCritJogador = N(danoCritJogador) + ((N(danoJogador)/2)*(2+N(sobeDCrit)));

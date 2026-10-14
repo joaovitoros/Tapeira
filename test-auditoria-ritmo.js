@@ -35,6 +35,8 @@ const CM_BASE = Number(arg('cmBase', 0));
 // fusao=fixo → desliga o escalonamento do fundo com os abates (mede o efeito
 // do escalonamento isolado, já que as SKILLS agora estão modeladas).
 const FUSAO_FIXA = arg('fusao', '') === 'fixo';
+// danoPreco=1.5 → devolve o passo antigo do preço do Dano (mede o antes/depois).
+const DANO_PRECO = Number(arg('danoPreco', 0));
 
 // Ordem de compra por política (todas as funções existem no jogo).
 const POLITICAS = {
@@ -66,8 +68,8 @@ const PATENTE_DA_COMPRA = {
 
     await page.goto('file://' + path.resolve(__dirname, 'Caverna.html'));
     await page.waitForFunction(() => window.andar !== undefined, { timeout: 15000 });
-    await page.evaluate(({ step, base, fusaoFixa }) => { window.__CM_STEP__ = step; window.__CM_BASE__ = base; window.__FUSAO_FIXA__ = fusaoFixa; },
-        { step: CM_STEP ? Number(CM_STEP) : 0, base: CM_BASE || 0, fusaoFixa: FUSAO_FIXA });
+    await page.evaluate(({ step, base, fusaoFixa, danoPreco }) => { window.__CM_STEP__ = step; window.__CM_BASE__ = base; window.__FUSAO_FIXA__ = fusaoFixa; window.__DANO_PRECO__ = danoPreco; },
+        { step: CM_STEP ? Number(CM_STEP) : 0, base: CM_BASE || 0, fusaoFixa: FUSAO_FIXA, danoPreco: DANO_PRECO || 0 });
 
     const saida = await page.evaluate(async ({ RESETS, ORDEM, PATENTE_DA_COMPRA, SEED, COMPRAR_PATENTE }) => {
         // ---------- cenário de balanceamento (opcional) ----------
@@ -79,6 +81,7 @@ const PATENTE_DA_COMPRA = {
             const base = window.__CM_BASE__, original = MultiplicadorCM;
             MultiplicadorCM = () => base * original();
         }
+        if (window.__DANO_PRECO__) PASSO_PRECO_DANO = window.__DANO_PRECO__;
         if (window.__FUSAO_FIXA__) {
             TempoFugaMax = () => {
                 const base = 90 + cmNivelFuga * 2;

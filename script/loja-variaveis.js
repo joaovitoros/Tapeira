@@ -5,6 +5,12 @@
 // ====================================================================
 //variaveis referentes a loja
 var precoDano = 5;
+// Passo do preço do Dano a partir do 5º nível (o balanço antigo era ×1,5).
+// Como o dano é a soma cumulativa dos incrementos (mulDano, ×1,025 no ★I por
+// compra), ×1,5 de preço fazia o custo por ponto disparar: depois de ~15-20
+// níveis o mesmo ouro rendia mais em subvida/crítico/recarga. A razão do preço
+// é o que move o teto (foi o que aconteceu no CM) — medido pelo bot de auditoria.
+var PASSO_PRECO_DANO = 1.35;
 var mulDano = 1;
 var lvlDano = 1;
 
