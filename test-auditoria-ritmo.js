@@ -13,8 +13,18 @@
 // A cada run registra: recorde, ritmo (segundos por andar), compras e o
 // multiplicador permanente. No fim imprime a curva e onde o ritmo trava.
 //
-// Uso:  node test-auditoria-ritmo.js [resets=12] [politica=valor|dano] [seed=1]
+// Uso:  node test-auditoria-ritmo.js [resets=12] [politica=valor|dano|patente|cidade] [seed=1]
+//         [cmStep=1.15] [cmBase=2] [fusao=fixo] [danoPreco=1.5] [danoTaxa=1.025]
 // Nada de aleatório no resultado: o Math.random do jogo é semeado.
+//
+// POLÍTICA REALISTA: `patente` — o jogador compra o ingresso ★ quando o item bate
+// no teto. A `valor`/`dano` PULAM o item no teto (podeComprar), e isso custa ~7
+// andares no platô: com o ★ o teto sobe (subvida 60->118, recarga 16->10 ticks).
+// Medido: patente 92 vs valor 85 no reset 8 (mesmo seed).
+//
+// O ANDAR É MEDIDO ATÉ O FIM: quem decide a parede é o cronômetro de fuga (teto de
+// 750 s simulados por andar). A trava de tempo real (200 s) é só segurança — quando
+// ela dispara, a linha sai truncada e não vale como parede do jogo.
 // ============================================================================
 const { chromium } = require('playwright');
 const path = require('path');
