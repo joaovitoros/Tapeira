@@ -86,8 +86,12 @@ const PATENTE_DA_COMPRA = {
 
     await page.goto('file://' + path.resolve(__dirname, 'Caverna.html'));
     await page.waitForFunction(() => window.andar !== undefined, { timeout: 15000 });
-    await page.evaluate(({ step, base, fusaoFixa, danoPreco, danoTaxa }) => { window.__CM_STEP__ = step; window.__CM_BASE__ = base; window.__FUSAO_FIXA__ = fusaoFixa; window.__DANO_PRECO__ = danoPreco; window.__DANO_TAXA__ = danoTaxa; },
-        { step: CM_STEP ? Number(CM_STEP) : 0, base: CM_BASE || 0, fusaoFixa: FUSAO_FIXA, danoPreco: DANO_PRECO || 0, danoTaxa: DANO_TAXA || 0 });
+    // cmReset=1.25 → bônus do reset curto ×1.25 por reset (o jogo usa ×1.05).
+    // Mede o lado da RENDA da escada do CM: o platô é limitado pela renda, não pelo
+    // preço (medido: cmStep 1.25->1.15 adianta os níveis e depois converge).
+    const CM_RESET = Number(arg('cmReset', 0));
+    await page.evaluate(({ step, base, cmReset, fusaoFixa, danoPreco, danoTaxa }) => { window.__CM_STEP__ = step; window.__CM_BASE__ = base; window.__CM_RESET__ = cmReset; window.__FUSAO_FIXA__ = fusaoFixa; window.__DANO_PRECO__ = danoPreco; window.__DANO_TAXA__ = danoTaxa; },
+        { step: CM_STEP ? Number(CM_STEP) : 0, base: CM_BASE || 0, cmReset: CM_RESET || 0, fusaoFixa: FUSAO_FIXA, danoPreco: DANO_PRECO || 0, danoTaxa: DANO_TAXA || 0 });
 
     const saida = await page.evaluate(async ({ RESETS, ORDEM, PATENTE_DA_COMPRA, SEED, COMPRAR_PATENTE, CIDADE_PRIMEIRO }) => {
         // ---------- cenário de balanceamento (opcional) ----------
@@ -98,6 +102,13 @@ const PATENTE_DA_COMPRA = {
         if (window.__CM_BASE__ && window.__CM_BASE__ !== 1) {
             const base = window.__CM_BASE__, original = MultiplicadorCM;
             MultiplicadorCM = () => base * original();
+        }
+        if (window.__CM_RESET__ && window.__CM_RESET__ !== 1.05) {
+            // Troca SÓ o fator do reset curto dentro do MultiplicadorCM (o jogo usa
+            // ×1.05 por reset curto): divide o antigo e multiplica o novo.
+            const novo = window.__CM_RESET__, original = MultiplicadorCM;
+            const curtos = () => Math.max(0, Math.floor(Number(resetsCurtosCM) || 0));
+            MultiplicadorCM = () => original() / Math.pow(1.05, curtos()) * Math.pow(novo, curtos());
         }
         if (window.__DANO_PRECO__) PASSO_PRECO_DANO = window.__DANO_PRECO__;
         if (window.__DANO_TAXA__) {
