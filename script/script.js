@@ -140,7 +140,12 @@ var CUSTO_CIDADE_MULT = balanceAntigo ? 10 : 0.1;
 // andares por 10+ resets. Medido: o eixo do CM (preço ×1,15 / renda ×1,25) não
 // moveu o platô; o portão é o que sobrou.
 // balanceAntigo (painel F2) devolve o +5%. (Lido no load: exige recarregar.)
-var PORTAO_BONUS = balanceAntigo ? 0.05 : 0.10;
+// +10% deu +9 andares medidos (o maior efeito de um lever isolado da auditoria),
+// mas o platô continuou plano — a escada avança ~1 portão a cada 5 resets. Subir
+// para +16% é o EQUIVALENTE MATEMÁTICO de portões a cada 3 andares (14 portões
+// ×1,16 = 22 portões ×1,10 = ×8,1 no andar 100), sem mexer em save/validação nem
+// no padrão dos portões de esmeralda.
+var PORTAO_BONUS = balanceAntigo ? 0.05 : 0.16;
 
 // Aparência (customização): id do item equipado em cada slot (ver
 // customizacao.js). PERMANENTE — não zera no Resetar. Ausente em save antigo =
