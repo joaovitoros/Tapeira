@@ -133,6 +133,15 @@ function NomeJogador() {
 // (Lido no load: o "Dificuldade antiga" do painel F2 exige recarregar.)
 var CUSTO_CIDADE_MULT = balanceAntigo ? 10 : 0.1;
 
+// Bônus de dano permanente por portão de reset (o jogo era +5%).
+// Dobrado na auditoria de ritmo (item 14): o portão é o ÚNICO lever permanente
+// SEM damping — a Loja do CM e a Pesquisa da Cidade têm preço > bônus, então
+// decaem (×0,84 e ×0,69 por nível) — e o recorde do bot ficava cravado em ~90-100
+// andares por 10+ resets. Medido: o eixo do CM (preço ×1,15 / renda ×1,25) não
+// moveu o platô; o portão é o que sobrou.
+// balanceAntigo (painel F2) devolve o +5%. (Lido no load: exige recarregar.)
+var PORTAO_BONUS = balanceAntigo ? 0.05 : 0.10;
+
 // Aparência (customização): id do item equipado em cada slot (ver
 // customizacao.js). PERMANENTE — não zera no Resetar. Ausente em save antigo =
 // "nenhum".

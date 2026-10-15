@@ -20,7 +20,7 @@ function PagaDanoReset(piso){
 	const primeiro = Math.max(35, gateDanoPago + 5);
 	gateDanoPago = primeiro + (qtd - 1) * 5;
 	danoResetQtd = danoResetQtd + qtd;
-	return qtd * 5;
+	return Math.round(qtd * PORTAO_BONUS * 100);
 }
 
 // Esmeraldas neste reset? Portões de esmeralda (≡5 em 10: 15/25/35/45/55...)
@@ -134,7 +134,7 @@ function PedeReset() {
 
 	const total = N(esmeraldas) + premio;
 	const pendentes = GatesDanoPendentes(andar);
-	const danoPendente = pendentes * 5;
+	const danoPendente = Math.round(pendentes * PORTAO_BONUS * 100);
 	const cmRecebido = andar >= 20 ? Math.round(derrotadosRun * MultiplicadorCM() * BonusCMPontosSobra()) : 0;
 	// sobra de pontos (andar 65+): o × extra aparece na linha do preview
 	const bonusPontosCM = BonusCMPontosSobra();

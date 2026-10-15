@@ -563,7 +563,7 @@ function Resetar() {
 
 	// Bônus permanente de dano dos resets (+5% por portão >= 35, único por portão)
 	if (danoResetQtd > 0 && isFinite(danoResetQtd)) {
-		danoJogador = danoJogador * Math.pow(1.05, danoResetQtd);
+		danoJogador = danoJogador * Math.pow(1 + PORTAO_BONUS, danoResetQtd);
 		LimitaDanoCritico();
 	}
 

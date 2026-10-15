@@ -350,13 +350,13 @@ function HtmlMarcos() {
                 ${linha("Próximo portão", faltamPortao > 0 ? `andar ${andarVolta} — faltam ${faltamPortao}` : `andar ${andarVolta} — disponível`)}
                 ${linha("Recompensa do portão", recompensaPortao)}
                 ${linha("Dano pendente até aqui", pendentesDano > 0 ? `+${pendentesDano * 5}% se resetar agora` : "nenhum")}
-                ${linha("Dano permanente pago", danoPago > 0 ? `${danoPago} portões (+${danoPago * 5}%)` : "nenhum")}
+                ${linha("Dano permanente pago", danoPago > 0 ? `${danoPago} portões (+${Math.round(danoPago * PORTAO_BONUS * 100)}%)` : "nenhum")}
                 ${linha("Perks desta run", `${perkDisp} ${perkDisp === 1 ? "disponível" : "disponíveis"} de ${perkGanhosRun}`)}
 
                 <div class="modal-info">
                     Portões terminados em 5 (15, 25, 35, 45…) dão esmeralda; os
                     intermediários (40, 50…) só dano. Cada portão a partir do 35
-                    paga +5% de dano permanente uma única vez. A partir do andar 20
+                    paga +${Math.round(PORTAO_BONUS * 100)}% de dano permanente uma única vez. A partir do andar 20
                     a troca de andar também gera Conhecimento Mug.
                 </div>
             </div>
@@ -518,7 +518,7 @@ function MostraDecomposicaoDano() {
     if (N(danoResetQtd) > 0) {
         html += `
         <div class="decomp-grupo">Bônus de reset (reaplicado a cada reset)</div>
-        ${linha("Portões pagos: " + N(danoResetQtd) + " (+" + (N(danoResetQtd) * 5) + "%)", "×" + Math.pow(1.05, N(danoResetQtd)).toFixed(2))}
+        ${linha("Portões pagos: " + N(danoResetQtd) + " (+" + Math.round(N(danoResetQtd) * PORTAO_BONUS * 100) + "%)", "×" + Math.pow(1 + PORTAO_BONUS, N(danoResetQtd)).toFixed(2))}
         `;
     }
 
