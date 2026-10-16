@@ -14225,25 +14225,26 @@ html.rodape-empilhado #container-Loja {
 	.btn-status-dano,
 	#btnVerItensBuild,
 	.btnVerItensBuild {
-		min-height: 44px;
+		min-height: 46px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 	}
 
-	/* Botoes do HUD: altura minima de toque */
+	/* Botoes do HUD: altura minima de toque.
+	   O #btnPause exige a MESMA especificidade da regra original
+	   (#container-HudTopo > #btnPause) - com seletor simples a dela ganha. */
 	#btnAndar,
 	.btnAndar,
-	#btnPause,
-	.btnPause {
-		min-height: 44px;
+	#container-HudTopo > #btnPause {
+		min-height: 46px;
 	}
 
-	/* Info do bau dourado: era 20x20 (quase impossivel acertar com o dedo) */
-	#golden-chest-info,
-	.golden-chest-info {
-		min-width: 44px;
-		min-height: 44px;
+	/* Info do bau dourado: era 20x20 (quase impossivel acertar com o dedo).
+	   A regra original e #golden-chest-tracker #golden-chest-info (dois ids). */
+	#golden-chest-tracker #golden-chest-info {
+		min-width: 46px;
+		min-height: 46px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
