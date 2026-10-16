@@ -86,7 +86,7 @@ const path = require('path');
     check("reputação 5 → -10% (90)", Math.abs(r.preco5 - 90) < 1e-9, r.preco5);
     check("PrecoLojaCM sem reputação = 10", r.cm0 === 10, r.cm0);
     check("PrecoLojaCM reputação máx = 8 (-20%)", r.cm10 === 8, r.cm10);
-    check("custo da reputação nível 0 = 50000 CM", r.custo0 === 50000, r.custo0);
+    check("custo da reputação nível 0 = 5000 CM", r.custo0 === 5000, r.custo0);
     check("compra sem CM falha", r.semCM === false);
     check("compra com CM funciona", r.ok === true && r.nivel === 1, r.nivel);
     check("reputação no máximo falha", r.noMax === false);

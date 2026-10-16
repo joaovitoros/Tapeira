@@ -110,7 +110,7 @@ const path = require('path');
     });
 
     check("API Tapeira.Fabrica existe", r.temApi === true);
-    check("custo do nível 0 = 200000 CM", r.custo0 === 200000, r.custo0);
+    check("custo do nível 0 = 20000 CM", r.custo0 === 20000, r.custo0);
     check("linha nível 0 = 1 auto-compra/s", r.linhas0 === 1, r.linhas0);
     check("linha nível 3 = 4 auto-compras/s", r.linhas3 === 4, r.linhas3);
     check("linha nível 4 = 5 auto-compras/s", r.linhasProx === 5, r.linhasProx);

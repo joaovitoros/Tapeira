@@ -124,14 +124,15 @@ function NomeJogador() {
 
 // Multiplicador global dos custos em CM da CIDADE (todos os prédios). Um botão
 // só pra recalibrar.
-// Era ×10: cobrando em CM a preço de OURO — a Pesquisa custava 200 mil CM com
-// uma renda de ~10-25 mil CM por run, então a Cidade inteira era impagável e o
-// dano de 80+ (Pesquisa: +10% por nível, 5 níveis) ficava fora de alcance. A
-// auditoria de ritmo flagrou o bot batendo em "não tem Conhecimento Mug
-// suficiente" 122x numa run. Agora o preço é da ordem de "uma run" (÷100).
-// CM é moeda PERMANENTE (não reseta) — por isso a Cidade é em CM, não em ouro.
+// Histórico: os custos do jogo "base" passaram por ~×1000 (duas ×10 em 11/10 +
+// o ×10 do próprio multiplicador em 12/10 = 32,18M -> 321,77M). A auditoria de
+// ritmo derrubou para 0,1 (÷100) porque a Cidade virou impagável (a Pesquisa
+// custava 200 mil CM com renda de 10-25 mil CM por run; o bot fez 0 compras em
+// 1769 tentativas). O jogador pediu para voltar ao PADRÃO de ~32,2M CM (o estado
+// de 11/10, antes do ×10 de 12/10) — é o valor 1 aqui. O F2 (balanceAntigo)
+// devolve o ×10 caro (321,77M) para comparar.
 // (Lido no load: o "Dificuldade antiga" do painel F2 exige recarregar.)
-var CUSTO_CIDADE_MULT = balanceAntigo ? 10 : 0.1;
+var CUSTO_CIDADE_MULT = balanceAntigo ? 10 : 1;
 
 // Bônus de dano permanente por portão de reset (o jogo era +5%).
 // Histórico: na auditoria de ritmo (item 14) foi dobrado (+5% → +10%) e depois
