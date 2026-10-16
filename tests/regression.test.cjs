@@ -579,6 +579,49 @@ test("compras de gold respeitam saldo e progressão de preço", async () => {
     }
 });
 
+test("Chance Crítica/Avanço/Qtd Avanço: o aumento por compra dobrou (balanceamento)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.CompraCCrit === "function");
+        const r = await page.evaluate(() => {
+            window.ChamaSom = () => {};
+            document.querySelectorAll("#infoModal, #gameModal").forEach(m => m.remove());
+            gold = new GoldNumber(1e15);
+
+            // Chance Crítica: preço ×2,0 e passo ×1,2 por compra
+            patenteCCrit = 0; chanceCrit = 0.10; precoCCrit = 1000; sobeCCrit = 0.02; lvlCCrit = 1;
+            CompraCCrit();
+            const precoCCritDepois = N(precoCCrit);
+            const sobeCCritDepois = N(sobeCCrit);
+
+            // Avanço Rápido: preço ×4,0
+            patenteAvan = 0; avanco = 0; precoAvan = 1000; lvlAvan = 1;
+            CompraAvanco();
+            const precoAvanDepois = N(precoAvan);
+
+            // Qtd Avanço: preço ×4,0
+            patenteQTDAvan = 0; lvlQTDAvanco = 1; precoQTDAvanco = 1000;
+            CompraQTDAvanco();
+            const precoQTDAvancoDepois = N(precoQTDAvanco);
+
+            return {
+                precoCCritDepois, sobeCCritDepois, precoAvanDepois, precoQTDAvancoDepois,
+                fatorCCrit: PASSO_PRECO_CCRIT,
+                fatorAvan: PASSO_PRECO_AVANCO, fatorQtd: PASSO_PRECO_QTDAVANCO
+            };
+        });
+        assert.equal(r.fatorCCrit, 2.0, "preço da Chance Crítica sobe ×2,0 por compra");
+        assert.equal(r.fatorAvan, 4.0, "preço do Avanço Rápido sobe ×4,0 por compra");
+        assert.equal(r.fatorQtd, 4.0, "preço da Qtd Avanço sobe ×4,0 por compra");
+        assert.ok(Math.abs(r.precoCCritDepois - 2000) < 1e-6, "1000 → 2000 na compra da Chance Crítica");
+        assert.ok(Math.abs(r.sobeCCritDepois - 0.022) < 1e-9, "o PASSO da Chance Crítica segue ×1,1 (0,02 → 0,022)");
+        assert.ok(Math.abs(r.precoAvanDepois - 4000) < 1e-6, "1000 → 4000 na compra do Avanço Rápido");
+        assert.ok(Math.abs(r.precoQTDAvancoDepois - 4000) < 1e-6, "1000 → 4000 na compra da Qtd Avanço");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
 test("combate aplica dano, item de build e respeita pausa", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
@@ -3899,6 +3942,237 @@ test("HUD: a fuga fica dentro do topo, abaixo do Andar/Manter, e as 3 moedas tê
         await context.close();
     }
 });
+test("mobile: o tempo do baú dourado não vaza do card e os alvos de toque fecham 44px", async () => {
+    // Regressão de duas coisas medidas no celular:
+    //  1) o card do baú tem 84px e a linha "ícone + tempo" pedia ~85px — o
+    //     tempo vazava para FORA da borda (bug desde que o ícone subiu 26→36);
+    //  2) alvos abaixo de 44×44 (checkboxes 34×18, botão Voltar de 39-42px de
+    //     largura, Fechar dos modais com 34px, qualidade/arquivo no pause).
+    // A área de toque é conferida por HIT-TEST (elementFromPoint), não pela
+    // caixa do elemento: os alvos usam ::after invisível para crescer sem
+    // mudar o visual, e a caixa mediria pequena mesmo com o alvo correto.
+    const abrir = async viewport => {
+        const context = await browser.newContext({ viewport });
+        await context.addInitScript(() => {
+            localStorage.setItem("volumeJogo", "0");
+            localStorage.setItem("volumeAmbienteJogo", "0");
+        });
+        const page = await context.newPage();
+        const pageErrors = [];
+        page.on("pageerror", error => pageErrors.push(error.message));
+        await page.goto(`${baseUrl}/Caverna.html`, { waitUntil: "domcontentloaded" });
+        await page.waitForFunction(() =>
+            typeof window.andar === "number"
+            && typeof UI === "object" && typeof UI.toggleInfoModal === "function",
+            undefined, { timeout: 15000 });
+        return { context, page, pageErrors };
+    };
+
+    const casos = [
+        { v: [390, 844], toque: true, legibilidade: true },
+        { v: [320, 568], toque: true, legibilidade: true },
+        { v: [1280, 720], toque: false },
+        // celular DEITADO: escapa do bloco `max-width:700px` (o layout vira
+        // "landscape baixo" até 900 e, acima disso, cai no desktop com a nav
+        // em 38px).
+        { v: [900, 520], toque: true, legibilidade: true },
+        { v: [844, 390], toque: true, legibilidade: true },
+        { v: [740, 360], toque: true, legibilidade: true },
+        { v: [960, 440], toque: true, legibilidade: true }
+    ];
+
+    for (const caso of casos) {
+        const { context, page, pageErrors } = await abrir({ width: caso.v[0], height: caso.v[1] });
+        const nome = caso.v[0] + "x" + caso.v[1];
+        try {
+            await page.evaluate(() => {
+                window.ChamaSom = () => {};
+                maxAndar = 100;
+                document.querySelectorAll("#infoModal, #gameModal").forEach(m => m.remove());
+                const t = document.getElementById("golden-chest-progress-text");
+                if (t) t.textContent = "17:31"; // pior caso: 5 caracteres
+            });
+
+            // 1) o tempo do baú cabe no card (antes: scrollWidth 85 > clientWidth 68)
+            const bau = await page.evaluate(() => {
+                const c = document.getElementById("golden-chest-claim");
+                const t = document.getElementById("golden-chest-progress-text");
+                return {
+                    scroll: c.scrollWidth,
+                    client: c.clientWidth,
+                    textoDireita: Math.round(t.getBoundingClientRect().right),
+                    cardDireita: Math.round(c.getBoundingClientRect().right)
+                };
+            });
+            assert.ok(bau.scroll <= bau.client + 1,
+                nome + ": a linha do baú não estoura o card (" + bau.scroll + " <= " + bau.client + ")");
+            assert.ok(bau.textoDireita <= bau.cardDireita + 1,
+                nome + ": o tempo do baú termina dentro da borda (" + bau.textoDireita + " <= " + bau.cardDireita + ")");
+
+            if (!caso.toque) {
+                assert.deepEqual(pageErrors, []);
+                continue;
+            }
+
+            // 2) alvos de toque ≥ 44×44 na tela do jogo (área real, por hit-test)
+            const alvos = await page.evaluate(() => {
+                const grupos = [
+                    { nome: "manter no andar", sel: "#manterAndar", ow: ["#lblManter", "#manterAndar"] },
+                    { nome: "auto-coleta", sel: "#autoColetaToggle", ow: ["#autoColetaWrap", "#autoColetaToggle", ".golden-chest-tracker__auto-label"] },
+                    { nome: "info do baú", sel: "#golden-chest-info", ow: ["#golden-chest-info", "#golden-chest-info svg", "#golden-chest-info circle", "#golden-chest-info path"] },
+                    { nome: "linha do baú", sel: "#golden-chest-claim", ow: ["#golden-chest-claim", "#golden-chest-claim img", "#golden-chest-progress-text"] },
+                    { nome: "voltar andar", sel: "#btnAndar", ow: ["#btnAndar", "#btnAndar span", "#btnAndar svg", "#btnAndar path"] },
+                    { nome: "pausar", sel: "#btnPause", ow: ["#btnPause", "#btnPause span"] },
+                    { nome: "nav Loja", sel: "#btn-Loja", ow: ["#btn-Loja", "#btn-Loja span"] }
+                ];
+                const eh = (el, sels) => el && sels.some(s => {
+                    try { return el.matches(s); } catch (e) { return false; }
+                });
+                return grupos.map(g => {
+                    const el = document.querySelector(g.sel);
+                    const b = el.getBoundingClientRect();
+                    const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+                    const hit = (x, y) => eh(document.elementFromPoint(x, y), g.ow);
+                    // meio-pixel: um alvo de exatamente 44px mede 44 (e não 43)
+                    let l = 0, r = 0, u = 0, d = 0;
+                    for (let i = 1; i <= 60; i++) { if (hit(cx - (i - 0.5), cy)) l = i; else break; }
+                    for (let i = 1; i <= 60; i++) { if (hit(cx + (i - 0.5), cy)) r = i; else break; }
+                    for (let i = 1; i <= 60; i++) { if (hit(cx, cy - (i - 0.5))) u = i; else break; }
+                    for (let i = 1; i <= 60; i++) { if (hit(cx, cy + (i - 0.5))) d = i; else break; }
+                    return { nome: g.nome, w: l + r, h: u + d };
+                });
+            });
+            for (const a of alvos) {
+                assert.ok(a.w >= 44 && a.h >= 44,
+                    nome + ": alvo '" + a.nome + "' tem " + a.w + "x" + a.h + " (mínimo 44x44)");
+            }
+
+            if (!caso.legibilidade) {
+                assert.deepEqual(pageErrors, []);
+                continue;
+            }
+
+            // 3) legibilidade do painel Objetivo/Missão (a base era 9px; o
+            //    título media 6.5px e o "Próximo reset" 7.2px no celular) e dos
+            //    rótulos "Andar/Manter/Voltar" do HUD (10-10.9px e, no
+            //    retrato, o bump para 12px era vencido por especificidade).
+            const fontes = await page.evaluate(() => {
+                const px = id => {
+                    const el = document.querySelector(id);
+                    return el ? Math.round(parseFloat(getComputedStyle(el).fontSize) * 10) / 10 : 0;
+                };
+                // pega o rótulo VISÍVEL (retrato usa -mobile, deitado usa -desktop)
+                const visivel = sel => {
+                    const el = [...document.querySelectorAll(sel)]
+                        .find(e => e.getBoundingClientRect().width > 0);
+                    return el ? Math.round(parseFloat(getComputedStyle(el).fontSize) * 10) / 10 : 0;
+                };
+                return {
+                    titulo: px("#objetivoTitulo"), descricao: px("#objetivoDescricao"),
+                    contagem: px("#objetivoContagem"), aviso: px("#avisoReset"),
+                    missaoTitulo: px("#missaoTitulo"), missaoDescricao: px("#missaoDescricao"),
+                    rotuloManter: visivel(".manter-label-mobile, .manter-label-desktop"),
+                    rotuloVoltar: visivel(".voltar-label-mobile, .voltar-label-desktop")
+                };
+            });
+            assert.ok(fontes.titulo >= 11, nome + ": título do objetivo legível (" + fontes.titulo + "px)");
+            assert.ok(fontes.descricao >= 12, nome + ": descrição do objetivo legível (" + fontes.descricao + "px)");
+            assert.ok(fontes.contagem >= 11, nome + ": contagem do objetivo legível (" + fontes.contagem + "px)");
+            assert.ok(fontes.aviso >= 11, nome + ": aviso de reset legível (" + fontes.aviso + "px)");
+            assert.ok(fontes.missaoTitulo >= 11 && fontes.missaoDescricao >= 12,
+                nome + ": missão legível (" + fontes.missaoTitulo + "/" + fontes.missaoDescricao + "px)");
+            assert.ok(fontes.rotuloManter >= 12, nome + ": rótulo 'Manter' do HUD legível (" + fontes.rotuloManter + "px)");
+            assert.ok(fontes.rotuloVoltar >= 11, nome + ": rótulo 'Voltar' do HUD legível (" + fontes.rotuloVoltar + "px)");
+
+            // 4) menu de pause/ajustes: Fechar dos modais, qualidade, importar save
+            const pause = await page.evaluate(() => {
+                PausarJogo();
+                const altura = el => el ? el.getBoundingClientRect().height : 0;
+                const menorAltura = sel => {
+                    const els = [...document.querySelectorAll(sel)];
+                    return els.length ? Math.min(...els.map(altura)) : 0;
+                };
+                document.querySelectorAll("#infoModal").forEach(m => m.remove());
+                UI.toggleInfoModal();
+                const fechar = altura(document.querySelector(".btn-FecharModal"));
+                document.querySelectorAll("#infoModal").forEach(m => m.remove());
+                return {
+                    fechar,
+                    qualidade: menorAltura("#configQualidade .qualidade-btn"),
+                    arquivo: altura(document.getElementById("txtfiletoread")),
+                    configItem: menorAltura(".config-item")
+                };
+            });
+            assert.ok(pause.fechar >= 44, nome + ": 'Fechar' dos modais tem 44px (" + pause.fechar + ")");
+            assert.ok(pause.qualidade >= 44, nome + ": botões de Qualidade têm 44px (" + pause.qualidade + ")");
+            assert.ok(pause.arquivo >= 44, nome + ": campo de importar save tem 44px (" + pause.arquivo + ")");
+            assert.ok(pause.configItem >= 44, nome + ": linhas de ajuste têm 44px (" + pause.configItem + ")");
+
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    }
+});
+test("botão Cidade só aparece depois de destravar (andar 80)", async () => {
+    // O CSS do botão tem `display: flex`, que vencia o `[hidden]` do navegador —
+    // a Cidade aparecia desde o começo mesmo com o JS marcando hidden=true.
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof UI === "object"
+            && window.Tapeira && window.Tapeira.Cidade, undefined, { timeout: 15000 });
+
+        const medir = valor => page.evaluate(v => {
+            window.ChamaSom = () => {};
+            document.querySelectorAll("#infoModal, #gameModal").forEach(m => m.remove());
+            maxAndar = v;
+            window.Tapeira.Cidade.sincroniza();
+            const b = document.getElementById("btnCidade");
+            return {
+                display: getComputedStyle(b).display,
+                largura: Math.round(b.getBoundingClientRect().width),
+                escondido: b.hidden
+            };
+        }, valor);
+
+        const antes = await medir(79);
+        assert.ok(antes.escondido, "abaixo do andar 80 o botão segue com hidden");
+        assert.equal(antes.display, "none", "abaixo do andar 80 o botão não é exibido (display: none)");
+        assert.equal(antes.largura, 0, "abaixo do andar 80 o botão não ocupa espaço na barra");
+
+        const depois = await medir(80);
+        assert.equal(depois.escondido, false, "no andar 80 o botão perde o hidden");
+        assert.notEqual(depois.display, "none", "no andar 80 o botão é exibido");
+        assert.ok(depois.largura > 0, "no andar 80 o botão ocupa espaço na barra");
+
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+test("portão de reset paga +5% de dano por portão (revertido do +16%)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof PagaDanoReset === "function", undefined, { timeout: 15000 });
+        const r = await page.evaluate(() => {
+            window.ChamaSom = () => {};
+            const bonus = PORTAO_BONUS;
+            gateDanoPago = 30;
+            danoResetQtd = 0;
+            const pago = PagaDanoReset(45);   // portões 35, 40 e 45 = 3
+            const qtd = danoResetQtd;
+            const repetido = PagaDanoReset(45); // já pagos, não paga de novo
+            return { bonus, pago, qtd, repetido };
+        });
+        assert.equal(r.bonus, 0.05, "PORTAO_BONUS voltou a 5%");
+        assert.equal(r.pago, 15, "3 portões × 5% = +15% de dano permanente");
+        assert.equal(r.qtd, 3, "os 3 portões entram no dano permanente");
+        assert.equal(r.repetido, 0, "portão já pago não paga duas vezes");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
 test("Mercado: ofertas do dia giram pela data, dão o bem e não repetem", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
@@ -4452,6 +4726,39 @@ test("nome do jogador: Casa grava, o save carrega e o nome aparece no duelo", as
     }
 });
 
+test("tempo de fuga: base 30 s e escala pela quota do andar", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.TempoFugaMax === "function");
+        const r = await page.evaluate(() => {
+            cmNivelFuga = 0;
+            conquistasComp = [0, 0, 0, 0, 0]; // sem o +5 s do Destemido
+            Tapeira.ItensBuild.carrega({ itensBuild: [] }); // sem Relógio de Bolso
+            especializacao = 0;
+            nivelJogador = 1;
+            totalNiveis = 0;
+
+            qtdInimigosAndar = 1;                 // escala 1
+            const andar1 = TempoFugaMax();
+            qtdInimigosAndar = 21;                // (nível 1) quota 20 → escala 2
+            const qtd = QuotaAndar();
+            const andar20 = TempoFugaMax();
+            cmNivelFuga = 5;                      // +2 s por nível = +10 s
+            const comCM = TempoFugaMax();
+            especializacao = 4;                   // Canhão de Vidro: −80%
+            const vidro = TempoFugaMax();
+            return { andar1, qtd, andar20, comCM, vidro };
+        });
+        assert.equal(r.andar1, 30, "andar 1 (escala 1) = 30 s");
+        assert.equal(r.qtd, 20, "com nível 1 a quota do andar 21 é 20");
+        assert.equal(r.andar20, 60, "quota 20 → escala 2 = 60 s");
+        assert.equal(r.comCM, 80, "CM +5 níveis (+10 s) × escala 2 = 80 s");
+        assert.equal(r.vidro, 16, "Canhão de Vidro corta 80% → 16 s");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
 test("tempo para fugir mostra no máximo duas casas decimais", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
@@ -4476,7 +4783,7 @@ test("tempo para fugir mostra no máximo duas casas decimais", async () => {
                 FormataTempoFuga(0.0500000000003),
                 FormataTempoFuga(NaN)
             ];
-            tempoAvancoInimigos = 90; // devolve o valor padrão da página
+            tempoAvancoInimigos = 30; // devolve o valor padrão da página
             return casos;
         });
         assert.equal(resultado.sujo, "117.05", "valor sujo aparece com 2 casas");
