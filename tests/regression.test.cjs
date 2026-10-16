@@ -3968,10 +3968,11 @@ test("forja da Fábrica custa ~80 avanços de andar e cobra o gold", async () =>
     }
 });
 
-test("inimigos não nascem atrás do HUD no layout deitado (janela baixa)", async () => {
-    // No layout "deitado baixo" (≤900 × ≤520) os inimigos usavam top: 38vh/55vh
-    // SEM piso — em janela baixa nasciam DENTRO do painel Objetivo, e o card do
-    // baú (z-index 16) escondia o sprite e o anel do Frenesi (z-index 5).
+test("inimigos não nascem atrás do HUD (janela baixa/estreita)", async () => {
+    // Os inimigos são posicionados por `--game-unit` (global) e por vh nos
+    // layouts menores — sem piso, em janela baixa/estreita o inimigo 1/3 nascia
+    // DENTRO do painel Objetivo, e o card do baú (z-index 16) escondia o sprite
+    // e o anel do Frenesi (z-index 5). Este teste pega o retângulo x retângulo.
     const abrir = async (w, h) => {
         const context = await browser.newContext({ viewport: { width: w, height: h } });
         const page = await context.newPage();
@@ -3982,27 +3983,36 @@ test("inimigos não nascem atrás do HUD no layout deitado (janela baixa)", asyn
         return { context, page, pageErrors };
     };
 
-    for (const [w, h] of [[900, 520], [844, 390], [740, 360], [500, 400]]) {
+    const tamanhos = [[900, 520], [844, 390], [740, 360], [700, 450], [500, 400], [1280, 600], [1000, 500], [900, 600], [800, 700], [1280, 400]];
+    for (const [w, h] of tamanhos) {
         const { context, page, pageErrors } = await abrir(w, h);
         const nome = w + "x" + h;
         try {
-            const r = await page.evaluate(() => {
+            const sobreposicoes = await page.evaluate(() => {
                 window.ChamaSom = () => {};
                 document.querySelectorAll("#infoModal, #gameModal").forEach(m => m.remove());
-                andar = 6; // 2+ inimigos na tela
-                const metas = document.getElementById("container-Metas").getBoundingClientRect();
-                const chest = document.getElementById("golden-chest-tracker").getBoundingClientRect();
-                const nav = document.getElementById("container-Botoes").getBoundingClientRect();
-                const inimigos = [1, 2].map(i => {
+                andar = 30; // 4 inimigos na tela
+                const R = el => { const b = el.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
+                const paineis = {
+                    Objetivo: R(document.getElementById("container-Metas")),
+                    Bau: R(document.getElementById("golden-chest-tracker")),
+                    HudTopo: R(document.getElementById("container-HudTopo"))
+                };
+                const out = [];
+                for (let i = 1; i <= 4; i++) {
                     const el = document.getElementById("inimigo" + i);
-                    return { id: i, top: parseFloat(getComputedStyle(el).top), h: el.getBoundingClientRect().height };
-                });
-                return { limite: Math.max(metas.bottom, chest.bottom), navTop: nav.top, inimigos };
+                    if (!el) continue;
+                    const b = el.getBoundingClientRect();
+                    if (!b.width) continue;
+                    for (const [pnome, p] of Object.entries(paineis)) {
+                        if (b.left < p.r - 1 && b.right > p.l + 1 && b.top < p.b - 1 && b.bottom > p.t + 1) {
+                            out.push("inimigo " + i + " × " + pnome);
+                        }
+                    }
+                }
+                return [...new Set(out)];
             });
-            for (const ini of r.inimigos) {
-                assert.ok(ini.top >= r.limite - 1,
-                    nome + ": inimigo " + ini.id + " (top " + ini.top + ") não pode nascer dentro do HUD (fim " + Math.round(r.limite) + ")");
-            }
+            assert.deepEqual(sobreposicoes, [], nome + ": inimigo não pode nascer atrás do HUD");
             assert.deepEqual(pageErrors, []);
         } finally {
             await context.close();

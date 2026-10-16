@@ -1874,10 +1874,15 @@ body {
 	height: calc(var(--game-unit) * 7.22);
 }
 
-.inimigo1 { top: calc(var(--game-unit) * 20); left: 20%; }
-.inimigo2 { top: calc(var(--game-unit) * 35); left: 25%; }
-.inimigo3 { top: calc(var(--game-unit) * 20); left: 74%; }
-.inimigo4 { top: calc(var(--game-unit) * 35); left: 57%; }
+/* Piso em px: o HUD ocupa a faixa de cima (~112-226) e, sem o piso, em janela
+   ESTREITA o inimigo 1/3 nascia atrás dele (a 20 unidades o topo fica acima do
+   HUD quando a largura < ~1120). O card do baú tem z-index 16 contra o 5 do
+   anel do Frenesi, então o sprite E o anel sumiam. O piso acompanha a altura do
+   HUD; a fileira de baixo mantém o vão. */
+.inimigo1 { top: max(calc(var(--game-unit) * 20), 234px); left: 20%; }
+.inimigo2 { top: max(calc(var(--game-unit) * 35), calc(234px + var(--game-unit) * 7.5)); left: 25%; }
+.inimigo3 { top: max(calc(var(--game-unit) * 20), 234px); left: 74%; }
+.inimigo4 { top: max(calc(var(--game-unit) * 35), calc(234px + var(--game-unit) * 7.5)); left: 57%; }
 
 #container-AndarManter {
 	position: absolute;
