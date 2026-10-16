@@ -36,6 +36,20 @@ var lvlCCrit = 1;
 var precoQTDAvanco = 400;
 var lvlQTDAvanco = 1;
 
+// ---- Passos de preço dos itens de chance/avanço (balanceamento direto) ----
+// O jogador achou a Chance Crítica barata demais. Pedido: DOBRAR O AUMENTO do
+// PREÇO por compra (o fator vira 1 + 2×(fator−1)), nos 3 itens. O PASSO do
+// efeito NÃO muda (a chance ganha por compra segue igual). Aplicado direto,
+// sem toggle no painel F2.
+//   Chance Crítica: preço ×1,5 → ×2,0 (o passo do efeito segue ×1,1)
+//   Avanço Rápido:  preço ×2,5 → ×4,0
+//   Qtd Avanço:     preço ×2,5 → ×4,0
+// Obs.: o passo do Avanço (sobeAvanco) segue intocado — o persistencia-carregar
+// o deriva do nível com ×1,005.
+var PASSO_PRECO_CCRIT = 2.0;
+var PASSO_PRECO_AVANCO = 4.0;
+var PASSO_PRECO_QTDAVANCO = 4.0;
+
 var precoVidaInimigo = 150;
 var subVidaInimigo = 0.00;
 var lvlSubVida = 0;

@@ -48,7 +48,7 @@ var avanco = 0; //variavel utilizada para calculo de probabilidade de um avanço
 var qtdAvanco = 2;////variavel que determina quantos inimigos serão derrotados noa vanço rapido
 var ValidaBater = 30; //tempo atual para que se possa executar um ataque com o espaço
 var MaxValidaBater = 30; //tempo maximo para que se possa executar um ataque com o espaço
-var tempoAvancoInimigos = 90; //tempo para que o jogar seja obrigado a recuar um andar
+var tempoAvancoInimigos = 30; //tempo para que o jogar seja obrigado a recuar um andar
 var andarBoss = 10; //andar atual onde aparecerão inimigos mais fortes
 var progressoConquistaDano = 100; //multiplicador e quantidade necessaria para premiação e conclusão da conquista atual de dano
 var progressoConquistaGold = 500; //multiplicador e quantidade necessaria para premiação e conclusão da conquista atual de gold
@@ -134,18 +134,11 @@ function NomeJogador() {
 var CUSTO_CIDADE_MULT = balanceAntigo ? 10 : 0.1;
 
 // Bônus de dano permanente por portão de reset (o jogo era +5%).
-// Dobrado na auditoria de ritmo (item 14): o portão é o ÚNICO lever permanente
-// SEM damping — a Loja do CM e a Pesquisa da Cidade têm preço > bônus, então
-// decaem (×0,84 e ×0,69 por nível) — e o recorde do bot ficava cravado em ~90-100
-// andares por 10+ resets. Medido: o eixo do CM (preço ×1,15 / renda ×1,25) não
-// moveu o platô; o portão é o que sobrou.
-// balanceAntigo (painel F2) devolve o +5%. (Lido no load: exige recarregar.)
-// +10% deu +9 andares medidos (o maior efeito de um lever isolado da auditoria),
-// mas o platô continuou plano — a escada avança ~1 portão a cada 5 resets. Subir
-// para +16% é o EQUIVALENTE MATEMÁTICO de portões a cada 3 andares (14 portões
-// ×1,16 = 22 portões ×1,10 = ×8,1 no andar 100), sem mexer em save/validação nem
-// no padrão dos portões de esmeralda.
-var PORTAO_BONUS = balanceAntigo ? 0.05 : 0.16;
+// Histórico: na auditoria de ritmo (item 14) foi dobrado (+5% → +10%) e depois
+// para +16% (equivalente a portões a cada 3 andares). O jogador decidiu VOLTAR
+// ao +5% original — então o valor é fixo, sem branch de balanceAntigo (o painel
+// F2 não mexe mais aqui). A loja e a Cidade continuam como estão.
+var PORTAO_BONUS = 0.05;
 
 // Aparência (customização): id do item equipado em cada slot (ver
 // customizacao.js). PERMANENTE — não zera no Resetar. Ausente em save antigo =
@@ -224,6 +217,8 @@ function BonusXPConhecimento() {
 // TODAS as runs (o ritmo era ditado pelo cronômetro, não pela força do build).
 // Agora o fundo escala com o trabalho do andar: ×1 até FUSAO_ABATES_REF abates
 // (o começo não muda) e linear daí pra frente.
+// BASE reduzida de 90 para 30 s a pedido (com o joelho em 10 abates, isso vira
+// ~3 s por abate exigido no andar em vez de ~9 s).
 // O Canhão de Vidro corta 80% do teto (sobra 20%, arredondado pra baixo); como o
 // cronômetro só reabastece na troca de andar/onda, a troca de build vale a
 // partir do próximo abastecimento.
@@ -232,7 +227,7 @@ const FUSAO_ABATES_REF = 10;
 function TempoFugaMax() {
 	const abates = (typeof QuotaAndar === "function") ? Number(QuotaAndar()) : 1;
 	const escala = balanceAntigo ? 1 : Math.max(1, (Number.isFinite(abates) ? abates : 1) / FUSAO_ABATES_REF);
-	const base = (90 + cmNivelFuga * 2) * escala;
+	const base = (30 + cmNivelFuga * 2) * escala;
 	const tempo = especializacao === 4 ? Math.floor(base * 0.2) : base;
 	// +5 s da conquista Destemido entra por fora (sempre +5, mesmo no −80% do Canhão)
 	// Relógio de Bolso (itens da build): +10% por cópia no tempo total

@@ -177,11 +177,16 @@ test("eventos: névoa dá CM por abate na hora", async () => {
             EventoAbateCM(3);
             const cm = conhecimentoMug;
             const contador = eventoCM;
+            const mult = MultiplicadorCM();
             EncerraEvento(true);
-            return { cm, contador };
+            return { cm, contador, mult };
         });
-        assert.equal(r.cm, 3);
-        assert.equal(r.contador, 3);
+        // A Névoa paga, por abate, o CM que o abate valeria no reset ×
+        // MultiplicadorCM() (o "CM em dobro"). A base é ×2 desde o ajuste de
+        // balanceamento (CM_MULT_BASE), então 3 abates = 6.
+        assert.equal(r.mult, 2, "CM base ×2 (ajuste de balanceamento)");
+        assert.equal(r.cm, Math.round(3 * r.mult), "névoa paga CM por abate multiplicado");
+        assert.equal(r.contador, Math.round(3 * r.mult), "o contador da névoa acompanha");
         assert.deepEqual(pageErrors, []);
     } finally { await context.close(); }
 });
@@ -428,17 +433,17 @@ test("progressão: Canhão de Vidro corta 80% do tempo de fuga", async () => {
             gold = new GoldNumber(1e9);
             andarVolta = 20; maxAndar = 90; // destrava as builds
             especializacao = 0;
-            tempoAvancoInimigos = TempoFugaMax(); // 90
+            tempoAvancoInimigos = TempoFugaMax(); // 30
             const antesTroca = tempoAvancoInimigos;
             EscolheEspecializacao(4); // paga e troca pra Canhão de Vidro
             const depoisTroca = tempoAvancoInimigos;
 
             return { base, vidro, antesTroca, depoisTroca };
         });
-        assert.equal(r.base, 90);
-        assert.equal(r.vidro, 18, "90 s com −80% = 18 s");
-        assert.equal(r.antesTroca, 90);
-        assert.equal(r.depoisTroca, 18, "a troca de build corta o cronômetro na hora");
+        assert.equal(r.base, 30);
+        assert.equal(r.vidro, 6, "30 s com −80% = 6 s");
+        assert.equal(r.antesTroca, 30);
+        assert.equal(r.depoisTroca, 6, "a troca de build corta o cronômetro na hora");
         assert.deepEqual(pageErrors, []);
     } finally { await context.close(); }
 });

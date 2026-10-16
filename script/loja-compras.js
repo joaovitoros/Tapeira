@@ -122,7 +122,7 @@ function CompraAvanco(){
 			PagaLoja(precoAvan);
 
 			avanco = Math.min(N(avanco) + N(sobeAvanco), TetoLoja("avan"));
-			precoAvan = N(precoAvan) * 2.5; // preço mais exponencial (era ×2)
+			precoAvan = N(precoAvan) * PASSO_PRECO_AVANCO; // era ×2,5; dobra o aumento
 			sobeAvanco = N(sobeAvanco) * 1.005;
 			lvlAvan++;
 
@@ -232,8 +232,8 @@ function CompraCCrit(){
 			// a partir de 30% cada compra vale metade do passo (o teto segue o da patente)
 			const passo = N(sobeCCrit) * (N(chanceCrit) >= 0.3 ? 0.5 : 1);
 			chanceCrit = Math.min(N(chanceCrit) + passo, TetoLoja("ccrit"));
-			precoCCrit = N(precoCCrit) * 1.5;
-			sobeCCrit = N(sobeCCrit) * 1.1;
+			precoCCrit = N(precoCCrit) * PASSO_PRECO_CCRIT;
+			sobeCCrit = N(sobeCCrit) * 1.1; // o passo do efeito NÃO mudou (só o preço)
 			lvlCCrit++;
 
 			ChamaSom('audio6');
@@ -287,7 +287,7 @@ function CompraQTDAvanco(){
 			PagaLoja(precoQTDAvanco);
 
 			qtdAvanco++;
-			precoQTDAvanco = N(precoQTDAvanco) * 2.5; // preço mais exponencial (era ×2)
+			precoQTDAvanco = N(precoQTDAvanco) * PASSO_PRECO_QTDAVANCO; // era ×2,5; dobra o aumento
 			lvlQTDAvanco++;
 
 			ChamaSom('audio6');

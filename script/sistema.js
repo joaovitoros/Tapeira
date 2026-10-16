@@ -435,7 +435,7 @@ function Resetar() {
 	ValidaBater = 30; //tempo atual para que se possa executar um ataque com o espaço
 	MaxValidaBater = 30; //tempo maximo para que se possa executar um ataque com o espaço
 
-	tempoAvancoInimigos = TempoFugaMax(); //tempo para que o jogar seja obrigado a recuar um andar (base 90 + bônus do Conhecimento)
+	tempoAvancoInimigos = TempoFugaMax(); //tempo para que o jogar seja obrigado a recuar um andar (base 30 + bônus do Conhecimento)
 	nivelJogador = 1;
 	xpAtual = 0;
 	pontosHabilidade = 0;

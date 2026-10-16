@@ -117,7 +117,7 @@ const PATENTE_DA_COMPRA = {
         }
         if (window.__FUSAO_FIXA__) {
             TempoFugaMax = () => {
-                const base = 90 + cmNivelFuga * 2;
+                const base = 30 + cmNivelFuga * 2;
                 const tempo = especializacao === 4 ? Math.floor(base * 0.2) : base;
                 return (tempo + BonusFugaConquistaComp()) * Tapeira.ItensBuild.multFuga();
             };
