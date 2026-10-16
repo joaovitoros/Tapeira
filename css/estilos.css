@@ -14240,14 +14240,18 @@ html.rodape-empilhado #container-Loja {
 		min-height: 46px;
 	}
 
-	/* Info do bau dourado: era 20x20 (quase impossivel acertar com o dedo).
+	/* Info do bau dourado: NAO aumentar o icone (isso quebra o card - ele cresce
+	   de verdade e empurra o AUTO/toggle). Aqui a gente expande SO a AREA DE
+	   TOQUE com um pseudo-elemento invisivel, mantendo o visual original.
 	   A regra original e #golden-chest-tracker #golden-chest-info (dois ids). */
 	#golden-chest-tracker #golden-chest-info {
-		min-width: 46px;
-		min-height: 46px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
+		position: relative;
+	}
+
+	#golden-chest-tracker #golden-chest-info::after {
+		content: "";
+		position: absolute;
+		inset: -12px;
 	}
 
 	/* Textos ilegiveis: rotulo da fuga estava em 8px */
