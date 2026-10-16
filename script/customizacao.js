@@ -219,6 +219,17 @@ function AparenciaAplica() { AparenciaAplicaEm(document); }
 // Compat: o load (persistencia-carregar) chama AplicaChapeuJogador.
 function AplicaChapeuJogador() { AparenciaAplica(); }
 
+// Aplica JÁ NO START, com ou sem save. O HTML da arena nasce com a base NOVA
+// visível e a clássica escondida; quem ligava o interruptor era só o load do save
+// (AplicaChapeuJogador). Num jogo novo (save apagado) o load não roda — então o
+// jogador novo nunca via a clássica (capacete+picareta), que é justamente a arte
+// dos primeiros 80 andares. O readyState cobre os dois momentos de carregamento.
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", AparenciaAplica);
+} else {
+    AparenciaAplica();
+}
+
 function AparenciaEquipa(slotId, itemId) {
     const slot = AparenciaSlot(slotId);
     if (!slot) return false;
