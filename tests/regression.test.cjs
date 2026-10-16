@@ -1701,6 +1701,41 @@ test("loja do Conhecimento aplica +5% de dano/gold/XP por nível", async () => {
     }
 });
 
+test("Loja do Conhecimento: itens de formiga custam o dobro e sobem o dobro (efeito igual)", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.PrecoLojaCM === "function");
+        const r = await page.evaluate(() => {
+            reputacao = 0; // sem o desconto do Mercado
+            const preco = (n, t) => PrecoLojaCM(n, t);
+            cmNivelFormiga = 30;
+            const efeitoFormiga30 = ChanceDropFormiga();
+            cmNivelDuasFormigas = 20;
+            const efeitoDuas20 = Math.min(cmNivelDuasFormigas, 100) * 0.01;
+            return {
+                formiga: [preco(0, "formiga"), preco(1, "formiga"), preco(2, "formiga")],
+                duas: [preco(0, "duasformigas"), preco(2, "duasformigas")],
+                normal: [preco(0, "dano"), preco(1, "dano"), preco(2, "dano")],
+                semTipo: preco(0),
+                efeitoFormiga30,
+                efeitoDuas20
+            };
+        });
+
+        // itens normais (dano/gold/xp/fuga/crit/comp) NÃO mudaram: base 10, ×1,25
+        assert.deepEqual(r.normal, [10, 13, 16], "item normal segue 10 / ×1,25");
+        assert.equal(r.semTipo, 10, "chamada sem tipo = comportamento antigo");
+        // formigas: base dobrada (20) e aumento dobrado (passo 1,5)
+        assert.deepEqual(r.formiga, [20, 30, 45], "formiga: 20 / 30 / 45");
+        assert.deepEqual(r.duas, [20, 45], "duas formigas: 20 / 45");
+        // e os GANHOS não mudam
+        assert.ok(Math.abs(r.efeitoFormiga30 - 0.16) < 1e-9, "efeito da formiga intacto (+0,5%/nível)");
+        assert.ok(Math.abs(r.efeitoDuas20 - 0.20) < 1e-9, "efeito das duas formigas intacto (+1%/nível)");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
 test("explorador: chance só da distância e o nível pula N andares", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

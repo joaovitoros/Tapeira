@@ -232,7 +232,7 @@ function AtualizaSaldoBotoesLoja() {
 		for (const item of itens) {
 			const btn = painelCM.querySelector('.loja-item__comprar[data-compra-cm="' + item.id + '"]');
 			if (!btn) continue;
-			btn.classList.toggle("loja-item__comprar--off", !(conhecimentoMug >= PrecoLojaCM(item.nivel)));
+			btn.classList.toggle("loja-item__comprar--off", !(conhecimentoMug >= PrecoLojaCM(item.nivel, item.id)));
 		}
 	}
 }
@@ -380,21 +380,21 @@ function AtualizaLojaCM() {
 	if (saldo) saldo.innerHTML = FormatCM(conhecimentoMug);
 
 	const itens = [
-		{ nivel: cmNivelDano, preco: "precoCMDano", lvl: "lvlCMDano" },
-		{ nivel: cmNivelGold, preco: "precoCMGold", lvl: "lvlCMGold" },
-		{ nivel: cmNivelXp, preco: "precoCMXp", lvl: "lvlCMXp" },
-		{ nivel: cmNivelFuga, preco: "precoCMFuga", lvl: "lvlCMFuga" },
-		{ nivel: cmNivelCrit, preco: "precoCMCrit", lvl: "lvlCMCrit" },
-		{ nivel: cmNivelFormiga, preco: "precoCMFormiga", lvl: "lvlCMFormiga" },
-		{ nivel: cmNivelDuasFormigas, preco: "precoCMDuas", lvl: "lvlCMDuas" },
-		{ nivel: cmNivelComp, preco: "precoCMComp", lvl: "lvlCMComp" },
-		{ nivel: cmNivelGoldComp2, preco: "precoCMGoldComp2", lvl: "lvlCMGoldComp2" }
+		{ id: "dano", nivel: cmNivelDano, preco: "precoCMDano", lvl: "lvlCMDano" },
+		{ id: "gold", nivel: cmNivelGold, preco: "precoCMGold", lvl: "lvlCMGold" },
+		{ id: "xp", nivel: cmNivelXp, preco: "precoCMXp", lvl: "lvlCMXp" },
+		{ id: "fuga", nivel: cmNivelFuga, preco: "precoCMFuga", lvl: "lvlCMFuga" },
+		{ id: "crit", nivel: cmNivelCrit, preco: "precoCMCrit", lvl: "lvlCMCrit" },
+		{ id: "formiga", nivel: cmNivelFormiga, preco: "precoCMFormiga", lvl: "lvlCMFormiga" },
+		{ id: "duasformigas", nivel: cmNivelDuasFormigas, preco: "precoCMDuas", lvl: "lvlCMDuas" },
+		{ id: "comp", nivel: cmNivelComp, preco: "precoCMComp", lvl: "lvlCMComp" },
+		{ id: "goldcomp2", nivel: cmNivelGoldComp2, preco: "precoCMGoldComp2", lvl: "lvlCMGoldComp2" }
 	];
 
 	for (const item of itens) {
 		const elPreco = document.getElementById(item.preco);
 		const elLvl = document.getElementById(item.lvl);
-		if (elPreco) elPreco.innerHTML = FormatCM(PrecoLojaCM(item.nivel));
+		if (elPreco) elPreco.innerHTML = FormatCM(PrecoLojaCM(item.nivel, item.id));
 		if (elLvl) elLvl.innerHTML = item.nivel;
 	}
 
@@ -423,7 +423,7 @@ function CompraCM(tipo) {
 		return;
 	}
 
-	const preco = PrecoLojaCM(nivel);
+	const preco = PrecoLojaCM(nivel, tipo);
 	if (conhecimentoMug < preco) {
 		MostraInfo("Você não tem Conhecimento Mug suficiente!");
 		return;
