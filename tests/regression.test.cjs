@@ -2550,6 +2550,44 @@ test("loja v2: cabeçalho + carteira + abas, sem sobrepor o rodapé/HUD", async 
     }
 });
 
+test("loja de Gold mostra o nome da build ao lado do título", async () => {
+    // A build escolhida aparece no cabeçalho ("Força Bruta · Loja de Gold") para
+    // não precisar rolar até a seção de especialização, que vive no fim da loja.
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof SyncSecaoEspecializacao === "function"
+            && typeof ESPECIALIZACOES !== "undefined", undefined, { timeout: 15000 });
+        const r = await page.evaluate(() => {
+            window.ChamaSom = () => {};
+            document.querySelectorAll("#infoModal, #gameModal").forEach(m => m.remove());
+            const ler = () => {
+                const h2 = document.querySelector("#Loja .loja-titulo");
+                const span = document.getElementById("lojaEspecializacao");
+                return {
+                    titulo: h2.textContent.trim(),
+                    span: span ? span.textContent : null,
+                    visivel: !!span && getComputedStyle(span).display !== "none"
+                };
+            };
+            especializacao = 0;
+            SyncSecaoEspecializacao();
+            const semBuild = ler();
+            especializacao = 1; // Força Bruta
+            SyncSecaoEspecializacao();
+            const comBuild = ler();
+            return { semBuild, comBuild, nome: ESPECIALIZACOES[1].nome };
+        });
+
+        assert.equal(r.semBuild.titulo, "Loja de Gold", "sem build o título é só 'Loja de Gold'");
+        assert.equal(r.semBuild.visivel, false, "sem build o rótulo da build fica escondido (:empty)");
+        assert.equal(r.comBuild.titulo, r.nome + " · Loja de Gold", "com build o nome entra ao lado do título");
+        assert.equal(r.comBuild.span, r.nome + " · ", "o rótulo traz o nome da build");
+        assert.equal(r.comBuild.visivel, true, "com build o rótulo fica visível");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
 test("reset e pausa usam listeners registrados (sem onclick/onload inline)", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
