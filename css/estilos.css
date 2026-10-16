@@ -2136,20 +2136,20 @@ body {
 
 .contGoldlbl,
 .contGold {
-	font-size: clamp(9px, calc((6.25vh - 13px) / 2), 26px);
+	font-size: clamp(11px, calc((6.25vh - 13px) / 2), 26px);
 	font-weight: 800;
 	line-height: 1;
 }
 
 .contEmeraldaslbl,
 .contEmeraldas {
-	font-size: clamp(9px, calc((6.25vh - 13px) / 2), 26px);
+	font-size: clamp(11px, calc((6.25vh - 13px) / 2), 26px);
 	line-height: 1;
 }
 
 .contConhecimentolbl,
 .contConhecimento {
-	font-size: clamp(9px, calc((6.25vh - 13px) / 2), 26px);
+	font-size: clamp(11px, calc((6.25vh - 13px) / 2), 26px);
 	line-height: 1;
 }
 
@@ -4998,7 +4998,7 @@ input:focus-visible {
 		gap: 4px;
 		margin: 0;
 		padding: 0 2px;
-		font-size: clamp(9px, calc((6.25vh - 13px) / 2), 26px);
+		font-size: clamp(11px, calc((6.25vh - 13px) / 2), 26px);
 	}
 
 	#container-Gold .contGoldlbl,
@@ -8205,10 +8205,17 @@ button.skill-ramo-no:focus-visible {
 /* Linha do baú: reivindica width/height/font-size/min-height e o alinhamento
    interno que #container-Botoes button (1 ID + tipo, também dentro das media
    queries) impunha sobre #golden-chest-claim (1 ID só) — e "flex: none" para a
-   linha não esticar na vertical quando o card virou flex-column. */
+   linha não esticar na vertical quando o card virou flex-column.
+
+   EMPILHADO (ícone em cima, tempo embaixo), não lado a lado: o card tem só
+   84-92px e o conteúdo horizontal (ícone 36 + texto "17:31" 41 + gap) pedia
+   ~85px — o tempo vazava para FORA da borda em TODOS os tamanhos (bug desde o
+   8ddba7c, que subiu o ícone 26→36). Empilhado, cada um usa a largura inteira
+   do card e o tempo continua legível em 14px. */
 #golden-chest-tracker #golden-chest-claim {
 	width: 100%;
 	flex: none;
+	flex-direction: column;
 	height: auto;
 	min-height: 0;
 	margin-top: 0;
@@ -8217,7 +8224,8 @@ button.skill-ramo-no:focus-visible {
 	padding-left: 3px;
 	padding-right: 3px;
 	font-size: 12px;
-	justify-content: space-between;
+	justify-content: center;
+	gap: 2px;
 }
 
 /* Legenda "auto" empilhada EM CIMA do checkbox, alinhada à direita do card */
@@ -14240,27 +14248,25 @@ html.rodape-empilhado #container-Loja {
 		min-height: 46px;
 	}
 
-	/* Info do bau dourado: NAO aumentar o icone (isso quebra o card - ele cresce
-	   de verdade e empurra o AUTO/toggle). Aqui a gente expande SO a AREA DE
-	   TOQUE com um pseudo-elemento invisivel, mantendo o visual original.
-	   A regra original e #golden-chest-tracker #golden-chest-info (dois ids). */
-	#golden-chest-tracker #golden-chest-info {
-		position: relative;
-	}
-
-	#golden-chest-tracker #golden-chest-info::after {
-		content: "";
-		position: absolute;
-		inset: -12px;
-	}
+	/* Info do bau dourado e os checkboxes tem o alvo de toque definido no bloco
+	   "ALVOS DE TOQUE COMUNS AS DUAS ORIENTACOES" (mais abaixo), porque o
+	   ::before do proprio input nao depende de onde o label esta. */
 
 	/* Textos ilegiveis: rotulo da fuga estava em 8px */
 	.fuga-label-mobile,
 	.fuga-label-desktop,
-	.andar-label-mobile,
-	.manter-label-mobile,
-	.voltar-label-mobile,
 	.golden-chest-tracker__auto-label {
+		font-size: 12px;
+		line-height: 1.15;
+	}
+
+	/* Andar/Manter/Voltar: o bump para 12px NUNCA valeu porque
+	   `#container-AndarManter .andar-label-mobile { font-size: inherit }`
+	   (1 id + classe) vence uma regra de 1 classe só. Mesma especificidade,
+	   bloco no fim do arquivo -> empata e vence. */
+	#container-AndarManter .andar-label-mobile,
+	#container-AndarManter .manter-label-mobile,
+	#container-AndarManter .voltar-label-mobile {
 		font-size: 12px;
 		line-height: 1.15;
 	}
@@ -14269,4 +14275,182 @@ html.rodape-empilhado #container-Loja {
 	.contTempo {
 		font-size: 13px;
 	}
+
+	/* Fechar dos modais: tinha 34px de altura (< 44 de toque) */
+	.btn-FecharModal {
+		min-height: 44px;
+	}
+
+	/* Voltar andar: a coluna tinha 39-42px de largura (< 44) */
+	#btnAndar {
+		min-width: 44px;
+	}
+
+	/* "Manter no andar" e "auto": o alvo de toque vem do ::before do checkbox
+	   (ver o bloco "ALVOS DE TOQUE COMUNS AS DUAS ORIENTACOES"). */
+
+	/* Menu de pause / ajustes: linhas de toggle (39px), botao de qualidade (31px)
+	   e o campo de importar save (26px) ficavam todos abaixo do minimo de toque.
+	   Os dois primeiros precisam da MESMA especificidade das regras originais
+	   (#configQualidade .qualidade-btn), senao a delas ganha. */
+	.config-item {
+		min-height: 44px;
+	}
+
+	#configQualidade .qualidade-btn {
+		min-height: 44px;
+	}
+
+	#txtfiletoread {
+		min-height: 44px;
+	}
+
+	/* ---- Legibilidade do painel Objetivo/Missao ----
+	   A base do painel no celular era 9px (media query de <=900px) e, como o
+	   titulo/contagem sao `em` sobre ela, o "OBJETIVO DO ANDAR" media 6.5px e o
+	   "Proximo reset" 7.2px — ilegiveis. Aqui os pisos vao em px (nao em `em`)
+	   para nao depender da base. Escopado em <=700px: tablet/desktop nao mudam. */
+	#container-Objetivo,
+	#container-Missao {
+		font-size: 13px;
+	}
+
+	#objetivoTitulo,
+	#missaoTitulo {
+		font-size: 11px;
+	}
+
+	#objetivoContagem,
+	#missaoContagem {
+		font-size: 12px;
+	}
+
+	#avisoReset {
+		font-size: 11px;
+	}
+}
+
+/* =====================================================================
+   ALVOS DE TOQUE COMUNS AS DUAS ORIENTACOES (retrato <=700 e landscape de
+   celular). Sao geometricamente independentes da orientacao:
+   - os checkboxes (34x18) ganham area de toque pelo ::before do PROPRIO
+     input (o ::after dele ja e' o knob, entao o ::before esta livre). Assim
+     nao depende de onde o label esta — no retrato ele fica EM CIMA do
+     checkbox e no landscape AO LADO, e os dois casos funcionam.
+   - o icone de info do bau dourado (20x20) cresce por ::after assimetrico.
+   ===================================================================== */
+@media (max-width: 700px), (min-width: 701px) and (max-width: 960px) and (max-height: 520px) and (orientation: landscape) {
+	/* Cada checkbox tem vizinhos diferentes (o "manter" tem buttAndar a' direita;
+	   o "auto" tem o info a' esquerda), entao a folga e' assimetrica para os
+	   dois fecharem 44 sem roubar o alvo um do outro. Insets relativos ao
+	   proprio input, entao valem nas duas orientacoes. */
+	#container-ManterAndar #manterAndar::before {
+		content: "";
+		position: absolute;
+		inset: -14px -6px -14px -16px;
+	}
+
+	#golden-chest-tracker #autoColetaToggle::before {
+		content: "";
+		position: absolute;
+		inset: -14px -10px -14px -2px;
+	}
+
+	/* Info do bau dourado: NAO aumentar o icone (isso quebra o card - ele
+	   cresce de verdade e empurra o AUTO/toggle). Expandir so a AREA DE TOQUE.
+	   A regra original e #golden-chest-tracker #golden-chest-info (dois ids). */
+	#golden-chest-tracker #golden-chest-info {
+		position: relative;
+	}
+
+	#golden-chest-tracker #golden-chest-info::after {
+		content: "";
+		position: absolute;
+		/* assimetrico: o card e' estreito e o toggle "auto" fica logo a' direita,
+		   entao o alvo se estende para a esquerda/cima/baixo (nao ha' nada por
+		   cima dele) em vez de para os lados iguais. */
+		inset: -15px -12px -12px -18px;
+	}
+}
+
+/* =====================================================================
+   POLIMENTO MOBILE — LANDSCAPE (celular deitado)
+   O bloco de cima e' `max-width:700px`, entao o celular deitado escapava:
+   de 701 a 900px caia no layout "landscape baixo" (que cuida de parte do
+   toque, mas nao de Pausar/Voltar/checkboxes/info) e acima de 900px (iPhone
+   Max / Galaxy deitados) caia no layout de desktop, com os botoes da nav
+   voltando a 38px (clamp 3.5vw). Mesmos truques do retrato: min-height e
+   area de toque por ::after invisivel. Aqui as regras valem SO nessa faixa
+   (701-960) para nao mexer no retrato (<=700) nem no desktop.
+   ===================================================================== */
+@media (min-width: 701px) and (max-width: 960px) and (max-height: 520px) and (orientation: landscape) {
+	/* Nav: o base usa `height: clamp(38px, 3.5vw, 50px)` e em 915-960 da 38px. */
+	#container-Botoes .screen-nav-button,
+	#container-Botoes button {
+		min-height: 44px;
+	}
+
+	/* Pausar (36px) e Voltar andar (27px) no layout "landscape baixo". */
+	#container-HudTopo > #btnPause {
+		min-height: 44px;
+	}
+
+	#btnAndar {
+		min-height: 44px;
+	}
+
+	/* Legibilidade do painel Objetivo/Missao DEITADO. A base neste layout e 9px
+	   (media query de 900x520 landscape) e o titulo/contagem sao `em` sobre ela
+	   -> o "OBJETIVO DO ANDAR" mede 6.5px e o "Proximo reset" 7.2px. Mesmos
+	   pisos do retrato, em px. */
+	#container-Objetivo,
+	#container-Missao {
+		font-size: 13px;
+	}
+
+	#objetivoTitulo,
+	#missaoTitulo {
+		font-size: 11px;
+	}
+
+	#objetivoContagem,
+	#missaoContagem {
+		font-size: 12px;
+	}
+
+	#avisoReset {
+		font-size: 11px;
+	}
+
+	/* Rotulos do HUD no layout deitado: aqui valem os "-desktop" (o
+	   "Manter no andar" media 10.3px via `#lblManter { font-size: 0.86em }`). */
+	#container-ManterAndar #lblManter,
+	#container-AndarManter .voltar-label-desktop,
+	#container-AndarManter .andar-label-desktop {
+		font-size: 12px;
+	}
+
+	/* "Manter no andar" e "auto": o alvo de toque vem do ::before do checkbox
+	   (bloco "ALVOS DE TOQUE COMUNS AS DUAS ORIENTACOES"). */
+
+	/* Pause / ajustes: Fechar (fonte clamp de vw dava ~29px aqui), linhas de
+	   ajuste, qualidade e o campo de importar save. */
+	.btn-FecharModal,
+	.config-item,
+	#configQualidade .qualidade-btn,
+	#txtfiletoread {
+		min-height: 44px;
+	}
+}
+
+/* ---------------------------------------------------------------------
+   Botao da nav com `hidden` precisa SUMIR de verdade.
+   A regra base `#container-Botoes .screen-nav-button` tem `display: flex`,
+   que vence o `[hidden]` do navegador (display:none) — por isso o botao
+   "Cidade" aparecia desde o inicio, mesmo com o JS marcando hidden=true
+   ate destravar (andar 80). Vale no PC e no celular.
+   --------------------------------------------------------------------- */
+#container-Botoes .screen-nav-button[hidden],
+#container-Botoes button[hidden] {
+	display: none;
 }
