@@ -3968,6 +3968,47 @@ test("forja da Fábrica custa ~80 avanços de andar e cobra o gold", async () =>
     }
 });
 
+test("inimigos não nascem atrás do HUD no layout deitado (janela baixa)", async () => {
+    // No layout "deitado baixo" (≤900 × ≤520) os inimigos usavam top: 38vh/55vh
+    // SEM piso — em janela baixa nasciam DENTRO do painel Objetivo, e o card do
+    // baú (z-index 16) escondia o sprite e o anel do Frenesi (z-index 5).
+    const abrir = async (w, h) => {
+        const context = await browser.newContext({ viewport: { width: w, height: h } });
+        const page = await context.newPage();
+        const pageErrors = [];
+        page.on("pageerror", e => pageErrors.push(e.message));
+        await page.goto(`${baseUrl}/Caverna.html`, { waitUntil: "domcontentloaded" });
+        await page.waitForFunction(() => typeof window.andar === "number", undefined, { timeout: 15000 });
+        return { context, page, pageErrors };
+    };
+
+    for (const [w, h] of [[900, 520], [844, 390], [740, 360], [500, 400]]) {
+        const { context, page, pageErrors } = await abrir(w, h);
+        const nome = w + "x" + h;
+        try {
+            const r = await page.evaluate(() => {
+                window.ChamaSom = () => {};
+                document.querySelectorAll("#infoModal, #gameModal").forEach(m => m.remove());
+                andar = 6; // 2+ inimigos na tela
+                const metas = document.getElementById("container-Metas").getBoundingClientRect();
+                const chest = document.getElementById("golden-chest-tracker").getBoundingClientRect();
+                const nav = document.getElementById("container-Botoes").getBoundingClientRect();
+                const inimigos = [1, 2].map(i => {
+                    const el = document.getElementById("inimigo" + i);
+                    return { id: i, top: parseFloat(getComputedStyle(el).top), h: el.getBoundingClientRect().height };
+                });
+                return { limite: Math.max(metas.bottom, chest.bottom), navTop: nav.top, inimigos };
+            });
+            for (const ini of r.inimigos) {
+                assert.ok(ini.top >= r.limite - 1,
+                    nome + ": inimigo " + ini.id + " (top " + ini.top + ") não pode nascer dentro do HUD (fim " + Math.round(r.limite) + ")");
+            }
+            assert.deepEqual(pageErrors, []);
+        } finally {
+            await context.close();
+        }
+    }
+});
 test("HUD: a fuga fica dentro do topo, abaixo do Andar/Manter, e as 3 moedas têm o mesmo tamanho", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

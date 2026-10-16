@@ -5497,14 +5497,18 @@ input:focus-visible {
 		left: 28%;
 	}
 
+	/* Piso em px (o retrato já tem): neste layout o HUD ocupa a faixa de cima
+	   (~90-208) e, sem o piso, em janela baixa o inimigo 1/3 nascia DENTRO do
+	   painel Objetivo — o sprite e o anel do Frenesi (z-index 5 < 16 do card
+	   do baú) ficavam atrás dele. Piso = fim do HUD + folga. */
 	.inimigo1,
 	.inimigo3 {
-		top: 38vh;
+		top: max(210px, 38vh);
 	}
 
 	.inimigo2,
 	.inimigo4 {
-		top: 55vh;
+		top: max(256px, 55vh);
 	}
 
 	.bau {
