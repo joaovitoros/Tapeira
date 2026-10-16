@@ -14214,3 +14214,54 @@ html.rodape-empilhado #container-Loja {
 	color: #9ccfff;
 	font-size: clamp(12px, 1.05vw, 14px);
 }
+
+/* =====================================================================
+   POLIMENTO MOBILE — medido em 390x844 (auditoria de toque)
+   Alvos abaixo de 44x44 e textos abaixo de 14px no celular.
+   Escopado em max-width:700px: o desktop NAO e tocado.
+   ===================================================================== */
+@media (max-width: 700px) {
+	/* Botoes de acao que tinham 20px de altura (abaixo do minimo de toque) */
+	.btn-status-dano,
+	#btnVerItensBuild,
+	.btnVerItensBuild {
+		min-height: 44px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* Botoes do HUD: altura minima de toque */
+	#btnAndar,
+	.btnAndar,
+	#btnPause,
+	.btnPause {
+		min-height: 44px;
+	}
+
+	/* Info do bau dourado: era 20x20 (quase impossivel acertar com o dedo) */
+	#golden-chest-info,
+	.golden-chest-info {
+		min-width: 44px;
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* Textos ilegiveis: rotulo da fuga estava em 8px */
+	.fuga-label-mobile,
+	.fuga-label-desktop,
+	.andar-label-mobile,
+	.manter-label-mobile,
+	.voltar-label-mobile,
+	.golden-chest-tracker__auto-label {
+		font-size: 12px;
+		line-height: 1.15;
+	}
+
+	#contTempo,
+	.contTempo {
+		font-size: 13px;
+	}
+}
