@@ -2,6 +2,23 @@
   "_instrucoes": "Edite este arquivo e salve — o site mostra as mudancas na proxima recarga da pagina, sem reiniciar nada. Campos por patch: versao, data (AAAA-MM-DD), titulo (opcional), itens (lista de frases). O mais recente fica no topo (o site ordena pela data).",
   "patches": [
     {
+      "versao": "1.8.1",
+      "data": "2026-10-16",
+      "titulo": "Preços da Cidade de volta ao padrão e ajustes de preço/ritmo",
+      "itens": [
+        "Cidade: os custos em CM voltaram ao padrão (~32,2 milhões) — as construções ficaram 10× mais caras, na escala que o jogo pede.",
+        "Loja de gold: comprar Chance Crítica, Avanço Rápido e Qtd Avanço agora encarece mais rápido (o aumento do preço por compra dobrou). O ganho de cada item segue igual.",
+        "Loja do Conhecimento: os itens de formiga (chance de formiga e de vir 2 formigas) custam o dobro e sobem o dobro — o ganho segue igual.",
+        "Tempo de fuga: o cronômetro base caiu de 90s para 30s (o resto — Conhecimento Mug, Destemido, Relógio de Bolso e o corte do Canhão de Vidro — continua igual).",
+        "Portão de reset: o bônus de dano permanente voltou a +5% por portão.",
+        "Correção: o botão Cidade só aparece depois de destravar (andar 80) — antes ele ficava na barra desde o começo.",
+        "Correção: em janela estreita ou baixa o inimigo não nasce mais atrás do HUD (o sprite e o anel do Frenesi sumiam).",
+        "Loja de Gold volta a mostrar a build escolhida ao lado do título (ex.: Força Bruta · Loja de Gold).",
+        "Mobile: alvos de toque com mínimo de 44 px e textos legíveis (retrato e deitado); o tempo do baú dourado não estoura mais o card.",
+        "Correção: o jogador novo volta a ver a toupeira clássica (capacete + picareta) até liberar a Cidade."
+      ]
+    },
+    {
       "versao": "1.8.0",
       "data": "2026-10-14",
       "titulo": "Biomas oficiais, música por região e o balance da auditoria",
