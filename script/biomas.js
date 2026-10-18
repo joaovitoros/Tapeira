@@ -48,7 +48,7 @@ const BIOMA_MORTE = {
     normal: BiomaMorte("normal", 14),
     gigante: BiomaMorte("gigante", 14),
     cristal: BiomaMorte("cristal", 15),
-    vegetal: BiomaMorte("vegetal", 14),
+    vegetal: BiomaMorte("vegetal", 13),
     metalico: BiomaMorte("metalico", 13),
     lava: BiomaMorte("lava", 14),
     gelo: BiomaMorte("gelo", 14),
