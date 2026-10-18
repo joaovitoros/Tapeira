@@ -230,7 +230,9 @@ function CompraCCrit(){
 			PagaLoja(precoCCrit);
 
 			// a partir de 30% cada compra vale metade do passo (o teto segue o da patente)
-			const passo = N(sobeCCrit) * (N(chanceCrit) >= 0.3 ? 0.5 : 1);
+			// Cap: uma compra NUNCA concede mais de 1% de chance (o passo cresce
+			// ×1,1 e passaria de 1% por volta da 41ª compra).
+			const passo = Math.min(0.01, N(sobeCCrit) * (N(chanceCrit) >= 0.3 ? 0.5 : 1));
 			chanceCrit = Math.min(N(chanceCrit) + passo, TetoLoja("ccrit"));
 			precoCCrit = N(precoCCrit) * PASSO_PRECO_CCRIT;
 			sobeCCrit = N(sobeCCrit) * 1.1; // o passo do efeito NÃO mudou (só o preço)

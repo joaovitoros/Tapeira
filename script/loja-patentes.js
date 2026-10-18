@@ -20,7 +20,7 @@
 var ITENS_PATENTE = {
 	bau: {
 		nome: "Chance Bau", patenteVar: "patenteBau", precoVar: "precoBau",
-		tetos: [0.75, 0.95], passos: [0.05, 0.04],
+		tetos: [0.75, 0.95], passos: [0.025, 0.02],
 		noTeto: () => N(chanceBau) >= TetoLoja("bau") - 1e-9
 	},
 	espaco: {
@@ -56,7 +56,7 @@ var ITENS_PATENTE = {
 	esmbau: {
 		nome: "Esmeralda no Baú", patenteVar: "patenteEsmBau", precoVar: "precoEsmBau",
 		tetos: [0.10, 0.15, 0.175, 0.19, 0.20],
-		passos: [0.01, 0.005, 0.0025, 0.0015, 0.001],
+		passos: [0.005, 0.0025, 0.00125, 0.00075, 0.0005],
 		noTeto: () => N(chanceEsmeraldaBau) >= TetoLoja("esmbau") - 1e-9
 	},
 	velcomp: {

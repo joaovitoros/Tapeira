@@ -62,7 +62,7 @@ const PREVIEWS_LOJA = {
 	CompraCCrit() {
 		if (ITENS_PATENTE.ccrit.noTeto()) return "Chance crítica — ★ " + (GanhoProximaPatenteTexto("ccrit") || "patente máxima");
 		const meio = N(chanceCrit) >= 0.3;
-		const passo = N(sobeCCrit) * (meio ? 0.5 : 1);
+		const passo = Math.min(0.01, N(sobeCCrit) * (meio ? 0.5 : 1));
 		const prox = Math.min(TetoLoja("ccrit"), N(chanceCrit) + passo);
 		return "Chance crítica: " + FormataPct(chanceCrit) + " → " + FormataPct(prox)
 			+ " (máx " + FormataTetoPct(TetoLoja("ccrit")) + (meio ? " · ganho pela metade" : " · a partir de 30% cai pela metade") + ")";

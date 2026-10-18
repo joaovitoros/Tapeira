@@ -1437,7 +1437,7 @@ test("automação respeita desbloqueios, compra mais barato e gasta pontos eleg�
         assert.equal(result.seletivaDesbloqueada, true);
         assert.equal(result.comprouMaisBarato.gold, 5);
         assert.equal(result.comprouMaisBarato.nivelBau, 2);
-        assert.ok(Math.abs(result.comprouMaisBarato.chanceBau - 0.15) < 1e-10);
+        assert.ok(Math.abs(result.comprouMaisBarato.chanceBau - 0.125) < 1e-10);
         assert.equal(result.seletivaPadraoCompra, true);
         assert.equal(result.seletivaDesmarcadaNaoCompra, true);
         assert.equal(result.seletivaComprou, true);
@@ -1826,6 +1826,46 @@ test("menu de pause: 'Girar tela' só aparece com a ponte nativa (app Android)",
         }));
         assert.deepEqual(r.chamadas, ["landscape"], "em retrato, clicar trava paisagem");
         assert.equal(r.status, "Deitado", "o status acompanha a troca");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+test("balance+UI: cap de 1% no crítico, baú/esmeralda pela metade e Loja acima do evento", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof window.CompraCCrit === "function"
+            && typeof window.IniciaEvento === "function");
+        const r = await page.evaluate(() => {
+            window.ChamaSom = () => {};
+            document.querySelectorAll("#infoModal, #gameModal").forEach(m => m.remove());
+
+            // 1) Crítico: nem com um passo absurdo a compra passa de 1%
+            patenteCCrit = 0; chanceCrit = 0; sobeCCrit = 5; lvlCCrit = 1;
+            gold = new GoldNumber(1e15);
+            CompraCCrit();
+            const ganhoCrit = Math.round(chanceCrit * 10000) / 10000;
+
+            // 2) Baú e esmeralda no baú: metade do passo por nível
+            patenteBau = 0; patenteEsmBau = 0;
+            const passoBau = PassoLoja("bau");
+            const passoEsmbau = PassoLoja("esmbau");
+
+            // 3) O painel do evento fica ATRÁS da Loja aberta
+            window.ElegivelEvento = () => true;
+            IniciaEvento("nevoa");
+            AbreLoja(false);
+            const zPainel = el => parseInt(getComputedStyle(el).zIndex) || 0;
+            return {
+                ganhoCrit, passoBau, passoEsmbau,
+                zEvento: zPainel(document.getElementById("eventoPainel")),
+                zLoja: zPainel(document.getElementById("container-Loja"))
+            };
+        });
+        assert.ok(Math.abs(r.ganhoCrit - 0.01) < 1e-9, "crítico dá no máximo 1% por compra (veio " + (r.ganhoCrit * 100) + "%)");
+        assert.ok(Math.abs(r.passoBau - 0.025) < 1e-9, "baú dá +2,5% por nível (metade de 5%)");
+        assert.ok(Math.abs(r.passoEsmbau - 0.005) < 1e-9, "esmeralda no baú dá +0,5% por nível (metade de 1%)");
+        assert.ok(r.zEvento < r.zLoja, "o painel do evento (z=" + r.zEvento + ") fica atrás da Loja (z=" + r.zLoja + ")");
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();
@@ -4184,6 +4224,14 @@ test("mobile: o tempo do baú dourado não vaza do card e os alvos de toque fech
             typeof window.andar === "number"
             && typeof UI === "object" && typeof UI.toggleInfoModal === "function",
             undefined, { timeout: 15000 });
+        // Jogo SEM save: o CarregarAutoSave abre o "Como jogar" (MostraInfos) —
+        // e ele pode nascer DEPOIS do setup do teste, cobrindo o HUD e zerando o
+        // hit-test (era a causa de um flake intermitente). Remove a cada aparição.
+        await page.evaluate(() => {
+            const limpa = () => document.querySelectorAll("#infoModal, #gameModal").forEach(m => m.remove());
+            limpa();
+            new MutationObserver(limpa).observe(document.body, { childList: true });
+        });
         return { context, page, pageErrors };
     };
 
