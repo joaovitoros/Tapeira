@@ -4,6 +4,48 @@ Este arquivo registra **onde a reorganização parou** e o que falta, para que
 qualquer pessoa (ou sessão futura) continue do ponto certo. As regras de
 contribuição continuam no `AGENTS.md`.
 
+## 🚩 ONDE PARAMOS (13/10/2026)
+
+**Estado:** suíte **79/79 verde**. `main` = `joao` (o commit deste doc).
+
+**Feito nesta leva (item 13 — refatorações):**
+- **Item 20** — **fundo da caverna** extraído para `script/fundos.js` (corte byte a byte).
+- **Item 21** — limpeza de **38 assets órfãos** (−3,7 MB) + **folhas de arte-fonte fora do
+  pacote do PC** (corrigida a exclusão de `imagens/customização/**`, que estava sem o acento,
+  e excluída `imagens/possiveis novos fundos/**`) → **~29,5 MB a menos**.
+- **Item 22** — extraídos de `script.js` mais **3 blocos byte a byte** (script.js **716 → 348**
+  linhas):
+  - variáveis da loja → `script/loja-variaveis.js`
+  - avanço/fuga do andar → `script/avanco-inimigos.js`
+  - portões de dano + `VoltaAndar` + `PedeReset`/`ConfirmaReset`/`AlternaManterAndar` → `script/reset.js`
+
+  Os três entram **logo depois de `script.js` nas DUAS páginas** — o código vivia no
+  `script.js`, que carrega no menu e na caverna; assim o comportamento é idêntico. Nenhum
+  campo de save mudou (mesmos nomes globais). Suíte 79/79.
+- **Item 23** — `FormatarGold` conferido: já tinha fallback científico.
+
+**Correção de build (regressão da limpeza de assets):** `npm run prepare:web` estava
+**quebrado** — o `scripts/prepare-animation-sprites.ps1` ainda gerava as faixas `ataque` e
+`fugindo-sprites` (mortas; as folhas-fonte foram apagadas no item 21) e abortava o build
+PC/Android. Removidas as 2 chamadas, restaurada a folha-fonte
+**`imagens/animacoes/fugindo/fugindo.png`** (fonte dos frames de fuga que o jogo usa) e ela
+excluída do pacote. `prepare:web` ✓ de novo (bundles 478/283 KB).
+
+**PRÓXIMO PASSO (foi onde parei):** o que resta em `script.js` é o **estado global** (vars
+por-run e permanentes), o bloco do **Conhecimento Mug** (funções) e o `CarregarStatus` — não
+é mais "arquivo monstro" (348 linhas). Se continuar: `CarregarStatus` encaixa em
+`batalha.js`; o estado global só vale a pena quando os campos forem agrupados por dono.
+
+**Depois:** item 2 restante (os sprites do build saem sem otimização) e o item 1 (cache de
+`getElementById`/ticks — **baixo valor**: só 3 timers ativos, ~0,4 ms no tick de 1 s).
+
+- **Item 24** — `test-loja-layout.js` **atualizado para o desenho atual** (era stale: falhava
+  13/26). A Loja virou **overlay de tela cheia** (fade + painel centrado) e o teste antigo
+  media `#container-Loja` como se fosse o painel. Agora mede o painel de verdade
+  (`#container-Loja > #Loja`) e cobra, em 13 resoluções (1920×1080 → 800×600): painel visível,
+  cabe na tela, respeita os máximos 1300×850, o fade cobre a viewport, e a área do overlay vai
+  do topo até a faixa inferior — **65/65**.
+
 ## Objetivo
 
 Reduzir o acoplamento dos arquivos monstro (`script.js`, `sistema.js`,
@@ -159,6 +201,16 @@ navegador, Windows (Electron) e Android (Capacitor).
     `android-save` + `dev-tools`). A fonte e a suíte seguem com os scripts
     individuais; `test-bundle.js` valida o bundle sobre o `www`.
 
+20. Extração do **fundo da caverna** de `script.js` para `script/fundos.js`
+    (`FUNDOS_CAVERNA`, `IniciaFundos`, `TrocaFundoPara`, `ProximoFundo`) — corte
+    byte a byte, sem mudar comportamento. Suíte 79/79.
+21. Limpeza de assets: 38 arquivos órfãos (−3,7 MB: props da Cidade não usados,
+    animação de ataque/fuga antigas desativadas, itens e ícones obsoletos).
+    **Folhas de arte-fonte fora do pacote do PC**: corrigida a exclusão de
+    `imagens/customização/**` (faltava o acento) e excluída
+    `imagens/possiveis novos fundos/**` → **~29,5 MB a menos** (verificado no
+    `app.asar`).
+
 Resultado: nenhum arquivo passa de 800 linhas (antes `ui.js` tinha ~2.960 e
 `script.js`/`sistema.js` mais de 1.800 cada).
 
@@ -197,11 +249,8 @@ Rode `npm run prepare:web` antes dos testes focados que abrem `www/`.
   variáveis exige conferir save, reset e validação em conjunto.
 - ~~O save incompatível preserva o auto save local e mostra o motivo~~ —
   **resolvido**: era o `perkFrenesi` fora do cálculo de pontos (item 12).
-- **`FormatarGold` sem fallback científico** (achado à parte, não misturado): é
-  usado só no status/cartão de batalha (dano, DPS, crítico) e, além do último
-  sufixo (~e+150), imprimiria um número gigante + "Noqig" em vez de notação
-  científica — diferente do `FormatGold`/`formatNumber`. Baixo risco hoje, mas
-  vale unificar.
+- ~~**`FormatarGold` sem fallback científico**~~ — **resolvido**: já cai em
+  notação científica além do último sufixo (`gold.js`, ~linhas 175-182).
 - **Customização (Aparência) — slot de CHAPÉUS pronto**: base sem chapéu
   (`imagens/personagens/player.png`) + camada `.player__chapeu` dentro da caixa
   do player + 8 chapéus (`imagens/personagens/chapeus/`) + seção "Aparência" na

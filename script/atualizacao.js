@@ -9,7 +9,7 @@
 // rodando solto (arquivo/.exe/app), usa o endereço salvo (Configurações).
 
 // Versão DESTE build — atualize junto com o package.json a cada release.
-const VERSAO_JOGO = "1.7.0";
+const VERSAO_JOGO = "1.8.0";
 
 function AtualizacaoBase() {
     if (location.protocol === "http:" || location.protocol === "https:") return "";

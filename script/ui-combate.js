@@ -217,7 +217,7 @@ Object.assign(UI, {
 
     spawnEnemies() {
 
-        ChamaSom('audio1');
+        // a trilha é tocada quando a CENA carrega (script/biomas.js), não aqui
 
         let limiteInimigos = 1;
 
@@ -326,6 +326,8 @@ Object.assign(UI, {
 // "surgimento" no chão. Só visual; some no animationend (sem timer novo).
 function SurgeInimigo(el) {
 	if (!el) return;
+	// Biomas: garante o sprite da criatura da faixa atual.
+	if (typeof BiomaAplicaInimigo === "function") BiomaAplicaInimigo(el);
 	el.classList.remove("inimigo--surgindo");
 	void el.offsetWidth;
 	el.classList.add("inimigo--surgindo");

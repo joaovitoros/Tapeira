@@ -1,4 +1,4 @@
-// Teste focado: "CM em dobro" da loja de esmeraldas — 4 níveis (×2/×4/×8/×16),
+// Teste focado: "CM em dobro" da loja de esmeraldas - 4 níveis (×4/×8/×16/×32),
 // preço base 5 dobrando (5/10/20/40). Rode depois de `npm run prepare:web`:
 // node test-esm-cm.js
 const { chromium } = require('playwright');
@@ -31,7 +31,7 @@ const path = require('path');
         for (let i = 0; i < 4; i++) { precos.push(precoEsmCM); CompraEsmCM(); }
         check("chega a 4 níveis", lvlEsmCM === 4, lvlEsmCM);
         check("preços 5/10/20/40", JSON.stringify(precos) === "[5,10,20,40]", JSON.stringify(precos));
-        check("efeito ×16 no nível 4", Math.abs(MultiplicadorCM() - 16) < 1e-9, MultiplicadorCM());
+        check("efeito ×32 no nível 4 (base ×2 do item)", Math.abs(MultiplicadorCM() - 32) < 1e-9, MultiplicadorCM());
 
         const esmAntes = esmeraldas;
         CompraEsmCM();
@@ -46,7 +46,7 @@ const path = require('path');
         check("ValidarSave rejeita nível 5", rejeitou5);
 
         const previewMax = PREVIEWS_LOJA.CompraEsmCM();
-        check("preview no máximo cita ×16", /×16/.test(previewMax), previewMax);
+        check("preview no máximo cita ×32", /×32/.test(previewMax), previewMax);
 
         // migração de save antigo: preço derivado do nível
         lvlEsmCM = 1; NormalizaPrecosLoja();

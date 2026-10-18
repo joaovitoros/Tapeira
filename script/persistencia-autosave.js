@@ -132,6 +132,7 @@ function CriarObjetoSave(incluirOffline = true) {
 		armaEquipado,
 		cintoEquipado,
 		escudoEquipado,
+		aparenciaClassica,
 		ofertasDia,
 		ofertasDiaCompradas,
 		reputacao,

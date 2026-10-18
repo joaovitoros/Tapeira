@@ -1,0 +1,16 @@
+% TAPeira — tema animado (loop de 8 compassos de 6/8).
+% Lá menor, balada celta, passo rápido pra combate/avanço.
+X:1
+T:Mina Animada
+C:TAPeira
+M:6/8
+L:1/8
+Q:1/4=126
+K:Am
+V:1 name="Melodia"
+V:2 name="Baixo"
+%
+[V:1] e a a2 a f | e c c2 e f | e a a2 c' b | a g e2 c2 |
+[V:1] e a a2 a f | e c c2 e f | g e d2 c B | a2 a2 a2 |
+[V:2] A,2 E,2 A,2 | C,2 G,2 C,2 | A,2 E,2 A,2 | F,2 C,2 G,2 |
+[V:2] A,2 E,2 A,2 | C,2 G,2 C,2 | G,2 D,2 G,2 | A,2 E,2 A,2 |

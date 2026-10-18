@@ -80,6 +80,11 @@
             <button type="button" data-recarrega-habilidades>Recarregar habilidades</button>
             <button type="button" data-bau-dourado>Liberar baú dourado</button>
         </div>
+        <div class="game-dev-tools__section">Balanceamento</div>
+        <label class="game-dev-tools__repeat">
+            <input type="checkbox" data-balance-antigo>
+            Dificuldade antiga (pré-rebalanceamento)
+        </label>
         <div class="game-dev-tools__readout" aria-live="polite">
             <span data-playback>Status: pronto</span>
             <span data-frame>Quadro: -</span>
@@ -103,6 +108,7 @@
     const floorInput = panel.querySelector("#dev-floor");
     const cmInput = panel.querySelector("#dev-cm");
     const oneHitKillInput = panel.querySelector("[data-one-hit-kill]");
+    const balanceAntigoInput = panel.querySelector("[data-balance-antigo]");
     const eventoStatusReadout = panel.querySelector("[data-evento-status]");
     const gameStateReadout = panel.querySelector("[data-game-state]");
     let playing = false;
@@ -365,6 +371,19 @@
         });
     });
     panel.querySelector("[data-set-floor]").addEventListener("click", setFloor);
+
+    // Balanceamento: compara com a dificuldade de ANTES (CM ×1,4, sem o ×2 base e
+    // sem o fundo escalável). Só na sessão — o flag não vai pro save de propósito.
+    if (balanceAntigoInput) {
+        balanceAntigoInput.checked = !!balanceAntigo;
+        balanceAntigoInput.addEventListener("change", () => {
+            balanceAntigo = balanceAntigoInput.checked;
+            tempoAvancoInimigos = TempoFugaMax(); // o cronômetro reflete na hora
+            reportGameState(balanceAntigo
+                ? "Balanceamento ANTIGO ligado (CM ×1,4, sem ×2, fundo fixo)."
+                : "Balanceamento NOVO (padrão) de volta.");
+        });
+    }
 
     panel.querySelectorAll("[data-forca-evento]").forEach(button => {
         button.addEventListener("click", () => forcaEvento(button.dataset.forcaEvento));

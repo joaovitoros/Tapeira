@@ -160,8 +160,35 @@ function AparenciaHtmlArte(mapa) {
     return `<div class="player__arte"><img class="player__base" src="imagens/personagens/player.png" alt="">${camadas}</div>`;
 }
 
+// --- imagem CLÁSSICA (a toupeira com capacete e picareta) ---
+// Antes de destravar a Cidade (andar 80) o player é SEMPRE a imagem clássica.
+// Depois, a Casa deixa escolher voltar pra ela (sem customização).
+const APARENCIA_IMG_CLASSICA = "imagens/personagens/player-classico.png";
+const APARENCIA_ANDAR_CIDADE = 80;
+
+function AparenciaCidadeLiberada() {
+    return (Number(window.maxAndar) || 0) >= APARENCIA_ANDAR_CIDADE;
+}
+
+function AparenciaUsaClassica() {
+    if (!AparenciaCidadeLiberada()) return true;          // antes da Cidade: sempre clássico
+    return window.aparenciaClassica === true;             // opção da Casa
+}
+
 // Aplica as camadas equipadas em todos os sprites de aparência dentro de `raiz`.
 function AparenciaAplicaEm(raiz) {
+    // clássico x customizado (troca a imagem base e esconde as camadas)
+    const classico = AparenciaUsaClassica();
+    raiz.querySelectorAll(".player__arte").forEach(arte => {
+        const imgClassico = arte.querySelector(".player__classico");
+        const base = arte.querySelector(".player__base");
+        if (imgClassico) imgClassico.hidden = !classico;
+        if (base) base.hidden = classico;
+    });
+    if (classico) {
+        raiz.querySelectorAll("[data-aparencia-slot]").forEach(img => { img.hidden = true; });
+        return;
+    }
     for (const slot of APARENCIA_SLOTS) {
         const item = AparenciaItem(slot, AparenciaEquipadoId(slot));
         const camadas = raiz.querySelectorAll('[data-aparencia-slot="' + slot.id + '"]');
@@ -191,6 +218,17 @@ function AparenciaAplica() { AparenciaAplicaEm(document); }
 
 // Compat: o load (persistencia-carregar) chama AplicaChapeuJogador.
 function AplicaChapeuJogador() { AparenciaAplica(); }
+
+// Aplica JÁ NO START, com ou sem save. O HTML da arena nasce com a base NOVA
+// visível e a clássica escondida; quem ligava o interruptor era só o load do save
+// (AplicaChapeuJogador). Num jogo novo (save apagado) o load não roda — então o
+// jogador novo nunca via a clássica (capacete+picareta), que é justamente a arte
+// dos primeiros 80 andares. O readyState cobre os dois momentos de carregamento.
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", AparenciaAplica);
+} else {
+    AparenciaAplica();
+}
 
 function AparenciaEquipa(slotId, itemId) {
     const slot = AparenciaSlot(slotId);
@@ -235,6 +273,25 @@ function CasaSecaoAparencia() {
     }
     preview.appendChild(arte);
     secao.append(titulo, desc, preview);
+
+    // opção: usar a imagem CLÁSSICA (sem customização) — só depois da Cidade
+    if (AparenciaCidadeLiberada()) {
+        const linha = document.createElement("label");
+        linha.className = "aparencia-classica";
+        const check = document.createElement("input");
+        check.type = "checkbox";
+        check.checked = window.aparenciaClassica === true;
+        check.addEventListener("change", () => {
+            window.aparenciaClassica = check.checked;
+            AparenciaAplica();
+            if (typeof AutoSaveLocal === "function") AutoSaveLocal();
+            RenderCasaPainel();
+        });
+        const txt = document.createElement("span");
+        txt.textContent = "Usar a imagem clássica (com capacete e picareta, sem customização)";
+        linha.append(check, txt);
+        secao.appendChild(linha);
+    }
 
     for (const slot of APARENCIA_SLOTS) secao.appendChild(CasaBlocoAparencia(slot));
 
@@ -300,5 +357,7 @@ window.Tapeira.Aparencia = {
     item: AparenciaItem,
     equipar: AparenciaEquipa,
     aplica: AparenciaAplica,
+    usaClassica: AparenciaUsaClassica,
+    cidadeLiberada: AparenciaCidadeLiberada,
     secaoCasa: CasaSecaoAparencia
 };

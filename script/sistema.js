@@ -377,6 +377,8 @@ function PreCarregamento() {
 //// Resetar
 function Resetar() {
 	EncerraEvento(true); //evento aleatório não sobrevive ao reset
+	// limpa animações de morte em voo (o reset troca a cena inteira)
+	if (typeof LimpaEfeitosMorte === "function") LimpaEfeitosMorte();
 	// Casa (Cidade): casaNivel e trofeusExibidos são PERMANENTES — não zeram
 	// aqui (só no ZerarTodosSaves), como o Conhecimento Mug e seus níveis.
 	// Fazenda de Formigas (Cidade): fazendaNivel e fazendaRainha idem.
@@ -562,7 +564,7 @@ function Resetar() {
 
 	// Bônus permanente de dano dos resets (+5% por portão >= 35, único por portão)
 	if (danoResetQtd > 0 && isFinite(danoResetQtd)) {
-		danoJogador = danoJogador * Math.pow(1.05, danoResetQtd);
+		danoJogador = danoJogador * Math.pow(1 + PORTAO_BONUS, danoResetQtd);
 		LimitaDanoCritico();
 	}
 

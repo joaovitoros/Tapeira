@@ -1,5 +1,10 @@
 ﻿//variaveis de regras
 var avancoInterval;
+
+// Painel de DEV (F2): roda o jogo com a dificuldade de ANTES do rebalanceamento
+// (preço do CM ×1,4, sem o ×2 base e sem o fundo escalável). De propósito NÃO vai
+// pro save: é um comparador de sessão, não um modo de jogo do jogador.
+var balanceAntigo = false;
 var numInimigosTela = 1; //usada para validar quantos inimigos e
 var andar = 1;	//usada para contagem do andar atual do jogo (Necessario para calculos progressivos)
 var andarMaxRun = 1; //pico de andar desta run (base dos pontos de perk; zera no reset)
@@ -32,6 +37,7 @@ var danoCritJogador = 2; //dano critico atual do jogador
 var chanceCrit = 0.01; //chance em porcentagem de se causar um dano critico
 var multiplicadorMaximoDanoCritico = 4;
 var vidaAndar; //usado para marcar a vida maximo que os inimigos podem ter no andar atual
+var vidaAndarGold = 0; //vida do andar SEM o desconto do item "subtrair vida" — base do gold de avanço/baú
 var vidaInimigo1; //vida atual do inimigo 1
 var vidaInimigo2; //vida atual do inimigo 2
 var vidaInimigo3; //vida atual do inimigo 3
@@ -117,8 +123,29 @@ function NomeJogador() {
 }
 
 // Multiplicador global dos custos em CM da CIDADE (todos os prédios). Um botão
-// só pra recalibrar — nasceu do rebalance de ×10 pedido pelo jogador.
-const CUSTO_CIDADE_MULT = 10;
+// só pra recalibrar.
+// Era ×10: cobrando em CM a preço de OURO — a Pesquisa custava 200 mil CM com
+// uma renda de ~10-25 mil CM por run, então a Cidade inteira era impagável e o
+// dano de 80+ (Pesquisa: +10% por nível, 5 níveis) ficava fora de alcance. A
+// auditoria de ritmo flagrou o bot batendo em "não tem Conhecimento Mug
+// suficiente" 122x numa run. Agora o preço é da ordem de "uma run" (÷100).
+// CM é moeda PERMANENTE (não reseta) — por isso a Cidade é em CM, não em ouro.
+// (Lido no load: o "Dificuldade antiga" do painel F2 exige recarregar.)
+var CUSTO_CIDADE_MULT = balanceAntigo ? 10 : 0.1;
+
+// Bônus de dano permanente por portão de reset (o jogo era +5%).
+// Dobrado na auditoria de ritmo (item 14): o portão é o ÚNICO lever permanente
+// SEM damping — a Loja do CM e a Pesquisa da Cidade têm preço > bônus, então
+// decaem (×0,84 e ×0,69 por nível) — e o recorde do bot ficava cravado em ~90-100
+// andares por 10+ resets. Medido: o eixo do CM (preço ×1,15 / renda ×1,25) não
+// moveu o platô; o portão é o que sobrou.
+// balanceAntigo (painel F2) devolve o +5%. (Lido no load: exige recarregar.)
+// +10% deu +9 andares medidos (o maior efeito de um lever isolado da auditoria),
+// mas o platô continuou plano — a escada avança ~1 portão a cada 5 resets. Subir
+// para +16% é o EQUIVALENTE MATEMÁTICO de portões a cada 3 andares (14 portões
+// ×1,16 = 22 portões ×1,10 = ×8,1 no andar 100), sem mexer em save/validação nem
+// no padrão dos portões de esmeralda.
+var PORTAO_BONUS = balanceAntigo ? 0.05 : 0.16;
 
 // Aparência (customização): id do item equipado em cada slot (ver
 // customizacao.js). PERMANENTE — não zera no Resetar. Ausente em save antigo =
@@ -128,6 +155,9 @@ var cachecolEquipado = "nenhum";
 var armaEquipado = "nenhum";
 var cintoEquipado = "nenhum";
 var escudoEquipado = "nenhum";
+// Aparência: usar a imagem CLÁSSICA (com capacete/picareta) em vez da
+// customização. Antes da Cidade (andar 80) o player é sempre clássico.
+var aparenciaClassica = false;
 const TEMPO_BAU_DOURADO_JOGO = 20 * 60 * 1000;
 const TEMPO_BAU_DOURADO_OFFLINE = 40 * 60 * 1000;
 var progressoBauDourado = 0;
@@ -166,10 +196,13 @@ var danoBonus = 0; //variavel para armazenar os danos bonus
 // =========================
 // CONHECIMENTO MUG
 // =========================
-// Preço dos itens da loja: base 10 CM, escalonado ×1.4 por nível
-// (10, 14, 20, 27, 38...). Era ×1.5 e o crescimento ficava grande rápido.
+// Preço dos itens da loja: base 10 CM, escalonado ×1.25 por nível
+// (10, 13, 16, 20, 24...). Era ×1.4 — e antes ×1.5. A renda de CM cresce
+// ~linear com os abates do reset, então ×1.4 travava a loja no meio do jogo
+// (a auditoria de ritmo flagrou: o bot parava de comprar CM no nível ~18).
 function PrecoLojaCM(nivel) {
-	const base = 10 * Math.pow(1.4, Math.max(0, Number(nivel) || 0));
+	const passo = balanceAntigo ? 1.4 : 1.25; // 1,4 = dificuldade antiga (painel F2)
+	const base = 10 * Math.pow(passo, Math.max(0, Number(nivel) || 0));
 	// Mercado (Cidade): a reputação dá desconto na Loja do Conhecimento
 	const preco = (typeof PrecoComReputacao === "function") ? PrecoComReputacao(base) : base;
 	return Math.round(preco);
@@ -185,12 +218,21 @@ function BonusXPConhecimento() {
 	return 1 + cmNivelXp * 0.05;
 }
 
-// Tempo máximo do cronômetro de fuga: base 90 + 2 s por nível da loja. O
-// Canhão de Vidro corta 80% do teto (sobra 20%, arredondado pra baixo); como o
+// Tempo máximo do cronômetro de fuga. A exigência de abates do andar cresce com
+// o andar (1 no andar 1, ~100 no andar 100), então um teto FIXO virava o gargalo
+// do jogo inteiro — a auditoria de ritmo mediu o bot colado em 90-133 s/andar em
+// TODAS as runs (o ritmo era ditado pelo cronômetro, não pela força do build).
+// Agora o fundo escala com o trabalho do andar: ×1 até FUSAO_ABATES_REF abates
+// (o começo não muda) e linear daí pra frente.
+// O Canhão de Vidro corta 80% do teto (sobra 20%, arredondado pra baixo); como o
 // cronômetro só reabastece na troca de andar/onda, a troca de build vale a
-// partir do próximo abastecimento
+// partir do próximo abastecimento.
+const FUSAO_ABATES_REF = 10;
+
 function TempoFugaMax() {
-	const base = 90 + cmNivelFuga * 2;
+	const abates = (typeof QuotaAndar === "function") ? Number(QuotaAndar()) : 1;
+	const escala = balanceAntigo ? 1 : Math.max(1, (Number.isFinite(abates) ? abates : 1) / FUSAO_ABATES_REF);
+	const base = (90 + cmNivelFuga * 2) * escala;
 	const tempo = especializacao === 4 ? Math.floor(base * 0.2) : base;
 	// +5 s da conquista Destemido entra por fora (sempre +5, mesmo no −80% do Canhão)
 	// Relógio de Bolso (itens da build): +10% por cópia no tempo total
@@ -236,8 +278,14 @@ function GoldCompanheiroPorSegundo(nivel = lvlComp2) {
 // +1 por marco de 50 níveis do jogador (marcosNivel50, permanente)
 // ×1,05 por reset curto (resetsCurtosCM, permanente — o total pode virar
 // decimal; FormataMultCM formata os textos que mostram "×N")
+// Base: ×2 desde o começo (auditoria de ritmo — o começo era o trecho mais
+// árido, e medido no bot o ×2 adianta ~1 reset por marco no early/mid sem
+// mexer no teto: lá quem manda é o preço do CM e o bônus de reset curto).
+// O "CM em dobro" da loja de esmeraldas dobra A PARTIR daqui (×2 → ×4 ...).
+const CM_MULT_BASE = 2;
+
 function MultiplicadorCM() {
-	const item = Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
+	const item = (balanceAntigo ? 1 : CM_MULT_BASE) * Math.pow(2, Math.max(0, Math.floor(Number(lvlEsmCM) || 0)));
 	// Loja de Troféus (Cidade): +% de CM por nível do troféu Colecionador
 	const trofeuCM = (typeof TrofeuBonusCM === "function") ? TrofeuBonusCM() : 1;
 	return (item + Math.max(0, Math.floor(Number(marcosNivel50) || 0)))
@@ -282,123 +330,8 @@ function BonusCMPontosSobra() {
 	return 1 + 0.01 * restantes;
 }
 
-//variaveis referentes a loja
-var precoDano = 5;
-var mulDano = 1;
-var lvlDano = 1;
-
-var precoBEspaco = 45;
-var lvlBEspaco = 1;
-
-var precoGold = 100;
-var sobeGold = 0.3;
-var lvlGold = 1;
-
-var precoAvan = 160;
-var sobeAvanco = 0.005;
-var lvlAvan = 0;
-
-var precoDCrit = 150;
-var sobeDCrit = 0.1;
-var lvlDCrit = 1;
-
-var precoCCrit = 250;
-var sobeCCrit = 0.02; //passo da chance crítica (cresce ×1,1 por compra; de 30% em diante só metade é aplicada)
-var lvlCCrit = 1;
-
-var precoQTDAvanco = 400;
-var lvlQTDAvanco = 1;
-
-var precoVidaInimigo = 150;
-var subVidaInimigo = 0.00;
-var lvlSubVida = 0;
-
-var precoBau = 25;
-var lvlBau = 1;
-
-// Item novo da loja de gold: chance de esmeralda ao abrir cada baú
-var precoEsmBau = 500;
-var lvlEsmBau = 0;
-
-// Item novo da loja de gold: velocidade de ataque do companheiro — +20% por
-// nível a partir de 1 hit/s, com teto por patente (1,6 → 1,8 → 2,0 hits/s).
-// O tick do DanoCompanheiros escala junto (SincronizaIntervaloDanoComp)
-var precoVelComp = 125;
-var lvlVelComp = 1;
-var velAtaqueComp = 1;
-
-// Patentes da loja de gold (0 = ★I, a base de hoje): ao bater no nível máximo
-// o ingresso destrava o próximo segmento de níveis com o teto do efeito
-// subindo. São por run — zeram no reset junto com os itens que destravam.
-var patenteBau = 0;
-var patenteBEspaco = 0;
-var patenteQTDAvan = 0;
-var patenteCCrit = 0;
-var patenteSubVida = 0;
-var patenteAvan = 0;
-var patenteEsmBau = 0;
-var patenteVelComp = 0;
-// Dano e Dano Crítico: gate por nível (★I fecha no 50) e a ★ acelera a taxa
-// do passo dinâmico (1,025 → +0,005 por patente)
-var patenteDano = 0;
-var patenteDCrit = 0;
-
-var descontoLoja = 0;
-var mulGoldInicial = mulGold;
-////
-
-
-
-//variaveis loja de esmeraldas
-var precoComp1 = 1;
-var danoComp1 = 0.4;
-var lvlComp1 = 0;
-
-var precoAvGold = 2;
-var lvlAvGold = 1;
-
-var precoComp2 = 3;
-var goldComp2 = 0.5;
-var lvlComp2 = 0;
-
-var precoComp3 = 4;
-var tempoComp3 = 1;
-var lvlComp3 = 0;
-
-// Companheiro 4 (Alquimista): a cada 20s sorteia um buff aleatório por 10s
-var precoComp4 = 6;
-var lvlComp4 = 0;
-
-// Companheiro 5 (Assassino): passiva de morte instantânea
-var precoComp5 = 8;
-var lvlComp5 = 0;
-
-// Companheiro 6 (Explorador do mapa): chance de avançar mais de um andar
-var precoComp6 = 10;
-var lvlComp6 = 0;
-
-// Buffs do Alquimista (comp 4): sorteia um dos 4 a cada 20s, vale por 10s.
-// buffAtivo guarda o tipo e o timestamp (ms) de fim.
-var buffAtivo = null; // { tipo: "dano"|"gold"|"velocidade"|"bau", fimMs }
-// Handles dos intervalos dos novos companheiros (gerenciados: criados na
-// compra/load e limpos no PreCarregamento junto com os demais intervalos)
-var intervaloMagoRelogio = null; // comp 3: carrega skill a cada 5s
-var intervaloAlquimista = null;  // comp 4: sorteia buff a cada 20s −1s por nível
-
-var precoXP = 1;
-var lvlXP = 0;
-// marcos de 50 níveis do jogador já reivindicados (+1 cada no MultiplicadorCM)
-// permanente: não zera no Resetar, então o mesmo marco não paga duas vezes
-var marcosNivel50 = 0;
-// resets feitos perto do recorde (até 10 andares antes do maxAndar): +5%
-// permanente no MultiplicadorCM cada — acumulativo (1,05^N), não zera no Resetar
-var resetsCurtosCM = 0;
-
-var precoEsmCM = 5; //base do item "CM em dobro"; dobra por nível (5/10/20/40)
-const MAX_ESM_CM = 4; //níveis do "CM em dobro" (cada nível dobra o CM no reset)
-var lvlEsmCM = 0; //0..MAX_ESM_CM
-////
-
+//variaveis da loja de gold e de esmeraldas
+// (movidas para script/loja-variaveis.js — carregado logo depois deste arquivo)
 function CarregarStatus(){
 	// Curva "patamares por década": crescimento contínuo por andar (sem os saltos
 	// de expoente do antigo pow, tipo 15→16 ×5 e 40→41 ×14) + degrau a cada 10
@@ -448,305 +381,19 @@ function CarregarStatus(){
 			andarBoss=andarBoss+10;
 		}
 	}
+
+	// Gold do avanço/baú: a vida do andar vira ouro, mas SEM o desconto do item
+	// "subtrair vida do inimigo" — comprar esse item não pode cortar a renda
+	// (antes, com −60% de vida, o bônus de avanço caía junto e o item se sabotava).
+	// O ×1,5 do chefe continua valendo, como sempre.
+	vidaAndarGold = (subVidaInimigo < 1) ? vidaAndar / (1 - subVidaInimigo) : vidaAndar;
 }
 
 // ---------- Fundo da caverna ----------
-// Duas camadas fixas (#fundoA/#fundoB) se cruzam (crossfade ~1,2s; corte seco
-// em reduced-motion) a cada andar vencido. Novo fundo = jogar o PNG em imagens/
-// e listar o nome aqui. Cosmético: não vai pro save.
-var FUNDOS_CAVERNA = ['fundos/background cristal.png', 'fundos/background.png'];
-var fundoIdxAtual = 0;
-var fundoA = null, fundoB = null, fundoAtiva = null;
+// (movido para script/fundos.js — carregado logo depois deste arquivo)
 
-function IniciaFundos() {
-	if (fundoAtiva) return; // idempotente (Batalha roda a cada load/onda)
-	fundoA = document.getElementById('fundoA');
-	fundoB = document.getElementById('fundoB');
-	if (!fundoA || !fundoB) return;
-	fundoAtiva = fundoA;
-	// aquece as duas artes: a primeira troca não pode "piscar"
-	FUNDOS_CAVERNA.forEach(function (nome) {
-		var img = new Image();
-		img.src = 'imagens/' + nome;
-	});
-}
+// AvancoInimigos (avanço/fuga do andar) foi movido para
+// script/avanco-inimigos.js
 
-function ProximoFundo() {
-	if (!fundoAtiva) IniciaFundos();
-	if (!fundoAtiva) return;
-	fundoIdxAtual = (fundoIdxAtual + 1) % FUNDOS_CAVERNA.length;
-	var oculta = fundoAtiva === fundoA ? fundoB : fundoA;
-	// andares muito rápidos: conclui na hora qualquer crossfade em voo
-	fundoAtiva.style.transition = 'none';
-	fundoAtiva.style.opacity = '1';
-	oculta.style.transition = 'none';
-	oculta.style.opacity = '0';
-	void oculta.offsetHeight; // aplica os estados finais sem transição
-	// a camada oculta recebe a próxima arte; as duas se cruzam (~1,2s)
-	// URL absoluta: URL relativa dentro de var() resolveria contra estilos.css (css/imagens/… = 404)
-	oculta.style.setProperty('--fundo-img', "url('" + new URL('imagens/' + FUNDOS_CAVERNA[fundoIdxAtual], document.baseURI).href + "')");
-	fundoAtiva.style.transition = '';
-	oculta.style.transition = '';
-	void oculta.offsetHeight; // reativa a transição antes de mexer no opacity
-	oculta.style.opacity = '1';
-	fundoAtiva.style.opacity = '0';
-	fundoAtiva = oculta;
-}
-
-function AvancoInimigos() {
-	if (jogoPausado || fugaEmAndamento) return;
-	if (AtualizaRelogioHabilidade()) return;
-	// Fissura temporal: congela só o cronômetro de fuga (a pausa da skill de
-	// escape acima continua sendo consumida e os demais ticks seguem)
-	if (typeof eventoAtivo !== "undefined" && eventoAtivo === "fissura") return;
-
-    tempoAvancoInimigos--;
-    document.getElementById("contTempo").innerHTML = FormataTempoFuga(tempoAvancoInimigos);
-
-	// Lógica de avanço dos inimigos
-/*
-    for (let i = 1; i <= numInimigosTela; i++) {
-
-        const el = document.getElementById("inimigo" + i);
-        if (!el) continue;
-
-        if (i === 1 || i === 2) {
-            el.style.left = (380 - tempoAvancoInimigos * 3) + "px";
-        } else {
-            el.style.left = (820 + tempoAvancoInimigos * 3) + "px";
-        }
-    }
-*/
-    if (tempoAvancoInimigos <= 0) {
-        if (andar > 1) {
-			// perk da Pausa da fuga: chance de não fugir — o tempo do andar volta ao máximo
-			const chancePerkFuga = Math.min(50, perkFuga * 10);
-			if (chancePerkFuga > 0 && Math.random() * 100 < chancePerkFuga) {
-				tempoAvancoInimigos = TempoFugaMax();
-				document.getElementById("contTempo").innerHTML = FormataTempoFuga(tempoAvancoInimigos);
-				UI.showInfo("O tempo para fugir deste andar voltou ao máximo! (chance de perk: " + chancePerkFuga + "%)");
-				return;
-			}
-			fugaEmAndamento = true;
-			UI.showInfo("Inimigos te alcançaram, fugindo...");
-			UI.playEscapeAnimation().then(() => {
-				RemoverInimigos();
-				andar--;
-				inimigosDerrotados = 0;
-				qtdInimigosAndar--;
-				tempoAvancoInimigos = TempoFugaMax();
-				UI.render();
-				CarregarStatus();
-				UI.spawnEnemies();
-				UI.showInfo("Dica: compre Avanço rápido para facilitar os andares");
-				fugaEmAndamento = false;
-			});
-			return;
-        }
-
-        tempoAvancoInimigos = TempoFugaMax();
-    }
-}
-
-// Portões de dano permanente: múltiplos de 5 a partir do andar 35. Cada portão
-// paga +5% UMA única vez — gateDanoPago só avança, então nunca se paga de novo.
-function GatesDanoPendentes(piso){
-	const primeiro = Math.max(35, gateDanoPago + 5);
-	const ate = Math.floor(piso / 5) * 5;
-	if (ate < primeiro) return 0;
-	return Math.floor((ate - primeiro) / 5) + 1;
-}
-
-// Paga de uma vez todos os portões não reivindicados até o piso do reset
-// (resetar no 45 com o 40 pendente = +10%; os dois ficam gastos pra sempre)
-function PagaDanoReset(piso){
-	const qtd = GatesDanoPendentes(piso);
-	if (qtd <= 0) return 0;
-	const primeiro = Math.max(35, gateDanoPago + 5);
-	gateDanoPago = primeiro + (qtd - 1) * 5;
-	danoResetQtd = danoResetQtd + qtd;
-	return qtd * 5;
-}
-
-// Esmeraldas neste reset? Portões de esmeralda (≡5 em 10: 15/25/35/45/55...)
-// continuam iguais; intermediários (40, 50...) só dão dano. Se o reset cobre
-// 2+ portões, algum é de esmeralda ⇒ dá esmeraldas (nunca se perde).
-function EhPortaoEsmeralda(piso){
-	const primeiro = Math.max(35, gateDanoPago + 5);
-	const ate = Math.floor(piso / 5) * 5;
-	if (ate < primeiro) return andarVolta % 10 === 5; // fase antiga: 15/25/35
-	if (ate === primeiro) return ate % 10 === 5;
-	return true;
-}
-
-function VoltaAndar(){
-	// reset livre a partir do andar 20; portão de reset quando andar >= andarVolta
-	if(andar>=Math.min(andarVolta, 20)){
-		const andarAnterior = andar;
-		const ehPortao = andar >= andarVolta;
-		// bônus de dano: cada portão >= 35 paga +5% uma vez só (com acumulado)
-		// reset livre (sem portão) não reivindica esmeralda nem dano
-		const ehPortaoEsmeralda = ehPortao && EhPortaoEsmeralda(andar);
-		const danoRecebido = ehPortao ? PagaDanoReset(andar) : 0;
-		let esmeraldasRecebidas = 0;
-		if(ehPortaoEsmeralda && andar>=maxAndar){
-			numVoltas++;
-			esmeraldasRecebidas = numVoltas;
-			esmeraldas = esmeraldas+numVoltas;
-		}else if(ehPortaoEsmeralda){
-			var auxEsmeraldas = Math.round(esmeraldas/andar);
-			
-			if(auxEsmeraldas<1){
-				auxEsmeraldas=1;
-			}
-			esmeraldasRecebidas = auxEsmeraldas;
-			esmeraldas = esmeraldas+auxEsmeraldas;
-		}
-		
-		// portão avança: pós-35 = próximo portão não reivindicado (+5); antes = +10.
-		// reset livre mantém andarVolta como está (o portão continua pendente)
-		if (ehPortao) {
-			if (danoRecebido > 0) {
-				andarVolta = gateDanoPago + 5;
-			} else {
-				andarVolta = andarVolta + 10;
-			}
-		}
-		
-		// Conhecimento Mug: a partir do andar 20, 1 abate desta run = 1 CM
-		// (o item da loja de esmeraldas "CM em dobro" duplica o ganho)
-		let cmRecebido = 0;
-		if (andarAnterior >= 20) {
-			// sobra de pontos (andar 65+): ×(1 + 1% por ponto na mão) — feito
-			// AQUI, antes do Resetar zerar pontosHabilidade
-			cmRecebido = Math.round(derrotadosRun * MultiplicadorCM() * BonusCMPontosSobra());
-			conhecimentoMug = conhecimentoMug + cmRecebido;
-			AtualizaHUDConhecimento();
-		}
-		// Reset curto: reset feito PERTO do recorde — até 10 andares antes
-		// dele (recorde 97, reset no 88 = 9 andares → conta; no 20 → não) —
-		// dá +5% no multiplicador de CM, permanente e acumulativo, mas só a
-		// partir do PRÓXIMO reset (a conversão acima já usou o valor anterior)
-		const resetCurto = maxAndar - andarAnterior <= 10;
-		if (resetCurto) resetsCurtosCM = Math.min(10000, resetsCurtosCM + 1);
-		
-		andar=1;
-		qtdInimigosAndar=1;
-		mulGold = mulGoldInicial;
-		mulGold = mulGold*1.25;
-
-		if(lvlComp2>0){
-			goldCompanheiro = GoldCompanheiroPorSegundo();
-		}
-		
-		// conquista Velocista: reset feito com a run abaixo de 10 minutos no
-		// andar 30×nível — um reset profundo carrega todos os níveis de uma
-		// vez (o Resetar logo abaixo reinicia o cronômetro da nova run)
-		if (Date.now() - runInicioMs < 10 * 60 * 1000 && andarAnterior >= 30)
-			SobeNivelConquistaComp(0, Math.floor(andarAnterior / 30));
-		Resetar(); // zera derrotadosRun (a conversão em CM já foi feita acima)
-		RemoverInimigos();
-		Batalha();
-		if (esmeraldasRecebidas > 0) UI.showCurrencyReward("emerald", esmeraldasRecebidas);
-		if (cmRecebido > 0) UI.showInfo("Você ganhou " + cmRecebido + " Conhecimento Mug!");
-		if (resetCurto) UI.showMilestone("Reset curto!", "+5% permanente no multiplicador de CM (agora ×" + FormataMultCM() + ")");
-		UI.MostraCelebracaoReset(esmeraldasRecebidas, andarAnterior, andarVolta, danoRecebido, cmRecebido);
-		UI.updateResetAviso();
-		if (TutorialComp1Pendente()) MostraTutorialComp1();
-	}else{
-		UI.showInfo("É necessario chegar no andar "+Math.min(andarVolta, 20)+" para poder voltar");
-	}
-}
-
-// Pede confirmação antes de resetar; se ainda não pode voltar, só avisa (fluxo antigo)
-function PedeReset() {
-	if (andar < Math.min(andarVolta, 20)) {
-		VoltaAndar();
-		return;
-	}
-
-	const ehPortao = andar >= andarVolta;
-	const ehPortaoEsmeralda = ehPortao && EhPortaoEsmeralda(andar);
-	let premio = 0;
-	if (ehPortaoEsmeralda) {
-		if (andar >= maxAndar) {
-			// recorde: recompensa igual à que VoltaAndar vai dar (numVoltas + 1)
-			premio = numVoltas + 1;
-		} else {
-			premio = Math.max(1, Math.round(N(esmeraldas) / andar));
-		}
-	}
-
-	const total = N(esmeraldas) + premio;
-	const pendentes = GatesDanoPendentes(andar);
-	const danoPendente = pendentes * 5;
-	const cmRecebido = andar >= 20 ? Math.round(derrotadosRun * MultiplicadorCM() * BonusCMPontosSobra()) : 0;
-	// sobra de pontos (andar 65+): o × extra aparece na linha do preview
-	const bonusPontosCM = BonusCMPontosSobra();
-	// próximo portão; o reset fica livre a partir do andar 20 em qualquer run
-	const proximoPortao = pendentes > 0
-		? Math.max(35, gateDanoPago + 5) + danoPendente
-		: (ehPortao ? andarVolta + 10 : andarVolta);
-
-	UI.showModal("Voltar ao 1º andar?", `
-		<div class="modal-tutorial-texto">
-			Você está no andar <b>${andar}</b> e voltará para o <b>1º andar</b>
-			${ehPortaoEsmeralda ? "ganhando esmeraldas no caminho" : ehPortao ? "coletando o bônus de dano permanente" : "convertendo seus abates em Conhecimento Mug"}.
-		</div>
-
-		<div class="modal-tutorial-info">
-			<span>Recompensa: <b>${premio > 0 ? "+" + premio + " esmeralda" + (premio === 1 ? "" : "s") : ehPortao ? "sem esmeraldas (portão intermediário)" : "sem esmeraldas (reset livre)"}</b></span>
-			${danoPendente > 0 ? `<span>Bônus: <b>+${danoPendente}% de dano permanente</b></span>` : ""}
-			${cmRecebido > 0 ? `<span>Conhecimento Mug: <b>+${cmRecebido} CM</b> (${derrotadosRun} abates × ${FormataMultCM()}${bonusPontosCM > 1 ? " × " + bonusPontosCM.toFixed(2).replace(".", ",") + " pela sobra de pontos" : ""})</span>` : ""}
-			<span>Total de esmeraldas: <b>${total}</b></span>
-		</div>
-
-		<div class="reset-confirm-lista">
-			<div><span class="reset-tag reset-tag--reseta">Reseta</span> gold, loja de gold, nível/XP, habilidades e perks</div>
-			<div><span class="reset-tag reset-tag--fica">Fica</span> esmeraldas, loja de esmeraldas, conquistas, conhecimento mug e bônus de dano de reset · base de gold +25%</div>
-			<div><span class="reset-tag reset-tag--prox">Próximo</span> reset livre no andar 20${proximoPortao > 20 ? " · portão no andar " + proximoPortao : ""}</div>
-		</div>
-
-		<div class="reset-confirm-acoes">
-			<button type="button" class="btn-Padrao btn-reset-confirmar" data-reset-confirmar>Confirmar reset</button>
-			<button type="button" class="btn-Padrao btn-reset-cancelar" data-reset-cancelar>Cancelar</button>
-		</div>
-	`);
-}
-
-function ConfirmaReset() {
-	const modal = document.getElementById("gameModal");
-	if (modal) modal.remove();
-	VoltaAndar();
-}
-
-//funçoes de controles das missoes
-function AlternaManterAndar(){
-	const chk = document.getElementById("manterAndar");
-	if(!chk) return;
-	if(chk.checked && andar <= 4){
-		chk.checked = false;
-		UI.showInfo("Só pode ser ativado a partir do andar 5");
-		return;
-	}
-	UI.showInfo(chk.checked ? "Manter no andar ativado: voce vai ficar farmando neste andar." : "Manter no andar desativado: avanco automatico reativado.");
-}
-
-// Painel de reset: checkbox "manter no andar" e botão "voltar andar" por
-// addEventListener (sem onclick inline no HTML).
-document.addEventListener("DOMContentLoaded", () => {
-	const manter = document.getElementById("manterAndar");
-	if (manter) manter.addEventListener("change", () => AlternaManterAndar());
-	const voltar = document.getElementById("btnAndar");
-	if (voltar) voltar.addEventListener("click", () => PedeReset());
-});
-
-// Botões do modal de reset (markup dinâmico): delegados no document.
-document.addEventListener("click", (e) => {
-	if (!(e.target instanceof Element)) return;
-	if (e.target.closest("[data-reset-confirmar]")) {
-		ConfirmaReset();
-		return;
-	}
-	if (e.target.closest("[data-reset-cancelar]")) UI.closeModal();
-});
+// Portões de dano, VoltaAndar, PedeReset/ConfirmaReset e o painel
+// "manter no andar" foram movidos para script/reset.js

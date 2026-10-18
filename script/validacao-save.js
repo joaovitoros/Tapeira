@@ -561,7 +561,7 @@ function ValidarSave(save) {
 			"conquistasComp", "melhorGoldRun", "autoItensLoja",
 			"itensBuild", "bauBuildPendente", "opcoesBauBuild",
 			"pvpCartoesUsados", "pvpCartoesExportados", "nomeJogador",
-			"pesquisaItens", "pesquisaInimigos", "trofeus", "chapeuEquipado", "cachecolEquipado", "armaEquipado", "cintoEquipado", "escudoEquipado", "forja"].includes(key)) continue;
+			"pesquisaItens", "pesquisaInimigos", "trofeus", "chapeuEquipado", "cachecolEquipado", "armaEquipado", "cintoEquipado", "escudoEquipado", "aparenciaClassica", "forja"].includes(key)) continue;
 		if (typeof value !== "number" || !Number.isFinite(value)) {
 			throw new TypeError("O save contém dados inválidos.");
 		}

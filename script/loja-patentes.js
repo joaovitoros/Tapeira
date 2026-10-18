@@ -67,9 +67,12 @@ var ITENS_PATENTE = {
 	dano: {
 		nome: "Dano", patenteVar: "patenteDano", precoVar: "precoDano",
 		// gate por nível (★I fecha no 75); a ★ também acelera a taxa do passo
-		// dinâmico: 1,025 → +0,005 por ★
+		// dinâmico: +0,005 por ★. A taxa do ★I subiu de 1,025 para 1,05
+		// (auditoria de ritmo): o dano é a SOMA dos incrementos, então 1,025
+		// deixava o ganho relativo por compra em ~1/n — a loja não fechava
+		// nenhuma década de vida e virava beco sem saída (nem baixando o preço).
 		niveis: [75, 150, 250, 370, 490, 610],
-		taxas: [1.025, 1.03, 1.035, 1.04, 1.045, 1.05],
+		taxas: [1.05, 1.055, 1.06, 1.065, 1.07, 1.075],
 		noTeto: () => N(lvlDano) >= NiveisLoja("dano")
 	},
 	dcrit: {

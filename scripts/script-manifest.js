@@ -14,6 +14,11 @@ module.exports = {
         "script/gold.js",
         "script/keymap.js",
         "script/script.js",
+        // blocos extraídos de script.js (carregados logo depois dele)
+        "script/loja-variaveis.js",
+        "script/avanco-inimigos.js",
+        "script/reset.js",
+        "script/qualidade.js",
         "script/atualizacao.js",
         "script/config.js",
         "script/progressao.js",
@@ -29,6 +34,9 @@ module.exports = {
         "script/ui-baus.js",
         "script/ui-telas.js",
         "script/ui-feitos.js",
+        // fundo da caverna (extraído de script.js) + biomas por faixa de andar (só no jogo)
+        "script/fundos.js",
+        "script/biomas.js",
         "script/casa.js",
         "script/fazenda.js",
         "script/pesquisa.js",
@@ -66,6 +74,11 @@ module.exports = {
         "script/gold.js",
         "script/keymap.js",
         "script/script.js",
+        // blocos extraídos de script.js (carregados logo depois dele)
+        "script/loja-variaveis.js",
+        "script/avanco-inimigos.js",
+        "script/reset.js",
+        "script/qualidade.js",
         "script/atualizacao.js",
         "script/config.js",
         "script/progressao.js",
