@@ -3451,6 +3451,68 @@ test("qualidade: presets ligam as otimizações certas e a Personalizada traz a 
     }
 });
 
+test("onda nova só nasce depois da animação de morte terminar", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            typeof AgendaNovaOnda === "function"
+            && typeof DuracaoMorteMs === "function"
+            && typeof CancelarNovaOnda === "function",
+            undefined,
+            { timeout: 15000 }
+        );
+
+        const r = await page.evaluate(async () => {
+            window.ChamaSom = () => {};
+            document.querySelectorAll("#infoModal, #gameModal").forEach(m => m.remove());
+            const el = document.getElementById("inimigo1");
+            // criatura com morte longa (13-15 quadros), como as novas
+            el.dataset.criatura = "normal";
+            const out = { duracao: DuracaoMorteMs(el) };
+
+            // espia o NovaOnda (só o timer da onda chama): o atraso tem MESMO
+            // que segurar a criação
+            const original = window.NovaOnda;
+            let chamou = 0;
+            window.NovaOnda = () => { chamou++; };
+            try {
+                AgendaNovaOnda(400);
+                out.agendou = timerNovaOnda !== null;
+                out.criouNaHora = chamou;
+                await new Promise(ok => setTimeout(ok, 700));
+                out.criouDepois = chamou;
+
+                // cancelamento (reset / menu / troca de andar)
+                chamou = 0;
+                AgendaNovaOnda(400);
+                RemoverInimigos();
+                out.cancelou = timerNovaOnda === null;
+                await new Promise(ok => setTimeout(ok, 700));
+                out.criouDepoisDeCancelar = chamou;
+
+                // sem espera (0ms) cria na hora, como antes
+                AgendaNovaOnda(0);
+                out.criouSemEspera = chamou;
+            } finally {
+                window.NovaOnda = original;
+            }
+            return out;
+        });
+
+        assert.ok(r.duracao >= 1000, `morte por criatura dura ~1,2s (medido ${r.duracao}ms)`);
+        assert.equal(r.agendou, true, "a onda fica agendada em vez de nascer na hora");
+        assert.equal(r.criouNaHora, 0, "nada nasce enquanto a morte está rodando");
+        assert.equal(r.criouDepois, 1, "a onda nasce depois do tempo da morte");
+        assert.equal(r.cancelou, true, "RemoverInimigos (reset/menu/andar) cancela a onda agendada");
+        assert.equal(r.criouDepoisDeCancelar, 0, "cancelada, a onda não nasce");
+        assert.equal(r.criouSemEspera, 1, "sem espera (0ms) cria na hora, como antes");
+
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("telas complexas: Skills, Coleção e Feitos trazem o ícone de info com balão", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

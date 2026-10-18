@@ -1126,6 +1126,9 @@ function RemoverInimigos() {
     // (wave nova e subir andar) e limpar apagava a animação de morte do
     // inimigo que acabou de cair — dava a impressão de ele "só sumir".
     // A animação se limpa sozinha (timeout de ≤1,2s em batalha.js).
+    // Mas a ONDA AGENDADA é cancelada: quem manda remover os inimigos (reset,
+    // menu, load, troca de andar) cria a onda seguinte na hora.
+    if (typeof CancelarNovaOnda === "function") CancelarNovaOnda();
     UI.removeAllEnemies();
 }
 

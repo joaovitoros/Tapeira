@@ -460,9 +460,22 @@ if (!FOLHA) {
             return { x0, x1, y0, y1, cx };
         }).filter(Boolean);
 
-        // ---- tela fixa: maior largura/altura, chão na base ----
-        const largura = Math.max(...quadrosInfo.map(q => q.x1 - q.x0 + 1)) + 6;
-        const altura = Math.max(...quadrosInfo.map(q => q.y1 - q.y0 + 1)) + 6;
+        // ---- tela fixa ----
+        // Mesma proporção da caixa do inimigo no jogo (120:130), com o chão no
+        // pé: o jogo desenha o quadro com `object-fit: contain` e CENTRALIZA. Se
+        // a tela tiver outra proporção, o quadro baixinho (a pilha) aparece no
+        // meio da caixa, flutuando — e o bicho "pula" de altura entre os
+        // quadros. Com a proporção igual, o contain preenche a caixa exata e o
+        // chão cai no lugar certo.
+        const RAZAO_CAIXA = 120 / 130;
+        const MARGEM = 4;
+        let largura = Math.max(...quadrosInfo.map(q => q.x1 - q.x0 + 1)) + MARGEM * 2;
+        let altura = Math.round(largura / RAZAO_CAIXA);
+        const alturaMinima = Math.max(...quadrosInfo.map(q => q.y1 - q.y0 + 1)) + MARGEM * 2;
+        if (altura < alturaMinima) {
+            altura = alturaMinima;
+            largura = Math.round(altura * RAZAO_CAIXA);
+        }
         const quadros = quadrosInfo.map((q) => {
             const cw = q.x1 - q.x0 + 1;
             const ch = q.y1 - q.y0 + 1;
@@ -473,7 +486,7 @@ if (!FOLHA) {
             // centraliza pelo CORPO do cogumelo (a poeira pode sair pro lado) e
             // ancora o chão sempre na mesma linha
             const dx = Math.round(tela.width / 2 - (q.cx - q.x0));
-            const dy = tela.height - 3 - ch;
+            const dy = tela.height - MARGEM - ch;
             tg.drawImage(canvas, q.x0, q.y0, cw, ch, dx, dy, cw, ch);
             return tela.toDataURL("image/png");
         });

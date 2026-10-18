@@ -329,10 +329,13 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	UI.updateObjective();
 
 	// nova wave
+	// A onda seguinte espera a ANIMAÇÃO DE MORTE terminar: as mortes por
+	// criatura passaram a ter 13-15 quadros (~1,2s) e o inimigo novo nascia em
+	// cima do que ainda estava caindo. O atraso tem dono (timerNovaOnda) e é
+	// cancelado em RemoverInimigos — ou seja, no reset, ao voltar pro menu e na
+	// troca de andar (que já cria a onda da nova faixa na hora).
 	if (numInimigosTela <= 0) {
-		RemoverInimigos();
-		CarregarStatus();
-		CriarInimigos();
+		AgendaNovaOnda(DuracaoMorteMs(inimigoElement));
 	}
 
 	// subir andar
@@ -645,12 +648,14 @@ function CriaPoeiraMorte(rect) {
 	poeira.addEventListener("animationend", () => poeira.remove(), { once: true });
 }
 
-function animarMorte(el) {
-	const rect = el.getBoundingClientRect();
-	CriaPoeiraMorte(rect);
-	// Biomas: cada criatura tem a SUA morte (fatiada do atlas). Se não houver
-	// quadros pra ela, cai na animação genérica do cogumelo marrom.
-	const frames = (typeof BiomaMorteFrames === "function" && BiomaMorteFrames(el)) || [
+// Quadros da morte de um inimigo: o próprio sprite + a sequência do bioma
+// (ou a genérica do cogumelo marrom quando a criatura não tem uma própria).
+function MorteFramesDe(el) {
+	if (typeof BiomaMorteFrames === "function") {
+		const doBioma = BiomaMorteFrames(el);
+		if (doBioma) return doBioma;
+	}
+	return [
 		"imagens/animacoes/morte/frame12.png",
 		"imagens/animacoes/morte/frame11.png",
 		"imagens/animacoes/morte/frame10.png",
@@ -664,6 +669,60 @@ function animarMorte(el) {
 		"imagens/animacoes/morte/frame2.png",
 		"imagens/animacoes/morte/frame1.png"
 	];
+}
+
+// Passo da sequência: poucos quadros (as mortes por criatura) pedem um passo
+// mais lento; sequências longas vão no passo rápido.
+function IntervaloMorteMs(frames) {
+	return frames.length <= 6 ? 150 : 80;
+}
+
+// Quanto tempo a morte daquele inimigo vai levar (mesma conta do animarMorte).
+// A onda seguinte espera por isso em vez de nascer em cima do que está caindo.
+function DuracaoMorteMs(el) {
+	const frames = MorteFramesDe(el);
+	if (!frames.length) return 0;
+	const intervaloMs = IntervaloMorteMs(frames);
+	return Math.max(1200, frames.length * intervaloMs + 200);
+}
+
+// ---- atraso entre a morte e a próxima onda ----
+// Dono do timer da onda agendada (regra do projeto: todo timer tem dono e é
+// cancelado). Cancelar acontece em RemoverInimigos, que é o caminho do reset,
+// da volta pro menu, do load e da troca de andar.
+var timerNovaOnda = null;
+
+function CancelarNovaOnda() {
+	if (timerNovaOnda) {
+		clearTimeout(timerNovaOnda);
+		timerNovaOnda = null;
+	}
+}
+
+function AgendaNovaOnda(esperaMs) {
+	CancelarNovaOnda();
+	if (!(esperaMs > 0)) {
+		NovaOnda();
+		return;
+	}
+	timerNovaOnda = setTimeout(() => {
+		timerNovaOnda = null;
+		NovaOnda();
+	}, esperaMs);
+}
+
+function NovaOnda() {
+	RemoverInimigos();
+	CarregarStatus();
+	CriarInimigos();
+}
+
+function animarMorte(el) {
+	const rect = el.getBoundingClientRect();
+	CriaPoeiraMorte(rect);
+	// Biomas: cada criatura tem a SUA morte (fatiada do atlas). Se não houver
+	// quadros pra ela, cai na animação genérica do cogumelo marrom.
+	const frames = MorteFramesDe(el);
 
 	const morte = document.createElement("img");
 	morte.className = "morteAnim";
@@ -687,7 +746,7 @@ function animarMorte(el) {
 		morte.remove();
 	};
 	// poucos quadros (morte por criatura) pedem um passo mais lento
-	const intervaloMs = frames.length <= 6 ? 150 : 80;
+	const intervaloMs = IntervaloMorteMs(frames);
 	const intervalo = setInterval(() => {
 		frame++;
 		if (frame >= frames.length) {
