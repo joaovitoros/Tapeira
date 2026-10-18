@@ -18,6 +18,7 @@ Object.assign(UI, {
     // Re-renderiza a cada troca de aba pra refletir o estado atual do jogo.
     showFeitosPanel(aba) {
         document.getElementById("feitosModal")?.remove();
+        FechaTelasNavegacao("feitos");
 
         const abas = [
             { id: "conquistas", rotulo: "Conquistas", html: () => HtmlConquistas() },

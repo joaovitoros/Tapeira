@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Velocidade do companheiro: asas mágicas com vento -->
+  <!-- partículas de vento -->
+  <path d="M4 40c8 2 14 1 20-3" stroke="#9fdcff" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M6 48c7 2 12 1 17-2" stroke="#c9ecff" stroke-width="2.6" stroke-linecap="round"/>
+  <circle cx="9" cy="30" r="2.2" fill="#e8f7ff"/>
+  <circle cx="16" cy="52" r="1.8" fill="#e8f7ff"/>
+  <!-- asa esquerda -->
+  <path d="M30 34C20 30 12 20 8 9c11 3 21 12 24 23z" fill="#bfe6ff" stroke="#1a1109" stroke-width="3" stroke-linejoin="round"/>
+  <!-- asa direita -->
+  <path d="M34 34c10-4 18-14 22-25-11 3-21 12-24 23z" fill="#e8f7ff" stroke="#1a1109" stroke-width="3" stroke-linejoin="round"/>
+  <!-- nervuras das asas -->
+  <path d="M14 12c6 6 10 12 12 19M18 20c3 4 5 8 6 12" stroke="#7fc2ea" stroke-width="2" stroke-linecap="round"/>
+  <path d="M50 12c-6 6-10 12-12 19M46 20c-3 4-5 8-6 12" stroke="#7fc2ea" stroke-width="2" stroke-linecap="round"/>
+  <!-- núcleo mágico -->
+  <circle cx="32" cy="36" r="4" fill="#ffe08a" stroke="#1a1109" stroke-width="2.4"/>
+</svg>

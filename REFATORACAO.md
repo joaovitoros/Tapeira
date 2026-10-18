@@ -108,8 +108,9 @@ navegador, Windows (Electron) e Android (Capacitor).
    `ui.js` (Status, Loja, Config, Formigas e Skills).
 8. Painel de status migrado: baú dourado (coleta e info) em `ui-baus.js` e
    auto-coleta em `automacao.js`, ligados no `DOMContentLoaded`.
-9. Habilidades de combate migradas: os 4 botões (`skill-electric`, `skill-gold`,
-   `skill-escape`, `skill-frenzy`) registrados em `progressao.js`.
+9. Habilidades de combate migradas: os 4 botões (`habilidade-eletrica`,
+   `habilidade-ouro`, `habilidade-fuga`, `habilidade-frenesi`) registrados em
+   `progressao.js` (ids do DOM em pt-BR via `IdDomHabilidade`).
 10. Inimigos migrados: os 4 cliques (`inimigo1..4` → `Bater(id, true)`)
     registrados em `batalha.js`.
 11. Loja migrada para `data-*` + `addEventListener`: compras (`data-compra`,

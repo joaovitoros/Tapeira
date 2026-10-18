@@ -33,8 +33,8 @@ const views = [
             UI.spawnSkill();
 
             const vw = window.innerWidth;
-            const icone = document.getElementById("habilidade1").getBoundingClientRect();
-            const botoes = [...document.querySelectorAll(".combat-skill")].filter(b => !b.hidden);
+            const icone = document.getElementById("habilidade-dano").getBoundingClientRect();
+            const botoes = [...document.querySelectorAll(".combate-habilidade")].filter(b => !b.hidden);
             const ultimo = botoes[botoes.length - 1].getBoundingClientRect();
 
             document.getElementById("infoModal")?.remove();

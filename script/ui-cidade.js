@@ -104,6 +104,7 @@
         const el = painel();
         if (!el) return;
         fechaPainaisLaterais();
+        FechaTelasNavegacao("cidade");
         el.hidden = false;
         // a Cidade vive dentro de #container-opcoes (z-index 3); sobe o contexto
         // pra ela ficar acima do HUD (z-index 5) enquanto está aberta

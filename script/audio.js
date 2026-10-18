@@ -194,6 +194,28 @@ function TocaSomSintetico(tipo) {
 		});
 	}
 
+	// Skill pronta/ativada: "plim" curto e agradável (duas notas ascendentes)
+	if (tipo === "plim") {
+		[880, 1318.51].forEach((frequency, index) => {
+			const tone = context.createOscillator();
+			const gain = context.createGain();
+			const start = agora + index * 0.07;
+			tone.type = "sine";
+			tone.frequency.value = frequency;
+			gain.gain.setValueAtTime(0.001, start);
+			gain.gain.linearRampToValueAtTime(volumeAtual * 0.24, start + 0.012);
+			gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
+			tone.connect(gain);
+			gain.connect(context.destination);
+			tone.start(start);
+			tone.stop(start + 0.2);
+			tone.onended = () => {
+				tone.disconnect();
+				gain.disconnect();
+			};
+		});
+	}
+
 	if (tipo === "guardiao") {
 		[196, 146.83, 110].forEach((frequency, index) => {
 			const tone = context.createOscillator();

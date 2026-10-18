@@ -34,15 +34,15 @@ const path = require('path');
 
         // tremor do guardião (andar múltiplo de 10)
         UI.showFloorTransition(10);
-        check("guardião faz a cena tremer", document.documentElement.classList.contains("guardian-rumble"));
+        check("guardião faz a cena tremer", document.documentElement.classList.contains("guardiao-tremor"));
 
         await new Promise(r => setTimeout(r, 800));
-        check("tremor do guardião sai no animationend", !document.documentElement.classList.contains("guardian-rumble"));
+        check("tremor do guardião sai no animationend", !document.documentElement.classList.contains("guardiao-tremor"));
         check("moeda some quando a animação termina", !document.querySelector(".moeda-voadora"));
         check("poeira some quando a animação termina", !document.querySelector(".morte-poeira"));
 
         UI.showFloorTransition(7);
-        check("andar normal não treme", !document.documentElement.classList.contains("guardian-rumble"));
+        check("andar normal não treme", !document.documentElement.classList.contains("guardiao-tremor"));
 
         // brilho dos cristais (camada criada no load)
         CriaBrilhoCristais();

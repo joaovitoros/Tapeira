@@ -463,15 +463,15 @@ test("progressão: Mago do Relógio ativa a Pausa da fuga (+50%) ao encher", asy
             AdicionaCargaSkill("escape", TetoSkill("escape"));
             const mago = { segundos: segundosPausaFuga, carga: abatesPausaFuga };
             // efeito visual do Mago: classe no botão da skill
-            const magoEfeito = document.getElementById("skill-escape")?.classList.contains("skill-mago");
+            const magoEfeito = document.getElementById("habilidade-fuga")?.classList.contains("habilidade-mago");
 
             // a ativação MANUAL (botão) não leva o bônus nem o efeito do mago
             segundosPausaFuga = 0;
             abatesPausaFuga = TetoSkill("escape");
-            document.getElementById("skill-escape")?.classList.remove("skill-mago");
+            document.getElementById("habilidade-fuga")?.classList.remove("habilidade-mago");
             AtivaHabilidadeCombate("escape");
             const manual = segundosPausaFuga;
-            const manualEfeito = document.getElementById("skill-escape")?.classList.contains("skill-mago");
+            const manualEfeito = document.getElementById("habilidade-fuga")?.classList.contains("habilidade-mago");
 
             // Skills de combate todas cheias, mas o Dano ainda tem espaço:
             // o Dano continua valendo e a Pausa da fuga (cheia) também entra
@@ -487,11 +487,11 @@ test("progressão: Mago do Relógio ativa a Pausa da fuga (+50%) ao encher", asy
             // força o sorteio a pegar a Pausa da fuga (última da lista)
             const randOriginal = Math.random;
             Math.random = () => 0.999;
-            document.getElementById("skill-escape")?.classList.remove("skill-mago");
+            document.getElementById("habilidade-fuga")?.classList.remove("habilidade-mago");
             CarregaSkillAleatoriaMago();
             Math.random = randOriginal;
             const magoLiga = segundosPausaFuga;
-            const magoLigaEfeito = document.getElementById("skill-escape")?.classList.contains("skill-mago");
+            const magoLigaEfeito = document.getElementById("habilidade-fuga")?.classList.contains("habilidade-mago");
 
             // agora o Dano também cheio: a Pausa da fuga vira a única opção
             qtdCarregaHabilidade = abateshabilidadeDano;
@@ -648,7 +648,10 @@ test("telas: ESC (FechaJanelasAbertas) fecha tudo", async () => {
         const r = await page.evaluate(() => {
             const vis = id => document.getElementById(id)?.style.visibility;
             AbreLoja(false);
+            const lojaAberta = vis("Loja");
+            // abrir a árvore de habilidades fecha a Loja (telas exclusivas — item 2)
             UI.showSkillUpgradePanel();
+            const lojaFechadaPelaSkill = vis("Loja") === "hidden";
             UI.showItensBuild(); // tela de leitura dos itens da build
             const antes = {
                 loja: vis("Loja"),
@@ -658,6 +661,8 @@ test("telas: ESC (FechaJanelasAbertas) fecha tudo", async () => {
             };
             const fechou = FechaJanelasAbertas();
             return {
+                lojaAberta,
+                lojaFechadaPelaSkill,
                 antes,
                 fechou,
                 loja: vis("Loja"),
@@ -666,7 +671,9 @@ test("telas: ESC (FechaJanelasAbertas) fecha tudo", async () => {
                 classe: document.body.classList.contains("itens-build-tela-aberta")
             };
         });
-        assert.equal(r.antes.loja, "visible");
+        assert.equal(r.lojaAberta, "visible");
+        assert.equal(r.lojaFechadaPelaSkill, true,
+            "abrir as habilidades fecha a Loja (telas exclusivas)");
         assert.equal(r.antes.skills, true);
         assert.equal(r.antes.build, true);
         assert.equal(r.antes.classe, true);

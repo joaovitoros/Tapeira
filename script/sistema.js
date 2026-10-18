@@ -451,7 +451,8 @@ function Resetar() {
 	tempoHabilidadeDano = 30;
 	verificaHabilidadeDano = false;
 	qtdCarregaHabilidade = 0;
-	document.getElementById("habilidade1")?.remove();
+	// o botão do "Dano automático" é fixo: só re-sincroniza o visual (item 1)
+	AtualizaHabilidadesCombate();
 	const chkManterAndar = document.getElementById("manterAndar");
 	if (chkManterAndar) chkManterAndar.checked = false;
 	abatesCorrenteEletrica = 0;

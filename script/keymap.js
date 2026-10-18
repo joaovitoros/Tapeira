@@ -79,6 +79,16 @@ function PausarJogo() {
     const panel = document.createElement("div");
     panel.className = "pause-panel";
 
+    // Botão "X" no canto superior direito: mesma ação do "Continuar" (retoma o
+    // jogo sem alterar o progresso). Fecha a interface de pausa — ver item 4.
+    const fechar = document.createElement("button");
+    fechar.type = "button";
+    fechar.className = "pausa-fechar";
+    fechar.setAttribute("aria-label", "Fechar pause e retomar o jogo");
+    fechar.title = "Fechar pause";
+    fechar.textContent = "×";
+    fechar.addEventListener("click", () => AtualizaEstadoPausa(false));
+
     const title = document.createElement("h2");
     title.id = "pauseTitle";
     title.textContent = "Jogo pausado";
@@ -108,7 +118,7 @@ function PausarJogo() {
     acoes.className = "pause-actions";
     acoes.append(resume, sair);
 
-    panel.append(title);
+    panel.append(fechar, title);
     if (config) panel.appendChild(config);
     panel.appendChild(acoes);
     overlay.appendChild(panel);

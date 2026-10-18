@@ -79,54 +79,35 @@ function SobeTetoCritico(passo = 0.1) {
 //Funçoes de habildiades
 
 function VerificaHabilidade(){
-	if(qtdCarregaHabilidade==abateshabilidadeDano && !document.getElementById("habilidade1")){
-		// perk do Dano automático no nível máximo: ativa sozinha quando carregada
-		if (PerkNoMaximo("damage")) {
-			UsaHabilidadeDano();
-			return;
-		}
-		habilidade = document.createElement("img");
-		att1 = document.createAttribute("src");
-		att2 = document.createAttribute("class");
-		att3 = document.createAttribute("id");
-		att4 = document.createAttribute("onClick");
-		att1.value = ICONE_SKILL.damage;
-		att2.value = "habilidade1";
-		att3.value = "habilidade1";
-		att4.value = "UsaHabilidadeDano()";
-		habilidade.setAttributeNode(att1);
-		habilidade.setAttributeNode(att2);
-		habilidade.setAttributeNode(att3);
-		habilidade.setAttributeNode(att4);
-		const containerHabilidades = document.getElementById("container-Habilidades");
-		(containerHabilidades || document.body).prepend(habilidade);
-		ChamaSom('audio7');
+	// O botão do "Dano automático" (#habilidade-dano) é fixo no HTML: aqui só
+	// disparamos a ativação automática (perk no máximo) e refletimos o estado.
+	// A skill não desaparece mais ao ativar (item 1).
+	if (qtdCarregaHabilidade >= abateshabilidadeDano && !verificaHabilidadeDano && PerkNoMaximo("damage")) {
+		UsaHabilidadeDano();
+		return;
 	}
 	if(qtdCarregaHabilidade>abateshabilidadeDano){
 		qtdCarregaHabilidade=abateshabilidadeDano;
 	}
+	AtualizaHabilidadesCombate();
 }
 
+// Compat: a barra vertical do dano saiu; o progresso agora vive no ícone do
+// #habilidade-dano (desenhado por AtualizaHabilidadesCombate). Mantida a função
+// porque companheiros.js e o tick de 1s a chamam.
 function AtualizaQTDHabildiade1(){
-
-	// Barra igual às skills de combate: começa vazia e enche conforme carrega
-	// (antes era invertida: cheia e esvaziando).
-	porcentagem = abateshabilidadeDano > 0
-		? qtdCarregaHabilidade * 100 / abateshabilidadeDano
-		: 0;
-
-	document.getElementById("BaraQTDHab1").style.height=Math.max(0, Math.min(100, porcentagem))+"%";
-	document.getElementById("BaraQTDHab1").style.color="#fff";
+	AtualizaHabilidadesCombate();
 }
 
 function UsaHabilidadeDano(){
-	// ícone pode não existir quando a ativação é automática (perk no máximo)
-	document.getElementById("habilidade1")?.remove();
-	ChamaSom('audio5');
+	// Só ativa quando está pronta e não está em uso (item 1: uma única
+	// ativação válida por vez). O ícone permanece visível.
+	if (jogoPausado || verificaHabilidadeDano || qtdCarregaHabilidade < abateshabilidadeDano) return;
+	TocaSomSintetico("plim");
 	verificaHabilidadeDano = true;
 	tempoHabilidadeDano = DuracaoHabilidadeDano();
 	qtdCarregaHabilidade = 0;
-	UI.updateSkillProgress();
+	AtualizaHabilidadesCombate();
 }
 
 const habilidadesCombate = [
@@ -137,6 +118,21 @@ const habilidadesCombate = [
 	// ataqueJogador) — 40 cliques manuais carregam a janela do Toque Frenético
 	{ id: "frenzy", unlockFloor: 45, killsRequired: 40 }
 ];
+
+// id interno da skill (dado do jogo) -> sufixo pt-BR do id no DOM.
+// O id interno ("electric", "gold"…) é dado/contrato do código; o id do
+// elemento na tela segue o naming pt-BR (item: vocabulário do domínio).
+const SLUG_DOM_HABILIDADE = {
+	damage: "dano",
+	electric: "eletrica",
+	gold: "ouro",
+	escape: "fuga",
+	frenzy: "frenesi"
+};
+
+function IdDomHabilidade(id) {
+	return "habilidade-" + (SLUG_DOM_HABILIDADE[id] || id);
+}
 
 function PisoMaximoAlcancado() {
 	return Math.max(andar, maxAndar);
@@ -364,16 +360,50 @@ function CompraPerk(skillId){
 }
 
 function AtualizaHabilidadesCombate() {
-	const panel = document.getElementById("skill-unlock-panel");
+	const panel = document.getElementById("painel-habilidades");
 	if (!panel) return;
+
+	// --- Dano automático (#habilidade-dano): botão fixo, sempre visível ---
+	// Carga = abates/abateshabilidadeDano; ativo = janela de 30s (verificaHabilidadeDano).
+	const danoBtn = document.getElementById("habilidade-dano");
+	if (danoBtn) {
+		const danoMeter = document.getElementById("habilidade-dano-medidor");
+		const danoTrack = danoMeter ? danoMeter.parentElement : null;
+		const danoProgress = document.getElementById("habilidade-dano-progresso");
+		const required = Math.max(1, abateshabilidadeDano);
+		const carga = Math.max(0, Math.min(required, qtdCarregaHabilidade));
+		const ativo = verificaHabilidadeDano && tempoHabilidadeDano > 0;
+		const pronto = !ativo && carga >= required;
+		const ratio = ativo
+			? tempoHabilidadeDano / Math.max(1, DuracaoHabilidadeDano())
+			: carga / required;
+		const pct = Math.max(0, Math.min(100, Math.round(ratio * 100)));
+
+		danoBtn.disabled = ativo;
+		danoBtn.classList.toggle("is-ativa", ativo);
+		danoBtn.classList.toggle("is-pronta", pronto);
+		danoBtn.classList.toggle("is-carregando", !ativo && !pronto);
+		if (danoMeter) danoMeter.style.height = `${pct}%`;
+		if (danoTrack) {
+			danoTrack.setAttribute("aria-valuenow", String(pct));
+			danoTrack.setAttribute("aria-valuetext", ativo
+				? `Ativa por mais ${Math.max(0, Math.ceil(tempoHabilidadeDano))} segundos`
+				: pronto ? "Pronta" : `${carga} de ${required} abates`);
+		}
+		if (danoProgress) {
+			danoProgress.textContent = ativo
+				? `Ativa: ${Math.max(0, Math.ceil(tempoHabilidadeDano))}s`
+				: pronto ? "Pronta!" : `${carga}/${required} abates`;
+		}
+	}
 
 	const unlockedSkills = habilidadesCombate.filter(skill => maxAndar >= skill.unlockFloor);
 	panel.hidden = unlockedSkills.length === 0;
 
 	habilidadesCombate.forEach(skill => {
-		const button = document.getElementById(`skill-${skill.id}`);
-		const progress = document.getElementById(`skill-${skill.id}-progress`);
-		const meter = document.getElementById(`skill-${skill.id}-meter`);
+		const button = document.getElementById(IdDomHabilidade(skill.id));
+		const progress = document.getElementById(IdDomHabilidade(skill.id) + "-progresso");
+		const meter = document.getElementById(IdDomHabilidade(skill.id) + "-medidor");
 		if (!button || !progress || !meter) return;
 
 		const unlocked = maxAndar >= skill.unlockFloor;
@@ -411,22 +441,23 @@ function AtualizaHabilidadesCombate() {
 			: skill.id === "frenzy" ? `${kills} de ${skill.killsRequired} toques`
 				: `${kills} de ${skill.killsRequired} abates`);
 
-		// ícone só aparece quando a skill está carregada (pronta ou ativa);
-		// enquanto carrega, o botão mostra apenas a barra de progresso
-		button.classList.toggle("is-charging", active === 0 && kills < skill.killsRequired);
+		// O ícone fica SEMPRE visível (item 1): "is-carregando" só escurece o
+		// ícone; "is-pronta" acende o brilho; "is-ativa" marca a janela ativa.
+		const pronto = active === 0 && kills >= skill.killsRequired;
+		button.classList.toggle("is-pronta", pronto);
+		button.classList.toggle("is-ativa", active > 0);
+		button.classList.toggle("is-carregando", active === 0 && !pronto);
 
 		if (active > 0) {
 			progress.textContent = skill.id === "escape"
 				? `Ativa: ${active}s`
 				: skill.id === "frenzy" ? `Ativa: ${active} toques`
 					: `Ativa: ${active} ataques`;
-			button.classList.add("is-active");
 		} else {
-			progress.textContent = kills >= skill.killsRequired
+			progress.textContent = pronto
 				? "Pronta!"
 				: skill.id === "frenzy" ? `${kills}/${skill.killsRequired} toques`
 					: `${kills}/${skill.killsRequired} abates`;
-			button.classList.remove("is-active");
 		}
 	});
 }
@@ -463,12 +494,12 @@ function RegistraToqueFrenesi() {
 // no botão (classe + animação CSS). A classe sai no fim da animação — sem
 // timer órfão. Chamado só quando a ativação vem da passiva do Mago.
 function EfeitoAtivacaoMago(id) {
-	const botao = document.getElementById(`skill-${id}`);
+	const botao = document.getElementById(IdDomHabilidade(id));
 	if (!botao) return;
-	botao.classList.remove("skill-mago");
+	botao.classList.remove("habilidade-mago");
 	void botao.offsetWidth; // reinicia a animação se disparar de novo
-	botao.classList.add("skill-mago");
-	botao.addEventListener("animationend", () => botao.classList.remove("skill-mago"), { once: true });
+	botao.classList.add("habilidade-mago");
+	botao.addEventListener("animationend", () => botao.classList.remove("habilidade-mago"), { once: true });
 }
 
 function AtivaHabilidadeCombate(id, opcoes = {}) {
@@ -480,13 +511,11 @@ function AtivaHabilidadeCombate(id, opcoes = {}) {
 		habilidadeAtivada = true;
 		abatesCorrenteEletrica = 0;
 		ataquesCorrenteEletrica = 20;
-		ChamaSom("audio5");
 		UI.showInfo("Corrente elétrica ativa por 20 ataques!");
 	} else if (id === "gold" && abatesBonusGoldAtaque >= skill.killsRequired && ataquesBonusGold === 0) {
 		habilidadeAtivada = true;
 		abatesBonusGoldAtaque = 0;
 		ataquesBonusGold = DuracaoSkillGold();
-		ChamaSom("audio6");
 		UI.showInfo(`Bônus de Gold ativo por ${ataquesBonusGold} ataques!`);
 	} else if (id === "escape" && abatesPausaFuga >= skill.killsRequired && segundosPausaFuga === 0 && !fugaEmAndamento) {
 		habilidadeAtivada = true;
@@ -494,7 +523,6 @@ function AtivaHabilidadeCombate(id, opcoes = {}) {
 		// Passiva do Mago do Relógio: a ativação automática dele dura 50% a mais
 		const bonusFuga = Math.max(1, Number(opcoes.bonusFuga) || 1);
 		segundosPausaFuga = Math.round(DuracaoPausaFuga() * bonusFuga);
-		ChamaSom("audio7");
 		if (bonusFuga > 1) EfeitoAtivacaoMago("escape");
 		UI.showInfo(bonusFuga > 1
 			? `Mago do Relógio: fuga pausada por ${segundosPausaFuga} segundos (+50%)!`
@@ -503,12 +531,14 @@ function AtivaHabilidadeCombate(id, opcoes = {}) {
 		habilidadeAtivada = true;
 		abatesFrenesi = 0;
 		ataquesFrenesi = DuracaoJanelaFrenesi();
-		ChamaSom("audio5");
 		// companheiro de dano: marca o alvo da janela (1 ou 2) e zera o acumulado
 		const alvoComp = MarcaAlvoFrenesiComp();
 		UI.showInfo(`Toque Frenético ativo por ${ataquesFrenesi} toques!`
 			+ (alvoComp > 0 ? ` · inimigo ${alvoComp} marcado!` : ""));
 	}
+
+	// Um "plim" curto e único por ativação válida (item 1)
+	if (habilidadeAtivada) TocaSomSintetico("plim");
 
 	//desafio "sem habilidades": só ativar de verdade falha (tentativa sem carga não conta)
 	if (habilidadeAtivada && missaoAtual === 5 && missaoDesafioSub === 2) {
@@ -535,7 +565,6 @@ function HabilidadeDano(){
 	if (jogoPausado) return;
 
 	AtualizaHabilidadesCombate();
-	AtualizaQTDHabildiade1();
 	if(verificaHabilidadeDano){
 		DanoAutomatico(false,true);
 		// Alquimista: buff de Velocidade ×2 — golpe extra no mesmo tick
@@ -543,12 +572,11 @@ function HabilidadeDano(){
 			DanoAutomatico(false,true);
 		}
 		tempoHabilidadeDano--;
-		document.getElementById("BaraQTDHab1").style.color="#f00";
 		if(tempoHabilidadeDano==0){
 			verificaHabilidadeDano=false;
 			tempoHabilidadeDano = DuracaoHabilidadeDano();
 		}
-	} 	
+	}
 }
 
 // Pontos de perk (por run): 1 por portão alcançado no pico de andar desta run
@@ -588,13 +616,16 @@ function PontosNotificadosRamos() {
 // addEventListener (sem onclick inline no HTML).
 document.addEventListener("DOMContentLoaded", () => {
 	const habilidades = {
-		"skill-electric": "electric",
-		"skill-gold": "gold",
-		"skill-escape": "escape",
-		"skill-frenzy": "frenzy"
+		"habilidade-eletrica": "electric",
+		"habilidade-ouro": "gold",
+		"habilidade-fuga": "escape",
+		"habilidade-frenesi": "frenzy"
 	};
 	for (const [id, tipo] of Object.entries(habilidades)) {
 		const botao = document.getElementById(id);
 		if (botao) botao.addEventListener("click", () => AtivaHabilidadeCombate(tipo));
 	}
+	// "Dano automático" (#habilidade-dano): ativação própria (janela de 30s)
+	const botaoDano = document.getElementById("habilidade-dano");
+	if (botaoDano) botaoDano.addEventListener("click", () => UsaHabilidadeDano());
 });

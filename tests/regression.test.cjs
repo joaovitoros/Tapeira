@@ -2638,9 +2638,9 @@ test("inimigos usam listeners registrados (sem onclick inline)", async () => {
 test("habilidades de combate usam listeners registrados (sem onclick inline)", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
-        await page.waitForFunction(() => document.getElementById("skill-electric"));
+        await page.waitForFunction(() => document.getElementById("habilidade-eletrica"));
         const result = await page.evaluate(() => {
-            const ids = ["skill-electric", "skill-gold", "skill-escape", "skill-frenzy"];
+            const ids = ["habilidade-eletrica", "habilidade-ouro", "habilidade-fuga", "habilidade-frenesi"];
             const inline = ids.filter(id => document.getElementById(id)?.hasAttribute("onclick"));
 
             const chamadas = [];
@@ -4840,6 +4840,178 @@ test("pvp fase 3: id de integridade, +2 esmeraldas na vitória e cartão usado n
         assert.equal(self.okSelf, true, "cartão próprio não usado é aceito (duelo abre)");
         assert.ok(self.avisoSelf.includes("consigo mesmo"),
             "toast avisa que é duelo consigo mesmo: " + self.avisoSelf);
+
+        assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
+    } finally {
+        await context.close();
+    }
+});
+
+test("front: navegação entre telas, estados das skills, buff, pause e emblema de andar", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            typeof window.AbreLoja === "function"
+            && typeof UI !== "undefined"
+            && !!document.getElementById("habilidade-dano"),
+            undefined, { timeout: 15000 });
+
+        const r = await page.evaluate(() => {
+            const out = {};
+            const vis = id => {
+                const el = document.getElementById(id);
+                return !!el && getComputedStyle(el).visibility !== "hidden";
+            };
+            document.querySelectorAll("#infoModal, #gameModal, .offline-rewards-overlay").forEach(m => m.remove());
+
+            // ---- item 2: navegação entre telas (mutuamente exclusiva) ----
+            UI.showFeitosPanel();
+            AbreLoja(false);
+            out.lojaComFeitos = vis("Loja") && !document.getElementById("feitosModal");
+            FechaLoja();
+            UI.showRamosTreePanel();
+            AbreLoja(false);
+            out.lojaComRamos = vis("Loja") && !document.getElementById("ramosTreeModal");
+            FechaLoja();
+            UI.showFeitosPanel();
+            out.feitosFecha = !!document.getElementById("feitosModal") && !vis("Loja");
+            UI.toggleRamosTreePanel();
+            out.ramosFechaFeitos = !!document.getElementById("ramosTreeModal")
+                && !document.getElementById("feitosModal");
+            UI.toggleRamosTreePanel();
+
+            // ---- item 1: skills (carga sobre o ícone, sem desaparecer) ----
+            window.ChamaSom = () => {};
+            let plim = 0;
+            window.TocaSomSintetico = t => { if (t === "plim") plim++; };
+            UI.showInfo = () => {};
+            maxAndar = 100;
+            andar = 50;
+            CarregaHabilidadesDesbloqueadas(false);
+
+            const dano = document.getElementById("habilidade-dano");
+            const icone = dano.querySelector(".combate-habilidade__icone");
+            out.danoPrimeiro = document.getElementById("container-Habilidades").firstElementChild === dano;
+
+            qtdCarregaHabilidade = 0;
+            AtualizaHabilidadesCombate();
+            out.carregando = dano.classList.contains("is-carregando")
+                && getComputedStyle(icone).display !== "none"
+                && parseFloat(document.getElementById("habilidade-dano-medidor").style.height) === 0;
+
+            qtdCarregaHabilidade = abateshabilidadeDano;
+            AtualizaHabilidadesCombate();
+            out.pronta = dano.classList.contains("is-pronta")
+                && parseFloat(document.getElementById("habilidade-dano-medidor").style.height) === 100;
+
+            plim = 0;
+            UsaHabilidadeDano();
+            out.ativaPlim = dano.classList.contains("is-ativa") && plim === 1;
+            plim = 0;
+            UsaHabilidadeDano(); // já ativa: não toca de novo
+            out.reAtiva = plim === 0;
+            verificaHabilidadeDano = false;
+            tempoHabilidadeDano = 30;
+            AtualizaHabilidadesCombate();
+
+            plim = 0;
+            abatesCorrenteEletrica = habilidadesCombate.find(s => s.id === "electric").killsRequired;
+            AtivaHabilidadeCombate("electric");
+            out.combatePlim = plim === 1;
+
+            // ---- item 3: buff do alquimista em container acima das skills ----
+            lvlComp4 = 1;
+            buffAtivo = { tipo: "velocidade", fimMs: Date.now() + 10000 };
+            AtualizaBuffAlquimistaUI();
+            const contBuffs = document.getElementById("recipienteBuffs");
+            const buff = document.getElementById("buffAlquimista");
+            const row = document.getElementById("container-Habilidades");
+            out.buffContainer = !!contBuffs && !!buff && buff.parentElement === contBuffs
+                && contBuffs.parentElement === row;
+            out.buffAcima = buff.getBoundingClientRect().bottom <= row.getBoundingClientRect().top + 1;
+            buffAtivo = null;
+            AtualizaBuffAlquimistaUI();
+
+            // ---- item 4: botão X do pause fecha e retoma ----
+            if (!jogoPausado) PausarJogo();
+            const x = document.querySelector("#pauseOverlay .pausa-fechar");
+            out.pauseTemX = !!x;
+            if (x) x.click();
+            out.pauseFecha = !document.getElementById("pauseOverlay") && !jogoPausado;
+
+            // ---- item 5: emblema da transição de andar ----
+            UI.showFloorTransition(7);
+            const trans = document.getElementById("transicaoAndar");
+            const escudo = trans && trans.querySelector(".transicao-andar__escudo");
+            out.emblema = !!escudo
+                && /\b7\b/.test(trans.querySelector(".transicao-andar__numero").textContent)
+                && !trans.classList.contains("transicao-andar--guardiao");
+            UI.showFloorTransition(10);
+            out.emblemaBoss = trans.classList.contains("transicao-andar--guardiao")
+                && /andar-emblema-boss\.svg$/.test(trans.querySelector(".transicao-andar__escudo").src);
+
+            return out;
+        });
+
+        assert.equal(r.lojaComFeitos, true, "abrir a Loja fecha os Feitos");
+        assert.equal(r.lojaComRamos, true, "abrir a Loja fecha os Ramos");
+        assert.equal(r.feitosFecha, true, "abrir os Feitos fecha a Loja");
+        assert.equal(r.ramosFechaFeitos, true, "abrir os Ramos fecha os Feitos");
+        assert.equal(r.danoPrimeiro, true, "o botão do Dano automático abre a fileira de skills");
+        assert.equal(r.carregando, true, "skill carregando: ícone visível, barra vazia sobre o ícone");
+        assert.equal(r.pronta, true, "skill pronta: barra cheia + classe is-pronta (brilho)");
+        assert.equal(r.ativaPlim, true, "ativação válida: skill ativa (is-ativa) e 1 plim");
+        assert.equal(r.reAtiva, true, "reativar durante a janela não toca som de novo");
+        assert.equal(r.combatePlim, true, "skill de combate: 1 plim por ativação válida");
+        assert.equal(r.buffContainer, true, "buff do alquimista num container próprio dentro da fileira");
+        assert.equal(r.buffAcima, true, "container do buff fica acima da fileira de skills");
+        assert.equal(r.pauseTemX, true, "o pause tem botão X no painel");
+        assert.equal(r.pauseFecha, true, "o X fecha o pause e retoma o jogo");
+        assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
+    } finally {
+        await context.close();
+    }
+});
+
+test("loja: toggle de auto-compra desenha uma única bola mesmo travado", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            typeof window.MontaCheckboxesAutoLoja === "function"
+            && !!document.getElementById("Loja"),
+            undefined, { timeout: 15000 });
+
+        const r = await page.evaluate(() => {
+            document.querySelectorAll("#infoModal, #gameModal, .offline-rewards-overlay").forEach(m => m.remove());
+            window.ChamaSom = () => {};
+            // andar abaixo de 100 => auto-compra seletiva travada (input disabled)
+            maxAndar = 50;
+            andar = 1;
+            FechaLoja();
+            LojaGold();
+            MontaCheckboxesAutoLoja();
+            SyncCheckboxesAutoLoja();
+
+            const inp = document.getElementById("autoItemLoja-0");
+            const trilha = inp.nextElementSibling;
+            const cs = getComputedStyle(inp);
+            return {
+                disabled: inp.disabled,
+                inputOpacity: cs.opacity,
+                inputVisibility: cs.visibility,
+                inputAfterDisplay: getComputedStyle(inp, "::after").display,
+                trilhaEhTrilha: !!trilha && trilha.className === "auto-item-loja__trilha",
+                trilhaKnob: trilha ? getComputedStyle(trilha, "::after").content : null
+            };
+        });
+
+        assert.equal(r.disabled, true, "item travado (andar < 100) desabilita o toggle");
+        assert.equal(r.inputOpacity, "0",
+            "o input escondido continua invisível quando :disabled (não revela o knob)");
+        assert.equal(r.inputAfterDisplay, "none",
+            "o knob do input é desligado — não desenha a segunda bola");
+        assert.equal(r.trilhaEhTrilha, true, "a bola visível é a da .auto-item-loja__trilha");
+        assert.equal(r.trilhaKnob, '""', "a trilha tem o próprio knob");
 
         assert.deepEqual(pageErrors, [], "sem erros de JavaScript");
     } finally {

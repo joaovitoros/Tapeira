@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 190" fill="none">
+  <!-- Emblema do andar (variante GUARDIÃO): asas + escudo avermelhados -->
+  <defs>
+    <linearGradient id="embRubro" x1="100" y1="30" x2="100" y2="156" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffb3a0"/>
+      <stop offset=".5" stop-color="#e0533a"/>
+      <stop offset="1" stop-color="#8a1f14"/>
+    </linearGradient>
+  </defs>
+
+  <g opacity=".45" stroke="#ff8a6a" stroke-width="7" stroke-linecap="round">
+    <path d="M100 84V6M100 84l52-40M100 84l64 6M100 84l-52-40M100 84l-64 6"/>
+  </g>
+
+  <g stroke="#2a1414" stroke-width="4" stroke-linejoin="round">
+    <path d="M66 96C49 82 35 63 27 39c17 8 31 24 41 44-6-18-14-36-22-52 17 12 29 33 35 55z" fill="#f3d9d4"/>
+    <path d="M70 108c-14 4-27 13-37 26 13-2 25-7 34-14-6 9-14 22-19 34 15-9 26-23 32-38z" fill="#e0bdb6"/>
+  </g>
+  <g transform="translate(200 0) scale(-1 1)" stroke="#2a1414" stroke-width="4" stroke-linejoin="round">
+    <path d="M66 96C49 82 35 63 27 39c17 8 31 24 41 44-6-18-14-36-22-52 17 12 29 33 35 55z" fill="#f3d9d4"/>
+    <path d="M70 108c-14 4-27 13-37 26 13-2 25-7 34-14-6 9-14 22-19 34 15-9 26-23 32-38z" fill="#e0bdb6"/>
+  </g>
+
+  <path d="M100 12l11 11-11 11-11-11z" fill="#ffb08a" stroke="#3a140e" stroke-width="4" stroke-linejoin="round"/>
+
+  <path d="M100 32l48 16c0 50-16 88-48 110-32-22-48-60-48-110z" fill="url(#embRubro)" stroke="#3a140e" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M100 44l38 13c0 42-13 74-38 93-25-19-38-51-38-93z" fill="#2a0f0a" stroke="#ffb99a" stroke-width="3" stroke-linejoin="round"/>
+</svg>

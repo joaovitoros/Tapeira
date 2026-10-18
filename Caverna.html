@@ -232,45 +232,61 @@
 		<img style="visibility:hidden" src="imagens/personagens/comerciante.png" class="comerciante" id="comerciante" alt="">
 
 		<div id="container-Habilidades">
-			<div id="BaraQTDHab1Borda">
-				<div id="BaraQTDHab1"></div>
-			</div>
-			<div id="skill-unlock-panel" class="skill-unlock-panel" hidden aria-label="Habilidades desbloqueadas">
-				<button type="button" id="skill-electric" class="combat-skill" hidden aria-label="Corrente elétrica"
+			<button type="button" id="habilidade-dano" class="combate-habilidade combate-habilidade--dano"
+				aria-label="Dano automático" title="Dano automático">
+				<span class="combate-habilidade__moldura">
+					<img class="combate-habilidade__icone combate-habilidade__icone--dano" src="imagens/skills/skill-damage.svg" alt="">
+					<span class="combate-habilidade__medidor" role="progressbar" aria-label="Carga do dano automático"
+						aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+						<span id="habilidade-dano-medidor" class="combate-habilidade__medidor-preenchido"></span>
+					</span>
+				</span>
+				<span id="habilidade-dano-progresso" class="sr-only"></span>
+			</button>
+			<div id="painel-habilidades" class="habilidades-desbloqueadas" hidden aria-label="Habilidades desbloqueadas">
+				<button type="button" id="habilidade-eletrica" class="combate-habilidade" hidden aria-label="Corrente elétrica"
 					title="Corrente elétrica">
-					<img class="combat-skill__icon" src="imagens/skills/skill-electric.svg" alt="">
-					<span id="skill-electric-progress" class="sr-only"></span>
-					<span class="combat-skill__meter" role="progressbar" aria-label="Carga da corrente elétrica"
-						aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-						<span id="skill-electric-meter" class="combat-skill__meter-fill"></span>
+					<span class="combate-habilidade__moldura">
+						<img class="combate-habilidade__icone" src="imagens/skills/skill-electric.svg" alt="">
+						<span class="combate-habilidade__medidor" role="progressbar" aria-label="Carga da corrente elétrica"
+							aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+							<span id="habilidade-eletrica-medidor" class="combate-habilidade__medidor-preenchido"></span>
+						</span>
 					</span>
+					<span id="habilidade-eletrica-progresso" class="sr-only"></span>
 				</button>
-				<button type="button" id="skill-gold" class="combat-skill" hidden aria-label="Bônus de Gold"
+				<button type="button" id="habilidade-ouro" class="combate-habilidade" hidden aria-label="Bônus de Gold"
 					title="Bônus de Gold">
-					<img class="combat-skill__icon combat-skill__icon--gold" src="imagens/skills/skill-gold.svg" alt="">
-					<span id="skill-gold-progress" class="sr-only"></span>
-					<span class="combat-skill__meter" role="progressbar" aria-label="Carga do bônus de Gold"
-						aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-						<span id="skill-gold-meter" class="combat-skill__meter-fill"></span>
+					<span class="combate-habilidade__moldura">
+						<img class="combate-habilidade__icone combate-habilidade__icone--ouro" src="imagens/skills/skill-gold.svg" alt="">
+						<span class="combate-habilidade__medidor" role="progressbar" aria-label="Carga do bônus de Gold"
+							aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+							<span id="habilidade-ouro-medidor" class="combate-habilidade__medidor-preenchido"></span>
+						</span>
 					</span>
+					<span id="habilidade-ouro-progresso" class="sr-only"></span>
 				</button>
-				<button type="button" id="skill-escape" class="combat-skill" hidden aria-label="Parar fuga"
+				<button type="button" id="habilidade-fuga" class="combate-habilidade" hidden aria-label="Parar fuga"
 					title="Parar fuga">
-					<img class="combat-skill__icon combat-skill__icon--escape" src="imagens/skills/skill-escape.svg" alt="">
-					<span id="skill-escape-progress" class="sr-only"></span>
-					<span class="combat-skill__meter" role="progressbar" aria-label="Carga de parar a fuga"
-						aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-						<span id="skill-escape-meter" class="combat-skill__meter-fill"></span>
+					<span class="combate-habilidade__moldura">
+						<img class="combate-habilidade__icone combate-habilidade__icone--fuga" src="imagens/skills/skill-escape.svg" alt="">
+						<span class="combate-habilidade__medidor" role="progressbar" aria-label="Carga de parar a fuga"
+							aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+							<span id="habilidade-fuga-medidor" class="combate-habilidade__medidor-preenchido"></span>
+						</span>
 					</span>
+					<span id="habilidade-fuga-progresso" class="sr-only"></span>
 				</button>
-				<button type="button" id="skill-frenzy" class="combat-skill" hidden aria-label="Toque Frenético"
+				<button type="button" id="habilidade-frenesi" class="combate-habilidade" hidden aria-label="Toque Frenético"
 					title="Toque Frenético">
-					<img class="combat-skill__icon combat-skill__icon--frenzy" src="imagens/skills/skill-frenzy.svg" alt="">
-					<span id="skill-frenzy-progress" class="sr-only"></span>
-					<span class="combat-skill__meter" role="progressbar" aria-label="Carga do Toque Frenético"
-						aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-						<span id="skill-frenzy-meter" class="combat-skill__meter-fill"></span>
+					<span class="combate-habilidade__moldura">
+						<img class="combate-habilidade__icone combate-habilidade__icone--frenesi" src="imagens/skills/skill-frenzy.svg" alt="">
+						<span class="combate-habilidade__medidor" role="progressbar" aria-label="Carga do Toque Frenético"
+							aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+							<span id="habilidade-frenesi-medidor" class="combate-habilidade__medidor-preenchido"></span>
+						</span>
 					</span>
+					<span id="habilidade-frenesi-progresso" class="sr-only"></span>
 				</button>
 			</div>
 		</div>
@@ -561,7 +577,7 @@
 						<span class="loja-item__auto"></span>
 					</article>
 					<article class="loja-item" data-item="avanco">
-						<span class="loja-item__emblema"><img src="imagens/itens/lanterna.png" alt="" /></span>
+						<span class="loja-item__emblema"><img src="imagens/itens/avanco.svg" alt="" /></span>
 						<div class="loja-item__info">
 							<div class="loja-item__topo"><span class="loja-item__nome">Avanço Rápido</span><span class="loja-item__nivel">Nv. <span id="lvlAvan"></span></span></div>
 							<p class="loja-item__desc">Melhora o avanço rápido entre andares.</p>
@@ -576,7 +592,7 @@
 						<span class="loja-item__auto"></span>
 					</article>
 					<article class="loja-item" data-item="dcrit">
-						<span class="loja-item__emblema"><img src="imagens/itens/pocaoRubra.png" alt="" /></span>
+						<span class="loja-item__emblema"><img src="imagens/itens/dcrit.svg" alt="" /></span>
 						<div class="loja-item__info">
 							<div class="loja-item__topo"><span class="loja-item__nome">Dano crítico</span><span class="loja-item__nivel">Nv. <span id="lvlDCrit"></span></span></div>
 							<p class="loja-item__desc">Aumenta o dano causado pelos ataques críticos.</p>
@@ -591,7 +607,7 @@
 						<span class="loja-item__auto"></span>
 					</article>
 					<article class="loja-item" data-item="subvida">
-						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/escudo.png" alt="" /></span>
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/subvida.svg" alt="" /></span>
 						<div class="loja-item__info">
 							<div class="loja-item__topo"><span class="loja-item__nome">Subtrair vida Mug</span><span class="loja-item__nivel">Nv. <span id="lvlSubVida"></span></span></div>
 							<p class="loja-item__desc">Reduz a vida do Mug.</p>
@@ -606,7 +622,7 @@
 						<span class="loja-item__auto"></span>
 					</article>
 					<article class="loja-item" data-item="ccrit">
-						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/colarFormigas.png" alt="" /></span>
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/ccrit.svg" alt="" /></span>
 						<div class="loja-item__info">
 							<div class="loja-item__topo"><span class="loja-item__nome">Chance crítico</span><span class="loja-item__nivel">Nv. <span id="lvlCCrit"></span></span></div>
 							<p class="loja-item__desc">Aumenta a chance de causar um ataque crítico.</p>
@@ -621,7 +637,7 @@
 						<span class="loja-item__auto"></span>
 					</article>
 					<article class="loja-item" data-item="qtdavanco">
-						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/mapa.png" alt="" /></span>
+						<span class="loja-item__emblema loja-item__emblema--wide"><img src="imagens/itens/qtdavanco.svg" alt="" /></span>
 						<div class="loja-item__info">
 							<div class="loja-item__topo"><span class="loja-item__nome">Quantidade Avanço Rápido</span><span class="loja-item__nivel">Nv. <span id="lvlQTDAvan"></span></span></div>
 							<p class="loja-item__desc">Aumenta a quantidade de andares do avanço rápido.</p>
@@ -636,7 +652,7 @@
 						<span class="loja-item__auto"></span>
 					</article>
 					<article class="loja-item" data-item="velcomp">
-						<span class="loja-item__emblema"><img src="imagens/itens/pocaoVerde.png" alt="" /></span>
+						<span class="loja-item__emblema"><img src="imagens/itens/velcomp.svg" alt="" /></span>
 						<div class="loja-item__info">
 							<div class="loja-item__topo"><span class="loja-item__nome">Velocidade Companheiro</span><span class="loja-item__nivel">Nv. <span id="lvlVelComp"></span></span></div>
 							<p class="loja-item__desc">Aumenta a velocidade de atuação dos companheiros.</p>
