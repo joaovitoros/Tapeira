@@ -57,8 +57,8 @@ const BIOMA_MORTE = {
     normal2: BiomaMorte("normal2", 5),
     "rei-coroa": BiomaMorte("rei-coroa", 14),
     sombrio: BiomaMorte("sombrio", 14),
-    poeira: BiomaMorte("poeira", 5)
-    // madeira: sem morte própria (cai na genérica)
+    poeira: BiomaMorte("poeira", 5),
+    madeira: BiomaMorte("madeira", 14)
 };
 
 var biomaFundoMostrando = null;
