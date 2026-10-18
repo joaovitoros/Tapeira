@@ -321,7 +321,10 @@ if (!FOLHA) {
             const passo = W / n;
             for (let k = 1; k < n; k++) {
                 const alvo = Math.round(k * passo);
-                const jan = Math.max(3, Math.round(passo * 0.18));
+                // janela generosa: numa folha com aura/fumaça ligando os quadros a
+                // divisória real pode estar bem longe da fatia igual (no vegetal a
+                // última estava 30px adiante) e o corte entrava dentro do bicho
+                const jan = Math.max(4, Math.round(passo * 0.35));
                 let corte = alvo;
                 let menor = Infinity;
                 for (let x = Math.max(x0 + 4, alvo - jan); x <= Math.min(W - 2, alvo + jan); x++) {
