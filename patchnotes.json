@@ -2,6 +2,18 @@
   "_instrucoes": "Edite este arquivo e salve — o site mostra as mudancas na proxima recarga da pagina, sem reiniciar nada. Campos por patch: versao, data (AAAA-MM-DD), titulo (opcional), itens (lista de frases). O mais recente fica no topo (o site ordena pela data).",
   "patches": [
     {
+      "versao": "1.8.3",
+      "data": "2026-10-18",
+      "titulo": "X do pause fixo, evento sem cobrir as telas e ajustes de loja",
+      "itens": [
+        "Correção: o \"X\" do menu de pause agora fica sempre visível — dá pra sair do pause de qualquer ponto das opções (antes ele rolava junto com a lista).",
+        "Correção: o painel do evento aleatório (e os fragmentos do meteoro) não ficam mais por cima das telas abertas — a Loja, por exemplo, agora aparece na frente.",
+        "Balance: a Chance Crítica dá no máximo 1% de chance por compra (o ganho crescia sem limite e passava de 1%).",
+        "Balance: Chance de Baú e Esmeralda no Baú dão metade do ganho por nível (os tetos continuam iguais — o item só demora mais).",
+        "Chance de Baú: +2,5% por nível (era +5%); Esmeralda no Baú: +0,5% por nível (era +1%)."
+      ]
+    },
+    {
       "versao": "1.8.2",
       "data": "2026-10-18",
       "titulo": "Botão de girar a tela, aviso de compra e ajustes de skill/preço",
