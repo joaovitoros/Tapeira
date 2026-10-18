@@ -2,6 +2,22 @@
   "_instrucoes": "Edite este arquivo e salve — o site mostra as mudancas na proxima recarga da pagina, sem reiniciar nada. Campos por patch: versao, data (AAAA-MM-DD), titulo (opcional), itens (lista de frases). O mais recente fica no topo (o site ordena pela data).",
   "patches": [
     {
+      "versao": "1.8.2",
+      "data": "2026-10-18",
+      "titulo": "Botão de girar a tela, aviso de compra e ajustes de skill/preço",
+      "itens": [
+        "Android: botão \"Girar tela\" no menu de pause — gire o jogo mesmo com o giro automático do celular desligado.",
+        "Aviso no botão da Loja: quando a auto-compra está desligada e você já pode comprar bastante, aparece um selo (como o das Ramos) lembrando de gastar o ouro.",
+        "Skills no celular: agora ficam sempre ACIMA dos botões (Status/Loja/Feitos/Ramos/Cidade) no modo em pé, e maiores (52px) — bem mais fácil de ativar.",
+        "Loja do Conhecimento: os preços iniciais triplicaram (a loja estava barata demais no começo). O ganho de cada item segue igual.",
+        "Skills com a carga no próprio ícone (com brilho ao carregar) — sem barra separada.",
+        "Navegação entre telas: abrir uma fecha a outra (nunca duas abertas juntas).",
+        "Botão \"X\" para fechar o menu de pause e o buff do Alquimista agora aparece acima das skills.",
+        "Emblema do andar na transição e ícones novos na Loja.",
+        "Correção: o toggle de auto-compra não desenha mais uma \"bola\" duplicada."
+      ]
+    },
+    {
       "versao": "1.8.1",
       "data": "2026-10-16",
       "titulo": "Preços da Cidade de volta ao padrão e ajustes de preço/ritmo",
