@@ -696,7 +696,9 @@ function animarMorte(el) {
 		}
 		morte.src = frames[frame];
 	}, intervaloMs);
-	const limite = setTimeout(limpa, 1200);
+	// o limite acompanha a sequência: com sequências longas (15+ quadros) o
+	// 1200ms fixo cortava os últimos quadros
+	const limite = setTimeout(limpa, Math.max(1200, frames.length * intervaloMs + 200));
 	efeitosMorteAtivos.set(morte, { intervalo, limite });
 }
 

@@ -52,7 +52,7 @@ const BIOMA_MORTE = {
     metalico: BiomaMorte("metalico", 6),
     lava: BiomaMorte("lava", 4),
     gelo: BiomaMorte("gelo", 5),
-    "rei-espinhos": BiomaMorte("rei-espinhos", 3),
+    "rei-espinhos": BiomaMorte("rei-espinhos", 15),
     toxico: BiomaMorte("toxico", 6),
     normal2: BiomaMorte("normal2", 5),
     "rei-coroa": BiomaMorte("rei-coroa", 5),
