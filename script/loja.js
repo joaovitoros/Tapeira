@@ -22,6 +22,26 @@ function GE(a, b){
         .compare(b instanceof GoldNumber ? b : new GoldNumber(b)) >= 0;
 }
 
+// Escreve só quando o texto MUDOU. A loja é redesenhada a cada compra (e o tick
+// de 1s também passa por aqui); escrever sempre (innerHTML) obriga o navegador a
+// refazer o texto e o layout da linha toda, mesmo quando o valor é o mesmo.
+// FormatGold/FormatCM devolvem texto puro, então textContent serve.
+function TextoLoja(alvo, valor) {
+	const el = typeof alvo === "string" ? document.getElementById(alvo) : alvo;
+	if (!el) return;
+	const txt = String(valor);
+	if (el.textContent !== txt) el.textContent = txt;
+}
+
+// Algum painel da loja está aberto? Serve pra pular o trabalho de preço,
+// descrição e botões quando o jogador nem está olhando a loja.
+function LojaAberta() {
+	return ["Loja", "LojaEsm", "LojaCM"].some(id => {
+		const el = document.getElementById(id);
+		return el && el.style.visibility === "visible";
+	});
+}
+
 function NormalizaPrecosLoja() {
 	// Item de XP da loja de esmeraldas: base 1 (metade da antiga base 2) com
 	// dobra por nível — recalculado do nível, então saves antigos (base 2)
@@ -54,38 +74,26 @@ function NormalizaPrecosLoja() {
 
 function AtualizaLojaGold() {
 	NormalizaPrecosLoja();
-	document.getElementById("precoDano").innerHTML = FormatGold(precoDano);
-	document.getElementById("lvlDano").innerHTML = lvlDano;
-
-	document.getElementById("precoBau").innerHTML = FormatGold(precoBau);
-	document.getElementById("lvlBau").innerHTML = lvlBau;
-
-	document.getElementById("precoGold").innerHTML = FormatGold(precoGold);
-	document.getElementById("lvlGold").innerHTML = lvlGold;
-
-	document.getElementById("precoBEspaco").innerHTML = FormatGold(precoBEspaco);
-	document.getElementById("lvlBEspaco").innerHTML = lvlBEspaco;
-
-	document.getElementById("precoAvan").innerHTML = FormatGold(precoAvan);
-	document.getElementById("lvlAvan").innerHTML = lvlAvan;
-
-	document.getElementById("precoDCrit").innerHTML = FormatGold(precoDCrit);
-	document.getElementById("lvlDCrit").innerHTML = lvlDCrit;
-
-	document.getElementById("precoVidaInimigo").innerHTML = FormatGold(precoVidaInimigo);
-	document.getElementById("lvlSubVida").innerHTML = lvlSubVida;
-
-	document.getElementById("precoCCrit").innerHTML = FormatGold(precoCCrit);
-	document.getElementById("lvlCCrit").innerHTML = lvlCCrit;
-
-	document.getElementById("precoQTDAvan").innerHTML = FormatGold(precoQTDAvanco);
-	document.getElementById("lvlQTDAvan").innerHTML = lvlQTDAvanco;
-
-	document.getElementById("precoEsmBau").innerHTML = FormatGold(precoEsmBau);
-	document.getElementById("lvlEsmBau").innerHTML = lvlEsmBau;
-
-	document.getElementById("precoVelComp").innerHTML = FormatGold(precoVelComp);
-	document.getElementById("lvlVelComp").innerHTML = lvlVelComp;
+	// Pares preço/nível, na mesma ordem de sempre. A escrita passa pelo
+	// TextoLoja, que só toca no DOM quando o valor mudou de verdade (a loja é
+	// redesenhada a cada compra e o tick de 1s também passa por aqui).
+	const itens = [
+		["precoDano", precoDano, "lvlDano", lvlDano],
+		["precoBau", precoBau, "lvlBau", lvlBau],
+		["precoGold", precoGold, "lvlGold", lvlGold],
+		["precoBEspaco", precoBEspaco, "lvlBEspaco", lvlBEspaco],
+		["precoAvan", precoAvan, "lvlAvan", lvlAvan],
+		["precoDCrit", precoDCrit, "lvlDCrit", lvlDCrit],
+		["precoVidaInimigo", precoVidaInimigo, "lvlSubVida", lvlSubVida],
+		["precoCCrit", precoCCrit, "lvlCCrit", lvlCCrit],
+		["precoQTDAvan", precoQTDAvanco, "lvlQTDAvan", lvlQTDAvanco],
+		["precoEsmBau", precoEsmBau, "lvlEsmBau", lvlEsmBau],
+		["precoVelComp", precoVelComp, "lvlVelComp", lvlVelComp]
+	];
+	for (const [idPreco, valorPreco, idLvl, valorLvl] of itens) {
+		TextoLoja(idPreco, FormatGold(valorPreco));
+		TextoLoja(idLvl, valorLvl);
+	}
 
 	AtualizaMaximosLoja();
 	AtualizaCarteiraLoja();
@@ -126,14 +134,14 @@ function AtualizaMaximosLoja() {
 
 		if (!noTeto) {
 			// preço normal: botão "Comprar" com o preço do próximo nível
-			elPreco.innerHTML = FormatGold(window[cfg.precoVar]);
+			TextoLoja(elPreco, FormatGold(window[cfg.precoVar]));
 			if (btn) btn.style.display = "";
 			if (rotulo) rotulo.textContent = "Comprar";
 			if (selo) selo.hidden = true;
 			if (linha) linha.classList.remove("loja-item--max", "loja-item--patente");
 		} else if (proxima) {
 			// no teto com ★ pendente: o botão vira o ingresso da próxima patente
-			elPreco.innerHTML = FormatGold(PrecoPatenteLoja(item.id));
+			TextoLoja(elPreco, FormatGold(PrecoPatenteLoja(item.id)));
 			if (btn) btn.style.display = "";
 			if (rotulo) rotulo.textContent = "★ Patente";
 			if (selo) selo.hidden = true;
@@ -242,10 +250,7 @@ function AbreLoja(exibirTutorial){
 	// ou Conhecimento). Antes ele só olhava o #Loja: na aba do Conhecimento o
 	// ouro fica `hidden`, então "fechar" de novo REABRIA a loja de Gold em vez
 	// de fechar a loja.
-	const lojaAberta = ["Loja", "LojaEsm", "LojaCM"].some(id => {
-		const el = document.getElementById(id);
-		return el && el.style.visibility === "visible";
-	});
+	const lojaAberta = LojaAberta();
 
 	if (lojaAberta) {
 		document.getElementById("Loja").style.visibility = "hidden";
@@ -395,10 +400,8 @@ function AtualizaLojaCM() {
 	];
 
 	for (const item of itens) {
-		const elPreco = document.getElementById(item.preco);
-		const elLvl = document.getElementById(item.lvl);
-		if (elPreco) elPreco.innerHTML = FormatCM(PrecoLojaCM(item.nivel, item.id));
-		if (elLvl) elLvl.innerHTML = item.nivel;
+		TextoLoja(item.preco, FormatCM(PrecoLojaCM(item.nivel, item.id)));
+		TextoLoja(item.lvl, item.nivel);
 	}
 
 	AtualizaCarteiraLoja();

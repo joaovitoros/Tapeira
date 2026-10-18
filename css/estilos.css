@@ -12062,22 +12062,51 @@ img.ramos-tree-no__tile {
 	font-size: 13px;
 }
 
-/* --- Qualidade (por aparelho): corta efeitos caros nos níveis menores --- */
-html.q-media .player__arte,
-html.q-baixa .player__arte,
-html.q-media .player__camada,
-html.q-baixa .player__camada {
+/* --- Qualidade (por aparelho): corta os efeitos caros ---
+   Cada tópico da Qualidade vira uma classe config-sem-* no <html>
+   (script/qualidade.js), no mesmo padrão das outras preferências globais
+   (config-sem-movimento, config-logs-transparente). Os presets Alta/Média/
+   Baixa só ligam um grupo dessas classes; a Personalizada liga as escolhidas. */
+html.config-sem-filtros-player .player__arte,
+html.config-sem-filtros-player .player__camada {
 	filter: none;
 }
 
 /* Efeitos decorativos da Cidade (fumaça, poeira/faíscas e lampiões).
-   Medido (CPU 6x): desligar tudo dá +5 FPS com a Cidade aberta. A Média já
-   corta a fumaça (que usa filter: blur, o mais caro); a Baixa corta todos. */
-html.q-media .cidade-fumaca,
-html.q-baixa .cidade-fumaca,
-html.q-baixa .cidade-particulas,
-html.q-baixa .cidade-lampiao {
+   Medido (CPU 6x): desligar tudo dá +5 FPS com a Cidade aberta. A fumaça usa
+   filter: blur (a mais cara) e tem tópico próprio. */
+html.config-sem-fumaca-cidade .cidade-fumaca,
+html.config-sem-particulas-cidade .cidade-particulas,
+html.config-sem-particulas-cidade .cidade-lampiao {
 	display: none;
+}
+
+/* Desfoque do fundo atrás dos painéis de tela cheia (Loja, Feitos, pausa/
+   status) e do cartão do menu. O fundo desses painéis já é quase opaco
+   (0,72–0,97 de alfa), então o desfoque aparece pouco — mas custa caro,
+   porque a cada quadro o navegador precisa desfocar a cena que está atrás. */
+html.config-sem-desfoque-paineis #container-Loja > #Loja,
+html.config-sem-desfoque-paineis #container-Loja > #LojaEsm,
+html.config-sem-desfoque-paineis #container-Loja > #LojaCM,
+html.config-sem-desfoque-paineis .feitos-panel,
+html.config-sem-desfoque-paineis #pauseOverlay,
+html.config-sem-desfoque-paineis #DivStatus,
+html.config-sem-desfoque-paineis #container-SalvaCarrega,
+html.config-sem-desfoque-paineis #menu-card {
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+}
+
+/* Desfoque dos cartões fixos do HUD (andar, moedas, objetivo, missão, fugir):
+   são pequenos, mas ficam na tela durante TODA a batalha. */
+html.config-sem-desfoque-hud #container-AndarManter,
+html.config-sem-desfoque-hud #container-GoldEsmeraldas,
+html.config-sem-desfoque-hud #container-TotalAbatidos,
+html.config-sem-desfoque-hud #container-Objetivo,
+html.config-sem-desfoque-hud #container-Missao,
+html.config-sem-desfoque-hud #container-Fugir {
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
 }
 
 /* ---- Desempenho: content-visibility ----
@@ -12113,7 +12142,9 @@ html.q-baixa .cidade-lampiao {
 
 .qualidade-seletor__linha {
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
+	/* 4 botões em 2x2: cabem por inteiro ("Personalizada" não cabe em 4 colunas
+	   no painel estreito do pause) */
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 6px;
 	width: 100%;
 }
@@ -12145,6 +12176,16 @@ html.q-baixa .cidade-lampiao {
 .qualidade-btn.is-ativo {
 	border-color: #7ee0a0;
 	box-shadow: inset 0 0 0 1px rgba(126, 224, 160, 0.55);
+}
+
+/* Lista de otimizações da Qualidade "Personalizada": as mesmas linhas do bloco
+   de Ajustes (.config-item), num encarte próprio pra separar dos botões. */
+.qualidade-opcoes {
+	margin-top: 8px;
+	padding: 2px 10px 4px;
+	border: 1px solid rgba(137, 177, 255, 0.18);
+	border-radius: 9px;
+	background: rgba(10, 14, 20, 0.45);
 }
 
 /* --- Aviso de atualização (canto inferior) --- */

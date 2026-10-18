@@ -334,9 +334,14 @@ function AtualizaBadgeLoja() {
 function TickAutomacao() {
 	SyncTogglesAutomacao();
 	SyncCheckboxesAutoLoja();
-	AtualizaCarteiraLoja();
-	AtualizaSaldoBotoesLoja();
-	SincronizaDescricoesLoja(); // descrição do card acompanha saldo (cor --nao-pode)
+	// Com a loja FECHADA nada disso está na tela: era escrita de DOM a cada
+	// segundo (preço, descrição e classe dos botões) sem ninguém olhando. Quem
+	// abre a loja (AbreLoja/LojaGold/LojaConhecimento) já atualiza tudo.
+	if (LojaAberta()) {
+		AtualizaCarteiraLoja();
+		AtualizaSaldoBotoesLoja();
+		SincronizaDescricoesLoja(); // descrição do card acompanha saldo (cor --nao-pode)
+	}
 	AtualizaBadgeLoja();        // badge "gaste o gold" no botão da Loja
 	if (jogoPausado) return;
 

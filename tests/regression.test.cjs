@@ -3353,6 +3353,104 @@ test("árvore de ramos: ícone de info abre o balão de como funciona a tela", a
     }
 });
 
+test("qualidade: presets ligam as otimizações certas e a Personalizada traz a lista", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            typeof AplicaQualidade === "function"
+            && typeof window.Tapeira !== "undefined"
+            && !!window.Tapeira.Qualidade,
+            undefined,
+            { timeout: 15000 }
+        );
+
+        const r = await page.evaluate(() => {
+            const raiz = document.documentElement;
+            const classes = () => [...raiz.classList]
+                .filter(c => c.startsWith("config-sem-") || c.startsWith("q-"))
+                .sort();
+            const filtroLoja = () => getComputedStyle(document.getElementById("Loja")).backdropFilter;
+            const filtroHud = () => getComputedStyle(document.getElementById("container-Objetivo")).backdropFilter;
+            const out = { topicos: OTIMIZACOES.length, niveis: QUALIDADES.map(q => q.id), presets: Object.keys(PRESETS_QUALIDADE) };
+
+            DefineQualidade("alta");
+            out.alta = { nivel: QualidadeAtual(), classes: classes(), loja: filtroLoja(), hud: filtroHud() };
+
+            DefineQualidade("media");
+            out.media = { nivel: QualidadeAtual(), classes: classes(), loja: filtroLoja(), hud: filtroHud() };
+
+            DefineQualidade("baixa");
+            out.baixa = { nivel: QualidadeAtual(), classes: classes() };
+
+            // Personalizada: escolhe só as animações
+            DefineQualidade("personalizada");
+            ["filtrosPlayer", "fumacaCidade", "particulasCidade", "desfoquePaineis", "desfoqueHud"]
+                .forEach(id => DefineOtimizacao(id, false));
+            DefineOtimizacao("animacoes", true);
+            out.personalizada = { nivel: QualidadeAtual(), classes: classes(), opcoes: OpcoesQualidade() };
+
+            // seletor montado: 4 botões + a lista de tópicos quando é Personalizada
+            const alvo = document.getElementById("configQualidade");
+            alvo.replaceChildren(QualidadeSeletor());
+            out.botoes = [...alvo.querySelectorAll(".qualidade-btn")].map(b => b.textContent);
+            out.ativo = alvo.querySelector(".qualidade-btn.is-ativo")?.textContent || null;
+            out.lista = alvo.querySelectorAll(".qualidade-opcoes .config-item").length;
+            out.listaNomes = [...alvo.querySelectorAll(".qualidade-opcoes .config-item b")].map(b => b.textContent);
+
+            // preset não mostra a lista
+            DefineQualidade("media");
+            alvo.replaceChildren(QualidadeSeletor());
+            out.listaNaMedia = alvo.querySelectorAll(".qualidade-opcoes").length;
+
+            // não deixa estado na suíte
+            localStorage.removeItem("tapeira-qualidade");
+            localStorage.removeItem("tapeira-qualidade-opcoes");
+            raiz.classList.remove("config-sem-movimento", "config-sem-desfoque-hud",
+                "config-sem-desfoque-paineis", "config-sem-fumaca-cidade",
+                "config-sem-particulas-cidade", "config-sem-filtros-player");
+            return out;
+        });
+
+        assert.equal(r.topicos, 6, "6 tópicos de otimização");
+        assert.deepEqual(r.niveis, ["alta", "media", "baixa", "personalizada"], "4 níveis");
+        assert.deepEqual(r.presets, ["alta", "media", "baixa"], "a Personalizada não é preset");
+
+        assert.deepEqual(r.alta.classes, ["q-alta"], "Alta não desliga nada");
+        assert.match(r.alta.loja, /blur/, "Alta mantém o desfoque do painel da loja");
+        assert.match(r.alta.hud, /blur/, "Alta mantém o desfoque do HUD");
+
+        assert.equal(r.media.nivel, "media");
+        assert.deepEqual(r.media.classes, [
+            "config-sem-desfoque-hud", "config-sem-desfoque-paineis",
+            "config-sem-filtros-player", "config-sem-fumaca-cidade", "q-media"
+        ], "Média desliga filtros, fumaça e os dois desfoques");
+        assert.equal(r.media.loja, "none", "Média tira o desfoque do painel (abre mais leve)");
+        assert.equal(r.media.hud, "none", "Média tira o desfoque do HUD");
+
+        assert.deepEqual(r.baixa.classes, [
+            "config-sem-desfoque-hud", "config-sem-desfoque-paineis", "config-sem-filtros-player",
+            "config-sem-fumaca-cidade", "config-sem-movimento", "config-sem-particulas-cidade", "q-baixa"
+        ], "Baixa desliga tudo");
+
+        assert.equal(r.personalizada.nivel, "personalizada");
+        assert.deepEqual(r.personalizada.classes, ["config-sem-movimento", "q-personalizada"],
+            "Personalizada liga só o que o jogador marcou");
+        assert.equal(r.personalizada.opcoes.animacoes, true);
+        assert.equal(r.personalizada.opcoes.filtrosPlayer, false);
+
+        assert.deepEqual(r.botoes, ["Alta", "Média", "Baixa", "Personalizada"], "4 botões de nível");
+        assert.equal(r.ativo, "Personalizada", "o botão do nível atual fica marcado");
+        assert.equal(r.lista, 6, "a lista tem um item por tópico");
+        assert.ok(r.listaNomes.includes("Filtros do personagem") && r.listaNomes.includes("Desfoque do HUD"),
+            "os tópicos aparecem com nome");
+        assert.equal(r.listaNaMedia, 0, "num preset a lista não aparece");
+
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("telas complexas: Skills, Coleção e Feitos trazem o ícone de info com balão", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

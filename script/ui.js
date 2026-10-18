@@ -865,7 +865,7 @@ function FechaTelasNavegacao(exceto) {
         },
         skills: () => document.getElementById("skillUpgradeModal")?.remove(),
         feitos: () => document.getElementById("feitosModal")?.remove(),
-        ramos: () => document.getElementById("ramosTreeModal")?.remove(),
+        ramos: () => UI.fechaRamosTreePanel && UI.fechaRamosTreePanel(),
         cidade: () => {
             if (document.getElementById("container-Cidade")?.hidden === false) {
                 window.Tapeira?.Cidade?.fechar?.();

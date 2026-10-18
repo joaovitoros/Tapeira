@@ -548,10 +548,30 @@ Object.assign(UI, {
         return comAcao ? comAcao.id : null;
     },
 
+    // O painel da árvore é CARO de construir (medido no celular simulado: ~74ms
+    // com CPU 6x mais lenta) e de destruir (~32ms). Por isso ele é construído
+    // uma vez e REUSADO: ao fechar, o painel só sai do ar e fica guardado.
+    // O sinal de "aberto" pra todo o resto do jogo continua sendo o id
+    // #ramosTreeModal — o painel guardado NÃO tem id (é invisível de propósito).
+    ramosTreeCache: null,
+
+    painelRamos() {
+        const c = this.ramosTreeCache;
+        return (c && c.isConnected && c.style.display === "none") ? c : null;
+    },
+
+    // Fecha guardando o DOM (reabre sem reconstruir).
+    fechaRamosTreePanel() {
+        const overlay = document.getElementById("ramosTreeModal") || this.painelRamos();
+        if (!overlay) return;
+        overlay.style.display = "none";
+        overlay.removeAttribute("id");
+        this.syncScreenButtons();
+    },
+
     toggleRamosTreePanel() {
         if (document.getElementById("ramosTreeModal")) {
-            document.getElementById("ramosTreeModal").remove();
-            this.syncScreenButtons();
+            this.fechaRamosTreePanel();
             return;
         }
         document.getElementById("skillUpgradeModal")?.remove();
@@ -560,17 +580,37 @@ Object.assign(UI, {
         this.showRamosTreePanel();
     },
 
+    // Reabre o painel já construído: só volta ao ar, atualiza e devolve o foco.
+    ramosTreeReabre(overlay, focoAnterior) {
+        overlay.style.display = "";
+        overlay.id = "ramosTreeModal";
+        overlay.classList.remove("sem-entrada");
+        FechaTelasNavegacao("ramos");
+        this.atualizaRamosTree();
+        this.syncScreenButtons();
+        const alvo = focoAnterior
+            ? Array.from(overlay.querySelectorAll("[data-focus-key]"))
+                .find(el => el.dataset.focusKey === focoAnterior)
+            : null;
+        (alvo
+            || overlay.querySelector(".ramos-tree-trilha__btn--ativo")
+            || overlay.querySelector(".ant-collection-close"))?.focus({ preventScroll: true });
+    },
+
     showRamosTreePanel() {
+        // já aberto: atualiza no lugar em vez de reconstruir
+        if (document.getElementById("ramosTreeModal")) { this.atualizaRamosTree(); return; }
         const focoAnterior = document.activeElement instanceof HTMLElement
             ? document.activeElement.dataset.focusKey
             : null;
-        const reRenderizacao = !!document.getElementById("ramosTreeModal");
+        const guardado = this.painelRamos();
+        if (guardado) { this.ramosTreeReabre(guardado, focoAnterior); return; }
         document.getElementById("ramosTreeModal")?.remove();
         FechaTelasNavegacao("ramos");
 
         const overlay = document.createElement("div");
         overlay.id = "ramosTreeModal";
-        overlay.className = "ant-collection-overlay ramos-tree-overlay" + (reRenderizacao ? " sem-entrada" : "");
+        overlay.className = "ant-collection-overlay ramos-tree-overlay";
         overlay.setAttribute("role", "dialog");
         overlay.setAttribute("aria-modal", "true");
         overlay.setAttribute("aria-labelledby", "ramos-tree-title");
@@ -590,7 +630,9 @@ Object.assign(UI, {
         close.setAttribute("data-focus-key", "fechar");
         close.textContent = "×";
         const fechar = () => {
-            overlay.remove();
+            // guarda o DOM em vez de destruir: reabrir fica barato
+            overlay.style.display = "none";
+            overlay.removeAttribute("id");
             this.syncScreenButtons();
             document.getElementById("btnRamos")?.focus();
         };
@@ -657,7 +699,7 @@ Object.assign(UI, {
         autoGastoInput.setAttribute("aria-label", "Auto-gasto de pontos de habilidade");
         autoGastoInput.addEventListener("change", () => {
             AlternaAutoGasto(autoGastoInput.checked);
-            this.showRamosTreePanel();
+            this.atualizaRamosTree();
         });
         autoGastoWrap.append(autoGastoTexto, autoGastoInput);
 
@@ -763,6 +805,31 @@ Object.assign(UI, {
         SyncTogglesAutomacao();
         this.updateSkillProgress();
         focoInicial.focus({ preventScroll: true });
+        // guarda pra reabrir sem reconstruir (ver fechaRamosTreePanel)
+        this.ramosTreeCache = overlay;
+    },
+
+    // Atualiza a árvore NO LUGAR, sem recriar o painel: só a seção da skill e os
+    // estados da trilha/resumo. Antes cada nível/perk/ramo comprado chamava
+    // showRamosTreePanel(), que destrói e remonta o overlay inteiro — no celular
+    // é justamente o engasgo ao comprar.
+    atualizaRamosTree() {
+        const modal = document.getElementById("ramosTreeModal");
+        if (!modal) { this.showRamosTreePanel(); return; }
+        const exibida = this.ramosTreeAtiva
+            || (SKILLS_UPGRADE[0] ? SKILLS_UPGRADE[0].id : null);
+        const secaoEl = modal.querySelector(".ramos-tree-secao");
+        if (secaoEl) this.montarSecaoSkill(secaoEl, exibida);
+        modal.querySelectorAll(".ramos-tree-trilha__btn").forEach(btn => {
+            const skill = SKILLS_UPGRADE.find(s => s.id === btn.dataset.skillId);
+            if (!skill) return;
+            const liberada = this.SkillUnlocked(skill.id);
+            btn.classList.toggle("ramos-tree-trilha__btn--ativo", skill.id === exibida);
+            btn.classList.toggle("ramos-tree-trilha__btn--travada", !liberada);
+            btn.classList.toggle("ramos-tree-trilha__btn--pronta", liberada && this.SkillTemAcao(skill.id));
+        });
+        SyncTogglesAutomacao();
+        this.updateSkillProgress();
     },
 
     // monta a seção da skill escolhida (descrições sempre visíveis)
@@ -843,7 +910,7 @@ Object.assign(UI, {
             if (compravel) {
                 pip.setAttribute("data-focus-key", `nivel:${skill.id}:${nivel}`);
                 pip.addEventListener("click", () => {
-                    if (EvoluiSkill(skill.id)) this.showRamosTreePanel();
+                    if (EvoluiSkill(skill.id)) this.atualizaRamosTree();
                 });
             }
             faixa.appendChild(pip);
@@ -880,7 +947,7 @@ Object.assign(UI, {
                 noPerk.append(seloPerk);
                 noPerk.setAttribute("data-focus-key", `perk:${skill.id}`);
                 noPerk.addEventListener("click", () => {
-                    if (CompraPerk(skill.id)) this.showRamosTreePanel();
+                    if (CompraPerk(skill.id)) this.atualizaRamosTree();
                 });
             }
             bPerk.appendChild(noPerk);
@@ -964,7 +1031,7 @@ Object.assign(UI, {
         if (acao) {
             no.setAttribute("data-focus-key", "acao");
             no.addEventListener("click", () => {
-                if (acao()) this.showRamosTreePanel();
+                if (acao()) this.atualizaRamosTree();
             });
         }
         return no;
