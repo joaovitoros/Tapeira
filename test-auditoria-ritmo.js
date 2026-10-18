@@ -97,7 +97,7 @@ const PATENTE_DA_COMPRA = {
         // ---------- cenário de balanceamento (opcional) ----------
         if (window.__CM_STEP__) {
             const passo = window.__CM_STEP__;
-            PrecoLojaCM = (nivel) => Math.round(10 * Math.pow(passo, Math.max(0, Number(nivel) || 0)));
+            PrecoLojaCM = (nivel) => Math.round(30 * Math.pow(passo, Math.max(0, Number(nivel) || 0)));
         }
         if (window.__CM_BASE__ && window.__CM_BASE__ !== 1) {
             const base = window.__CM_BASE__, original = MultiplicadorCM;

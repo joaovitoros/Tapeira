@@ -190,20 +190,20 @@ var danoBonus = 0; //variavel para armazenar os danos bonus
 // =========================
 // CONHECIMENTO MUG
 // =========================
-// Preço dos itens da loja: base 10 CM, escalonado ×1.25 por nível
-// (10, 13, 16, 20, 24...). Era ×1.4 — e antes ×1.5. A renda de CM cresce
-// ~linear com os abates do reset, então ×1.4 travava a loja no meio do jogo
-// (a auditoria de ritmo flagrou: o bot parava de comprar CM no nível ~18).
+// Preço dos itens da loja: base 30 CM, escalonado ×1.25 por nível
+// (30, 38, 47, 59...). Era base 10 (×1.4 e ×1.5 antes disso). A base SUBIU ×3
+// por pedido — o começo ficava barato demais com a renda de CM por run.
+// O crescimento (×1,25) fica igual, então o meio/fim muda pouco.
 //
-// Itens de FORMIGA (formiga/duasformigas): preço DOBRADO e o AUMENTO do preço
-// por compra também dobrado (passo 1,25 → 1 + 2×(1,25−1) = 1,5), sem mexer no
-// ganho — o efeito segue o mesmo. Balanceamento direto (sem toggle no F2).
-// O `tipo` é opcional: chamadas antigas (sem tipo) continuam com base 10/×1,25.
+// Itens de FORMIGA (formiga/duasformigas): base 60 (x2 dos outros) e o AUMENTO
+// do preço por compra também dobrado (passo 1,25 → 1 + 2×(1,25−1) = 1,5), sem
+// mexer no ganho — o efeito segue o mesmo. Balanceamento direto (sem F2).
+// O `tipo` é opcional: chamadas antigas (sem tipo) usam a base normal.
 function PrecoLojaCM(nivel, tipo) {
 	const ehFormiga = tipo === "formiga" || tipo === "duasformigas";
 	const passoBase = balanceAntigo ? 1.4 : 1.25; // 1,4 = dificuldade antiga (painel F2)
 	const passo = ehFormiga ? 1 + 2 * (passoBase - 1) : passoBase;
-	const base = (ehFormiga ? 20 : 10) * Math.pow(passo, Math.max(0, Number(nivel) || 0));
+	const base = (ehFormiga ? 60 : 30) * Math.pow(passo, Math.max(0, Number(nivel) || 0));
 	// Mercado (Cidade): a reputação dá desconto na Loja do Conhecimento
 	const preco = (typeof PrecoComReputacao === "function") ? PrecoComReputacao(base) : base;
 	return Math.round(preco);
