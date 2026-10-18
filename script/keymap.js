@@ -118,9 +118,16 @@ function PausarJogo() {
     acoes.className = "pause-actions";
     acoes.append(resume, sair);
 
-    panel.append(fechar, title);
-    if (config) panel.appendChild(config);
-    panel.appendChild(acoes);
+    // O conteúdo rola DENTRO de .pause-panel__rolagem; o "X" fica fora dela
+    // (absolute no painel), então NÃO rola junto — dá pra sair do pause de
+    // qualquer ponto das opções.
+    const rolagem = document.createElement("div");
+    rolagem.className = "pause-panel__rolagem";
+    rolagem.appendChild(title);
+    if (config) rolagem.appendChild(config);
+    rolagem.appendChild(acoes);
+
+    panel.append(fechar, rolagem);
     overlay.appendChild(panel);
     document.getElementById("game-root")?.appendChild(overlay);
     // preventScroll: com o painel agora rolável, focar o botão jogaria a

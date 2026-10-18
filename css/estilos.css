@@ -2031,14 +2031,15 @@ body {
 
 .pause-panel {
 	position: relative;
-	display: grid;
+	display: flex;
+	flex-direction: column;
 	justify-items: center;
 	gap: 18px;
 	width: min(360px, calc(100vw - 100px));
 	/* content-box: desconta o padding (28px×2 + borda) além da folga do overlay
 	   (40px) — sem isso o painel estourava a tela no celular. */
 	max-height: calc(100dvh - 96px);
-	overflow-y: auto;
+	overflow: hidden;
 	padding: 28px;
 	border: 1px solid rgba(229, 183, 96, 0.55);
 	border-radius: 14px;
@@ -2056,6 +2057,20 @@ body {
 
 .pause-panel::-webkit-scrollbar {
 	width: 8px;
+}
+
+/* Área que ROLA do pause (título + config + ações). O "X" fica FORA dela
+   (absolute no .pause-panel), então não rola junto: o jogador fecha o pause de
+   qualquer ponto das opções. min-height:0 é o que deixa o flex-column encolher
+   e o filho rolar. */
+.pause-panel__rolagem {
+	display: grid;
+	justify-items: center;
+	gap: 18px;
+	min-height: 0;
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: #9b763e rgba(8, 11, 17, 0.6);
 }
 
 .pause-panel::-webkit-scrollbar-track {
@@ -8755,7 +8770,9 @@ button.skill-ramo-no:focus-visible {
 	position: fixed;
 	top: clamp(112px, 15vh, 150px);
 	left: 50%;
-	z-index: 26;
+	/* 18: acima do HUD/baú (16) e ABAIXO das telas (Loja/Status em 20), pra o
+	   painel do evento não cobrir a tela que o jogador abriu. */
+	z-index: 18;
 	box-sizing: border-box;
 	width: min(340px, calc(100vw - 20px));
 	padding: 10px 12px;
@@ -8903,7 +8920,9 @@ button.skill-ramo-no:focus-visible {
 #eventoFragmentos {
 	position: fixed;
 	inset: 0;
-	z-index: 24;
+	/* 17: acima do HUD/baú (16) e abaixo das telas (20) — os fragmentos não
+	   ficam por cima da Loja/Status que o jogador abriu. */
+	z-index: 17;
 	overflow: hidden;
 	pointer-events: none;
 }
@@ -14532,6 +14551,14 @@ html.rodape-empilhado #container-Loja {
 #container-Botoes .screen-nav-button[hidden],
 #container-Botoes button[hidden] {
 	display: none;
+}
+
+/* A Loja precisa ficar ACIMA do painel do evento aleatorio (z-index 18): no
+   celular ela cai para z-index 16 e o painel do evento (que fica no topo,
+   centralizado) cobria a tela aberta. Status/Feitos/Ramos ja ficam acima, porque
+   vivem dentro de #container-opcoes (z 30). Vale em todos os breakpoints. */
+#container-Loja {
+	z-index: 22;
 }
 
 /* ---------------------------------------------------------------------
