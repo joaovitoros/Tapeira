@@ -29,12 +29,14 @@ const BIOMA_FUNDOS = [
     "fundos/background.png"
 ];
 
-// Inimigos fatiados de "Folha de Criaturas MUGI Elementais.png" (14 tipos).
+// Inimigos fatiados de "Folha de Criaturas MUGI Elementais.png" (13 tipos).
+// O "normal2" saiu do rodízio: era o mesmo cogumelo marrom do "normal", só com
+// pedras na base — pouca variedade a mais.
 const BIOMA_INIMIGOS = [
     "inimigos/normal.png", "inimigos/vegetal.png", "inimigos/cristal.png",
     "inimigos/gelo.png", "inimigos/metalico.png", "inimigos/toxico.png",
     "inimigos/lava.png", "inimigos/madeira.png", "inimigos/sombrio.png",
-    "inimigos/rei-espinhos.png", "inimigos/gigante.png", "inimigos/normal2.png",
+    "inimigos/rei-espinhos.png", "inimigos/gigante.png",
     "inimigos/rei-coroa.png", "inimigos/poeira.png"
 ];
 
@@ -54,7 +56,6 @@ const BIOMA_MORTE = {
     gelo: BiomaMorte("gelo", 14),
     "rei-espinhos": BiomaMorte("rei-espinhos", 15),
     toxico: BiomaMorte("toxico", 13),
-    normal2: BiomaMorte("normal2", 5),
     "rei-coroa": BiomaMorte("rei-coroa", 14),
     sombrio: BiomaMorte("sombrio", 14),
     poeira: BiomaMorte("poeira", 5),

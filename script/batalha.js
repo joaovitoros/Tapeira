@@ -335,7 +335,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	// cancelado em RemoverInimigos — ou seja, no reset, ao voltar pro menu e na
 	// troca de andar (que já cria a onda da nova faixa na hora).
 	if (numInimigosTela <= 0) {
-		AgendaNovaOnda(DuracaoMorteMs(inimigoElement));
+		AgendaNovaOnda(EsperaProximaOndaMs(inimigoElement));
 	}
 
 	// subir andar
@@ -677,6 +677,12 @@ function IntervaloMorteMs(frames) {
 	return frames.length <= 6 ? 150 : 80;
 }
 
+// Quanto da animação de morte a onda seguinte espera antes de nascer.
+// A morte inteira dura ~1,2-1,4s, mas o fim é só a pilha achatada e a fumaça —
+// esperar tudo deixava a arena vazia demais. Com 0,6 o inimigo novo nasce
+// quando o bicho já está caindo/achatado (visualmente a queda já aconteceu).
+const ESPERA_MORTE_PCT = 0.6;
+
 // Quanto tempo a morte daquele inimigo vai levar (mesma conta do animarMorte).
 // A onda seguinte espera por isso em vez de nascer em cima do que está caindo.
 function DuracaoMorteMs(el) {
@@ -684,6 +690,11 @@ function DuracaoMorteMs(el) {
 	if (!frames.length) return 0;
 	const intervaloMs = IntervaloMorteMs(frames);
 	return Math.max(1200, frames.length * intervaloMs + 200);
+}
+
+// Espera efetiva antes da próxima onda.
+function EsperaProximaOndaMs(el) {
+	return Math.round(DuracaoMorteMs(el) * ESPERA_MORTE_PCT);
 }
 
 // ---- atraso entre a morte e a próxima onda ----

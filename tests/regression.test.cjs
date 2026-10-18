@@ -3451,7 +3451,7 @@ test("qualidade: presets ligam as otimizações certas e a Personalizada traz a 
     }
 });
 
-test("onda nova só nasce depois da animação de morte terminar", async () => {
+test("onda nova espera a morte antes de nascer (parte dela, não a queda inteira)", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
         await page.waitForFunction(() =>
@@ -3468,7 +3468,7 @@ test("onda nova só nasce depois da animação de morte terminar", async () => {
             const el = document.getElementById("inimigo1");
             // criatura com morte longa (13-15 quadros), como as novas
             el.dataset.criatura = "normal";
-            const out = { duracao: DuracaoMorteMs(el) };
+            const out = { duracao: DuracaoMorteMs(el), espera: EsperaProximaOndaMs(el) };
 
             // espia o NovaOnda (só o timer da onda chama): o atraso tem MESMO
             // que segurar a criação
@@ -3500,6 +3500,8 @@ test("onda nova só nasce depois da animação de morte terminar", async () => {
         });
 
         assert.ok(r.duracao >= 1000, `morte por criatura dura ~1,2s (medido ${r.duracao}ms)`);
+        assert.ok(r.espera < r.duracao && r.espera >= r.duracao * 0.4,
+            `a onda espera só parte da morte (${r.espera}ms de ${r.duracao}ms) - o fim da queda é só a pilha`);
         assert.equal(r.agendou, true, "a onda fica agendada em vez de nascer na hora");
         assert.equal(r.criouNaHora, 0, "nada nasce enquanto a morte está rodando");
         assert.equal(r.criouDepois, 1, "a onda nasce depois do tempo da morte");
