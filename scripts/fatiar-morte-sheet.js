@@ -278,10 +278,13 @@ if (!FOLHA) {
         segs.sort((a, b) => a.x0 - b.x0);
 
         // ---- caixa de cada quadro (dentro da fatia) ----
+        // A âncora horizontal é o CENTRO DA BASE (a faixa de baixo, no chão):
+        // as chamas e os respingos balançam em cima e, se a âncora fosse a
+        // coluna mais cheia, o corpo escorregava de um lado pro outro entre os
+        // quadros. O chão não se mexe em nenhum quadro.
         const quadrosInfo = segs.map((s) => {
-            let x0 = s.x1, x1 = s.x0, y0 = H, y1 = -1, colunaCheia = s.x0, melhorCol = -1;
+            let x0 = s.x1, x1 = s.x0, y0 = H, y1 = -1;
             for (let x = s.x0; x <= s.x1; x++) {
-                if (proj[x] > melhorCol) { melhorCol = proj[x]; colunaCheia = x; }
                 for (let y = 0; y < H; y++) {
                     if (!solido(x, y)) continue;
                     if (x < x0) x0 = x;
@@ -290,8 +293,20 @@ if (!FOLHA) {
                     if (y > y1) y1 = y;
                 }
             }
-            return { x0, x1, y0, y1, cx: colunaCheia + 0.5 };
-        }).filter(q => q.y1 >= 0);
+            if (y1 < 0) return null;
+            const alturaBase = Math.max(4, Math.round((y1 - y0 + 1) * 0.22));
+            const xs = [];
+            for (let x = x0; x <= x1; x++) {
+                for (let y = Math.max(y0, y1 - alturaBase + 1); y <= y1; y++) {
+                    if (solido(x, y)) { xs.push(x + 0.5); break; }
+                }
+            }
+            // MEDIANA (não média): os respingos/fumaça que saem para um lado são
+            // minoria e não puxam a âncora
+            xs.sort((a, b) => a - b);
+            const cx = xs.length ? xs[xs.length >> 1] : (x0 + x1) / 2;
+            return { x0, x1, y0, y1, cx };
+        }).filter(Boolean);
 
         // ---- tela fixa: maior largura/altura, chão na base ----
         const largura = Math.max(...quadrosInfo.map(q => q.x1 - q.x0 + 1)) + 6;
