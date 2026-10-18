@@ -45,17 +45,17 @@ function BiomaMorte(nome, n) {
     return out;
 }
 const BIOMA_MORTE = {
-    normal: BiomaMorte("normal", 5),
-    gigante: BiomaMorte("gigante", 4),
+    normal: BiomaMorte("normal", 14),
+    gigante: BiomaMorte("gigante", 14),
     cristal: BiomaMorte("cristal", 15),
-    vegetal: BiomaMorte("vegetal", 6),
-    metalico: BiomaMorte("metalico", 6),
-    lava: BiomaMorte("lava", 4),
+    vegetal: BiomaMorte("vegetal", 14),
+    metalico: BiomaMorte("metalico", 13),
+    lava: BiomaMorte("lava", 14),
     gelo: BiomaMorte("gelo", 14),
     "rei-espinhos": BiomaMorte("rei-espinhos", 15),
-    toxico: BiomaMorte("toxico", 6),
+    toxico: BiomaMorte("toxico", 13),
     normal2: BiomaMorte("normal2", 5),
-    "rei-coroa": BiomaMorte("rei-coroa", 5),
+    "rei-coroa": BiomaMorte("rei-coroa", 14),
     sombrio: BiomaMorte("sombrio", 14),
     poeira: BiomaMorte("poeira", 5)
     // madeira: sem morte própria (cai na genérica)
