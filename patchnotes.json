@@ -2,6 +2,18 @@
   "_instrucoes": "Edite este arquivo e salve — o site mostra as mudancas na proxima recarga da pagina, sem reiniciar nada. Campos por patch: versao, data (AAAA-MM-DD), titulo (opcional), itens (lista de frases). O mais recente fica no topo (o site ordena pela data).",
   "patches": [
     {
+      "versao": "1.8.4",
+      "data": "2026-10-18",
+      "titulo": "Mortes novas dos inimigos, qualidade personalizável e loja mais leve no celular",
+      "itens": [
+        "Novidade: as mortes dos inimigos ficaram muito mais fluidas. Onze criaturas ganharam animação nova, de 13 a 15 quadros (antes eram de 3 a 6): Normal, Gigante, Vegetal, Cristal, Gelo, Metálico, Tóxico, Lava, Rei, Espinhos e Sombrio.",
+        "Correção: o próximo inimigo não nasce mais em cima do que ainda está morrendo — a onda nova espera a animação de morte terminar.",
+        "Novidade: a Qualidade ganhou a opção \"Personalizada\", com a lista de cada otimização pra você ligar e desligar (inclui tirar o desfoque dos painéis e dos cartões da tela).",
+        "Melhoria: a Loja e a árvore de Ramos ficaram bem mais leves no celular — abrir, fechar e comprar não engasgam mais (abrir o Ramos ficou até ~5x mais leve e comprar um nível ~1,5x mais rápido).",
+        "Correção: alguns quadros de morte ficavam deslocados e davam impressão de tremor — agora todos ficam alinhados no pé do inimigo."
+      ]
+    },
+    {
       "versao": "1.8.3",
       "data": "2026-10-18",
       "titulo": "X do pause fixo, evento sem cobrir as telas e ajustes de loja",
