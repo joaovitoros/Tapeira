@@ -115,6 +115,47 @@ function PrepararDesktop() {
 	}
 }
 
+// App Android: o menu de pause ganha "Girar tela" (a ponte só existe no bundle
+// nativo — ver scripts/android-save-entry.js). Alterna em pé <-> deitado, útil
+// quando o giro automático do aparelho está desligado. No navegador a ponte não
+// existe e a seção fica escondida.
+function PrepararAndroid() {
+	const ponte = window.tapeiraOrientacao;
+	if (!ponte) return;
+	const secao = document.getElementById("divTelaAndroid");
+	const botao = document.getElementById("btnGirarTela");
+	const status = document.getElementById("orientacaoStatus");
+	if (secao) secao.hidden = false;
+	if (!botao) return;
+
+	const ehRetrato = (tipo) => /portrait/i.test(tipo || "");
+	const MostraAtual = (tipo) => {
+		if (!status) return;
+		status.textContent = !tipo ? "" : (ehRetrato(tipo) ? "Em pé" : "Deitado");
+	};
+
+	// PrepararAndroid roda no menu E no PreCarregamento: registra o listener
+	// UMA vez só (senão um clique dispara a troca duas vezes).
+	if (botao.dataset.orientacaoPronta !== "1") {
+		botao.dataset.orientacaoPronta = "1";
+		botao.addEventListener("click", async () => {
+			botao.disabled = true;
+			try {
+				const atual = await ponte.atual();
+				const destino = ehRetrato(atual) ? "landscape" : "portrait";
+				const ok = await ponte.travar(destino);
+				if (ok) MostraAtual(destino);
+				else MostraInfo?.("Não foi possível girar a tela.");
+			} finally {
+				botao.disabled = false;
+			}
+		});
+	}
+
+	// reflete a orientação atual (ao montar o menu e em cada chamada)
+	ponte.atual().then(MostraAtual);
+}
+
 async function AtualizaConfiguracaoTela() {
 	if (!window.tapeiraDesktop) return;
 
@@ -230,6 +271,7 @@ function AtualizaTempoOfflineMenu(timestampSalvo, quantidadeFormigasPretas = 0) 
 
 function PrepararMenu() {
 	PrepararDesktop();
+	PrepararAndroid();
 	const status = document.getElementById("menu-save-status");
 	const details = document.getElementById("menu-save-details");
 	if (!status || !details) return;
@@ -313,6 +355,7 @@ function TickUmSegundo() {
 
 function PreCarregamento() {
 	PrepararDesktop();
+	PrepararAndroid();
 	RegistraEventosAudioJogo();
 	bauDouradoEmJogo = document.visibilityState !== "hidden";
 	if (!eventosBauDouradoRegistrados) {

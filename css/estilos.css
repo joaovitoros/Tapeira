@@ -4304,6 +4304,19 @@ body:has(#menu-container) {
 	/* tamanho/aparência vêm da regra global de checkbox (trilha + bolinha) */
 }
 
+/* Tela (celular): botão "Girar tela" no menu de pause (só no app Android) */
+.orientacao-linha {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 8px 0;
+}
+
+.orientacao-status {
+	color: #9ccfff;
+	font-size: clamp(12px, 0.84vw, 14px);
+}
+
 body.desktop-app {
 	cursor: url("../imagens/ui/cursor-espada.svg") 3 3, auto;
 }

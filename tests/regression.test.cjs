@@ -1768,6 +1768,69 @@ test("badge da Loja: aparece com a auto-compra desligada e gold para 5 compras",
         await context.close();
     }
 });
+test("menu de pause: 'Girar tela' só aparece com a ponte nativa (app Android)", async () => {
+    // 1) Sem a ponte (navegador/PC): a seção da Tela (celular) fica escondida.
+    const sem = await openIsolatedPage("Caverna.html");
+    try {
+        await sem.page.waitForFunction(() => typeof PausarJogo === "function");
+        const r = await sem.page.evaluate(() => {
+            document.querySelectorAll("#infoModal, #gameModal").forEach(m => m.remove());
+            PausarJogo();
+            PrepararAndroid();
+            return { ponte: !!window.tapeiraOrientacao, hidden: document.getElementById("divTelaAndroid").hidden };
+        });
+        assert.equal(r.ponte, false, "no navegador não existe a ponte de orientação");
+        assert.equal(r.hidden, true, "sem a ponte a seção fica escondida");
+        assert.deepEqual(sem.pageErrors, []);
+    } finally {
+        await sem.context.close();
+    }
+
+    // 2) Com a ponte simulada (app Android): aparece e trava paisagem ao clicar.
+    const context = await browser.newContext();
+    await context.addInitScript(() => {
+        window.__orientacaoChamadas = [];
+        let atual = "portrait-primary";
+        window.tapeiraOrientacao = {
+            atual: async () => atual,
+            travar: async (modo) => {
+                window.__orientacaoChamadas.push(modo);
+                atual = (modo === "landscape" ? "landscape" : "portrait") + "-primary";
+                return true;
+            },
+            soltar: async () => true
+        };
+    });
+    const page = await context.newPage();
+    const pageErrors = [];
+    page.on("pageerror", e => pageErrors.push(e.message));
+    try {
+        await page.goto(`${baseUrl}/Caverna.html`, { waitUntil: "domcontentloaded" });
+        await page.waitForFunction(() => typeof PrepararAndroid === "function" && typeof PausarJogo === "function", undefined, { timeout: 15000 });
+        await page.evaluate(() => {
+            document.querySelectorAll("#infoModal, #gameModal").forEach(m => m.remove());
+            PausarJogo();
+            PrepararAndroid();
+        });
+        assert.equal(await page.evaluate(() => document.getElementById("divTelaAndroid").hidden), false,
+            "com a ponte a seção aparece");
+        assert.equal(await page.evaluate(() => document.getElementById("orientacaoStatus").textContent), "Em pé",
+            "o status mostra a orientação atual");
+        // clique via JS: o modal "Como jogar" pode reaparecer por cima e o
+        // clique por ponteiro seria interceptado (não é o que testamos aqui).
+        await page.evaluate(() => document.getElementById("btnGirarTela").click());
+        await page.waitForTimeout(120);
+        const r = await page.evaluate(() => ({
+            chamadas: window.__orientacaoChamadas,
+            status: document.getElementById("orientacaoStatus").textContent
+        }));
+        assert.deepEqual(r.chamadas, ["landscape"], "em retrato, clicar trava paisagem");
+        assert.equal(r.status, "Deitado", "o status acompanha a troca");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
 test("explorador: chance só da distância e o nível pula N andares", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {

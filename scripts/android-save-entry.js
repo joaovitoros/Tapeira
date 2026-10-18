@@ -1,5 +1,37 @@
 import { Directory, Encoding, Filesystem } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
+import { ScreenOrientation } from "@capacitor/screen-orientation";
+
+// Rotação da tela (app Android). O menu de pause ganha "Girar tela" quando esta
+// ponte existe — no navegador o screen.orientation.lock exige fullscreen e é
+// instável, então o controle só aparece no app. `modo` é "portrait" | "landscape".
+window.tapeiraOrientacao = {
+    async atual() {
+        try {
+            const o = await ScreenOrientation.orientation();
+            return o && o.type ? o.type : null; // ex.: "portrait-primary"
+        } catch (e) {
+            return null;
+        }
+    },
+    async travar(modo) {
+        try {
+            await ScreenOrientation.lock({ orientation: modo });
+            return true;
+        } catch (e) {
+            return false;
+        }
+    },
+    async soltar() {
+        try {
+            await ScreenOrientation.unlock();
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+};
+
 
 // Exportar: grava o save no cache e abre a folha de compartilhamento. É por
 // aqui que o Bluetooth aparece como destino (o arquivo vai anexado em `files`;
