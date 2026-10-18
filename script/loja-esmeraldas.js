@@ -39,6 +39,8 @@ function LojaEsmeralda(){
 		AtualizaCarteiraLoja();
 		AtualizaSaldoBotoesLoja();
 
+		FechaTelasNavegacao("loja");
+		UI.syncScreenButtons();
 	}else{
 		document.getElementById("LojaEsm").style.visibility="hidden";
 		document.getElementById("Loja").style.visibility="visible";

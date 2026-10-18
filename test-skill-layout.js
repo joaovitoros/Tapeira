@@ -1,6 +1,6 @@
-// Teste focado: padronização da fileira de habilidades (#container-Habilidades).
-// O "Dano automático" (ícone + barra) precisa ser o primeiro item da MESMA
-// fileira das skills de combate, com ícone/barra do mesmo tamanho e alinhados.
+// Teste focado: fileira de habilidades (#container-Habilidades) no novo
+// desenho (item 1) — a carga é mostrada SOBRE o ícone (sem barra vertical ao
+// lado), o ícone nunca some e cada estado (carregando/pronta/ativa) é distinto.
 // Roda direto da fonte (raiz do projeto): node test-skill-layout.js
 const { chromium } = require('playwright');
 const path = require('path');
@@ -19,6 +19,7 @@ const path = require('path');
         const out = [];
         const check = (nome, ok, detalhe) => out.push({ nome, ok: !!ok, detalhe: detalhe === undefined ? "" : String(detalhe) });
         window.ChamaSom = () => {};
+        window.TocaSomSintetico = () => {};
         UI.showInfo = () => {};
 
         // Desbloqueia as skills de combate pra ter ícone/barra de referência.
@@ -26,75 +27,107 @@ const path = require('path');
         CarregaHabilidadesDesbloqueadas(false);
         AtualizaHabilidadesCombate();
 
-        // Cria o ícone do "Dano automático" pela mesma via do jogo.
-        // (O jogo pode já ter criado um ao iniciar — limpa antes pra não duplicar.)
-        UI.removeSkill();
-        UI.spawnSkill();
-
         const cont = document.getElementById("container-Habilidades");
-        const icone = document.getElementById("habilidade1");
-        const barra = document.getElementById("BaraQTDHab1Borda");
-        const iconeCombate = document.querySelector(".combat-skill:not([hidden]) .combat-skill__icon");
-        const meter = document.querySelector(".combat-skill:not([hidden]) .combat-skill__meter");
+        const dano = document.getElementById("habilidade-dano");
+        const danoFrame = dano.querySelector(".combate-habilidade__moldura");
+        const danoIcone = dano.querySelector(".combate-habilidade__icone");
+        const danoMeter = document.getElementById("habilidade-dano-medidor");
+        const combate = document.querySelector(".combate-habilidade:not(#habilidade-dano):not([hidden])");
+        const combateFrame = combate.querySelector(".combate-habilidade__moldura");
+        const combateIcone = combate.querySelector(".combate-habilidade__icone");
 
-        check("ícone do dano criado dentro da fileira", icone && cont && icone.parentElement === cont);
-        check("ícone do dano é o primeiro item da fileira", icone && cont.firstElementChild === icone);
-        check("barra do dano vem logo depois do ícone", icone && icone.nextElementSibling === barra);
-        check("painel de combate fecha a fileira", barra && barra.nextElementSibling && barra.nextElementSibling.id === "skill-unlock-panel");
+        check("botão do dano existe (#habilidade-dano)", !!dano);
+        check("botão do dano é o primeiro item da fileira", cont.firstElementChild === dano);
+        check("painel de combate vem depois do dano", dano.nextElementSibling && dano.nextElementSibling.id === "painel-habilidades");
 
-        const rIcon = icone.getBoundingClientRect();
-        const rComb = iconeCombate.getBoundingClientRect();
-        const rBar = barra.getBoundingClientRect();
-        const rMeter = meter.getBoundingClientRect();
-
-        check("ícone do dano tem o mesmo tamanho do ícone de combate",
+        const rIcon = danoFrame.getBoundingClientRect();
+        const rComb = combateFrame.getBoundingClientRect();
+        check("frame do dano tem o mesmo tamanho do frame de combate",
             rIcon.width === rComb.width && rIcon.height === rComb.height,
             `${rIcon.width}x${rIcon.height} vs ${rComb.width}x${rComb.height}`);
-        check("barra do dano tem o mesmo tamanho da barra de combate",
-            rBar.width === rMeter.width && rBar.height === rMeter.height,
-            `${rBar.width}x${rBar.height} vs ${rMeter.width}x${rMeter.height}`);
-        check("ícone do dano alinhado com o ícone de combate",
-            Math.round(rIcon.top) === Math.round(rComb.top),
-            `${Math.round(rIcon.top)} vs ${Math.round(rComb.top)}`);
-        check("barra do dano alinhada com a barra de combate",
-            Math.round(rBar.top) === Math.round(rMeter.top),
-            `${Math.round(rBar.top)} vs ${Math.round(rMeter.top)}`);
-        check("ícone do dano fica à esquerda da própria barra",
-            rIcon.right <= rBar.left + 1, `${Math.round(rIcon.right)} <= ${Math.round(rBar.left)}`);
 
-        // Cor da barra por skill: cada uma tem o seu gradiente (puxado do ícone)
+        // O ícone fica SEMPRE visível (mesmo carregando) e a barra de progresso
+        // cobre exatamente o mesmo retângulo do ícone.
+        qtdCarregaHabilidade = 0;
+        AtualizaHabilidadesCombate();
+        const rIcone = danoIcone.getBoundingClientRect();
+        const rMeter = danoMeter.parentElement.getBoundingClientRect();
+        check("ícone do dano não é escondido enquanto carrega",
+            getComputedStyle(danoIcone).display !== "none" && rIcone.width > 0);
+        check("progresso do dano cobre o ícone (mesmo retângulo)",
+            Math.abs(rMeter.width - rIcone.width) <= 1 && Math.abs(rMeter.height - rIcone.height) <= 1,
+            `icon ${Math.round(rIcone.width)}x${Math.round(rIcone.height)} / meter ${Math.round(rMeter.width)}x${Math.round(rMeter.height)}`);
+
+        // Estado "carregando": escurecido, sem glifo de "pronta".
+        const alturaCarregando = parseFloat(danoMeter.style.height);
+        check("classe is-carregando durante a carga", dano.classList.contains("is-carregando"));
+        check("ícone escurecido durante a carga",
+            /brightness\(0?\.4/.test(getComputedStyle(danoIcone).filter), getComputedStyle(danoIcone).filter);
+        check("barra vazia no início da carga", alturaCarregando === 0, alturaCarregando);
+
+        // 50% de carga -> 50% de preenchimento
+        qtdCarregaHabilidade = abateshabilidadeDano / 2;
+        AtualizaHabilidadesCombate();
+        const meio = parseFloat(danoMeter.style.height);
+        check("barra do dano enche com a carga (50%)", meio === 50, meio);
+
+        // Carregada -> "pronta" com brilho
+        qtdCarregaHabilidade = abateshabilidadeDano;
+        AtualizaHabilidadesCombate();
+        check("classe is-pronta quando carregada", dano.classList.contains("is-pronta"));
+        check("barra cheia quando carregada", parseFloat(danoMeter.style.height) === 100);
+        check("brilho (drop-shadow) quando pronta",
+            /drop-shadow/.test(getComputedStyle(danoIcone).filter), getComputedStyle(danoIcone).filter);
+
+        // Ativação: vira is-ativa, escurecido, e não some
+        UsaHabilidadeDano();
+        check("após ativar, classe is-ativa (não desaparece)", dano.classList.contains("is-ativa") && !!danoIcone);
+        check("após ativar, dano ativo escurecido",
+            /brightness\(0?\.4/.test(getComputedStyle(danoIcone).filter), getComputedStyle(danoIcone).filter);
+        verificaHabilidadeDano = false;
+        tempoHabilidadeDano = 30;
+
+        // Skill de combate: mesmos 3 estados
+        const kills = abatesCorrenteEletrica;
+        abatesCorrenteEletrica = 0;
+        ataquesCorrenteEletrica = 0;
+        AtualizaHabilidadesCombate();
+        check("skill de combate carregando: is-carregando", document.getElementById("habilidade-eletrica").classList.contains("is-carregando"));
+        const corIconeCombate = getComputedStyle(combateIcone).filter;
+        abatesCorrenteEletrica = habilidadesCombate.find(s => s.id === "electric").killsRequired;
+        AtualizaHabilidadesCombate();
+        const elCombate = document.getElementById("habilidade-eletrica");
+        check("skill de combate pronta: is-pronta", elCombate.classList.contains("is-pronta"));
+        check("ícone de combate não é o mesmo (ganhou brilho)",
+            getComputedStyle(combateIcone).filter !== corIconeCombate,
+            corIconeCombate + " -> " + getComputedStyle(combateIcone).filter);
+        abatesCorrenteEletrica = kills;
+
+        // Cor própria por skill (o overlay mantém o gradiente de cada uma) —
+        // zera o estado pra todas ficarem em "carregando" (mesma regra de fundo)
+        qtdCarregaHabilidade = 0;
+        abatesCorrenteEletrica = 0;
+        abatesBonusGoldAtaque = 0;
+        abatesPausaFuga = 0;
+        abatesFrenesi = 0;
+        ataquesCorrenteEletrica = 0;
+        ataquesBonusGold = 0;
+        segundosPausaFuga = 0;
+        ataquesFrenesi = 0;
+        AtualizaHabilidadesCombate();
         const fundo = sel => {
             const el = document.querySelector(sel);
             return el ? getComputedStyle(el).backgroundImage : null;
         };
         const fundos = [
-            fundo("#BaraQTDHab1"),
-            fundo("#skill-electric .combat-skill__meter-fill"),
-            fundo("#skill-gold .combat-skill__meter-fill"),
-            fundo("#skill-escape .combat-skill__meter-fill"),
-            fundo("#skill-frenzy .combat-skill__meter-fill")
+            fundo("#habilidade-dano-medidor"),
+            fundo("#habilidade-eletrica .combate-habilidade__medidor-preenchido"),
+            fundo("#habilidade-ouro .combate-habilidade__medidor-preenchido"),
+            fundo("#habilidade-fuga .combate-habilidade__medidor-preenchido"),
+            fundo("#habilidade-frenesi .combate-habilidade__medidor-preenchido")
         ];
-        check("cada barra tem cor própria (dano + 4 skills)", new Set(fundos).size === 5,
+        check("cada skill tem cor própria (dano + 4 skills)", new Set(fundos).size === 5,
             fundos.map(s => (s || "-").slice(0, 22)).join(" | "));
-        check("barra do dano não é o azul padrão", fundos[0] !== fundos[1], fundos[0]);
-
-        // Barra do dano: começa VAZIA e enche conforme carrega (igual às outras).
-        abateshabilidadeDano = 20;
-        qtdCarregaHabilidade = 0;
-        AtualizaQTDHabildiade1();
-        const vazio = parseFloat(document.getElementById("BaraQTDHab1").style.height);
-        qtdCarregaHabilidade = 10;
-        AtualizaQTDHabildiade1();
-        const meio = parseFloat(document.getElementById("BaraQTDHab1").style.height);
-        qtdCarregaHabilidade = 20;
-        AtualizaQTDHabildiade1();
-        const cheio = parseFloat(document.getElementById("BaraQTDHab1").style.height);
-        check("barra do dano começa vazia", vazio === 0, vazio);
-        check("barra do dano enche conforme carrega", meio === 50 && cheio === 100, `${meio}/${cheio}`);
-
-        // Remove sem deixar lixo.
-        UI.removeSkill();
-        check("ícone do dano é removido sem sobrar resto", !document.getElementById("habilidade1"));
 
         return out;
     });

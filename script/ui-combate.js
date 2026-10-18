@@ -305,23 +305,16 @@ Object.assign(UI, {
     // HABILIDADE (VISUAL)
     // =========================
 
+    // O botão do "Dano automático" (#habilidade-dano) agora é FIXO no HTML (item 1):
+    // não some ao ativar, mostra a carga sobre o próprio ícone. spawnSkill /
+    // removeSkill ficaram como compatibilidade (alguns testes/dev usam) e só
+    // re-sincronizam o estado visual.
     spawnSkill() {
-        const habilidade = document.createElement("img");
-
-        habilidade.src = ICONE_SKILL.damage;
-        habilidade.className = "habilidade1";
-        habilidade.id = "habilidade1";
-        habilidade.addEventListener("click", () => UsaHabilidadeDano());
-
-        const containerHabilidades = document.getElementById("container-Habilidades");
-        (containerHabilidades || document.body).prepend(habilidade);
-
-        ChamaSom("audio7");
+        AtualizaHabilidadesCombate();
     },
 
     removeSkill() {
-        const el = document.getElementById("habilidade1");
-        if (el) el.remove();
+        // nada a remover: o botão é fixo no HTML
     },
 
     // =========================

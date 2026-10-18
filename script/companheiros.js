@@ -255,10 +255,21 @@ function AtualizaBuffAlquimistaUI() {
 		selo = document.createElement("div");
 		selo.id = "buffAlquimista";
 		selo.className = "buff-alquimista";
-		// Vive na coluna esquerda do HUD (junto do baú dourado e do chip
-		// ITENS); no menu, onde não há coluna, cai no body.
-		const rail = document.querySelector("#container-Metas > .coluna-rail") || document.body;
-		rail.appendChild(selo);
+		// Vive num container próprio (item 3), ancorado ACIMA da fileira de
+		// habilidades e com a mesma prioridade de visibilidade dela (z-index 15).
+		// No menu, onde não há a fileira, cai no body.
+		let recipienteBuffs = document.getElementById("recipienteBuffs");
+		if (!recipienteBuffs) {
+			const fileira = document.getElementById("container-Habilidades");
+			if (fileira) {
+				recipienteBuffs = document.createElement("div");
+				recipienteBuffs.id = "recipienteBuffs";
+				recipienteBuffs.className = "recipiente-buffs";
+				recipienteBuffs.setAttribute("aria-live", "polite");
+				fileira.appendChild(recipienteBuffs);
+			}
+		}
+		(recipienteBuffs || document.body).appendChild(selo);
 	}
 	const resta = Math.max(0, Math.ceil((buffAtivo.fimMs - Date.now()) / 1000));
 	selo.innerHTML = "🧪 " + info.nome + " (" + resta + "s)";

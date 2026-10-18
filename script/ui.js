@@ -151,78 +151,87 @@ const UI = {
         document.getElementById("logAvisosCabeca")?.setAttribute("aria-expanded", String(!recolhido));
     },
 
-    floorTransitionTimeout: null,
-    guardianIntroTimeout: null,
-    guardianTargetTimeout: null,
-    guardianTargetRestoreTimeout: null,
-    guardianTarget: null,
-    guardianTargetFilter: "",
-    guardianTargetTransition: "",
+    transicaoAndarTimeout: null,
+    guardiaoIntroTimeout: null,
+    guardiaoAlvoTimeout: null,
+    guardiaoAlvoRestoreTimeout: null,
+    guardiaoAlvo: null,
+    guardiaoAlvoFilter: "",
+    guardiaoAlvoTransition: "",
 
     clearGuardianIntro() {
-        clearTimeout(this.guardianIntroTimeout);
-        clearTimeout(this.guardianTargetTimeout);
-        clearTimeout(this.guardianTargetRestoreTimeout);
-        this.guardianIntroTimeout = null;
-        this.guardianTargetTimeout = null;
-        this.guardianTargetRestoreTimeout = null;
+        clearTimeout(this.guardiaoIntroTimeout);
+        clearTimeout(this.guardiaoAlvoTimeout);
+        clearTimeout(this.guardiaoAlvoRestoreTimeout);
+        this.guardiaoIntroTimeout = null;
+        this.guardiaoAlvoTimeout = null;
+        this.guardiaoAlvoRestoreTimeout = null;
 
-        if (this.guardianTarget) {
-            this.guardianTarget.style.filter = this.guardianTargetFilter;
-            this.guardianTarget.style.transition = this.guardianTargetTransition;
-            this.guardianTarget.classList.remove("guardian-intro-target");
-            this.guardianTarget = null;
+        if (this.guardiaoAlvo) {
+            this.guardiaoAlvo.style.filter = this.guardiaoAlvoFilter;
+            this.guardiaoAlvo.style.transition = this.guardiaoAlvoTransition;
+            this.guardiaoAlvo.classList.remove("guardiao-intro-alvo");
+            this.guardiaoAlvo = null;
         }
 
-        const spotlight = document.getElementById("guardianIntroSpotlight");
-        spotlight?.classList.remove("guardian-intro-spotlight--visible");
+        const spotlight = document.getElementById("guardiaoIntroHolofote");
+        spotlight?.classList.remove("guardiao-intro-holofote--visivel");
     },
 
     showFloorTransition(floor) {
         this.clearGuardianIntro();
-        clearTimeout(this.floorTransitionTimeout);
-        let transition = document.getElementById("floorTransition");
+        clearTimeout(this.transicaoAndarTimeout);
+        let transition = document.getElementById("transicaoAndar");
         if (!transition) {
             transition = document.createElement("div");
-            transition.id = "floorTransition";
-            transition.className = "floor-transition";
+            transition.id = "transicaoAndar";
+            transition.className = "transicao-andar";
             transition.setAttribute("role", "status");
             transition.setAttribute("aria-live", "polite");
             transition.innerHTML = `
-                <span class="floor-transition__eyebrow"></span>
-                <strong class="floor-transition__number"></strong>
+                <div class="transicao-andar__emblema">
+                    <img class="transicao-andar__escudo" src="imagens/hud/andar-emblema.svg" alt="" aria-hidden="true">
+                    <strong class="transicao-andar__numero"></strong>
+                </div>
+                <span class="transicao-andar__legenda"></span>
             `;
             document.body.appendChild(transition);
         }
 
         const bossFloor = floor % 10 === 0;
-        transition.classList.toggle("floor-transition--boss", bossFloor);
-        transition.querySelector(".floor-transition__eyebrow").textContent =
+        transition.classList.toggle("transicao-andar--guardiao", bossFloor);
+        const escudo = transition.querySelector(".transicao-andar__escudo");
+        if (escudo) {
+            escudo.src = bossFloor
+                ? "imagens/hud/andar-emblema-boss.svg"
+                : "imagens/hud/andar-emblema.svg";
+        }
+        transition.querySelector(".transicao-andar__legenda").textContent =
             bossFloor ? "Um guardião bloqueia o caminho" : "Descendo mais fundo";
-        transition.querySelector(".floor-transition__number").textContent =
-            bossFloor ? `Andar ${floor} · Guardião` : `Andar ${floor}`;
+        transition.querySelector(".transicao-andar__numero").textContent =
+            String(floor);
 
-        transition.classList.remove("floor-transition--visible");
+        transition.classList.remove("transicao-andar--visivel");
         void transition.offsetWidth;
-        transition.classList.add("floor-transition--visible");
-        clearTimeout(this.floorTransitionTimeout);
-        this.floorTransitionTimeout = setTimeout(() => {
-            transition.classList.remove("floor-transition--visible");
+        transition.classList.add("transicao-andar--visivel");
+        clearTimeout(this.transicaoAndarTimeout);
+        this.transicaoAndarTimeout = setTimeout(() => {
+            transition.classList.remove("transicao-andar--visivel");
         }, bossFloor ? 2800 : 1500);
 
         if (bossFloor) {
             // "rugido" do guardião: tremor curto na cena (só visual; sai no animationend)
             const raiz = document.documentElement;
-            raiz.classList.remove("guardian-rumble");
+            raiz.classList.remove("guardiao-tremor");
             void raiz.offsetWidth;
-            raiz.classList.add("guardian-rumble");
-            raiz.addEventListener("animationend", () => raiz.classList.remove("guardian-rumble"), { once: true });
+            raiz.classList.add("guardiao-tremor");
+            raiz.addEventListener("animationend", () => raiz.classList.remove("guardiao-tremor"), { once: true });
 
-            let spotlight = document.getElementById("guardianIntroSpotlight");
+            let spotlight = document.getElementById("guardiaoIntroHolofote");
             if (!spotlight) {
                 spotlight = document.createElement("div");
-                spotlight.id = "guardianIntroSpotlight";
-                spotlight.className = "guardian-intro-spotlight";
+                spotlight.id = "guardiaoIntroHolofote";
+                spotlight.className = "guardiao-intro-holofote";
                 spotlight.setAttribute("aria-hidden", "true");
                 document.body.appendChild(spotlight);
             }
@@ -230,13 +239,13 @@ const UI = {
             spotlight.style.setProperty("--guardian-focus-x", "50%");
             spotlight.style.setProperty("--guardian-focus-y", "50%");
             void spotlight.offsetWidth;
-            spotlight.classList.add("guardian-intro-spotlight--visible");
-            this.guardianIntroTimeout = setTimeout(() => {
-                spotlight.classList.remove("guardian-intro-spotlight--visible");
-                this.guardianIntroTimeout = null;
+            spotlight.classList.add("guardiao-intro-holofote--visivel");
+            this.guardiaoIntroTimeout = setTimeout(() => {
+                spotlight.classList.remove("guardiao-intro-holofote--visivel");
+                this.guardiaoIntroTimeout = null;
             }, 2800);
 
-            this.guardianTargetTimeout = setTimeout(() => {
+            this.guardiaoAlvoTimeout = setTimeout(() => {
                 const targets = Array.from(document.querySelectorAll(
                     "#inimigo1, #inimigo2, #inimigo3, #inimigo4"
                 ));
@@ -254,30 +263,30 @@ const UI = {
                     "--guardian-focus-y",
                     `${Math.round((rect.top + rect.height / 2) / window.innerHeight * 100)}%`
                 );
-                this.guardianTarget = target;
-                this.guardianTargetFilter = target.style.filter;
-                this.guardianTargetTransition = target.style.transition;
+                this.guardiaoAlvo = target;
+                this.guardiaoAlvoFilter = target.style.filter;
+                this.guardiaoAlvoTransition = target.style.transition;
                 target.style.transition = "filter 240ms ease-out";
                 target.style.filter = `${getComputedStyle(target).filter} drop-shadow(0 0 20px rgba(255, 220, 153, 0.98))`;
-                target.classList.add("guardian-intro-target");
-                this.guardianTargetRestoreTimeout = setTimeout(() => {
-                    if (this.guardianTarget !== target) return;
-                    target.style.filter = this.guardianTargetFilter;
-                    target.style.transition = this.guardianTargetTransition;
-                    target.classList.remove("guardian-intro-target");
-                    this.guardianTarget = null;
-                    this.guardianTargetRestoreTimeout = null;
+                target.classList.add("guardiao-intro-alvo");
+                this.guardiaoAlvoRestoreTimeout = setTimeout(() => {
+                    if (this.guardiaoAlvo !== target) return;
+                    target.style.filter = this.guardiaoAlvoFilter;
+                    target.style.transition = this.guardiaoAlvoTransition;
+                    target.classList.remove("guardiao-intro-alvo");
+                    this.guardiaoAlvo = null;
+                    this.guardiaoAlvoRestoreTimeout = null;
                 }, 1900);
             }, 650);
         }
         TocaSomSintetico(bossFloor ? "guardiao" : "andar");
 
         const floorCounter = document.getElementById("contAndar");
-        floorCounter?.classList.remove("floor-counter--changed");
+        floorCounter?.classList.remove("contador-andar--mudou");
         if (floorCounter) {
             void floorCounter.offsetWidth;
-            floorCounter.classList.add("floor-counter--changed");
-            setTimeout(() => floorCounter.classList.remove("floor-counter--changed"), 650);
+            floorCounter.classList.add("contador-andar--mudou");
+            setTimeout(() => floorCounter.classList.remove("contador-andar--mudou"), 650);
         }
     },
 
@@ -668,7 +677,8 @@ const UI = {
             document.getElementById("container-SalvaCarrega").style.visibility = "hidden";
         }
         if (div.style.visibility === "visible") {
-            this.closeOtherPanels("status");
+            // abre Status: fecha as outras telas de navegação (item 2)
+            FechaTelasNavegacao("status");
         }
         this.syncScreenButtons();
     },
@@ -831,7 +841,42 @@ const UI = {
     }
 };
 
-
+// =========================
+// NAVEGAÇÃO ENTRE TELAS (item 2)
+// =========================
+// Fecha as OUTRAS telas de navegação quando uma abre. Os overlays de tela
+// cheia (Feitos/Ramos/Cidade) e os painéis flutuantes (Status/Loja) não se
+// misturam — é a fileira de navegação que manda: sem isto, abrir a Loja com
+// Ramos/Feitos abertos deixava a Loja escondida atrás do fundo do overlay (e o
+// clique seguinte fechava a seção errada). O painel de Configuração NÃO entra
+// aqui (ele pode coexistir com o Status em telas largas). Vale em desktop,
+// notebook e Android. `exceto` é a tela que está sendo aberta e NÃO deve fechar.
+function FechaTelasNavegacao(exceto) {
+    const fechar = {
+        status: () => {
+            const el = document.getElementById("DivStatus");
+            if (el) el.style.visibility = "hidden";
+        },
+        loja: () => {
+            ["Loja", "LojaEsm", "LojaCM"].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.visibility = "hidden";
+            });
+        },
+        skills: () => document.getElementById("skillUpgradeModal")?.remove(),
+        feitos: () => document.getElementById("feitosModal")?.remove(),
+        ramos: () => document.getElementById("ramosTreeModal")?.remove(),
+        cidade: () => {
+            if (document.getElementById("container-Cidade")?.hidden === false) {
+                window.Tapeira?.Cidade?.fechar?.();
+            }
+        }
+    };
+    for (const chave in fechar) {
+        if (chave !== exceto) fechar[chave]();
+    }
+    UI.syncScreenButtons();
+}
 
 let animacaoAtaqueAtiva = false;
 

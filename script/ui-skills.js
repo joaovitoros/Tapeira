@@ -63,6 +63,7 @@ Object.assign(UI, {
         // pode replayar a animação de entrada, senão a tela "pisca" a cada ação
         const reRenderizacao = !!document.getElementById("skillUpgradeModal");
         document.getElementById("skillUpgradeModal")?.remove();
+        FechaTelasNavegacao("skills");
 
         const overlay = document.createElement("div");
         overlay.id = "skillUpgradeModal";
@@ -565,6 +566,7 @@ Object.assign(UI, {
             : null;
         const reRenderizacao = !!document.getElementById("ramosTreeModal");
         document.getElementById("ramosTreeModal")?.remove();
+        FechaTelasNavegacao("ramos");
 
         const overlay = document.createElement("div");
         overlay.id = "ramosTreeModal";

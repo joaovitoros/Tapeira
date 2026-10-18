@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Subtrair vida Mug: coração vermelho rachado -->
+  <path d="M32 55C13 42 6 28 13 18c6-8 15-6 19 1 4-7 13-9 19-1 7 10 0 24-19 37z"
+        fill="#d92b26" stroke="#1a1109" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M32 55C13 42 6 28 13 18c6-8 15-6 19 1z" fill="#ef5348" opacity=".55"/>
+  <!-- rachadura -->
+  <path d="M32 19l-5 10 8 5-6 10 5 9" stroke="#5a0d0b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M32 19l-5 10 8 5-6 10 5 9" stroke="#ff9a90" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+  <!-- fragmentos -->
+  <path d="M47 12l3-5 1 6z" fill="#d92b26" stroke="#1a1109" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M54 26l6-2-3 5z" fill="#b3170f" stroke="#1a1109" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M11 33l-6-2 4 5z" fill="#b3170f" stroke="#1a1109" stroke-width="2" stroke-linejoin="round"/>
+</svg>

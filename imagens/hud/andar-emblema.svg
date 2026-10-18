@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 190" fill="none">
+  <!-- Emblema do andar: asas + escudo (o número do andar entra por cima, em texto) -->
+  <defs>
+    <linearGradient id="embOuro" x1="100" y1="30" x2="100" y2="156" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffe6a0"/>
+      <stop offset=".5" stop-color="#f2b53c"/>
+      <stop offset="1" stop-color="#a86a14"/>
+    </linearGradient>
+  </defs>
+
+  <!-- estouro de raios -->
+  <g opacity=".45" stroke="#ffd873" stroke-width="7" stroke-linecap="round">
+    <path d="M100 84V6M100 84l52-40M100 84l64 6M100 84l-52-40M100 84l-64 6"/>
+  </g>
+
+  <!-- asas (esquerda e espelho) -->
+  <g stroke="#232a36" stroke-width="4" stroke-linejoin="round">
+    <path d="M66 96C49 82 35 63 27 39c17 8 31 24 41 44-6-18-14-36-22-52 17 12 29 33 35 55z" fill="#eef4fb"/>
+    <path d="M70 108c-14 4-27 13-37 26 13-2 25-7 34-14-6 9-14 22-19 34 15-9 26-23 32-38z" fill="#dbe6f3"/>
+  </g>
+  <g transform="translate(200 0) scale(-1 1)" stroke="#232a36" stroke-width="4" stroke-linejoin="round">
+    <path d="M66 96C49 82 35 63 27 39c17 8 31 24 41 44-6-18-14-36-22-52 17 12 29 33 35 55z" fill="#eef4fb"/>
+    <path d="M70 108c-14 4-27 13-37 26 13-2 25-7 34-14-6 9-14 22-19 34 15-9 26-23 32-38z" fill="#dbe6f3"/>
+  </g>
+
+  <!-- gema do topo -->
+  <path d="M100 12l11 11-11 11-11-11z" fill="#ffe083" stroke="#3a240e" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- escudo -->
+  <path d="M100 32l48 16c0 50-16 88-48 110-32-22-48-60-48-110z" fill="url(#embOuro)" stroke="#3a240e" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M100 44l38 13c0 42-13 74-38 93-25-19-38-51-38-93z" fill="#2c1c0c" stroke="#ffe0a0" stroke-width="3" stroke-linejoin="round"/>
+</svg>

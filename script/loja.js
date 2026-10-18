@@ -258,6 +258,7 @@ function AbreLoja(exibirTutorial){
 
 	if (!lojaAberta) {
 		UI.closeOtherPanels("shop");
+		FechaTelasNavegacao("loja");
 	}
 	UI.syncScreenButtons();
 
@@ -283,6 +284,7 @@ function LojaGold(){
 	document.getElementById("LojaCM").style.visibility = "hidden";
 	AtualizaLojaGold();
 	UI.closeOtherPanels("shop");
+	FechaTelasNavegacao("loja");
 	UI.syncScreenButtons();
 }
 
@@ -364,6 +366,7 @@ function LojaConhecimento() {
 		painel.style.visibility = "visible";
 		AtualizaLojaCM();
 		UI.closeOtherPanels("shop");
+		FechaTelasNavegacao("loja");
 		UI.syncScreenButtons();
 	}
 }

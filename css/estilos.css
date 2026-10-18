@@ -178,15 +178,29 @@ body{
 .bau:hover{
 	cursor: pointer;
 }
-/* Selo do buff do Alquimista (criado por AtualizaBuffAlquimistaUI): chip na
-   coluna esquerda do HUD (junto do baú dourado e do chip ITENS); só some
-   quando o buff expira. Mesma largura do baú; o texto pode quebrar em duas
-   linhas nos buffs de nome longo (ex.: "Velocidade ×2"). */
+/* Container do buff do Alquimista (item 3): ancorado ACIMA da fileira de
+   habilidades (#container-Habilidades, position:fixed) e com a mesma
+   prioridade de visibilidade dela (z-index herdado = 15). Como é filho
+   absoluto, não entra na medição de largura da fileira (ui-rodape.js). */
+.recipiente-buffs {
+	position: absolute;
+	left: 0;
+	bottom: calc(100% + 8px);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	pointer-events: none;
+}
+
+/* Selo do buff do Alquimista (criado por AtualizaBuffAlquimistaUI): chip no
+   container acima das skills; só some quando o buff expira. O texto pode
+   quebrar em duas linhas nos buffs de nome longo (ex.: "Velocidade ×2"). */
 .buff-alquimista {
-	width: 100%;
-	min-width: 0;
+	width: auto;
+	max-width: min(260px, 70vw);
 	box-sizing: border-box;
-	padding: 5px 7px;
+	padding: 5px 9px;
 	border-radius: 11px;
 	background: rgba(14, 22, 38, 0.92);
 	border: 1px solid rgba(140, 220, 255, 0.55);
@@ -209,46 +223,9 @@ body{
 @media (prefers-reduced-motion: reduce) {
 	.buff-alquimista { animation: none; }
 }
-/* Ícone do "Dano automático": item da fileira #container-Habilidades, com o
-   mesmo tamanho do ícone das skills de combate (.combat-skill__icon). */
-.habilidade1{
-	flex: 0 0 auto;
-	align-self: center;
-	width: clamp(34px, 4vw, 52px);
-	height: clamp(34px, 4vw, 52px);
-}
-.habilidade1:hover{
-	cursor: pointer;
-}
-/* Barra do "Dano automático": item da fileira #container-Habilidades, com o
-   mesmo visual da barra das skills de combate (.combat-skill__meter). */
-#BaraQTDHab1{
-	position: absolute;
-	left: 1px;
-	bottom: 1px;
-	width: calc(100% - 2px);
-	height: 0;
-	/* Dourado do ícone do "Dano automático" */
-	background: linear-gradient(180deg, #ffe08a, #d9a02a 55%, #8a5a0f);
-	border-radius: 0 0 4px 4px;
-	box-shadow: 0 0 8px rgba(191, 144, 28, 0.55);
-	transition: height 180ms ease;
-}
-
-#BaraQTDHab1Borda{
-	position: relative;
-	flex: 0 0 auto;
-	align-self: flex-end;
-	box-sizing: border-box;
-	width: clamp(18px, 2vw, 26px);
-	height: clamp(76px, 10vh, 120px);
-	padding: 1px;
-	overflow: hidden;
-	background: linear-gradient(180deg, rgba(15, 21, 35, 0.96), rgba(5, 9, 18, 0.96));
-	border: 1px solid rgba(137, 177, 255, 0.58);
-	border-radius: 6px;
-	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 12px rgba(67, 126, 255, 0.2);
-}
+/* (O antigo par "ícone + barra vertical" do Dano automático e a barra
+   #BaraQTDHab1Borda saíram: agora o dano é um .combate-habilidade como os demais —
+   a carga é mostrada sobre o próprio ícone. Ver .combate-habilidade__moldura.) */
 /* ------------------------------ INIMIGOS ------------------------------ */
 .inimigo1, .inimigo2, .inimigo3, .inimigo4{
     position: absolute;
@@ -2053,6 +2030,7 @@ body {
 }
 
 .pause-panel {
+	position: relative;
 	display: grid;
 	justify-items: center;
 	gap: 18px;
@@ -2118,6 +2096,32 @@ body {
 	min-height: 46px;
 	font-size: 15px;
 	touch-action: manipulation;
+}
+
+/* "X" de fechar o pause: canto superior direito do painel, com o mesmo
+   visual dos demais botões de fechar do jogo (mesma família do .cidade-fechar). */
+.pause-panel .pausa-fechar {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	z-index: 1;
+	min-width: 0;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border: 1px solid rgba(229, 183, 96, 0.55);
+	border-radius: 10px;
+	background: linear-gradient(145deg, #3c4658, #252c39);
+	color: #ffe0a0;
+	font-size: 22px;
+	font-weight: 800;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.pause-panel .pausa-fechar:hover {
+	filter: brightness(1.15);
+	border-color: rgba(255, 224, 160, 0.8);
 }
 
 #game-root.game-paused > :not(#pauseOverlay) {
@@ -2296,7 +2300,7 @@ body {
 	pointer-events: auto;
 }
 
-.skill-unlock-panel {
+.habilidades-desbloqueadas {
 	display: flex;
 	align-items: flex-end;
 	gap: 5px;
@@ -2304,12 +2308,12 @@ body {
 	pointer-events: auto;
 }
 
-.skill-unlock-panel[hidden],
-.combat-skill[hidden] {
+.habilidades-desbloqueadas[hidden],
+.combate-habilidade[hidden] {
 	display: none !important;
 }
 
-.combat-skill {
+.combate-habilidade {
 	position: relative;
 	display: flex;
 	flex: 0 0 auto;
@@ -2330,62 +2334,108 @@ body {
 	touch-action: manipulation;
 }
 
-.combat-skill__icon {
+.combate-habilidade__moldura {
+	position: relative;
+	display: block;
 	flex: 0 0 auto;
 	width: clamp(34px, 4vw, 52px);
 	height: clamp(34px, 4vw, 52px);
+	border-radius: 50%;
+}
+
+.combate-habilidade__icone {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
 	object-fit: contain;
 	filter: drop-shadow(0 0 4px rgba(105, 205, 255, 0.55));
+	transition: filter 180ms ease, opacity 180ms ease;
 }
 
 /* Ícones ilustrados (SVG): o brilho é por skill (as cores já vêm da arte) */
-.combat-skill__icon--gold {
+.combate-habilidade__icone--ouro {
 	filter: drop-shadow(0 0 5px rgba(255, 194, 65, 0.6));
 }
 
-.combat-skill__icon--escape {
+.combate-habilidade__icone--fuga {
 	filter: drop-shadow(0 0 5px rgba(120, 200, 255, 0.6));
 }
 
-.combat-skill__icon--frenzy {
+.combate-habilidade__icone--frenesi {
 	filter: drop-shadow(0 0 5px rgba(255, 130, 60, 0.6));
 }
 
 /* Cores das barras por skill — puxadas da cor dominante de cada ícone
-   (damage/gold dourado, electric/escape azul, frenzy laranja). A .combat-skill__meter-fill
-   lê estas variáveis; o dano automático usa o dourado direto no #BaraQTDHab1. */
-#skill-electric {
-	--meter-top: #8fe0ff;
-	--meter-mid: #1c8fc3;
-	--meter-low: #0c4f70;
-	--meter-glow: rgba(28, 143, 195, 0.55);
+   (damage/gold dourado, electric/escape azul, frenzy laranja). A .combate-habilidade__medidor-preenchido
+   lê estas variáveis (o Dano automático tem as suas em #habilidade-dano). */
+#habilidade-eletrica {
+	--medidor-topo: #8fe0ff;
+	--medidor-meio: #1c8fc3;
+	--medidor-base: #0c4f70;
+	--medidor-brilho: rgba(28, 143, 195, 0.55);
 }
 
-#skill-gold {
-	--meter-top: #ffe7a2;
-	--meter-mid: #d99a12;
-	--meter-low: #8a5a0f;
-	--meter-glow: rgba(211, 142, 8, 0.55);
+#habilidade-ouro {
+	--medidor-topo: #ffe7a2;
+	--medidor-meio: #d99a12;
+	--medidor-base: #8a5a0f;
+	--medidor-brilho: rgba(211, 142, 8, 0.55);
 }
 
-#skill-escape {
-	--meter-top: #a8f0ff;
-	--meter-mid: #15a0d8;
-	--meter-low: #0a5578;
-	--meter-glow: rgba(21, 148, 207, 0.55);
+#habilidade-fuga {
+	--medidor-topo: #a8f0ff;
+	--medidor-meio: #15a0d8;
+	--medidor-base: #0a5578;
+	--medidor-brilho: rgba(21, 148, 207, 0.55);
 }
 
-#skill-frenzy {
-	--meter-top: #ffcf9a;
-	--meter-mid: #e07a12;
-	--meter-low: #8a3d05;
-	--meter-glow: rgba(219, 112, 11, 0.55);
+#habilidade-frenesi {
+	--medidor-topo: #ffcf9a;
+	--medidor-meio: #e07a12;
+	--medidor-base: #8a3d05;
+	--medidor-brilho: rgba(219, 112, 11, 0.55);
 }
 
-/* Ícone some enquanto a skill carrega: o botão fica só com a barra
-   (a classe is-charging é alternada em AtualizaHabilidadesCombate) */
-.combat-skill.is-charging .combat-skill__icon {
-	display: none;
+/* Dano automático: dourado do próprio ícone (mesma cor da antiga barra). */
+#habilidade-dano {
+	--medidor-topo: #ffe08a;
+	--medidor-meio: #d9a02a;
+	--medidor-base: #8a5a0f;
+	--medidor-brilho: rgba(191, 144, 28, 0.55);
+}
+
+/* Estados da skill (item 1): só a PRONTA fica acesa com brilho na borda; em
+   carga/ativa o ícone escurece e a barra de progresso aparece SOBRE ele.
+   O ícone nunca some (a antiga classe is-charging escondia o ícone). */
+.combate-habilidade.is-pronta .combate-habilidade__icone {
+	filter:
+		drop-shadow(0 0 5px rgba(255, 226, 150, 0.95))
+		drop-shadow(0 0 12px rgba(255, 186, 66, 0.8));
+	animation: combate-habilidade-brilho 1.6s ease-in-out infinite;
+}
+
+.combate-habilidade.is-carregando .combate-habilidade__icone,
+.combate-habilidade.is-ativa .combate-habilidade__icone {
+	filter: brightness(0.42) saturate(0.7);
+}
+
+@keyframes combate-habilidade-brilho {
+	0%, 100% {
+		filter:
+			drop-shadow(0 0 4px rgba(255, 226, 150, 0.7))
+			drop-shadow(0 0 9px rgba(255, 186, 66, 0.55));
+	}
+	50% {
+		filter:
+			drop-shadow(0 0 8px rgba(255, 234, 170, 1))
+			drop-shadow(0 0 18px rgba(255, 190, 73, 0.95));
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.combate-habilidade.is-pronta .combate-habilidade__icone { animation: none; }
 }
 
 .sr-only {
@@ -2400,53 +2450,57 @@ body {
 	border: 0;
 }
 
-.combat-skill:disabled {
+.combate-habilidade:disabled {
 	cursor: default;
-	filter: saturate(0.55) brightness(0.76);
+	filter: saturate(0.85) brightness(0.94);
 }
 
-.combat-skill:not(:disabled):hover {
+.combate-habilidade:not(:disabled):hover .combate-habilidade__icone {
 	filter: brightness(1.18);
 }
 
-.combat-skill__meter {
-	position: relative;
-	flex: 0 0 auto;
+/* Progresso da recarga desenhado SOBRE o ícone (mesmo retângulo do ícone). */
+.combate-habilidade__medidor {
+	position: absolute;
+	inset: 0;
 	display: block;
 	box-sizing: border-box;
-	width: clamp(18px, 2vw, 26px);
+	width: 100%;
 	height: 100%;
-	padding: 1px;
+	padding: 0;
 	overflow: hidden;
-	background: linear-gradient(180deg, rgba(15, 21, 35, 0.96), rgba(5, 9, 18, 0.96));
-	border: 1px solid rgba(137, 177, 255, 0.58);
-	border-radius: 6px;
-	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 12px rgba(67, 126, 255, 0.2);
+	background: transparent;
+	border: 0;
+	border-radius: 50%;
+	box-shadow: none;
+	pointer-events: none;
 }
 
-.combat-skill__meter-fill {
+.combate-habilidade__medidor-preenchido {
 	position: absolute;
-	bottom: 1px;
-	left: 1px;
+	bottom: 0;
+	left: 0;
 	display: block;
-	width: calc(100% - 2px);
+	width: 100%;
 	height: 0;
-	background: linear-gradient(180deg, var(--meter-top, #77c7ff), var(--meter-mid, #3578ff) 55%, var(--meter-low, #1946c2));
-	border-radius: 0 0 4px 4px;
-	box-shadow: 0 0 8px var(--meter-glow, rgba(69, 145, 255, 0.5));
-	transition: height 180ms ease;
+	background: linear-gradient(180deg, var(--medidor-topo, #77c7ff), var(--medidor-meio, #3578ff) 55%, var(--medidor-base, #1946c2));
+	border-radius: 0 0 50% 50%;
+	opacity: 0.62;
+	transition: height 160ms ease;
 }
 
-.combat-skill.is-active .combat-skill__meter-fill {
+.combate-habilidade.is-pronta .combate-habilidade__medidor-preenchido {
+	/* pronta: barra cheia discreta, o destaque é o brilho do ícone */
+	background: linear-gradient(180deg, rgba(255, 231, 162, 0.5), rgba(255, 179, 71, 0.35));
+	opacity: 0.35;
+}
+
+.combate-habilidade.is-ativa .combate-habilidade__medidor-preenchido {
 	background: linear-gradient(180deg, #ffe7a2, #ffb347 55%, #d66a25);
-	box-shadow: 0 0 8px rgba(255, 190, 73, 0.5);
+	opacity: 0.7;
 }
 
-.combat-skill.is-active .combat-skill__meter {
-	border-color: rgba(255, 211, 107, 0.8);
-}
-
-.combat-skill:focus-visible {
+.combate-habilidade:focus-visible {
 	outline: 2px solid #ffd36b;
 	outline-offset: 2px;
 }
@@ -2454,7 +2508,7 @@ body {
 /* Mago do Relógio: quando ele ativa a skill sozinho, o botão dá um pulso
    dourado/arcano. A classe é alternada em EfeitoAtivacaoMago (progressao.js)
    e sai no fim da animação. */
-@keyframes skillMagoPulso {
+@keyframes habilidade-mago-pulso {
 	0% {
 		filter: drop-shadow(0 0 0 rgba(255, 214, 120, 0)) brightness(1);
 		transform: scale(1);
@@ -2473,13 +2527,13 @@ body {
 	}
 }
 
-.combat-skill.skill-mago {
-	animation: skillMagoPulso 1100ms ease-out;
+.combate-habilidade.habilidade-mago {
+	animation: habilidade-mago-pulso 1100ms ease-out;
 }
 
 /* Onda mágica: anel dourado que expande a partir do ícone. Fica centrado no
    ícone (o 1º filho do botão), então usa a mesma largura do ícone no left. */
-@keyframes skillMagoAnel {
+@keyframes habilidade-mago-anel {
 	0% {
 		opacity: 0;
 		transform: translate(-50%, -50%) scale(0.55);
@@ -2493,7 +2547,7 @@ body {
 	}
 }
 
-.combat-skill.skill-mago::after {
+.combate-habilidade.habilidade-mago::after {
 	content: "";
 	position: absolute;
 	top: 50%;
@@ -2504,17 +2558,17 @@ body {
 	border-radius: 50%;
 	box-shadow: 0 0 22px rgba(255, 200, 80, 1), inset 0 0 14px rgba(255, 224, 140, 0.85);
 	pointer-events: none;
-	animation: skillMagoAnel 1100ms ease-out;
+	animation: habilidade-mago-anel 1100ms ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.combat-skill.skill-mago {
+	.combate-habilidade.habilidade-mago {
 		animation: none;
 		outline: 2px solid #ffd36b;
 		outline-offset: 2px;
 	}
 
-	.combat-skill.skill-mago::after {
+	.combate-habilidade.habilidade-mago::after {
 		display: none;
 	}
 }
@@ -3421,11 +3475,11 @@ caption {
 }
 
 /* "Rugido" do guardião: tremor curto na cena (script/ui.js -> showFloorTransition) */
-html.guardian-rumble {
-	animation: guardian-rumble 620ms ease-out;
+html.guardiao-tremor {
+	animation: guardiao-tremor 620ms ease-out;
 }
 
-@keyframes guardian-rumble {
+@keyframes guardiao-tremor {
 	0%, 100% { transform: translate3d(0, 0, 0); }
 	12% { transform: translate3d(-5px, 2px, 0); }
 	26% { transform: translate3d(5px, -2px, 0); }
@@ -3438,7 +3492,7 @@ html.guardian-rumble {
 @media (prefers-reduced-motion: reduce) {
 	.moeda-voadora,
 	.morte-poeira,
-	html.guardian-rumble {
+	html.guardiao-tremor {
 		animation-duration: 1ms;
 	}
 }
@@ -3696,8 +3750,8 @@ html.crit-shake {
 	.player--atacando,
 	.contador--pulso,
 	.xp-fill--pulso,
-	.floor-transition--visible,
-	#contAndar.floor-counter--changed,
+	.transicao-andar--visivel,
+	#contAndar.contador-andar--mudou,
 	.floating-game-text {
 		animation-duration: 1ms;
 	}
@@ -4694,62 +4748,85 @@ input:focus-visible {
 /* (O banner #gameMilestone saiu: marco de andar e cia. agora entram no log de
    avisos — ver `.log-avisos`, no bloco do antigo `.chest-opening`.) */
 
-.floor-transition {
+/* Transição de andar (item 5): um EMBLEMA (asas + escudo) com o número do
+   andar e a legenda abaixo, no lugar do banner de texto. Fica ACIMA (z-index)
+   do Objetivo/Missão e demais painéis do jogo — é transiente (some sozinho) e
+   não captura cliques. */
+.transicao-andar {
 	position: fixed;
-	top: 48%;
+	top: 44%;
 	left: 50%;
-	z-index: 29;
+	z-index: 60;
 	display: grid;
-	gap: 7px;
-	box-sizing: border-box;
-	width: min(520px, calc(100vw - 32px));
-	padding: 18px 20px;
-	box-sizing: border-box;
-	border-top: 1px solid rgba(255, 211, 107, 0.62);
-	border-bottom: 1px solid rgba(255, 211, 107, 0.62);
-	background: linear-gradient(90deg, transparent, rgba(10, 12, 18, 0.86) 18% 82%, transparent);
-	color: #f3e7ce;
-	text-align: center;
-	text-shadow: 0 2px 8px #000;
+	justify-items: center;
+	gap: 4px;
+	width: min(420px, calc(100vw - 24px));
 	opacity: 0;
 	pointer-events: none;
-	transform: translate(-50%, -42%) scale(0.96);
+	transform: translate(-50%, -42%) scale(0.94);
 }
 
-.floor-transition--visible {
-	animation: floor-transition 1450ms ease-out both;
+.transicao-andar--visivel {
+	animation: transicao-andar 1450ms ease-out both;
 }
 
-.floor-transition--boss.floor-transition--visible {
+.transicao-andar--guardiao.transicao-andar--visivel {
 	animation-duration: 2600ms;
 }
 
-.floor-transition__eyebrow {
-	color: #b8c6d9;
+.transicao-andar__emblema {
+	position: relative;
+	width: clamp(150px, 30vw, 226px);
+	aspect-ratio: 200 / 190;
+	filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.6));
+}
+
+.transicao-andar__escudo {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.transicao-andar__numero {
+	position: absolute;
+	left: 50%;
+	top: 45%;
+	transform: translate(-50%, -50%);
+	color: #ffe6a6;
+	font-size: clamp(34px, 7vw, 58px);
+	font-weight: 900;
+	line-height: 1;
+	letter-spacing: -0.02em;
+	text-shadow: 0 2px 0 #4a2c0c, 0 0 14px rgba(255, 200, 80, 0.75);
+}
+
+.transicao-andar__legenda {
+	padding: 3px 14px;
+	border-radius: 999px;
+	background: linear-gradient(180deg, rgba(20, 14, 6, 0.92), rgba(8, 6, 3, 0.92));
+	border: 1px solid rgba(255, 211, 107, 0.6);
+	color: #ffe8bd;
 	font-size: clamp(11px, 1vw, 14px);
 	font-weight: 700;
-	letter-spacing: 0.18em;
+	letter-spacing: 0.14em;
 	text-transform: uppercase;
+	text-align: center;
+	text-shadow: 0 1px 4px #000;
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
 }
 
-.floor-transition__number {
-	color: #ffe2a0;
-	font-size: clamp(26px, 4vw, 48px);
-	font-weight: 900;
-	letter-spacing: 0.06em;
+.transicao-andar--guardiao .transicao-andar__numero {
+	color: #ffd7c2;
+	text-shadow: 0 2px 0 #4a120a, 0 0 16px rgba(255, 120, 80, 0.85);
 }
 
-.floor-transition--boss {
-	border-color: rgba(255, 116, 91, 0.78);
-	background: linear-gradient(90deg, transparent, rgba(29, 11, 13, 0.9) 18% 82%, transparent);
+.transicao-andar--guardiao .transicao-andar__legenda {
+	border-color: rgba(255, 116, 91, 0.72);
+	color: #ffd0c0;
+	background: linear-gradient(180deg, rgba(32, 10, 8, 0.92), rgba(14, 4, 3, 0.92));
 }
 
-.floor-transition--boss .floor-transition__eyebrow,
-.floor-transition--boss .floor-transition__number {
-	color: #ffd0a2;
-}
-
-.guardian-intro-spotlight {
+.guardiao-intro-holofote {
 	position: fixed;
 	inset: 0;
 	z-index: 28;
@@ -4763,19 +4840,19 @@ input:focus-visible {
 	transition: background-position 450ms ease-out, opacity 350ms ease-out;
 }
 
-.guardian-intro-spotlight--visible {
+.guardiao-intro-holofote--visivel {
 	opacity: 1;
 }
 
-.guardian-intro-target {
+.guardiao-intro-alvo {
 	z-index: 29;
 }
 
-#contAndar.floor-counter--changed {
-	animation: floor-counter-change 620ms cubic-bezier(0.2, 0.8, 0.25, 1);
+#contAndar.contador-andar--mudou {
+	animation: contador-andar-mudou 620ms cubic-bezier(0.2, 0.8, 0.25, 1);
 }
 
-@keyframes floor-transition {
+@keyframes transicao-andar {
 	0% {
 		opacity: 0;
 		transform: translate(-50%, -36%) scale(0.92);
@@ -4793,7 +4870,7 @@ input:focus-visible {
 	}
 }
 
-@keyframes floor-counter-change {
+@keyframes contador-andar-mudou {
 	0%,
 	100% {
 		color: inherit;
@@ -6313,23 +6390,13 @@ input:focus-visible {
 		gap: 4px;
 	}
 
-	.combat-skill {
+	.combate-habilidade {
 		height: 72px;
 	}
 
-	.combat-skill__icon,
-	.habilidade1 {
+	.combate-habilidade__moldura {
 		width: 40px;
 		height: 40px;
-	}
-
-	.combat-skill__meter,
-	#BaraQTDHab1Borda {
-		width: 18px;
-	}
-
-	#BaraQTDHab1Borda {
-		height: 72px;
 	}
 }
 
@@ -6351,23 +6418,13 @@ input:focus-visible {
 		gap: 3px;
 	}
 
-	.combat-skill {
+	.combate-habilidade {
 		height: 54px;
 	}
 
-	.combat-skill__icon,
-	.habilidade1 {
+	.combate-habilidade__moldura {
 		width: 34px;
 		height: 34px;
-	}
-
-	.combat-skill__meter,
-	#BaraQTDHab1Borda {
-		width: 18px;
-	}
-
-	#BaraQTDHab1Borda {
-		height: 54px;
 	}
 }
 
@@ -6615,23 +6672,13 @@ input:focus-visible {
 		gap: 4px;
 	}
 
-	.combat-skill {
+	.combate-habilidade {
 		height: 78px;
 	}
 
-	.combat-skill__icon,
-	.habilidade1 {
+	.combate-habilidade__moldura {
 		width: 42px;
 		height: 42px;
-	}
-
-	.combat-skill__meter,
-	#BaraQTDHab1Borda {
-		width: 20px;
-	}
-
-	#BaraQTDHab1Borda {
-		height: 78px;
 	}
 }
 
@@ -8319,11 +8366,11 @@ button.skill-ramo-no:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.floor-transition--boss.floor-transition--visible {
+	.transicao-andar--guardiao.transicao-andar--visivel {
 		animation-duration: 900ms;
 	}
 
-	.guardian-intro-spotlight {
+	.guardiao-intro-holofote {
 		transition: none;
 	}
 
@@ -9313,15 +9360,9 @@ button.skill-ramo-no:focus-visible {
 		gap: 3px;
 	}
 
-	.combat-skill__icon,
-	.habilidade1 {
+	.combate-habilidade__moldura {
 		width: 34px;
 		height: 34px;
-	}
-
-	.combat-skill__meter,
-	#BaraQTDHab1Borda {
-		width: 16px;
 	}
 }
 
@@ -10205,9 +10246,9 @@ img.ramos-tree-no__tile {
 }
 
 /* (4b) Coluna à esquerda: baú dourado em cima; abaixo o chip ITENS (baús de
-   itens da build pendentes) e o chip do buff do Alquimista — ambos criados
-   por JS (ui-baus.js / companheiros.js). Mesma largura do baú; "order" fixa a
-   ordem mesmo com os chips entrando/saindo do DOM. */
+   itens da build pendentes) — criado por ui-baus.js. Mesma largura do baú;
+   "order" fixa a ordem mesmo com o chip entrando/saindo do DOM. (O buff do
+   Alquimista saiu daqui: agora vive no .recipiente-buffs, acima das skills.) */
 #container-Metas > .coluna-rail {
 	flex: 0 0 auto;
 	display: grid;
@@ -10217,7 +10258,6 @@ img.ramos-tree-no__tile {
 }
 #container-Metas > .coluna-rail > #golden-chest-tracker { order: 1; }
 #container-Metas > .coluna-rail > .itens-chip { order: 2; }
-#container-Metas > .coluna-rail > .buff-alquimista { order: 3; }
 
 /* (4b) Baú na arena (PC e tablet): o visual original do baú de itens da
    build — um baú de verdade solto perto do player, com o selo "ITENS"
@@ -13685,13 +13725,24 @@ input[type="checkbox"]:disabled {
 	user-select: none;
 }
 
-.auto-item-loja input {
+.auto-item-loja input,
+.auto-item-loja input:disabled {
 	position: absolute;
 	width: 1px;
 	height: 1px;
 	margin: 0;
 	opacity: 0;
 	pointer-events: none;
+}
+
+/* O input aqui é só o controle escondido: o visual do interruptor é o
+   `.auto-item-loja__trilha`. A regra genérica `input[type="checkbox"]:disabled`
+   (opacidade .5) tem especificidade maior que `.auto-item-loja input` e, quando
+   o item está travado, REVELAVA o knob `::after` do próprio input — desenhando
+   uma SEGUNDA bola sobre a trilha. O `:disabled` no seletor acima empata a
+   especificidade e vence por ordem; o `::after` abaixo mata o knob de vez. */
+.auto-item-loja input::after {
+	display: none;
 }
 
 .auto-item-loja__trilha {
