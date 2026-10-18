@@ -1722,15 +1722,47 @@ test("Loja do Conhecimento: itens de formiga custam o dobro e sobem o dobro (efe
             };
         });
 
-        // itens normais (dano/gold/xp/fuga/crit/comp) NÃO mudaram: base 10, ×1,25
-        assert.deepEqual(r.normal, [10, 13, 16], "item normal segue 10 / ×1,25");
-        assert.equal(r.semTipo, 10, "chamada sem tipo = comportamento antigo");
-        // formigas: base dobrada (20) e aumento dobrado (passo 1,5)
-        assert.deepEqual(r.formiga, [20, 30, 45], "formiga: 20 / 30 / 45");
-        assert.deepEqual(r.duas, [20, 45], "duas formigas: 20 / 45");
+        // itens normais (dano/gold/xp/fuga/crit/comp): base 30, ×1,25
+        assert.deepEqual(r.normal, [30, 38, 47], "item normal = base 30 / ×1,25");
+        assert.equal(r.semTipo, 30, "chamada sem tipo usa a base normal (30)");
+        // formigas: base dobrada dos normais (60) e aumento dobrado (passo 1,5)
+        assert.deepEqual(r.formiga, [60, 90, 135], "formiga: 60 / 90 / 135");
+        assert.deepEqual(r.duas, [60, 135], "duas formigas: 60 / 135");
         // e os GANHOS não mudam
         assert.ok(Math.abs(r.efeitoFormiga30 - 0.16) < 1e-9, "efeito da formiga intacto (+0,5%/nível)");
         assert.ok(Math.abs(r.efeitoDuas20 - 0.20) < 1e-9, "efeito das duas formigas intacto (+1%/nível)");
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+test("badge da Loja: aparece com a auto-compra desligada e gold para 5 compras", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() => typeof AtualizaBadgeLoja === "function"
+            && typeof ITENS_AUTO_COMPRA !== "undefined");
+        const r = await page.evaluate(() => {
+            const badge = document.getElementById("loja-badge");
+            const ler = () => ({ hidden: badge.hidden, txt: badge.textContent });
+            maxAndar = 500;          // auto-compra destravada
+            autoCompra = 0;          // desligada
+            gold = new GoldNumber(0);
+            AtualizaBadgeLoja();
+            const semGold = ler();
+            gold = new GoldNumber(1e12);
+            AtualizaBadgeLoja();
+            const comGold = ler();
+            autoCompra = 1;          // ligada -> o aviso some (ela compra sozinha)
+            AtualizaBadgeLoja();
+            const comAuto = ler();
+            return { semGold, comGold, comAuto, destravada: AutoCompraDesbloqueada() };
+        });
+        assert.equal(r.destravada, true, "auto-compra destravada no andar 500");
+        assert.equal(r.semGold.hidden, true, "sem gold o badge não aparece");
+        assert.equal(r.comGold.hidden, false, "com gold para 5 compras o badge aparece");
+        assert.ok(/^\d+$/.test(r.comGold.txt) || r.comGold.txt === "5+",
+            "o badge mostra a contagem: " + r.comGold.txt);
+        assert.equal(r.comAuto.hidden, true, "com a auto-compra ligada o badge some");
         assert.deepEqual(pageErrors, []);
     } finally {
         await context.close();

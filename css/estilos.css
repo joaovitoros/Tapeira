@@ -2283,6 +2283,12 @@ body {
 	display: none;
 }
 
+/* Badge do botao Loja (mesma linguagem do badge de pontos das Ramos): e um
+   absoluto dentro do botao, entao o botao precisa ser a ancora. */
+#btn-Loja {
+	position: relative;
+}
+
 /* Fileira das habilidades: âncora fixa no rodapé. O ícone do "Dano
    automático", a barra de carga e o painel de skills de combate são itens
    desta mesma fileira — assim todos compartilham posição e tamanho. */

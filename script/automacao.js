@@ -280,6 +280,53 @@ function AutoCompraMaisBarato() {
 	}
 }
 
+// Badge do botao Loja: lembrete de gastar o gold quando a COMPRA AUTOMATICA
+// nao esta rodando (o jogador desligou OU ainda nao destravou) e ja da pra
+// comprar bastante. Regra (pedido): 5 itens DIFERENTES pagaveis ao preco atual
+// OU gold para 5 compras do item mais barato. O numero e quantos itens da pra
+// comprar (5+ quando o gatilho veio da regra dos 5 niveis).
+// Fica fora do desafio "sem gold" (comprar la falha a missao) e fora do tick
+// pausado nao fica: ele roda sempre, pra nao ficar com estado velho no pause.
+function AtualizaBadgeLoja() {
+	const badge = document.getElementById("loja-badge");
+	if (!badge) return;
+
+	const automaticaAtiva = autoCompra === 1 && AutoCompraDesbloqueada();
+	const desafioSemGold = missaoAtual === 5 && missaoDesafioSub === 1;
+	let mostra = false;
+	let contagem = 0;
+
+	if (!automaticaAtiva && !desafioSemGold) {
+		NormalizaPrecosLoja();
+		const precos = [];
+		for (const item of ITENS_AUTO_COMPRA) {
+			let preco;
+			if (item.teto && ITENS_PATENTE[item.teto].noTeto()) {
+				if (!TemProximaPatente(item.teto)) continue; // patente maxima
+				preco = PrecoPatenteLoja(item.teto);         // ingresso da proxima ★
+			} else {
+				preco = N(window[item.preco]);
+			}
+			if (preco > 0) precos.push(preco);
+		}
+		if (precos.length) {
+			const pagaveis = precos.filter(p => GE(gold, p)).length;
+			const menor = Math.min.apply(null, precos);
+			const niveis = menor > 0 ? Math.floor(N(gold) / menor) : 0;
+			mostra = pagaveis >= 5 || niveis >= 5;
+			contagem = pagaveis;
+		}
+	}
+
+	if (mostra) {
+		const texto = contagem >= 5 ? String(Math.min(contagem, 99)) : "5+";
+		if (badge.textContent !== texto) badge.textContent = texto;
+		if (badge.hidden) badge.hidden = false;
+	} else if (!badge.hidden) {
+		badge.hidden = true;
+	}
+}
+
 // Tick de 1s registrado no PreCarregamento. Primeiro coleta (o prêmio entra
 // no gold e pode liberar a compra do mesmo tick), depois tenta comprar.
 // Tudo parado com o jogo pausado — inclusive atrás do modal de recompensas
@@ -290,6 +337,7 @@ function TickAutomacao() {
 	AtualizaCarteiraLoja();
 	AtualizaSaldoBotoesLoja();
 	SincronizaDescricoesLoja(); // descrição do card acompanha saldo (cor --nao-pode)
+	AtualizaBadgeLoja();        // badge "gaste o gold" no botão da Loja
 	if (jogoPausado) return;
 
 	if (autoColeta === 1 && AutoColetaDesbloqueada()) {

@@ -108,7 +108,15 @@ var UIRodape = (function () {
 		var alturaHab = hab.getBoundingClientRect().height;
 		var alturaTela = document.documentElement.clientHeight;
 		var limiteDireita = LimiteDireita();
-		var cabeAoLado =
+		// MOBILE NO VERTICAL: as skills ficam SEMPRE ACIMA dos botoes, mesmo
+		// quando caberiam ao lado (pedido). Em retrato o "lado a lado" espremia a
+		// fileira contra a borda direita e dificultava o toque pra ativar a
+		// habilidade. Acima de 960px (desktop) o lado a lado continua valendo.
+		var retratoMobile =
+			(typeof window.matchMedia === "function"
+				&& window.matchMedia("(orientation: portrait)").matches)
+			&& document.documentElement.clientWidth <= 960;
+		var cabeAoLado = !retratoMobile &&
 			rBot.left + rBot.width + ESPACO_LADO + larguraHab <= limiteDireita;
 		var topoSkills;
 		if (cabeAoLado) {
