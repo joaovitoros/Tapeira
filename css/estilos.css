@@ -14514,3 +14514,33 @@ html.rodape-empilhado #container-Loja {
 #container-Botoes button[hidden] {
 	display: none;
 }
+
+/* ---------------------------------------------------------------------
+   SKILLS em tela grande de retrato (ex.: 800x1340).
+   A moldura da skill ficava em 42px (a regra de min-width:701px) — abaixo do
+   minimo de toque — e colada no canto inferior direito, longe do centro onde o
+   jogador esta: era dificil acertar o toque pra ATIVAR a habilidade. Aqui o
+   alvo sobe para 52px e a fileira ganha folga da borda (barra de gestos).
+   Escopado em 701-960 e retrato: o celular (<=700) e o desktop nao mudam.
+   --------------------------------------------------------------------- */
+@media (min-width: 701px) and (max-width: 960px) and (orientation: portrait) {
+	.combate-habilidade {
+		min-height: 52px;
+	}
+
+	.combate-habilidade__moldura {
+		width: 52px;
+		height: 52px;
+	}
+
+	/* o selo do Mago acompanha a moldura (a base usa clamp(34px, 4vw, 52px)) */
+	.combate-habilidade.habilidade-mago::after {
+		left: 26px;
+		width: 52px;
+		height: 52px;
+	}
+
+	#container-Habilidades {
+		bottom: max(var(--rodape-hab-bottom, 4.6rem), calc(1rem + env(safe-area-inset-bottom)));
+	}
+}
