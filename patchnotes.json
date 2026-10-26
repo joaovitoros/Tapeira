@@ -2,6 +2,16 @@
   "_instrucoes": "Edite este arquivo e salve — o site mostra as mudancas na proxima recarga da pagina, sem reiniciar nada. Campos por patch: versao, data (AAAA-MM-DD), titulo (opcional), itens (lista de frases). O mais recente fica no topo (o site ordena pela data).",
   "patches": [
     {
+      "versao": "1.8.6",
+      "data": "2026-10-26",
+      "titulo": "Barra de vida em cada inimigo e as esferas do objetivo de volta",
+      "itens": [
+        "Novidade: cada inimigo agora tem a SUA barra de vida, com o nome da criatura (Mugi Cristal, Mugi Gelo...). Ela fica na tela enquanto o bicho está vivo — dá pra ver quem está mais fraco entre os quatro.",
+        "Correção: as esferas do objetivo não somem mais quando a meta passa de 8 abates (o que acontecia a partir do andar ~10). Acima de 12 elas viram blocos, e a esfera do bloco em andamento fica meio cheia.",
+        "Melhoria: o aviso de fuga ficou mais evidente — além do texto vermelho, o chip inteiro fica avermelhado nos últimos 5 segundos."
+      ]
+    },
+    {
       "versao": "1.8.5",
       "data": "2026-10-26",
       "titulo": "Golpe com peso, fuga urgente e o recorde na tela",
