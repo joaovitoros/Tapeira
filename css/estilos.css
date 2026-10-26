@@ -3860,7 +3860,10 @@ html.crit-shake {
 
 /* Recorde de andar (script/ui.js -> AtualizaRecordeAndar): linha pequena no
    chip do andar. Acende (dourado pulsante) enquanto o andar atual alcançou o
-   recorde — você está subindo terra virada. Começa hidden até haver recorde. */
+   recorde — você está subindo terra virada. Começa hidden até haver recorde.
+   O badge NÃO pode alargar o chip (alargava e fazia o "Voltar" encostar no
+   "Pausar" em 360-768px): por isso, em tela estreita ele vira só o troféu +
+   número; a palavra "Recorde:" só aparece onde o chip tem largura de sobra. */
 .andar-recorde {
 	flex-basis: 100%;
 	display: flex;
@@ -3876,6 +3879,24 @@ html.crit-shake {
 	padding-bottom: 2px; /* respiro pra não encostar na borda do chip */
 }
 
+/* O seletor precisa de ID: a regra legada "#container-AndarManter *" force
+   display:flex em todo descendente e venceria uma classe sozinha. */
+#container-AndarManter .andar-recorde-icone {
+	display: none;
+	font-size: 0.95em;
+	line-height: 1;
+}
+
+@media (max-width: 900px) {
+	#container-AndarManter .andar-recorde-label {
+		display: none;
+	}
+
+	#container-AndarManter .andar-recorde-icone {
+		display: flex;
+	}
+}
+
 .andar-recorde--novo {
 	color: #ffd46b;
 	animation: recorde-andar-pulso 1.4s ease-in-out infinite;
@@ -3884,6 +3905,22 @@ html.crit-shake {
 @keyframes recorde-andar-pulso {
 	0%, 100% { text-shadow: 0 0 6px rgba(255, 190, 73, 0.3); }
 	50% { text-shadow: 0 0 14px rgba(255, 190, 73, 0.75); }
+}
+
+/* Faixas apertadas do topo: sem espaço pro rótulo "Pausar" — o botão fica só
+   com o ícone Ⅱ (o aria-label continua dizendo "Pausar jogo"). Medido: em 320px
+   o "Voltar andar" cobria o Pausar; em 740/768x1024 a folga ficava em 2-3px. */
+@media (max-width: 340px), (min-width: 700px) and (max-width: 799px) {
+	#btnPause .pause-button-label {
+		display: none;
+	}
+
+	/* alvo de toque: só o ícone Ⅱ não pode encolher abaixo de 44px (teste
+	   "mobile: ... alvos de toque fecham 44px" mede por hit-test). Mesma
+	   especificidade da regra original (#container-HudTopo > #btnPause). */
+	#container-HudTopo > #btnPause {
+		min-width: 44px;
+	}
 }
 
 #container-GoldEsmeraldas {
