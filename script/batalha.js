@@ -44,6 +44,7 @@ function SobeUmAndar() {
 
 	if (elAndar) elAndar.innerHTML = andar;
 	if (elTitulo) elTitulo.innerHTML = "Caverna (Andar: " + andar + ")";
+	UI.AtualizaRecordeAndar(); // badge de recorde acende ao emplacar o andar
 	UI.showFloorTransition(andar);
 
 	qtdInimigosAndar++;
@@ -232,6 +233,7 @@ function Bater(inimigo, validaDano, aplicaNovasHabilidades = true) {
 	if (janelaFrenesiAtiva) RegistraDanoFrenesiComp(Math.min(dano, vidaAnterior), true);
 	UI.showDamageNumber(inimigoElement, dano, critico);
 	if (critico) FeedbackCritico();
+	AplicaSquashHit(inimigoElement, critico);
 	// Assassino: efeitos visuais do hit kill e do veneno
 	if (morteInstantaneaAssassino) {
 		animarHitKill(inimigoElement);
@@ -450,6 +452,18 @@ function Avancar() {
 // classe sai no animationend (sem timer novo) e há um throttle pra não sacudir
 // a tela a cada golpe quando a chance de crítico está alta.
 let ultimoFeedbackCriticoMs = 0;
+// Squash do inimigo no impacto: o sprite "achata" por um instante (peso físico
+// do golpe). Crítico achata mais. É só uma classe que a animação CSS toca —
+// sem timer (a animação termina sozinha; remove+reflow reinicia no próximo
+// hit). Usa a propriedade `scale` (e não transform) pra não desfazer o
+// scaleX(-1) inline dos inimigos 1-2.
+function AplicaSquashHit(inimigoElement, critico) {
+	if (!inimigoElement) return;
+	inimigoElement.classList.remove("inimigo--hit", "inimigo--hit-critico");
+	void inimigoElement.offsetWidth; // reflow: permite reiniciar a animação
+	inimigoElement.classList.add(critico ? "inimigo--hit-critico" : "inimigo--hit");
+}
+
 function FeedbackCritico() {
 	// preferência "Tremor no crítico" desligada
 	if (window.Tapeira?.Config && !window.Tapeira.Config.ativo("tremerCritico")) return;

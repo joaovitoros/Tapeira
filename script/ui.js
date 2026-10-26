@@ -30,10 +30,11 @@ const UI = {
         const elTotalAbatidos = document.getElementById("contDerrotados");
         if (elTotalAbatidos) elTotalAbatidos.innerHTML = totalDerrotados;
         document.getElementById("contAndar").innerHTML = andar;
+        this.AtualizaRecordeAndar();
         document.getElementById("contGold").innerHTML = FormatGold(gold);
         document.getElementById("contEmeraldas").innerHTML = esmeraldas;
         AtualizaHUDConhecimento();
-        document.getElementById("contTempo").innerHTML = FormataTempoFuga(tempoAvancoInimigos);
+        EscreveTempoFuga();
         this.updateResetAviso();
         this.updateObjective();
         this.updateMission();
@@ -410,6 +411,43 @@ const UI = {
         progress.setAttribute("aria-valuenow", String(derrotados));
         fill.style.width = `${porcentagem}%`;
         container.classList.remove("objetivo-concluido");
+
+        // pips substituem a barra quando a quota do andar é pequena (o caso
+        // comum): dá pra ler de relance quantos abates faltam. A barra volta
+        // sozinha se a quota passar de 8.
+        const pips = document.getElementById("objetivoPips");
+        if (pips) {
+            const comPips = total <= 8;
+            pips.hidden = !comPips;
+            progress.hidden = comPips;
+            if (comPips) {
+                if (pips.childElementCount !== total) {
+                    pips.replaceChildren(...Array.from({ length: total }, () => {
+                        const bolinha = document.createElement("span");
+                        bolinha.className = "objetivo-pip";
+                        return bolinha;
+                    }));
+                }
+                for (let i = 0; i < pips.childElementCount; i++) {
+                    pips.children[i].classList.toggle("objetivo-pip--feito", i < derrotados);
+                }
+            }
+        }
+    },
+
+    // Recorde de andar (maxAndar, permanente no save): linha pequena no chip do
+    // andar. Enquanto o andar atual alcança o recorde, o badge acende — "você
+    // está emplacando". Não usa save novo: maxAndar já é salvo.
+    AtualizaRecordeAndar() {
+        const badge = document.getElementById("andarRecorde");
+        if (!badge) return;
+        const valor = document.getElementById("contRecorde");
+        if (!valor) return;
+
+        const emRecorde = andar >= maxAndar;
+        badge.hidden = maxAndar <= 1;
+        badge.classList.toggle("andar-recorde--novo", emRecorde);
+        valor.textContent = emRecorde ? andar : maxAndar;
     },
 
     updateResetAviso() {
@@ -499,6 +537,12 @@ const UI = {
         fill.style.width = "100%";
         container.classList.add("objetivo-concluido");
 
+        // pips: todos acesos no andar concluído (se a barra estava escondida)
+        const pips = document.getElementById("objetivoPips");
+        if (pips && !pips.hidden) {
+            for (const bolinha of pips.children) bolinha.classList.add("objetivo-pip--feito");
+        }
+
         this.objectiveCompleteTimer = setTimeout(() => {
             this.objectiveCompleteTimer = null;
             this.updateObjective();
@@ -509,7 +553,7 @@ const UI = {
         document.getElementById("contGold").innerHTML = FormatGold(gold);
         document.getElementById("contEmeraldas").innerHTML = esmeraldas;
         AtualizaHUDConhecimento();
-        document.getElementById("contTempo").innerHTML = FormataTempoFuga(tempoAvancoInimigos);
+        EscreveTempoFuga();
         this.updateMission();
     },
 

@@ -4,6 +4,17 @@
 // fuga. Extraído de script.js byte a byte (ver REFATORACAO.md). Chamado pelo
 // tick de 1s em sistema.js (ExecutaTick("avanço", ...)).
 // ====================================================================
+// Escreve o relógio de fuga e liga/desliga a urgência (últimos 5s em cor de
+// alarme). Único ponto que toca #contTempo — render e updateResources também
+// passam por aqui, então o estado da classe nunca fica velho.
+function EscreveTempoFuga() {
+	const el = document.getElementById("contTempo");
+	if (!el) return;
+	el.innerHTML = FormataTempoFuga(tempoAvancoInimigos);
+	document.getElementById("container-Fugir")
+		?.classList.toggle("fuga-urgente", tempoAvancoInimigos <= 5 && tempoAvancoInimigos > 0);
+}
+
 function AvancoInimigos() {
 	if (jogoPausado || fugaEmAndamento) return;
 	if (AtualizaRelogioHabilidade()) return;
@@ -12,7 +23,7 @@ function AvancoInimigos() {
 	if (typeof eventoAtivo !== "undefined" && eventoAtivo === "fissura") return;
 
     tempoAvancoInimigos--;
-    document.getElementById("contTempo").innerHTML = FormataTempoFuga(tempoAvancoInimigos);
+    EscreveTempoFuga();
 
 	// Lógica de avanço dos inimigos
 /*
@@ -34,7 +45,7 @@ function AvancoInimigos() {
 			const chancePerkFuga = Math.min(50, perkFuga * 10);
 			if (chancePerkFuga > 0 && Math.random() * 100 < chancePerkFuga) {
 				tempoAvancoInimigos = TempoFugaMax();
-				document.getElementById("contTempo").innerHTML = FormataTempoFuga(tempoAvancoInimigos);
+				EscreveTempoFuga();
 				UI.showInfo("O tempo para fugir deste andar voltou ao máximo! (chance de perk: " + chancePerkFuga + "%)");
 				return;
 			}
@@ -56,5 +67,6 @@ function AvancoInimigos() {
         }
 
         tempoAvancoInimigos = TempoFugaMax();
+        EscreveTempoFuga(); // volta do alarme ao normal (andar 1 não foge)
     }
 }

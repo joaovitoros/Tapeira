@@ -3515,6 +3515,142 @@ test("onda nova espera a morte antes de nascer (parte dela, não a queda inteira
     }
 });
 
+test("hud: pips do objetivo, urgência da fuga, recorde de andar e squash do hit", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            typeof EscreveTempoFuga === "function"
+            && typeof AplicaSquashHit === "function"
+            && typeof UI !== "undefined"
+            && typeof UI.AtualizaRecordeAndar === "function",
+            undefined,
+            { timeout: 15000 }
+        );
+
+        const r = await page.evaluate(async () => {
+            window.ChamaSom = () => {};
+            document.querySelectorAll("#infoModal, #gameModal").forEach(m => m.remove());
+            const out = {};
+            const badge = document.getElementById("andarRecorde");
+            const valorRecorde = document.getElementById("contRecorde");
+
+            // ---- recorde de andar (maxAndar já é salvo: aqui é só exibição)
+            maxAndar = 8; andar = 3;
+            UI.AtualizaRecordeAndar();
+            out.recordeVisitando = {
+                visivel: !badge.hidden,
+                texto: valorRecorde.textContent,
+                novo: badge.classList.contains("andar-recorde--novo"),
+            };
+            andar = 8; // emplacou o recorde
+            UI.AtualizaRecordeAndar();
+            out.recordeEmplacando = {
+                texto: valorRecorde.textContent,
+                novo: badge.classList.contains("andar-recorde--novo"),
+            };
+            maxAndar = 12; andar = 12; // terra nova
+            UI.AtualizaRecordeAndar();
+            out.recordeNovo = {
+                texto: valorRecorde.textContent,
+                novo: badge.classList.contains("andar-recorde--novo"),
+            };
+            maxAndar = 0; andar = 1; // começo de jogo: nada a mostra
+            UI.AtualizaRecordeAndar();
+            out.recordeInicio = { visivel: !badge.hidden };
+
+            // ---- urgência da fuga (últimos 5s, só acende com tempo > 0)
+            const chip = document.getElementById("container-Fugir");
+            tempoAvancoInimigos = 6;
+            EscreveTempoFuga();
+            out.fugaNormal = chip.classList.contains("fuga-urgente");
+            tempoAvancoInimigos = 5;
+            EscreveTempoFuga();
+            out.fugaNoLimite = chip.classList.contains("fuga-urgente");
+            tempoAvancoInimigos = 0; // já fugindo: não pulsa
+            EscreveTempoFuga();
+            out.fugaZerada = chip.classList.contains("fuga-urgente");
+            tempoAvancoInimigos = TempoFugaMax();
+            EscreveTempoFuga();
+            out.fugaRestaurada = chip.classList.contains("fuga-urgente");
+
+            // ---- pips do objetivo (quota pequena) e barra (quota grande)
+            const pips = document.getElementById("objetivoPips");
+            const barra = document.getElementById("objetivoProgresso");
+            inimigosDerrotados = 2;
+            qtdInimigosAndar = 5;
+            UI.updateObjective();
+            out.pipsPequena = {
+                quota: QuotaAndar(),
+                pipsVisiveis: !pips.hidden,
+                barraEscondida: barra.hidden,
+                bolinhas: pips.childElementCount,
+                feitas: [...pips.children].filter(p => p.classList.contains("objetivo-pip--feito")).length,
+            };
+            qtdInimigosAndar = 12; // quota > 8: volta a barra
+            inimigosDerrotados = 0;
+            UI.updateObjective();
+            out.pipsGrande = {
+                quota: QuotaAndar(),
+                pipsEscondidos: pips.hidden,
+                barraVisivel: !barra.hidden,
+            };
+
+            // ---- squash do hit (classe troca no crítico e reinicia a cada hit)
+            const el = document.getElementById("inimigo1");
+            AplicaSquashHit(el, false);
+            out.squashNormal = el.classList.contains("inimigo--hit");
+            AplicaSquashHit(el, true);
+            out.squashCritico = el.classList.contains("inimigo--hit-critico")
+                && !el.classList.contains("inimigo--hit");
+
+            // integração: o Bater do combate aplica o squash (normal OU crítico,
+            // já que a chance de crítico é aleatória)
+            jogoPausado = false;
+            fugaEmAndamento = false;
+            el.style.visibility = "visible";
+            vidaInimigo1 = 1000;
+            vidaAndar = 1000;
+            danoJogador = 10;
+            Bater(1, true);
+            out.squashNoBater = el.classList.contains("inimigo--hit")
+                || el.classList.contains("inimigo--hit-critico");
+            return out;
+        });
+
+        assert.deepEqual(r.recordeVisitando, { visivel: true, texto: "8", novo: false },
+            "visitando andar 3 com recorde 8: mostra 8, sem acender");
+        assert.deepEqual(r.recordeEmplacando, { texto: "8", novo: true },
+            "ao emplacar o recorde o badge acende");
+        assert.deepEqual(r.recordeNovo, { texto: "12", novo: true },
+            "em terra nova mostra o andar atual aceso");
+        assert.equal(r.recordeInicio.visivel, false, "no começo (recorde 0-1) o badge fica escondido");
+
+        assert.equal(r.fugaNormal, false, "acima de 5s o relógio fica normal");
+        assert.equal(r.fugaNoLimite, true, "nos 5s finais o chip entra em urgência");
+        assert.equal(r.fugaZerada, false, "durante a fuga (0s) não pulsa");
+        assert.equal(r.fugaRestaurada, false, "restaurar o tempo apaga a urgência");
+
+        assert.ok(r.pipsPequena.quota >= 1, "quota do andar positiva");
+        if (r.pipsPequena.quota <= 8) {
+            assert.equal(r.pipsPequena.pipsVisiveis, true, "quota pequena: pips aparecem");
+            assert.equal(r.pipsPequena.barraEscondida, true, "quota pequena: barra sai de cena");
+            assert.equal(r.pipsPequena.bolinhas, r.pipsPequena.quota, "uma bolinha por abate da quota");
+            assert.equal(r.pipsPequena.feitas, 2, "bolinhas acesas = abates feitos");
+        }
+        assert.equal(r.pipsGrande.quota > 8, true, "12 inimigos no andar sem bônus vira quota > 8");
+        assert.equal(r.pipsGrande.pipsEscondidos, true, "quota grande: pips somem");
+        assert.equal(r.pipsGrande.barraVisivel, true, "quota grande: barra volta");
+
+        assert.equal(r.squashNormal, true, "hit normal aplica a classe de squash");
+        assert.equal(r.squashCritico, true, "crítico aplica a variante mais forte (e limpa a normal)");
+        assert.equal(r.squashNoBater, true, "Bater do combate aplica o squash no inimigo");
+
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("telas complexas: Skills, Coleção e Feitos trazem o ícone de info com balão", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
