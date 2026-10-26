@@ -64,6 +64,31 @@ const BIOMA_MORTE = {
 
 var biomaFundoMostrando = null;
 
+// Nome de exibição de cada criatura (barra de vida e avisos). As chaves são as
+// mesmas do BIOMA_INIMIGOS/BIOMA_MORTE (nome do arquivo, sem pasta/extensão).
+// "Mugi <elemento>" é como a folha de arte chama as criaturas.
+const BIOMA_NOMES = {
+    normal: "Cogumelo",
+    vegetal: "Mugi Vegetal",
+    cristal: "Mugi Cristal",
+    gelo: "Mugi Gelo",
+    metalico: "Mugi Metálico",
+    toxico: "Mugi Tóxico",
+    lava: "Mugi Lava",
+    madeira: "Mugi Madeira",
+    sombrio: "Mugi Sombrio",
+    "rei-espinhos": "Rei Espinhos",
+    gigante: "Mugi Gigante",
+    "rei-coroa": "Rei Coroa",
+    poeira: "Mugi Poeira"
+};
+
+// Nome da criatura que está no elemento (cai num genérico se faltar o sprite).
+function BiomaNomeCriatura(el) {
+    const chave = el && el.dataset ? el.dataset.criatura : null;
+    return (chave && BIOMA_NOMES[chave]) || "Criatura";
+}
+
 // Trilha sonora por bioma (loops de 8 compassos escritos em ABC e gerados por
 // scripts/abc-para-audio.js em media/musicas/). Andar de GUARDIÃO (múltiplo de
 // 10) toca o tema de batalha.

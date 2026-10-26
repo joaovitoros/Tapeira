@@ -123,92 +123,150 @@ Object.assign(UI, {
         setTimeout(() => marker.remove(), 1100);
     },
 
-    showEnemyHealth(target, health, maxHealth) {
-        if (!target || health <= 0) {
-            this.hideEnemyHealth();
-            return;
+    // =========================
+    // VIDA DOS INIMIGOS (uma barra por bicho)
+    // =========================
+    // Cada inimigo vivo tem a SUA mini-barra, com o nome da criatura. Antes
+    // existia um único indicador que sumia sozinho em 1,2s e dizia só
+    // "Inimigo 1" — com 4 bichos na tela não dava pra saber quem estava fraco.
+    // A barra fica enquanto o bicho está vivo; só o brilho de alvo (quem você
+    // acabou de acertar) some depois de um tempo.
+
+    enemyBarsLayer() {
+        let layer = document.getElementById("enemyHealthBars");
+        if (!layer) {
+            layer = document.createElement("div");
+            layer.id = "enemyHealthBars";
+            layer.className = "enemy-health-bars";
+            document.body.appendChild(layer);
         }
-
-        let indicator = document.getElementById("enemyHealthIndicator");
-        if (!indicator) {
-            indicator = document.createElement("div");
-            indicator.id = "enemyHealthIndicator";
-            indicator.className = "enemy-health-indicator";
-            indicator.setAttribute("role", "group");
-            indicator.innerHTML = `
-                <div class="enemy-health-label">
-                    <span id="enemyHealthName"></span>
-                    <span id="enemyHealthValue"></span>
-                </div>
-                <div id="enemyHealthTrack" role="progressbar" aria-label="Vida do inimigo"
-                    aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
-                    <div id="enemyHealthFill"></div>
-                </div>
-            `;
-            document.body.appendChild(indicator);
-        }
-
-        if (this.enemyHealthTarget && this.enemyHealthTarget !== target) {
-            this.enemyHealthTarget.classList.remove("enemy-targeted");
-        }
-
-        this.enemyHealthTarget = target;
-        target.classList.add("enemy-targeted");
-
-        const rect = target.getBoundingClientRect();
-        // O indicador usa translateX(-50%): "left" é o centro dele. Sem estas margens ele
-        // ultrapassava a borda quando o inimigo estava junto nela (cortava o nome e a barra).
-        const meioLargura = indicator.offsetWidth / 2;
-        const centroMin = meioLargura + 8;
-        const centroMax = Math.max(centroMin, window.innerWidth - meioLargura - 8);
-        const centro = Math.min(Math.max(rect.left + rect.width / 2, centroMin), centroMax);
-        const topoMax = Math.max(8, window.innerHeight - indicator.offsetHeight - 8);
-        indicator.style.left = `${centro}px`;
-        indicator.style.top = `${Math.min(Math.max(8, rect.top - 48), topoMax)}px`;
-
-        const percentage = Math.max(0, Math.min(100, health * 100 / maxHealth));
-        document.getElementById("enemyHealthName").textContent =
-            `Inimigo ${target.id.replace("inimigo", "")}`;
-        document.getElementById("enemyHealthValue").textContent =
-            `${FormatGold(health)} / ${FormatGold(maxHealth)}`;
-        document.getElementById("enemyHealthTrack").setAttribute("aria-valuenow", String(percentage));
-        document.getElementById("enemyHealthFill").style.width = `${percentage}%`;
-        indicator.classList.add("enemy-health-indicator--visible");
-
-        if (this.enemyHealthTimeout) {
-            clearTimeout(this.enemyHealthTimeout);
-        }
-
-        this.enemyHealthTimeout = setTimeout(() => {
-            this.hideEnemyHealth();
-        }, 1200);
+        return layer;
     },
 
-    hideEnemyHealth() {
-        if (this.enemyHealthTimeout) {
-            clearTimeout(this.enemyHealthTimeout);
-            this.enemyHealthTimeout = null;
+    enemyBarFor(inimigo) {
+        let bar = document.getElementById("enemyHealthBar" + inimigo);
+        if (!bar) {
+            bar = document.createElement("div");
+            bar.id = "enemyHealthBar" + inimigo;
+            bar.className = "enemy-health-bar";
+            bar.innerHTML =
+                '<span class="enemy-health-bar__nome"></span>' +
+                '<div class="enemy-health-bar__trilha" role="progressbar" aria-valuemin="0"' +
+                ' aria-valuemax="100" aria-valuenow="100">' +
+                '<div class="enemy-health-bar__preenchimento"></div>' +
+                "</div>";
+            this.enemyBarsLayer().appendChild(bar);
         }
+        return bar;
+    },
 
-        if (this.enemyHealthTarget) {
-            this.enemyHealthTarget.classList.remove("enemy-targeted");
-            this.enemyHealthTarget = null;
+    // O card do objetivo/missão (canto superior direito) fica ACIMA das barras
+    // (HUD z2 > barras z1): uma barra no topo dele ficaria invisível.
+    // O alvo é #container-Objetivo (o card visível); #container-Metas é só o
+    // container de largura total que o posiciona.
+    cardCobreBarra(topo, altura, centro, largura) {
+        const card = document.getElementById("container-Objetivo") ||
+            document.getElementById("container-Metas");
+        if (!card) return false;
+        const cs = getComputedStyle(card);
+        if (cs.display === "none" || cs.visibility === "hidden") return false;
+        const r = card.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) return false;
+        const esq = centro - largura / 2;
+        const dir = centro + largura / 2;
+        return esq < r.right && dir > r.left && topo < r.bottom && topo + altura > r.top;
+    },
+
+    // Posiciona a barra acima do inimigo, centrada e presa à tela.
+    posicionaEnemyBar(bar, target) {
+        const rect = target.getBoundingClientRect();
+        const largura = bar.offsetWidth || 96;
+        const altura = bar.offsetHeight || 24;
+        const meio = largura / 2;
+        const centroMin = meio + 8;
+        const centroMax = Math.max(centroMin, window.innerWidth - meio - 8);
+        const centro = Math.min(Math.max(rect.left + rect.width / 2, centroMin), centroMax);
+        const limiteBaixo = Math.max(8, window.innerHeight - altura - 8);
+        let topo = Math.min(Math.max(8, rect.top - altura - 6), limiteBaixo);
+        // em cima fica coberta pelo card? então embaixo do inimigo (visível > "em cima")
+        if (this.cardCobreBarra(topo, altura, centro, largura)) {
+            topo = Math.min(rect.bottom + 6, limiteBaixo);
         }
+        bar.style.left = centro + "px";
+        bar.style.top = topo + "px";
+    },
 
-        const indicator = document.getElementById("enemyHealthIndicator");
-        if (indicator) {
-            indicator.classList.remove("enemy-health-indicator--visible");
+    // Reposiciona as barras visíveis (janela redimensionou / girou a tela).
+    reposicionaEnemyBars() {
+        for (let i = 1; i <= 4; i++) {
+            const bar = document.getElementById("enemyHealthBar" + i);
+            const target = document.getElementById("inimigo" + i);
+            if (!bar || !target) continue;
+            if (!bar.classList.contains("enemy-health-bar--visivel")) continue;
+            this.posicionaEnemyBar(bar, target);
         }
     },
 
     updateEnemyHealth(inimigo, vida, vidaMax) {
         const target = document.getElementById("inimigo" + inimigo);
-        if (!target || vida <= 0 || vidaMax <= 0) {
-            this.hideEnemyHealth();
+        if (!target || !(vida > 0) || !(vidaMax > 0)) {
+            this.hideEnemyHealth(inimigo);
             return;
         }
 
-        this.showEnemyHealth(target, vida, vidaMax);
+        const bar = this.enemyBarFor(inimigo);
+        const nome = typeof BiomaNomeCriatura === "function"
+            ? BiomaNomeCriatura(target)
+            : "Inimigo " + inimigo;
+        const nomeEl = bar.querySelector(".enemy-health-bar__nome");
+        if (nomeEl.textContent !== nome) nomeEl.textContent = nome;
+
+        const pct = Math.max(0, Math.min(100, (vida * 100) / vidaMax));
+        const trilha = bar.querySelector(".enemy-health-bar__trilha");
+        trilha.setAttribute("aria-label", "Vida do " + nome);
+        trilha.setAttribute("aria-valuenow", String(Math.round(pct)));
+        bar.querySelector(".enemy-health-bar__preenchimento").style.width = pct + "%";
+
+        bar.classList.add("enemy-health-bar--visivel");
+        this.posicionaEnemyBar(bar, target);
+
+        // brilho de alvo: quem você acabou de acertar. Some sozinho; a BARRA fica.
+        if (this.enemyHealthTarget && this.enemyHealthTarget !== target) {
+            this.enemyHealthTarget.classList.remove("enemy-targeted");
+        }
+        this.enemyHealthTarget = target;
+        target.classList.add("enemy-targeted");
+        if (this.enemyHealthTimeout) clearTimeout(this.enemyHealthTimeout);
+        this.enemyHealthTimeout = setTimeout(() => {
+            this.enemyHealthTimeout = null;
+            target.classList.remove("enemy-targeted");
+            if (this.enemyHealthTarget === target) this.enemyHealthTarget = null;
+        }, 1200);
+    },
+
+    // Esconde a barra de UM inimigo (ou de todos, sem argumento/índice 0).
+    hideEnemyHealth(inimigo) {
+        const um = Number(inimigo) >= 1 && Number(inimigo) <= 4;
+        const alvos = um ? [Number(inimigo)] : [1, 2, 3, 4];
+
+        for (const i of alvos) {
+            const bar = document.getElementById("enemyHealthBar" + i);
+            if (bar) bar.classList.remove("enemy-health-bar--visivel");
+            const target = document.getElementById("inimigo" + i);
+            if (target) target.classList.remove("enemy-targeted");
+        }
+
+        if (!um) {
+            if (this.enemyHealthTimeout) {
+                clearTimeout(this.enemyHealthTimeout);
+                this.enemyHealthTimeout = null;
+            }
+        }
+        if (!this.enemyHealthTarget) return;
+        if (!um || this.enemyHealthTarget.id === "inimigo" + inimigo) {
+            this.enemyHealthTarget.classList.remove("enemy-targeted");
+            this.enemyHealthTarget = null;
+        }
     },
 
     // =========================
@@ -241,7 +299,11 @@ Object.assign(UI, {
             setTimeout(() => {
                 const visivel = window["vidaInimigo" + i] > 0;
                 inimigo.style.visibility = visivel ? "visible" : "hidden";
-                if (visivel) SurgeInimigo(inimigo);
+                if (visivel) {
+                    SurgeInimigo(inimigo);
+                    // barra de vida cheia já no surgimento (não espera o 1º golpe)
+                    UI.updateEnemyHealth(i, window["vidaInimigo" + i], vidaAndar);
+                }
 
             }, 600);
 
@@ -281,6 +343,7 @@ Object.assign(UI, {
     removeEnemy(i) {
         const el = document.getElementById("inimigo" + i);
         if (el) el.style.visibility = "hidden";
+        this.hideEnemyHealth(i);
     },
 
     removeAllEnemies() {
@@ -332,7 +395,15 @@ function SurgeInimigo(el) {
 	void el.offsetWidth;
 	el.classList.add("inimigo--surgindo");
 	el.getAnimations().forEach(anim =>
-		anim.finished.then(() => el.classList.remove("inimigo--surgindo")).catch(() => {})
+		anim.finished
+			.then(() => {
+				el.classList.remove("inimigo--surgindo");
+				// a barra de vida foi posicionada com o sprite ainda animado
+				if (typeof UI !== "undefined" && typeof UI.reposicionaEnemyBars === "function") {
+					UI.reposicionaEnemyBars();
+				}
+			})
+			.catch(() => {})
 	);
 
 	const rect = el.getBoundingClientRect();
@@ -407,3 +478,11 @@ function CriaBrilhoCristais() {
 }
 
 document.addEventListener("DOMContentLoaded", CriaBrilhoCristais);
+
+// Barras de vida: as medidas são em px (por cima de cada inimigo), então
+// reposiciona quando a janela muda de tamanho ou o celular gira a tela.
+window.addEventListener("resize", () => {
+	if (typeof UI !== "undefined" && typeof UI.reposicionaEnemyBars === "function") {
+		UI.reposicionaEnemyBars();
+	}
+});

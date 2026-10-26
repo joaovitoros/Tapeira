@@ -3665,6 +3665,114 @@ test("hud: pips do objetivo, urgência da fuga, recorde de andar e squash do hit
     }
 });
 
+test("barras de vida: uma por inimigo, com o nome da criatura e sem sumir sozinha", async () => {
+    const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
+    try {
+        await page.waitForFunction(() =>
+            typeof UI !== "undefined"
+            && typeof UI.updateEnemyHealth === "function"
+            && typeof BiomaNomeCriatura === "function"
+            && typeof BIOMA_NOMES === "object",
+            undefined, { timeout: 15000 });
+
+        const setup = await page.evaluate(() => {
+            window.ChamaSom = () => {};
+            document.querySelectorAll("#infoModal, #gameModal").forEach(m => m.remove());
+            // toda criatura do rodízio precisa de nome de exibição
+            const semNome = BIOMA_INIMIGOS
+                .map(c => c.replace(/^inimigos\//, "").replace(/\.png$/, ""))
+                .filter(chave => !BIOMA_NOMES[chave]);
+            andar = 30; // 4 inimigos na tela
+            qtdInimigosAndar = 30;
+            CarregarStatus();
+            CriarInimigos();
+            return { semNome };
+        });
+        await page.waitForTimeout(1200); // 600ms do surgimento + animação
+
+        const r = await page.evaluate(() => {
+            const card = document.getElementById("container-Objetivo").getBoundingClientRect();
+            const cruza = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+            const barras = [...document.querySelectorAll(".enemy-health-bar")];
+            return {
+                qtd: barras.length,
+                info: barras.map((barra, i) => {
+                    const alvo = document.getElementById("inimigo" + (i + 1));
+                    const ra = alvo.getBoundingClientRect();
+                    const rb = barra.getBoundingClientRect();
+                    return {
+                        visivel: barra.classList.contains("enemy-health-bar--visivel"),
+                        nome: barra.querySelector(".enemy-health-bar__nome").textContent,
+                        aria: barra.querySelector(".enemy-health-bar__trilha").getAttribute("aria-label"),
+                        acima: Math.round(ra.top - rb.bottom),
+                        abaixo: Math.round(rb.top - ra.bottom),
+                        sobreCard: cruza(rb, card),
+                    };
+                }),
+            };
+        });
+
+        await page.waitForTimeout(1600); // o indicador antigo sumia em 1,2 s
+        const persistiu = await page.evaluate(() =>
+            document.querySelectorAll(".enemy-health-bar--visivel").length);
+
+        await page.evaluate(() => {
+            jogoPausado = false;
+            fugaEmAndamento = false;
+            danoJogador = 10;
+            vidaInimigo1 = 1000;
+            vidaAndar = 1000;
+            UI.updateEnemyHealth(1, 1000, 1000);
+            Bater(1, true);
+        });
+        const dano = await page.evaluate(() =>
+            document.getElementById("enemyHealthBar1")
+                .querySelector(".enemy-health-bar__preenchimento").style.width);
+
+        await page.evaluate(() => { vidaInimigo1 = 0; DesceVida(1); });
+        const morte = await page.evaluate(() => ({
+            sumiu: !document.getElementById("enemyHealthBar1")
+                .classList.contains("enemy-health-bar--visivel"),
+            outras: document.querySelectorAll(".enemy-health-bar--visivel").length,
+        }));
+
+        await page.setViewportSize({ width: 720, height: 820 });
+        await page.waitForTimeout(300);
+        const girado = await page.evaluate(() => {
+            const barra = document.getElementById("enemyHealthBar2");
+            const alvo = document.getElementById("inimigo2");
+            if (!barra || !alvo) return null;
+            const rb = barra.getBoundingClientRect();
+            const ra = alvo.getBoundingClientRect();
+            return {
+                visivel: barra.classList.contains("enemy-health-bar--visivel"),
+                desvio: Math.round((rb.left + rb.right) / 2 - (ra.left + ra.right) / 2),
+            };
+        });
+
+        assert.deepEqual(setup.semNome, [], "toda criatura do rodízio tem nome de exibição");
+        assert.equal(r.qtd, 4, "andar 30 (4 inimigos) = 4 barras");
+        assert.equal(r.info.filter(b => b.visivel).length, 4, "todas nascem visíveis, sem esperar o 1º golpe");
+        for (const [i, b] of r.info.entries()) {
+            assert.equal(b.nome, "Mugi Cristal", `barra ${i + 1} mostra o nome da criatura (não "Inimigo N")`);
+            assert.equal(b.aria, "Vida do Mugi Cristal", `barra ${i + 1} tem aria-label com o nome`);
+            assert.ok(b.acima === 6 || (b.abaixo === 6 && !b.sobreCard),
+                `barra ${i + 1} fica logo acima do inimigo (ou abaixo, quando o HUD cobre o topo)`);
+            assert.equal(b.sobreCard, false, `barra ${i + 1} não fica por cima do card do objetivo`);
+        }
+        assert.equal(persistiu, 4, "a barra NÃO some sozinha com o tempo");
+        assert.ok(parseFloat(dano) < 100, `o dano baixa a barra (ficou em ${dano})`);
+        assert.deepEqual(morte, { sumiu: true, outras: 3 },
+            "a morte esconde só a barra daquele inimigo");
+        assert.ok(girado && girado.visivel && Math.abs(girado.desvio) <= 2,
+            "redimensionar/girar reposiciona a barra centrada no inimigo");
+
+        assert.deepEqual(pageErrors, []);
+    } finally {
+        await context.close();
+    }
+});
+
 test("telas complexas: Skills, Coleção e Feitos trazem o ícone de info com balão", async () => {
     const { context, page, pageErrors } = await openIsolatedPage("Caverna.html");
     try {
