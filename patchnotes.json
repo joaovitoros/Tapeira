@@ -2,6 +2,21 @@
   "_instrucoes": "Edite este arquivo e salve — o site mostra as mudancas na proxima recarga da pagina, sem reiniciar nada. Campos por patch: versao, data (AAAA-MM-DD), titulo (opcional), itens (lista de frases). O mais recente fica no topo (o site ordena pela data).",
   "patches": [
     {
+      "versao": "1.8.5",
+      "data": "2026-10-26",
+      "titulo": "Golpe com peso, fuga urgente e o recorde na tela",
+      "itens": [
+        "Novidade: o inimigo agora \"achata\" no impacto do golpe (e mais ainda no crítico) — bater dá peso, principalmente no celular.",
+        "Novidade: nos últimos 5 segundos o relógio de fuga fica vermelho e pulsa, pra você ver a pressa sem olhar o número.",
+        "Novidade: o objetivo do andar virou bolinhas — uma por abate — que apagam conforme você mata (a barra fica só quando a meta é grande).",
+        "Novidade: o seu recorde de andar aparece embaixo do andar atual e acende em dourado enquanto você empata ou passa dele.",
+        "Novidade: a morte do Mugi Madeira ganhou animação própria, de 14 quadros.",
+        "Ajuste: o inimigo \"normal2\" saiu do jogo — era o mesmo cogumelo do normal, só com pedras na base. O rodízio ficou com 13 criaturas.",
+        "Melhoria: a onda nova espera só 60% da animação de morte (antes esperava a queda inteira) — os inimigos aparecem mais rápido.",
+        "Correção: no celular, o botão \"Voltar andar\" encostava e cobria o \"Pausar\" em telas de 320 a 768px. Agora o topo se ajusta e o Pausar fica só com o ícone onde falta espaço."
+      ]
+    },
+    {
       "versao": "1.8.4",
       "data": "2026-10-18",
       "titulo": "Mortes novas dos inimigos, qualidade personalizável e loja mais leve no celular",
