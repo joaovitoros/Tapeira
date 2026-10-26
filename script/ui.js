@@ -412,26 +412,39 @@ const UI = {
         fill.style.width = `${porcentagem}%`;
         container.classList.remove("objetivo-concluido");
 
-        // pips substituem a barra quando a quota do andar é pequena (o caso
-        // comum): dá pra ler de relance quantos abates faltam. A barra volta
-        // sozinha se a quota passar de 8.
+        // pips do objetivo: sempre uma bolinha por abate até 12; acima disso
+        // cada bolinha vale um bloco (o texto da contagem dá o número exato) e
+        // a bolinha do bloco em andamento fica parcialmente cheia. Antes os
+        // pips sumiam quando a quota passava de 8 — e a quota sobe +1 por andar,
+        // então a partir do andar ~10 eles nunca mais apareciam.
         const pips = document.getElementById("objetivoPips");
         if (pips) {
-            const comPips = total <= 8;
-            pips.hidden = !comPips;
-            progress.hidden = comPips;
-            if (comPips) {
-                if (pips.childElementCount !== total) {
-                    pips.replaceChildren(...Array.from({ length: total }, () => {
-                        const bolinha = document.createElement("span");
-                        bolinha.className = "objetivo-pip";
-                        return bolinha;
-                    }));
-                }
-                for (let i = 0; i < pips.childElementCount; i++) {
-                    pips.children[i].classList.toggle("objetivo-pip--feito", i < derrotados);
-                }
+            const MAX_PIPS = 12;
+            const qtd = Math.min(total, MAX_PIPS);
+            if (pips.childElementCount !== qtd) {
+                pips.replaceChildren(...Array.from({ length: qtd }, () => {
+                    const bolinha = document.createElement("span");
+                    bolinha.className = "objetivo-pip";
+                    return bolinha;
+                }));
             }
+            const passo = total / qtd;
+            for (let i = 0; i < qtd; i++) {
+                const feito = Math.max(0, Math.min(1, (derrotados - i * passo) / passo));
+                const bolinha = pips.children[i];
+                bolinha.style.setProperty("--feito", feito.toFixed(3));
+                bolinha.classList.toggle("objetivo-pip--cheio", feito >= 0.999);
+            }
+            pips.hidden = false;
+            pips.setAttribute("role", "progressbar");
+            pips.setAttribute("aria-label", "Progresso para limpar a caverna");
+            pips.setAttribute("aria-valuemin", "0");
+            pips.setAttribute("aria-valuemax", String(total));
+            pips.setAttribute("aria-valuenow", String(derrotados));
+            // a barra fica só como fallback de HTML antigo (sem #objetivoPips)
+            progress.hidden = true;
+        } else {
+            progress.hidden = false;
         }
     },
 
@@ -523,7 +536,6 @@ const UI = {
         const progress = document.getElementById("objetivoProgresso");
         const fill = document.getElementById("objetivoProgressoPreenchido");
         const count = document.getElementById("objetivoContagem");
-
         if (!container || !description || !progress || !fill || !count) return;
 
         if (this.objectiveCompleteTimer) {
@@ -537,10 +549,13 @@ const UI = {
         fill.style.width = "100%";
         container.classList.add("objetivo-concluido");
 
-        // pips: todos acesos no andar concluído (se a barra estava escondida)
+        // pips: todos cheios no andar concluído (a barra está escondida)
         const pips = document.getElementById("objetivoPips");
-        if (pips && !pips.hidden) {
-            for (const bolinha of pips.children) bolinha.classList.add("objetivo-pip--feito");
+        if (pips) {
+            for (const bolinha of pips.children) {
+                bolinha.style.setProperty("--feito", "1");
+                bolinha.classList.add("objetivo-pip--cheio");
+            }
         }
 
         this.objectiveCompleteTimer = setTimeout(() => {

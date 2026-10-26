@@ -1908,6 +1908,8 @@ body {
    últimos 5s o chip entra em cor de alarme e pulsa — número parado não
    comunica pressa. ID no seletor pra vencer as re-declarações dos breakpoints. */
 #container-Fugir.fuga-urgente {
+	background: rgba(122, 22, 16, 0.78);
+	border-color: rgba(255, 96, 84, 0.85);
 	animation: fuga-urgente-pulso 900ms ease-in-out infinite;
 }
 
@@ -4184,28 +4186,31 @@ html.crit-shake {
 }
 
 /* Pips do objetivo (script/ui.js -> updateObjective): uma bolinha por abate
-   da quota do andar. Lê de relance quantos faltam — substitui a barra quando
-   a quota é pequena (total <= 8, o caso comum). aria-hidden: a contagem em
-   texto já descreve o estado pra leitor de tela. */
+   até 12; acima disso cada bolinha representa um bloco e a do bloco em
+   andamento fica parcialmente cheia (--feito 0..1). A contagem em texto logo
+   abaixo dá o número exato. */
 .objetivo-pips {
 	display: flex;
 	justify-content: center;
+	flex-wrap: wrap;
 	gap: 5px;
 	padding: 2px 0;
 }
 
 .objetivo-pip {
-	width: 9px;
-	height: 9px;
+	width: 10px;
+	height: 10px;
 	border-radius: 50%;
 	box-sizing: border-box;
-	background: rgba(5, 8, 14, 0.85);
 	border: 1px solid rgba(255, 255, 255, 0.25);
+	/* preenchimento "de líquido": sobe conforme os abates */
+	background: linear-gradient(to top,
+		#ffd36b calc(var(--feito, 0) * 100%),
+		rgba(5, 8, 14, 0.85) calc(var(--feito, 0) * 100%));
 	transition: background 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
 }
 
-.objetivo-pip--feito {
-	background: linear-gradient(135deg, #d89537, #ffd36b);
+.objetivo-pip--cheio {
 	border-color: rgba(255, 211, 107, 0.9);
 	box-shadow: 0 0 7px rgba(255, 190, 73, 0.45);
 }

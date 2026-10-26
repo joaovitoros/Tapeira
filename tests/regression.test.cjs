@@ -3573,7 +3573,7 @@ test("hud: pips do objetivo, urgência da fuga, recorde de andar e squash do hit
             EscreveTempoFuga();
             out.fugaRestaurada = chip.classList.contains("fuga-urgente");
 
-            // ---- pips do objetivo (quota pequena) e barra (quota grande)
+            // ---- pips do objetivo (sempre; teto de 12 com blocos parciais)
             const pips = document.getElementById("objetivoPips");
             const barra = document.getElementById("objetivoProgresso");
             inimigosDerrotados = 2;
@@ -3584,15 +3584,21 @@ test("hud: pips do objetivo, urgência da fuga, recorde de andar e squash do hit
                 pipsVisiveis: !pips.hidden,
                 barraEscondida: barra.hidden,
                 bolinhas: pips.childElementCount,
-                feitas: [...pips.children].filter(p => p.classList.contains("objetivo-pip--feito")).length,
+                cheias: [...pips.children].filter(p => p.classList.contains("objetivo-pip--cheio")).length,
             };
-            qtdInimigosAndar = 12; // quota > 8: volta a barra
-            inimigosDerrotados = 0;
+            qtdInimigosAndar = 30; // quota grande: cada bolinha vale um bloco
+            inimigosDerrotados = 15;
             UI.updateObjective();
             out.pipsGrande = {
                 quota: QuotaAndar(),
-                pipsEscondidos: pips.hidden,
-                barraVisivel: !barra.hidden,
+                pipsVisiveis: !pips.hidden,
+                barraEscondida: barra.hidden,
+                bolinhas: pips.childElementCount,
+                cheias: [...pips.children].filter(p => p.classList.contains("objetivo-pip--cheio")).length,
+                parciais: [...pips.children].filter(p => {
+                    const f = Number(p.style.getPropertyValue("--feito"));
+                    return f > 0 && f < 1;
+                }).length,
             };
 
             // ---- squash do hit (classe troca no crítico e reinicia a cada hit)
@@ -3631,15 +3637,23 @@ test("hud: pips do objetivo, urgência da fuga, recorde de andar e squash do hit
         assert.equal(r.fugaRestaurada, false, "restaurar o tempo apaga a urgência");
 
         assert.ok(r.pipsPequena.quota >= 1, "quota do andar positiva");
-        if (r.pipsPequena.quota <= 8) {
+        if (r.pipsPequena.quota <= 12) {
             assert.equal(r.pipsPequena.pipsVisiveis, true, "quota pequena: pips aparecem");
-            assert.equal(r.pipsPequena.barraEscondida, true, "quota pequena: barra sai de cena");
-            assert.equal(r.pipsPequena.bolinhas, r.pipsPequena.quota, "uma bolinha por abate da quota");
-            assert.equal(r.pipsPequena.feitas, 2, "bolinhas acesas = abates feitos");
+            assert.equal(r.pipsPequena.bolinhas, r.pipsPequena.quota, "uma bolinha por abate");
+            assert.equal(r.pipsPequena.cheias, 2, "bolinhas cheias = abates feitos");
         }
-        assert.equal(r.pipsGrande.quota > 8, true, "12 inimigos no andar sem bônus vira quota > 8");
-        assert.equal(r.pipsGrande.pipsEscondidos, true, "quota grande: pips somem");
-        assert.equal(r.pipsGrande.barraVisivel, true, "quota grande: barra volta");
+        assert.equal(r.pipsPequena.barraEscondida, true, "as bolinhas assumem no lugar da barra");
+
+        // quota grande: os pips NÃO somem (antes sumiam acima de 8 e a quota
+        // sobe +1 por andar, então a partir do andar ~10 nunca apareciam)
+        assert.ok(r.pipsGrande.quota > 12, "30 inimigos no andar viram quota acima do teto");
+        assert.equal(r.pipsGrande.pipsVisiveis, true, "quota grande continua mostrando as esferas");
+        assert.equal(r.pipsGrande.barraEscondida, true, "quota grande: a barra continua fora");
+        assert.equal(r.pipsGrande.bolinhas, 12, "teto de 12 bolinhas");
+        const passo = r.pipsGrande.quota / 12;
+        assert.equal(r.pipsGrande.cheias, Math.floor(15 / passo),
+            `bolinhas cheias = blocos completos (${r.pipsGrande.cheias} de ${r.pipsGrande.quota / 12} por bloco)`);
+        assert.equal(r.pipsGrande.parciais, 1, "a bolinha do bloco em andamento fica parcialmente cheia");
 
         assert.equal(r.squashNormal, true, "hit normal aplica a classe de squash");
         assert.equal(r.squashCritico, true, "crítico aplica a variante mais forte (e limpa a normal)");
